@@ -258,9 +258,9 @@ function CreateCatalogContent() {
           </Text>
           <Text 
             style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer', marginTop: '8px', display: 'block' }}
-            onClick={() => window.electronAPI?.openExternal('https://www.eightabyte.com')}
+            onClick={() => window.electronAPI?.openExternal('https://github.com/scottkw/storcat/')}
           >
-            <GlobalOutlined /> www.eightabyte.com
+            <GlobalOutlined /> github.com/scottkw/storcat
           </Text>
         </Space>
 
