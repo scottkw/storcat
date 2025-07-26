@@ -1,0 +1,152 @@
+{
+  "name": "storcat-electron",
+  "version": "1.1.0",
+  "description": "A modern Electron app for creating and searching directory catalogs",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "concurrently \"npm run dev:vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "dev:vite": "vite",
+    "dev-tools": "electron . --devtools",
+    "build": "vite build && electron-builder",
+    "build:renderer": "vite build",
+    "build:mac": "vite build && electron-builder --mac",
+    "build:win": "vite build && electron-builder --win",
+    "build:linux": "vite build && electron-builder --linux",
+    "build:all": "vite build && electron-builder --mac --win --linux",
+    "build:all-platforms": "./build-all.sh",
+    "build:fast": "./build-fast.sh",
+    "build:simple": "./build-simple.sh",
+    "build:complete": "./build-complete.sh",
+    "version:patch": "npm version patch --no-git-tag-version",
+    "version:minor": "npm version minor --no-git-tag-version",
+    "version:major": "npm version major --no-git-tag-version",
+    "version:patch-build": "npm run version:patch && npm run build:complete",
+    "version:minor-build": "npm run version:minor && npm run build:complete",
+    "version:major-build": "npm run version:major && npm run build:complete",
+    "pack": "vite build && electron-builder --dir",
+    "pack:mac": "vite build && electron-builder --mac --dir",
+    "pack:win": "vite build && electron-builder --win --dir",
+    "pack:linux": "vite build && electron-builder --linux --dir",
+    "dist": "vite build && electron-builder"
+  },
+  "keywords": [
+    "electron",
+    "directory",
+    "catalog",
+    "tree",
+    "file-manager"
+  ],
+  "author": {
+    "name": "Ken Scott",
+    "email": "ken@eightabyte.com"
+  },
+  "homepage": "https://www.eightabyte.com",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/react": "^18.2.45",
+    "@types/react-dom": "^18.2.18",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "concurrently": "^8.2.2",
+    "electron": "^28.0.0",
+    "electron-builder": "^24.9.1",
+    "eslint": "^8.55.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8",
+    "wait-on": "^7.2.0"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.2.6",
+    "antd": "^5.12.8",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "build": {
+    "appId": "com.kenscott.storcat",
+    "productName": "StorCat",
+    "copyright": "Copyright © 2024 Ken Scott",
+    "directories": {
+      "output": "dist"
+    },
+    "files": [
+      "src/main.js",
+      "src/preload.js",
+      "src/catalog-service.js",
+      "src/assets/**/*",
+      "dist/index.html",
+      "dist/assets/**/*",
+      "LICENSE"
+    ],
+    "extraResources": [
+      "LICENSE"
+    ],
+    "mac": {
+      "category": "public.app-category.utilities",
+      "icon": "build/icons/icon.icns"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "msi",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icons/icon.iconset/icon_256x256.png"
+    },
+    "linux": {
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "deb",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "rpm",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "snap",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
+      ],
+      "icon": "build/icons/favicon/web-app-manifest-512x512.png",
+      "maintainer": "Ken Scott <ken@eightabyte.com>",
+      "vendor": "Eightabyte",
+      "synopsis": "Directory Catalog Manager",
+      "description": "A modern Electron application for creating and searching directory catalogs"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    }
+  }
+}

@@ -1,0 +1,1813 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StorCat - Directory Catalog Manager</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon.ico">
+  
+  <!-- Shoelace CSS - Light Theme -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.12.0/cdn/themes/light.css" id="shoelace-light" />
+  <!-- Shoelace CSS - Dark Theme -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.12.0/cdn/themes/dark.css" id="shoelace-dark" disabled />
+  
+  <!-- HTMX -->
+  <script src="https://unpkg.com/htmx.org@1.9.10"></script>
+  
+  <!-- Shoelace JS -->
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@shoelace-style/shoelace@2.12.0/cdn/shoelace-autoloader.js"></script>
+  
+  <style>
+    :root {
+      --header-height: 45px;
+      --tab-nav-height: 50px;
+    }
+    
+    /* Light theme variables */
+    :root {
+      --app-bg: #f8f9fa;
+      --app-text: #212529;
+      --card-bg: #ffffff;
+      --border-color: #dee2e6;
+      --header-bg: var(--sl-color-primary-600);
+      --header-text: white;
+      --sidebar-bg: #ffffff;
+      --table-stripe: #f8f9fa;
+      --table-hover: #e9ecef;
+      --modal-bg: rgba(0, 0, 0, 0.5);
+      --shadow-color: rgba(0, 0, 0, 0.1);
+      --input-bg: #ffffff;
+      --code-bg: #f8f9fa;
+    }
+    
+    /* Dark theme variables */
+    [data-theme="dark"] {
+      --app-bg: #0f172a;
+      --app-text: #f1f5f9;
+      --card-bg: #1e293b;
+      --border-color: #334155;
+      --header-bg: #1e40af;
+      --header-text: #f8fafc;
+      --sidebar-bg: #1e293b;
+      --table-stripe: #2d3b4e;
+      --table-hover: #3b4d63;
+      --modal-bg: rgba(0, 0, 0, 0.8);
+      --shadow-color: rgba(0, 0, 0, 0.5);
+      --input-bg: #334155;
+      --code-bg: #334155;
+    }
+    
+    /* Ensure consistent sizing and fonts across themes */
+    sl-input, sl-button, sl-checkbox, sl-tab {
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      line-height: inherit !important;
+    }
+    
+    /* Force button consistency at the component level */
+    sl-button {
+      --sl-font-size-medium: 1rem !important;
+      --sl-font-weight-normal: 500 !important;
+      --sl-font-weight-medium: 500 !important;
+      --sl-font-weight-semibold: 500 !important;
+      --sl-line-height-normal: 1.5 !important;
+      --sl-line-height-dense: 1.5 !important;
+      --sl-spacing-small: 8px !important;
+      --sl-spacing-medium: 16px !important;
+      --sl-spacing-large: 24px !important;
+    }
+    
+    /* Also apply the same variables globally */
+    :root {
+      --sl-font-weight-normal: 500 !important;
+      --sl-font-weight-medium: 500 !important;
+      --sl-font-weight-semibold: 500 !important;
+      --sl-line-height-normal: 1.5 !important;
+      --sl-line-height-dense: 1.5 !important;
+      
+      /* Input label specific variables for light theme */
+      --sl-input-label-font-size-small: 1rem !important;
+      --sl-input-label-font-size-medium: 1rem !important;
+      --sl-input-label-font-size-large: 1rem !important;
+      --sl-input-label-font-weight: 500 !important;
+      --sl-input-spacing-small: 8px !important;
+      --sl-input-spacing-medium: 8px !important;
+      --sl-input-spacing-large: 8px !important;
+    }
+    
+    sl-input::part(base) {
+      box-sizing: border-box;
+      min-height: 44px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    sl-input::part(input) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    sl-button::part(base) {
+      box-sizing: border-box;
+      min-height: 44px;
+      padding: 0 16px !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      text-align: center !important;
+    }
+    
+    sl-button::part(label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    
+    sl-button sl-icon {
+      font-size: 1rem !important;
+      width: 1rem !important;
+      height: 1rem !important;
+    }
+    
+    /* Nuclear option - force consistent styling on all button content */
+    sl-button *, 
+    sl-button *::before, 
+    sl-button *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+    }
+    
+    [data-theme="dark"] sl-button *, 
+    [data-theme="dark"] sl-button *::before, 
+    [data-theme="dark"] sl-button *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Nuclear option - force consistent styling on all input content */
+    sl-input *, 
+    sl-input *::before, 
+    sl-input *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+    }
+    
+    [data-theme="dark"] sl-input *, 
+    [data-theme="dark"] sl-input *::before, 
+    [data-theme="dark"] sl-input *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Ultra-specific nuclear option for problematic inputs */
+    #catalog-title *, #catalog-title *::before, #catalog-title *::after,
+    #search-term *, #search-term *::before, #search-term *::after,
+    #output-root *, #output-root *::before, #output-root *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    [data-theme="dark"] #catalog-title *, [data-theme="dark"] #catalog-title *::before, [data-theme="dark"] #catalog-title *::after,
+    [data-theme="dark"] #search-term *, [data-theme="dark"] #search-term *::before, [data-theme="dark"] #search-term *::after,
+    [data-theme="dark"] #output-root *, [data-theme="dark"] #output-root *::before, [data-theme="dark"] #output-root *::after {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 !important;
+      padding: 0 !important;
+    }
+    
+    /* Specific targeting for input labels to prevent movement */
+    sl-input::part(form-control-label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 0 8px 0 !important;
+      padding: 0 !important;
+      display: block !important;
+      text-align: left !important;
+      position: relative !important;
+    }
+    
+    [data-theme="dark"] sl-input::part(form-control-label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 0 8px 0 !important;
+      padding: 0 !important;
+      display: block !important;
+      text-align: left !important;
+      position: relative !important;
+      color: #f1f5f9 !important;
+    }
+    
+    /* Target specific problematic inputs */
+    #catalog-title::part(form-control-label),
+    #search-term::part(form-control-label),
+    #output-root::part(form-control-label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 0 8px 0 !important;
+      padding: 0 !important;
+      display: block !important;
+      text-align: left !important;
+      position: relative !important;
+      width: 100% !important;
+    }
+    
+    [data-theme="dark"] #catalog-title::part(form-control-label),
+    [data-theme="dark"] #search-term::part(form-control-label),
+    [data-theme="dark"] #output-root::part(form-control-label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      box-sizing: border-box !important;
+      margin: 0 0 8px 0 !important;
+      padding: 0 !important;
+      display: block !important;
+      text-align: left !important;
+      position: relative !important;
+      color: #f1f5f9 !important;
+      width: 100% !important;
+    }
+    
+    /* Aggressive override for form control wrapper */
+    sl-input::part(form-control) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      box-sizing: border-box !important;
+    }
+    
+    [data-theme="dark"] sl-input::part(form-control) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Target the input wrapper specifically */
+    #catalog-title::part(form-control),
+    #search-term::part(form-control),
+    #output-root::part(form-control) {
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+    
+    [data-theme="dark"] #catalog-title::part(form-control),
+    [data-theme="dark"] #search-term::part(form-control),
+    [data-theme="dark"] #output-root::part(form-control) {
+      margin: 0 !important;
+      padding: 0 !important;
+      box-sizing: border-box !important;
+    }
+    
+    /* Final nuclear option - force consistent label styling with CSS reset */
+    sl-input, [data-theme="dark"] sl-input {
+      --sl-input-label-font-size: 1rem !important;
+      --sl-input-label-font-weight: 500 !important;
+      --sl-input-label-line-height: 1.5 !important;
+    }
+    
+    /* Override all possible input label variations */
+    sl-input[size="small"]::part(form-control-label),
+    sl-input[size="medium"]::part(form-control-label),
+    sl-input[size="large"]::part(form-control-label),
+    [data-theme="dark"] sl-input[size="small"]::part(form-control-label),
+    [data-theme="dark"] sl-input[size="medium"]::part(form-control-label),
+    [data-theme="dark"] sl-input[size="large"]::part(form-control-label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      margin: 0 0 8px 0 !important;
+      padding: 0 !important;
+      text-align: left !important;
+      display: block !important;
+      width: 100% !important;
+      box-sizing: border-box !important;
+      position: relative !important;
+    }
+    
+    [data-theme="dark"] sl-input[size="small"]::part(form-control-label),
+    [data-theme="dark"] sl-input[size="medium"]::part(form-control-label),
+    [data-theme="dark"] sl-input[size="large"]::part(form-control-label) {
+      color: #f1f5f9 !important;
+    }
+    
+    
+    sl-tab::part(base) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    /* Dark mode Shoelace component overrides */
+    [data-theme="dark"] {
+      --sl-color-neutral-0: #1e293b;
+      --sl-color-neutral-50: #334155;
+      --sl-color-neutral-100: #475569;
+      --sl-color-neutral-200: #64748b;
+      --sl-color-neutral-300: #94a3b8;
+      --sl-color-neutral-400: #cbd5e1;
+      --sl-color-neutral-500: #e2e8f0;
+      --sl-color-neutral-600: #f1f5f9;
+      --sl-color-neutral-700: #f8fafc;
+      --sl-color-neutral-800: #f8fafc;
+      --sl-color-neutral-900: #ffffff;
+      --sl-color-neutral-950: #ffffff;
+      
+      /* Ensure primary colors remain visible */
+      --sl-color-primary-50: #eff6ff;
+      --sl-color-primary-100: #dbeafe;
+      --sl-color-primary-200: #bfdbfe;
+      --sl-color-primary-300: #93c5fd;
+      --sl-color-primary-400: #60a5fa;
+      --sl-color-primary-500: #3b82f6;
+      --sl-color-primary-600: #2563eb;
+      --sl-color-primary-700: #1d4ed8;
+      --sl-color-primary-800: #1e40af;
+      --sl-color-primary-900: #1e3a8a;
+      --sl-color-primary-950: #172554;
+      
+      /* Force consistent fonts across themes */
+      --sl-font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --sl-font-serif: Georgia, 'Times New Roman', serif;
+      --sl-font-mono: SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      
+      /* Ensure consistent font sizes */
+      --sl-font-size-medium: 1rem !important;
+      --sl-font-size-large: 1.25rem !important;
+      --sl-font-size-small: 0.875rem !important;
+      --sl-font-weight-normal: 500 !important;
+      --sl-font-weight-medium: 500 !important;
+      --sl-font-weight-semibold: 500 !important;
+      --sl-line-height-normal: 1.5 !important;
+      --sl-line-height-dense: 1.5 !important;
+      
+      /* Force consistent spacing */
+      --sl-spacing-3x-small: 2px !important;
+      --sl-spacing-2x-small: 4px !important;
+      --sl-spacing-x-small: 6px !important;
+      --sl-spacing-small: 8px !important;
+      --sl-spacing-medium: 16px !important;
+      --sl-spacing-large: 24px !important;
+      
+      /* Input label specific variables to prevent movement */
+      --sl-input-label-font-size-small: 1rem !important;
+      --sl-input-label-font-size-medium: 1rem !important;
+      --sl-input-label-font-size-large: 1rem !important;
+      --sl-input-label-color: #f1f5f9 !important;
+      --sl-input-label-font-weight: 500 !important;
+      --sl-input-spacing-small: 8px !important;
+      --sl-input-spacing-medium: 8px !important;
+      --sl-input-spacing-large: 8px !important;
+    }
+    
+    /* Fix button visibility in dark mode */
+    [data-theme="dark"] sl-button[variant="primary"] {
+      --sl-color-primary-600: #2563eb;
+      --sl-color-primary-700: #1d4ed8;
+    }
+    
+    [data-theme="dark"] sl-button[variant="primary"]::part(base) {
+      background-color: #2563eb !important;
+      border-color: #2563eb !important;
+      color: white !important;
+      min-height: 44px !important;
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      text-align: center !important;
+      padding: 0 16px !important;
+    }
+    
+    [data-theme="dark"] sl-button[variant="primary"]::part(label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    
+    [data-theme="dark"] sl-button[variant="primary"]:not([disabled])::part(base):hover {
+      background-color: #1d4ed8 !important;
+      border-color: #1d4ed8 !important;
+    }
+    
+    [data-theme="dark"] sl-button[variant="default"]::part(base) {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+      min-height: 44px !important;
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      text-align: center !important;
+      padding: 0 16px !important;
+    }
+    
+    [data-theme="dark"] sl-button[variant="default"]::part(label) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      font-size: 1rem !important;
+      font-weight: 500 !important;
+      line-height: 1.5 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+    }
+    
+    [data-theme="dark"] sl-button[variant="default"]:not([disabled])::part(base):hover {
+      background-color: #475569 !important;
+      border-color: #64748b !important;
+    }
+    
+    /* Fix input styling */
+    [data-theme="dark"] sl-input::part(base) {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+      color: #f1f5f9 !important;
+      min-height: 44px !important;
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    [data-theme="dark"] sl-input::part(input) {
+      color: #f1f5f9 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    
+    [data-theme="dark"] sl-input::part(form-control-help-text) {
+      color: #94a3b8 !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    }
+    
+    /* Tab sidebar styling */
+    .tab-sidebar {
+      padding: 24px;
+    }
+    
+    /* Dark mode tab navigation overrides */
+    [data-theme="dark"] .tab-navigation sl-tab::part(base) {
+      color: var(--app-text);
+    }
+    
+    [data-theme="dark"] .tab-navigation sl-tab:not([active])::part(base) {
+      background: var(--table-stripe);
+      border-color: var(--border-color);
+      color: #94a3b8;
+    }
+    
+    [data-theme="dark"] .tab-navigation sl-tab:not([active])::part(base):hover {
+      background: var(--table-hover);
+      color: var(--app-text);
+    }
+    
+    [data-theme="dark"] .tab-navigation sl-tab[active]::part(base) {
+      background: var(--sidebar-bg);
+      border-color: var(--border-color);
+      border-bottom-color: var(--sidebar-bg);
+      color: #60a5fa;
+    }
+    
+    /* Fix checkbox styling */
+    [data-theme="dark"] sl-checkbox::part(base) {
+      color: #f1f5f9 !important;
+    }
+    
+    [data-theme="dark"] sl-checkbox::part(control) {
+      background-color: #334155 !important;
+      border-color: #475569 !important;
+      border-width: 1px !important;
+      border-style: solid !important;
+    }
+    
+    [data-theme="dark"] sl-checkbox::part(control--checked) {
+      background-color: #2563eb !important;
+      border-color: #2563eb !important;
+      color: white !important;
+    }
+    
+    [data-theme="dark"] sl-checkbox::part(checked-icon) {
+      color: white !important;
+    }
+    
+    /* Ensure checkbox labels are visible */
+    [data-theme="dark"] sl-checkbox {
+      color: #f1f5f9 !important;
+    }
+    
+    sl-checkbox::part(base) {
+      box-sizing: border-box !important;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      color: inherit !important;
+    }
+    
+    sl-checkbox::part(control) {
+      box-sizing: border-box !important;
+      min-width: 16px !important;
+      min-height: 16px !important;
+    }
+    
+    /* Fix details/summary styling */
+    [data-theme="dark"] sl-details::part(base) {
+      border-color: #475569;
+    }
+    
+    [data-theme="dark"] sl-details::part(header) {
+      color: #f1f5f9;
+    }
+    
+    [data-theme="dark"] sl-details::part(content) {
+      color: #f1f5f9;
+    }
+    
+    /* Fix icon styling */
+    [data-theme="dark"] sl-icon {
+      color: inherit;
+    }
+    
+    /* Fix badge styling */
+    [data-theme="dark"] sl-badge[variant="primary"] {
+      --sl-color-primary-600: #2563eb;
+      background-color: #2563eb;
+      color: white;
+    }
+    
+    [data-theme="dark"] sl-badge[variant="neutral"] {
+      background-color: #475569;
+      color: #f1f5f9;
+    }
+    
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--app-bg);
+      color: var(--app-text);
+      height: 100vh;
+      overflow: hidden;
+    }
+    
+    .app-header {
+      height: var(--header-height);
+      background: var(--header-bg);
+      color: var(--header-text);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 24px;
+      box-shadow: 0 2px 4px var(--shadow-color);
+      -webkit-app-region: drag;
+    }
+    
+    /* macOS traffic light button spacing */
+    .app-header h1 {
+      margin: 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      text-align: center;
+      flex: 1;
+      padding-left: 70px; /* Space for macOS window controls */
+    }
+    
+    .header-controls {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      -webkit-app-region: no-drag;
+    }
+    
+    #settings-toggle {
+      transform: scale(0.8) !important;
+      transform-origin: center !important;
+    }
+    
+    
+    /* Tab Navigation */
+    .tab-navigation {
+      height: var(--tab-nav-height);
+      background: var(--sidebar-bg);
+      border-bottom: 1px solid var(--border-color);
+      padding: 0 24px;
+      display: flex;
+      align-items: center;
+    }
+    
+    .tab-navigation sl-tab-group {
+      width: 100%;
+    }
+    
+    .tab-navigation sl-tab-group::part(nav) {
+      border-bottom: none;
+      background: transparent;
+      margin: 0;
+      padding: 0;
+    }
+    
+    .tab-navigation sl-tab::part(base) {
+      background: transparent;
+      border: 1px solid transparent;
+      border-bottom: none;
+      border-radius: 8px 8px 0 0;
+      margin-right: 2px;
+      padding: 8px 16px;
+      color: var(--app-text);
+      font-weight: 500;
+      transition: all 0.2s ease;
+      position: relative;
+      top: 1px;
+    }
+    
+    .tab-navigation sl-tab:not([active])::part(base) {
+      background: var(--table-stripe);
+      border-color: var(--border-color);
+      color: #64748b;
+    }
+    
+    .tab-navigation sl-tab:not([active])::part(base):hover {
+      background: var(--table-hover);
+      color: var(--app-text);
+    }
+    
+    .tab-navigation sl-tab[active]::part(base) {
+      background: var(--sidebar-bg);
+      border-color: var(--border-color);
+      border-bottom-color: var(--sidebar-bg);
+      color: var(--sl-color-primary-600);
+      z-index: 1;
+    }
+
+    .app-content {
+      height: calc(100vh - var(--header-height) - var(--tab-nav-height));
+      display: flex;
+      position: relative;
+    }
+    
+    .sidebar {
+      width: 300px;
+      background: var(--sidebar-bg);
+      border-right: 1px solid var(--border-color);
+      padding: 0;
+      overflow-y: auto;
+      transition: transform 0.3s ease, width 0.3s ease;
+      position: relative;
+    }
+    
+    .sidebar.collapsed {
+      width: 0;
+      padding: 0;
+      transform: translateX(-100%);
+      overflow: hidden;
+    }
+    
+    .toggle-button-container {
+      position: fixed;
+      top: calc(var(--header-height) + var(--tab-nav-height) + 12px);
+      left: 285px;
+      z-index: 1000;
+      transition: left 0.3s ease;
+    }
+    
+    .toggle-button-container.collapsed {
+      left: 12px;
+    }
+    
+    .sidebar-toggle {
+      background: var(--header-bg);
+      color: var(--header-text);
+      border: none;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 8px var(--shadow-color);
+      transition: background-color 0.2s ease;
+    }
+    
+    .sidebar-toggle:hover {
+      opacity: 0.8;
+    }
+    
+    .main-content {
+      flex: 1;
+      padding: 24px;
+      padding-left: 50px; /* Space for toggle button when collapsed */
+      overflow-y: auto;
+      transition: padding-left 0.3s ease;
+    }
+    
+    .main-content.sidebar-open {
+      padding-left: 24px; /* Normal padding when sidebar is open */
+    }
+    
+    .section-card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px var(--shadow-color);
+    }
+    
+    .section-title {
+      margin: 0 0 16px 0;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--app-text);
+    }
+    
+    .form-group {
+      margin-bottom: 16px;
+    }
+    
+    .input-with-info {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+    }
+    
+    .input-with-info sl-input {
+      flex: 1;
+    }
+    
+    .input-with-info .info-icon {
+      margin-top: 32px; /* Align with input field */
+      color: var(--sl-color-neutral-500);
+      font-size: 16px !important;
+    }
+    
+    .input-with-info .info-icon:hover {
+      color: var(--sl-color-primary-600);
+    }
+    
+    /* Uniform sidebar element widths */
+    .sidebar sl-button,
+    .sidebar sl-input,
+    .sidebar .selected-path,
+    .sidebar .input-with-info {
+      width: 100% !important;
+    }
+    
+    .sidebar sl-button {
+      justify-content: center;
+    }
+    
+    .sidebar .selected-path {
+      display: block;
+      width: 100%;
+      padding: 8px 12px;
+      background: var(--sl-color-neutral-50);
+      border: 1px solid var(--sl-color-neutral-300);
+      border-radius: 4px;
+      color: var(--sl-color-neutral-700);
+      font-size: 0.875rem;
+      word-break: break-all;
+      min-height: 38px;
+      box-sizing: border-box;
+    }
+    
+    [data-theme="dark"] .sidebar .selected-path {
+      background: var(--sl-color-neutral-800);
+      border-color: var(--sl-color-neutral-600);
+      color: var(--sl-color-neutral-200);
+    }
+
+    /* Fix tooltip styling */
+    sl-tooltip::part(base) {
+      max-width: 200px !important;
+      white-space: normal !important;
+      z-index: 1000 !important;
+    }
+    
+    sl-tooltip::part(body) {
+      background-color: var(--sl-color-neutral-800) !important;
+      color: white !important;
+      padding: 8px 12px !important;
+      border-radius: 6px !important;
+      font-size: 14px !important;
+      line-height: 1.4 !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    [data-theme="dark"] sl-tooltip::part(body) {
+      background-color: #ffffff !important;
+      color: #1f2937 !important;
+      border: 1px solid var(--sl-color-neutral-300) !important;
+    }
+    
+    .path-display {
+      background: var(--code-bg);
+      color: var(--app-text);
+      border: 1px solid var(--border-color);
+      padding: 12px;
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 0.9rem;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+    
+    .results-container {
+      max-height: 500px;
+      overflow-y: auto;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      background: var(--card-bg);
+      position: relative;
+    }
+    
+    .results-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    
+    .results-table th {
+      background: var(--table-stripe);
+      color: var(--app-text);
+      padding: 8px 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 2px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      cursor: pointer;
+      user-select: none;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-shadow: 0 2px 4px var(--shadow-color);
+    }
+    
+    .results-table th:hover {
+      background: var(--table-hover);
+    }
+    
+    .results-table th.sortable {
+      padding-right: 25px;
+    }
+    
+    .results-table th .sort-indicator {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.8rem;
+      color: var(--sl-color-neutral-500);
+    }
+    
+    .results-table th.sort-asc .sort-indicator::after {
+      content: '▲';
+      color: var(--sl-color-primary-600);
+    }
+    
+    .results-table th.sort-desc .sort-indicator::after {
+      content: '▼';
+      color: var(--sl-color-primary-600);
+    }
+    
+    .results-table th:not(.sort-asc):not(.sort-desc) .sort-indicator::after {
+      content: '▲▼';
+      font-size: 0.6rem;
+      line-height: 0.8;
+    }
+    
+    .results-table td {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-color);
+      vertical-align: top;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      color: var(--app-text);
+    }
+    
+    .results-table tr:hover {
+      background: var(--table-hover);
+    }
+    
+    .results-table tr:nth-child(even) {
+      background: var(--table-stripe);
+    }
+    
+    .results-table tr:nth-child(even):hover {
+      background: var(--table-hover);
+    }
+    
+    .column-resizer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 5px;
+      height: 100%;
+      cursor: col-resize;
+      user-select: none;
+      background: transparent;
+    }
+    
+    .column-resizer:hover {
+      background: var(--sl-color-primary-300);
+    }
+    
+    .column-resizer.resizing {
+      background: var(--sl-color-primary-500);
+    }
+    
+    .catalog-link {
+      color: var(--sl-color-primary-600);
+      text-decoration: none;
+      cursor: pointer;
+    }
+    
+    .catalog-link:hover {
+      text-decoration: underline;
+      color: var(--sl-color-primary-700);
+    }
+    
+    [data-theme="dark"] .catalog-link {
+      color: #60a5fa;
+    }
+    
+    [data-theme="dark"] .catalog-link:hover {
+      color: #93c5fd;
+    }
+    
+    .file-path {
+      font-family: monospace;
+      font-size: 0.85rem;
+      color: var(--sl-color-neutral-600);
+    }
+    
+    .file-basename {
+      font-weight: 500;
+      color: var(--sl-color-neutral-900);
+    }
+    
+    [data-theme="dark"] .file-path {
+      color: #94a3b8;
+    }
+    
+    [data-theme="dark"] .file-basename {
+      color: var(--app-text);
+    }
+    
+    .search-result {
+      padding: 12px;
+      border-bottom: 1px solid var(--sl-color-neutral-100);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .search-result:last-child {
+      border-bottom: none;
+    }
+    
+    .result-info {
+      flex: 1;
+    }
+    
+    .result-name {
+      font-weight: 500;
+      color: var(--sl-color-neutral-900);
+    }
+    
+    .result-path {
+      font-size: 0.85rem;
+      color: var(--sl-color-neutral-600);
+      font-family: monospace;
+    }
+    
+    .result-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.85rem;
+      color: var(--sl-color-neutral-500);
+    }
+    
+    .catalog-item {
+      padding: 12px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      margin-bottom: 8px;
+      background: var(--card-bg);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .catalog-item:hover {
+      border-color: var(--sl-color-primary-300);
+      box-shadow: 0 2px 8px var(--shadow-color);
+    }
+    
+    .catalog-name {
+      font-weight: 500;
+      color: var(--app-text);
+      margin-bottom: 4px;
+    }
+    
+    .catalog-meta {
+      font-size: 0.85rem;
+      color: var(--sl-color-neutral-600);
+    }
+    
+    [data-theme="dark"] .catalog-meta {
+      color: #94a3b8;
+    }
+    
+    .status-message {
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+    
+    .status-success {
+      background: var(--sl-color-success-50);
+      color: var(--sl-color-success-700);
+      border: 1px solid var(--sl-color-success-200);
+    }
+    
+    .status-error {
+      background: var(--sl-color-danger-50);
+      color: var(--sl-color-danger-700);
+      border: 1px solid var(--sl-color-danger-200);
+    }
+    
+    .checkbox-group {
+      margin-top: 12px;
+    }
+    
+    .hidden {
+      display: none;
+    }
+    
+    .loading {
+      opacity: 0.6;
+      pointer-events: none;
+    }
+    
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: var(--modal-bg);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+    }
+    
+    .modal-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+    
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 8px;
+      width: 90vw;
+      height: 85vh;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 10px 30px var(--shadow-color);
+      transform: scale(0.8);
+      transition: transform 0.3s ease;
+    }
+    
+    .modal-content.compact {
+      width: auto;
+      height: auto;
+      min-width: 500px;
+      max-width: 700px;
+      max-height: 80vh;
+    }
+    
+    .modal-overlay.show .modal-content {
+      transform: scale(1);
+    }
+    
+    .modal-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--table-stripe);
+      border-radius: 8px 8px 0 0;
+    }
+    
+    .modal-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 0;
+      color: var(--app-text);
+    }
+    
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--app-text);
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .modal-close:hover {
+      background: var(--table-hover);
+    }
+    
+    .modal-body {
+      flex: 1;
+      overflow: hidden;
+    }
+    
+    .modal-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    
+    /* Dark mode modal overrides */
+    [data-theme="dark"] .modal-content {
+      background: var(--card-bg) !important;
+      color: var(--app-text) !important;
+    }
+    
+    [data-theme="dark"] .modal-header {
+      background: var(--table-stripe) !important;
+      border-bottom-color: var(--border-color) !important;
+    }
+    
+    [data-theme="dark"] .modal-title {
+      color: var(--app-text) !important;
+    }
+    
+    [data-theme="dark"] .modal-close {
+      color: var(--app-text) !important;
+    }
+    
+    [data-theme="dark"] .modal-close:hover {
+      background: var(--table-hover) !important;
+    }
+    
+    [data-theme="dark"] .modal-body {
+      background: var(--card-bg) !important;
+    }
+    
+    /* Settings Modal Specific Styles */
+    .settings-modal {
+      width: 600px !important;
+      height: auto !important;
+      max-height: 80vh;
+      min-height: 400px;
+    }
+    
+    .settings-content {
+      padding: 24px;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    
+    .settings-section {
+      margin-bottom: 32px;
+    }
+    
+    .settings-section:last-child {
+      margin-bottom: 0;
+    }
+    
+    .settings-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--app-text);
+      margin: 0 0 16px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .setting-item {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    
+    .setting-item:last-child {
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+    
+    .setting-info {
+      flex: 1;
+    }
+    
+    .setting-label {
+      font-size: 1rem;
+      font-weight: 500;
+      color: var(--app-text);
+      margin: 0 0 4px 0;
+      display: block;
+    }
+    
+    .setting-description {
+      font-size: 0.875rem;
+      color: var(--sl-color-neutral-600);
+      line-height: 1.4;
+    }
+    
+    [data-theme="dark"] .setting-description {
+      color: #94a3b8;
+    }
+    
+    .setting-control {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+    }
+    
+    /* Fix switch styling and ensure it's clickable */
+    sl-switch {
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      position: relative !important;
+      z-index: 1 !important;
+    }
+    
+    sl-switch::part(base) {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+      cursor: pointer !important;
+      pointer-events: auto !important;
+    }
+    
+    sl-switch::part(control) {
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      border-width: 2px !important;
+      border-style: solid !important;
+      width: 48px !important;
+      height: 26px !important;
+      border-radius: 13px !important;
+      transition: all 0.2s ease !important;
+      position: relative !important;
+    }
+    
+    sl-switch::part(thumb) {
+      cursor: pointer !important;
+      pointer-events: auto !important;
+      width: 18px !important;
+      height: 18px !important;
+      border-radius: 50% !important;
+      transition: all 0.2s ease !important;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2) !important;
+      transform: translateX(-2px) !important;
+    }
+    
+    
+    /* Light mode switch */
+    sl-switch::part(control) {
+      background-color: #cbd5e1 !important;
+      border-color: #94a3b8 !important;
+    }
+    
+    sl-switch[checked]::part(control) {
+      background-color: #2563eb !important;
+      border-color: #2563eb !important;
+    }
+    
+    sl-switch::part(thumb) {
+      background-color: white !important;
+      border: 1px solid #e2e8f0 !important;
+    }
+    
+    sl-switch[checked]::part(thumb) {
+      background-color: white !important;
+      border: 1px solid white !important;
+      transform: translateX(11px) !important;
+    }
+    
+    /* Dark mode switch overrides - better visibility */
+    [data-theme="dark"] sl-switch::part(control) {
+      background-color: #374151 !important;
+      border-color: #6b7280 !important;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+    }
+    
+    [data-theme="dark"] sl-switch[checked]::part(control) {
+      background-color: #2563eb !important;
+      border-color: #3b82f6 !important;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2) !important;
+    }
+    
+    [data-theme="dark"] sl-switch::part(thumb) {
+      background-color: #ffffff !important;
+      border: 2px solid #e5e7eb !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4) !important;
+    }
+    
+    [data-theme="dark"] sl-switch[checked]::part(thumb) {
+      background-color: #ffffff !important;
+      border: 2px solid #ffffff !important;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3) !important;
+      transform: translateX(11px) !important;
+    }
+    
+    /* Hover effects */
+    sl-switch:hover::part(control) {
+      transform: scale(1.05) !important;
+    }
+    
+    [data-theme="dark"] sl-switch:hover::part(control) {
+      transform: scale(1.05) !important;
+    }
+    
+    /* Theme switch container */
+    .theme-switch-container {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .theme-label {
+      font-size: 0.875rem;
+      color: var(--sl-color-neutral-600);
+      font-weight: 500;
+      min-width: 40px;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      transition: color 0.2s ease;
+    }
+    
+    .theme-label:hover {
+      color: var(--sl-color-primary-600);
+    }
+    
+    [data-theme="dark"] .theme-label {
+      color: #94a3b8;
+    }
+    
+    [data-theme="dark"] .theme-label:hover {
+      color: #60a5fa;
+    }
+    
+    /* Highlight active theme label */
+    .theme-switch-container .theme-label.active {
+      color: var(--sl-color-primary-600);
+      font-weight: 600;
+    }
+    
+    [data-theme="dark"] .theme-switch-container .theme-label.active {
+      color: #60a5fa;
+    }
+    
+    /* Fix checkbox label font size */
+    #copy-to-secondary {
+      font-size: 0.8rem !important;
+    }
+    
+    #copy-to-secondary::part(label) {
+      font-size: 0.8rem !important;
+    }
+    
+    /* Apply monospace font to all table cells for consistency */
+    .results-table td {
+      font-family: monospace !important;
+      font-size: 0.85rem !important;
+    }
+    
+    .results-table td {
+      color: var(--sl-color-neutral-600) !important;
+    }
+    
+    [data-theme="dark"] .results-table td {
+      color: #94a3b8 !important;
+    }
+    
+    /* Keep links blue for visibility */
+    .catalog-link {
+      color: var(--sl-color-primary-600) !important;
+    }
+    
+    [data-theme="dark"] .catalog-link {
+      color: #60a5fa !important;
+    }
+    
+    /* Force correct thumb positioning for window persistence switch after JS manipulation */
+    #window-persistence-switch::part(thumb) {
+      transform: translateX(-2px) !important;
+    }
+    
+    #window-persistence-switch[checked]::part(thumb) {
+      transform: translateX(11px) !important;
+    }
+    
+    [data-theme="dark"] #window-persistence-switch::part(thumb) {
+      transform: translateX(-2px) !important;
+    }
+    
+    [data-theme="dark"] #window-persistence-switch[checked]::part(thumb) {
+      transform: translateX(11px) !important;
+    }
+    
+    /* Native switch styling to match Shoelace switches */
+    .native-switch {
+      position: relative;
+      display: inline-block;
+      width: 48px;
+      height: 26px;
+      cursor: pointer;
+    }
+    
+    .native-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+    
+    .native-slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #cbd5e1;
+      border: 2px solid #94a3b8;
+      border-radius: 13px;
+      transition: all 0.2s ease;
+    }
+    
+    .native-slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 1px;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: white;
+      border: 1px solid #e2e8f0;
+      border-radius: 50%;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    input:checked + .native-slider {
+      background-color: #2563eb;
+      border-color: #2563eb;
+    }
+    
+    input:checked + .native-slider:before {
+      transform: translateY(-50%) translateX(24px);
+      background-color: white;
+      border: 1px solid white;
+    }
+    
+    /* Dark mode */
+    [data-theme="dark"] .native-slider {
+      background-color: #374151;
+      border-color: #6b7280;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+    }
+    
+    [data-theme="dark"] .native-slider:before {
+      background-color: #ffffff;
+      border: 2px solid #e5e7eb;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+    }
+    
+    [data-theme="dark"] input:checked + .native-slider {
+      background-color: #2563eb;
+      border-color: #3b82f6;
+      box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    }
+    
+    [data-theme="dark"] input:checked + .native-slider:before {
+      background-color: #ffffff;
+      border: 2px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+      transform: translateY(-50%) translateX(22px);
+    }
+    
+    /* Hover effect */
+    .native-switch:hover .native-slider {
+      transform: scale(1.05);
+    }
+    
+  </style>
+</head>
+<body>
+  <div class="app-header">
+    <h1>StorCat - Directory Catalog Manager</h1>
+    <div class="header-controls">
+      <sl-button id="settings-toggle" variant="default" size="small" title="Settings" style="--sl-input-height-small: 24px; --sl-spacing-small: 4px 6px; --sl-font-size-small: 0.75rem;">
+        <sl-icon name="gear"></sl-icon>
+      </sl-button>
+    </div>
+  </div>
+  
+  <!-- Tab Navigation -->
+  <div class="tab-navigation">
+    <sl-tab-group id="main-tabs">
+      <sl-tab slot="nav" panel="create-tab">Create Catalog</sl-tab>
+      <sl-tab slot="nav" panel="search-tab">Search Catalogs</sl-tab>
+      <sl-tab slot="nav" panel="browse-tab">Browse Catalogs</sl-tab>
+    </sl-tab-group>
+  </div>
+
+  <!-- App Content -->
+  <div class="app-content">
+    <div class="toggle-button-container" id="toggle-container">
+      <button class="sidebar-toggle" id="sidebar-toggle" title="Toggle Sidebar">
+        <span>◀</span>
+      </button>
+    </div>
+    
+    <div class="sidebar" id="sidebar">
+      <!-- Create Catalog Sidebar -->
+      <div class="tab-sidebar" id="create-sidebar">
+        <div class="form-group">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <label style="font-size: 1rem; font-weight: 500; color: var(--app-text); margin: 0;">Catalog Title</label>
+            <sl-tooltip 
+              content="This will be displayed in the HTML output"
+              placement="right"
+              hoist>
+              <sl-icon-button 
+                name="info-circle" 
+                class="info-icon"
+                style="font-size: 16px; --sl-spacing-x-small: 4px; margin: 0;">
+              </sl-icon-button>
+            </sl-tooltip>
+          </div>
+          <sl-input 
+            id="catalog-title" 
+            placeholder="Enter catalog title"
+            required
+            style="width: 100%;">
+          </sl-input>
+        </div>
+        
+        <div class="form-group">
+          <sl-button id="select-directory-btn" variant="primary" size="medium">
+            <sl-icon slot="prefix" name="folder"></sl-icon>
+            Select Directory
+          </sl-button>
+          <div id="selected-directory-path" class="path-display hidden"></div>
+        </div>
+        
+        <div class="form-group">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <label style="font-size: 1rem; font-weight: 500; color: var(--app-text); margin: 0;">Output Filename Root</label>
+            <sl-tooltip 
+              content="Files will be saved as [root].json and [root].html"
+              placement="right"
+              hoist>
+              <sl-icon-button 
+                name="info-circle" 
+                class="info-icon"
+                style="font-size: 16px; --sl-spacing-x-small: 4px; margin: 0;">
+              </sl-icon-button>
+            </sl-tooltip>
+          </div>
+          <sl-input 
+            id="output-root" 
+            placeholder="catalog"
+            required
+            style="width: 100%;">
+          </sl-input>
+        </div>
+        
+        <div class="checkbox-group">
+          <sl-checkbox id="copy-to-secondary">
+            Copy files to secondary location
+          </sl-checkbox>
+        </div>
+        
+        <div id="secondary-location-group" class="form-group hidden" style="margin-top: 16px;">
+          <sl-button id="select-output-btn" variant="primary" size="medium">
+            <sl-icon slot="prefix" name="folder-plus"></sl-icon>
+            Select Output Directory
+          </sl-button>
+          <div id="selected-output-path" class="path-display hidden"></div>
+        </div>
+        
+        <sl-button 
+          id="create-catalog-btn" 
+          variant="primary" 
+          size="medium" 
+          loading
+          style="margin-top: 24px;">
+          <sl-icon slot="prefix" name="gear"></sl-icon>
+          Create Catalog
+        </sl-button>
+        
+        <div id="create-status" class="hidden"></div>
+      </div>
+      
+      <!-- Search Catalogs Sidebar -->
+      <div class="tab-sidebar hidden" id="search-sidebar">
+        <div class="form-group">
+          <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+            <label style="font-size: 1rem; font-weight: 500; color: var(--app-text); margin: 0;">Search Term</label>
+            <sl-tooltip 
+              content="Search for files and folders in catalog files"
+              placement="right"
+              hoist>
+              <sl-icon-button 
+                name="info-circle" 
+                class="info-icon"
+                style="font-size: 16px; --sl-spacing-x-small: 4px; margin: 0;">
+              </sl-icon-button>
+            </sl-tooltip>
+          </div>
+          <sl-input 
+            id="search-term" 
+            placeholder="Enter search term"
+            style="width: 100%;">
+          </sl-input>
+        </div>
+        
+        <div class="form-group">
+          <sl-button id="select-search-directory-btn" variant="primary" size="medium">
+            <sl-icon slot="prefix" name="folder"></sl-icon>
+            Select Catalog Directory
+          </sl-button>
+          <div id="selected-search-path" class="path-display hidden"></div>
+        </div>
+        
+        <sl-button 
+          id="search-catalogs-btn" 
+          variant="primary" 
+          size="medium" 
+          disabled>
+          <sl-icon slot="prefix" name="search"></sl-icon>
+          Search Catalogs
+        </sl-button>
+        
+        <div id="search-status" class="hidden"></div>
+      </div>
+      
+      <!-- Browse Catalogs Sidebar -->
+      <div class="tab-sidebar hidden" id="browse-sidebar">
+        <div class="form-group">
+          <sl-button id="select-browse-directory-btn" variant="primary" size="medium">
+            <sl-icon slot="prefix" name="folder"></sl-icon>
+            Select Catalog Directory
+          </sl-button>
+          <div id="selected-browse-path" class="path-display hidden"></div>
+        </div>
+        
+        <sl-button 
+          id="load-catalogs-btn" 
+          variant="primary" 
+          size="medium" 
+          disabled>
+          <sl-icon slot="prefix" name="list"></sl-icon>
+          Load Catalogs
+        </sl-button>
+        
+        <div id="browse-status" class="hidden"></div>
+      </div>
+    </div>
+    
+    <div class="main-content">
+      <div id="main-display">
+        <div class="section-card">
+          <h2 class="section-title">Welcome to StorCat</h2>
+          <p>Use the tabs above to create new directory catalogs, search existing catalogs, or browse your catalog collection.</p>
+          
+          <h3 style="margin: 24px 0 16px 0; font-size: 1.1rem; font-weight: 600; color: var(--app-text);">Features</h3>
+          <ul style="margin: 0; padding-left: 20px; line-height: 1.6;">
+            <li><strong>Create Catalogs:</strong> Generate JSON and HTML catalogs of any directory</li>
+            <li><strong>Search Catalogs:</strong> Find files across multiple catalog files</li>
+            <li><strong>Browse Catalogs:</strong> View and manage your catalog collection</li>
+            <li><strong>Cross-Platform:</strong> Pure JavaScript implementation works on all platforms</li>
+            <li><strong>Compatible:</strong> 100% compatible with existing catalog files</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Catalog Modal -->
+  <div class="modal-overlay" id="catalog-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 class="modal-title" id="modal-title">Catalog View</h3>
+        <button class="modal-close" id="modal-close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <iframe class="modal-iframe" id="modal-iframe" src="about:blank"></iframe>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settings-modal">
+    <div class="modal-content settings-modal">
+      <div class="modal-header">
+        <h3 class="modal-title">Settings</h3>
+        <button class="modal-close" id="settings-modal-close" title="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="settings-content">
+          <div class="settings-section">
+            <h4 class="settings-section-title">Appearance</h4>
+            <div class="setting-item">
+              <div class="setting-info">
+                <label class="setting-label">Theme</label>
+                <div class="setting-description">Switch between light and dark mode</div>
+              </div>
+              <div class="setting-control">
+                <div class="theme-switch-container">
+                  <span class="theme-label">Light</span>
+                  <sl-switch id="theme-switch" size="medium"></sl-switch>
+                  <span class="theme-label">Dark</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- General Settings -->
+          <div class="settings-section">
+            <h4 class="settings-section-title">General</h4>
+            <div class="setting-item">
+              <div class="setting-info">
+                <label class="setting-label">Remember Window Size & Position</label>
+                <div class="setting-description">Automatically restore window size and position when the app starts</div>
+              </div>
+              <div class="setting-control">
+                <div class="theme-switch-container">
+                  <span class="theme-label">Off</span>
+                  <label class="native-switch">
+                    <input type="checkbox" id="window-persistence-switch">
+                    <span class="native-slider"></span>
+                  </label>
+                  <span class="theme-label">On</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <script src="app.js"></script>
+</body>
+</html>
