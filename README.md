@@ -122,7 +122,14 @@ The application generates both JSON and HTML representations of directory struct
 ## 📦 Installation
 
 ### Quick Install (Pre-built Binaries)
-*[Instructions for downloading pre-built binaries would go here]*
+
+1. **Visit the [Releases page](https://github.com/scottkw/storcat/releases)** on GitHub
+2. **Download the appropriate package** for your platform and architecture:
+   - **Windows**: `.exe` (portable) or `.msi` (installer) for x64/ARM64
+   - **macOS**: `.dmg` installer for Intel (x64) or Apple Silicon (ARM64)
+   - **Linux**: `.AppImage` (portable), `.deb` (Debian/Ubuntu), `.rpm` (RedHat/CentOS), or `.snap` (Ubuntu)
+3. **Install or run** the downloaded package using your platform's standard method
+4. **Launch StorCat** and start creating catalogs!
 
 ### Install from Source
 
