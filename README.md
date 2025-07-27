@@ -140,6 +140,26 @@ brew install scottkw/storcat/storcat
 - ✅ **Clean uninstall** with `brew uninstall --zap storcat`
 - ✅ **No security warnings** after first launch approval
 
+### 📦 winget (Windows - Recommended)
+
+The easiest way to install StorCat on Windows:
+
+```powershell
+# Add the source and install
+winget source add storcat https://github.com/scottkw/winget-storcat
+winget install scottkw.StorCat
+
+# Or install directly
+winget install --source storcat scottkw.StorCat
+```
+
+**Benefits:**
+- ✅ **Built into Windows 10/11** - no additional setup required
+- ✅ **Portable installation** - no admin rights needed  
+- ✅ **Easy updates** with `winget upgrade scottkw.StorCat`
+- ✅ **Clean uninstall** with `winget uninstall scottkw.StorCat`
+- ✅ **Command line access** - type `storcat` in any terminal
+
 ### Quick Install (Pre-built Binaries)
 
 1. **Visit the [Releases page](https://github.com/scottkw/storcat/releases)** on GitHub
