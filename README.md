@@ -1,7 +1,7 @@
 # StorCat - Directory Catalog Manager
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/storcat-icons/storcat-logo.png" alt="StorCat Logo" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/storcat-icons/storcat-logo.svg" alt="StorCat Logo" width="128" height="128">
   
   **A modern Electron application for creating and searching directory catalogs**
   
