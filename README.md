@@ -121,6 +121,25 @@ The application generates both JSON and HTML representations of directory struct
 
 ## 📦 Installation
 
+### 🍺 Homebrew (macOS - Recommended)
+
+The easiest way to install StorCat on macOS:
+
+```bash
+# Add the tap and install
+brew tap scottkw/storcat
+brew install storcat
+
+# Or install directly in one command
+brew install scottkw/storcat/storcat
+```
+
+**Benefits:**
+- ✅ **Automatic architecture detection** (Intel vs Apple Silicon)
+- ✅ **Easy updates** with `brew upgrade storcat`
+- ✅ **Clean uninstall** with `brew uninstall --zap storcat`
+- ✅ **No security warnings** after first launch approval
+
 ### Quick Install (Pre-built Binaries)
 
 1. **Visit the [Releases page](https://github.com/scottkw/storcat/releases)** on GitHub
