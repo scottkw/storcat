@@ -1,7 +1,7 @@
 # StorCat - Directory Catalog Manager
 
 <div align="center">
-  <img src="storcat-icons/storcat-logo.png" alt="StorCat Logo" width="128" height="128">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/storcat-icons/storcat-logo.png" alt="StorCat Logo" width="128" height="128">
   
   **A modern Electron application for creating and searching directory catalogs**
   
@@ -75,7 +75,37 @@ The application generates both JSON and HTML representations of directory struct
 
 ## 📸 Screenshots
 
-*[Screenshots would go here showing the main interface, search results, and catalog browser]*
+### Light Mode
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/light-mode-1.png" alt="StorCat Light Mode - Create Catalog" width="800">
+  <p><em>Create Catalog Tab - Welcome Screen</em></p>
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/light-mode-2.png" alt="StorCat Light Mode - Search Results" width="800">
+  <p><em>Search Catalogs Tab - Results Table</em></p>
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/light-mode-3.png" alt="StorCat Light Mode - Browse Catalogs" width="800">
+  <p><em>Browse Catalogs Tab - Catalog Collection</em></p>
+</div>
+
+### Dark Mode
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/dark-mode-1.png" alt="StorCat Dark Mode - Create Catalog" width="800">
+  <p><em>Create Catalog Tab - Dark Theme</em></p>
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/dark-mode-2.png" alt="StorCat Dark Mode - Search Results" width="800">
+  <p><em>Search Catalogs Tab - Dark Theme</em></p>
+</div>
+
+<div align="center">
+  <img src="https://raw.githubusercontent.com/scottkw/storcat/main/screenshots/dark-mode-3.png" alt="StorCat Dark Mode - Browse Catalogs" width="800">
+  <p><em>Browse Catalogs Tab - Dark Theme</em></p>
+</div>
 
 ## 🖥️ System Requirements
 
