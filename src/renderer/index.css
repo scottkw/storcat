@@ -3,7 +3,7 @@
   --tab-nav-height: 50px;
 }
 
-/* Light theme variables */
+/* Default theme variables - will be overridden by JavaScript */
 :root {
   --app-bg: #f8f9fa;
   --app-text: #212529;
@@ -19,24 +19,6 @@
   --input-bg: #ffffff;
   --code-bg: #f8f9fa;
   --icon-filter: none;
-}
-
-/* Dark theme variables */
-[data-theme="dark"] {
-  --app-bg: #0f172a;
-  --app-text: #f1f5f9;
-  --card-bg: #1e293b;
-  --border-color: #334155;
-  --header-bg: #5D6569FF;
-  --header-text: #f8fafc;
-  --sidebar-bg: #1e293b;
-  --table-stripe: #2d3b4e;
-  --table-hover: #3b4d63;
-  --modal-bg: rgba(0, 0, 0, 0.8);
-  --shadow-color: rgba(0, 0, 0, 0.5);
-  --input-bg: #334155;
-  --code-bg: #334155;
-  --icon-filter: brightness(1.1) contrast(1.1);
 }
 
 body {
@@ -134,48 +116,36 @@ body {
 
 /* Link styling */
 .catalog-link {
-  color: #1d4ed8 !important;
+  color: var(--link-color, #1d4ed8) !important;
   text-decoration: none;
   cursor: pointer;
 }
 
 .catalog-link:hover {
   text-decoration: underline;
-  color: #1e40af !important;
+  color: var(--link-hover, #1e40af) !important;
 }
 
-[data-theme="dark"] .catalog-link {
-  color: #60a5fa !important;
-}
-
-[data-theme="dark"] .catalog-link:hover {
-  color: #93c5fd !important;
-}
-
-/* Dark mode modal styling */
-[data-theme="dark"] .ant-modal {
-  border: 1px solid #1e293b !important;
-}
-
-[data-theme="dark"] .ant-modal-content {
+/* Modal styling - works with all themes */
+.ant-modal-content {
   background: var(--card-bg) !important;
-  border: 1px solid #1e293b !important;
+  border: 1px solid var(--border-color) !important;
 }
 
-[data-theme="dark"] .ant-modal-header {
+.ant-modal-header {
   background: var(--card-bg) !important;
-  border-bottom: 1px solid #334155 !important;
+  border-bottom: 1px solid var(--border-color) !important;
 }
 
-[data-theme="dark"] .ant-modal-title {
+.ant-modal-title {
   color: var(--app-text) !important;
 }
 
-[data-theme="dark"] .ant-modal-close {
+.ant-modal-close {
   color: var(--app-text) !important;
 }
 
-[data-theme="dark"] .ant-modal-body {
+.ant-modal-body {
   background: var(--card-bg) !important;
 }
 
