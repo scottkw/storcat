@@ -196,29 +196,24 @@ function CreateCatalogContent() {
   return (
     <div style={{
       height: '100%',
-      display: 'flex',
-      alignItems: 'flex-start',
-      justifyContent: 'center',
-      padding: '40px 40px 80px 40px',
       background: 'var(--app-bg)',
       overflowY: 'auto',
-      minHeight: '100%',
+      padding: '24px',
     }}>
+      {/* Logo and Version Block - Full Width at Top */}
       <Card 
         style={{
-          maxWidth: '600px',
           width: '100%',
           textAlign: 'center',
           background: 'var(--card-bg)',
           border: '1px solid var(--border-color)',
-          boxShadow: '0 4px 12px var(--shadow-color)',
-          marginTop: '40px',
-          flexShrink: 0,
+          boxShadow: '0 2px 8px var(--shadow-color)',
+          marginBottom: '24px',
         }}
-        bodyStyle={{ padding: '48px 32px' }}
+        bodyStyle={{ padding: '32px' }}
       >
         {/* Logo and App Name */}
-        <div style={{ marginBottom: '32px' }}>
+        <div style={{ marginBottom: '24px' }}>
           <img
             src={storcatIcon}
             alt="StorCat Logo"
@@ -246,25 +241,41 @@ function CreateCatalogContent() {
           </Text>
         </div>
 
-        <Divider style={{ borderColor: 'var(--border-color)', margin: '32px 0' }} />
+        <Divider style={{ borderColor: 'var(--border-color)', margin: '24px 0' }} />
 
         {/* Version and Author Info */}
-        <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: '32px' }}>
+        <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: '24px' }}>
           <Text strong style={{ color: 'var(--app-text)', fontSize: '1rem' }}>
             Version {packageJson.version}
           </Text>
           <Text style={{ color: 'var(--app-text)', opacity: 0.8 }}>
             Created by Ken Scott
           </Text>
-          <Text 
-            style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer', marginTop: '8px', display: 'block' }}
-            onClick={() => window.electronAPI?.openExternal('https://github.com/scottkw/storcat/')}
-          >
-            <GlobalOutlined /> github.com/scottkw/storcat
-          </Text>
+          <div style={{ marginTop: '12px' }}>
+            <Space direction="horizontal" size="large" wrap>
+              <Text 
+                style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal('https://github.com/scottkw/storcat/')}
+              >
+                <GlobalOutlined /> GitHub Repository
+              </Text>
+              <Text 
+                style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal(`https://github.com/scottkw/storcat/releases/tag/${packageJson.version}`)}
+              >
+                📋 Release Notes
+              </Text>
+              <Text 
+                style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer' }}
+                onClick={() => window.electronAPI?.openExternal('https://github.com/scottkw/storcat/wiki')}
+              >
+                📖 Wiki & Documentation
+              </Text>
+            </Space>
+          </div>
         </Space>
 
-        <Divider style={{ borderColor: 'var(--border-color)', margin: '32px 0' }} />
+        <Divider style={{ borderColor: 'var(--border-color)', margin: '24px 0' }} />
 
         {/* Description and Instructions */}
         <div style={{ textAlign: 'left' }}>
@@ -272,7 +283,7 @@ function CreateCatalogContent() {
             color: 'var(--app-text)', 
             fontSize: '1rem',
             lineHeight: '1.6',
-            marginBottom: '24px'
+            marginBottom: '20px'
           }}>
             StorCat is a modern directory catalog management application that helps you create, 
             search, and browse comprehensive catalogs of your file systems. Generate both JSON 
@@ -281,10 +292,10 @@ function CreateCatalogContent() {
 
           <Title level={4} style={{ 
             color: 'var(--app-text)', 
-            marginBottom: '16px',
-            fontSize: '1.2rem'
+            marginBottom: '12px',
+            fontSize: '1.1rem'
           }}>
-            How to Use StorCat:
+            Getting Started:
           </Title>
 
           <Space direction="vertical" size="small" style={{ width: '100%' }}>

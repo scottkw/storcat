@@ -6,7 +6,6 @@ import { themes, getThemeById } from '../themes';
 import CreateCatalogTab from './tabs/CreateCatalogTab';
 import SearchCatalogsTab from './tabs/SearchCatalogsTab';
 import BrowseCatalogsTab from './tabs/BrowseCatalogsTab';
-import WelcomeContent from './WelcomeContent';
 
 const { Sider, Content } = Layout;
 const { Title, Text } = Typography;
@@ -307,7 +306,6 @@ function MainContent() {
           transition: 'padding 0.3s ease',
         }}
       >
-        {state.activeTab === 'create' && !state.selectedDirectory && <WelcomeContent />}
         {state.activeTab === 'create' && <CreateCatalogTab.Content />}
         {state.activeTab === 'search' && <SearchCatalogsTab.Content />}
         {state.activeTab === 'browse' && <BrowseCatalogsTab.Content />}

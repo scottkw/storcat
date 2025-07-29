@@ -11,5 +11,6 @@ contextBridge.exposeInMainWorld('electronAPI', {
   getCatalogHtmlPath: (catalogPath) => ipcRenderer.invoke('get-catalog-html-path', catalogPath),
   readHtmlFile: (filePath) => ipcRenderer.invoke('read-html-file', filePath),
   setWindowPersistence: (enabled) => ipcRenderer.invoke('set-window-persistence', enabled),
-  getWindowPersistence: () => ipcRenderer.invoke('get-window-persistence')
+  getWindowPersistence: () => ipcRenderer.invoke('get-window-persistence'),
+  openExternal: (url) => ipcRenderer.invoke('open-external', url)
 });

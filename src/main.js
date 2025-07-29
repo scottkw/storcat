@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('path');
 const fs = require('fs').promises;
 const { createCatalog, searchCatalogs } = require('./catalog-service');
@@ -337,4 +337,15 @@ ipcMain.handle('set-window-persistence', async (event, enabled) => {
 
 ipcMain.handle('get-window-persistence', async () => {
   return { success: true, enabled: windowPersistenceEnabled };
+});
+
+// Open external URLs
+ipcMain.handle('open-external', async (event, url) => {
+  try {
+    await shell.openExternal(url);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to open external URL:', error);
+    return { success: false, error: error.message };
+  }
 });
