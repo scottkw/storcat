@@ -16,6 +16,7 @@ export interface AppState {
   browseSortColumn: string | null;
   browseSortDirection: 'asc' | 'desc';
   sidebarCollapsed: boolean;
+  sidebarPosition: 'left' | 'right';
   activeTab: string;
   catalogModalOpen: boolean;
   catalogModalTitle: string;
@@ -37,6 +38,7 @@ type AppAction =
   | { type: 'SET_BROWSE_SORT_COLUMN'; payload: string | null }
   | { type: 'SET_BROWSE_SORT_DIRECTION'; payload: 'asc' | 'desc' }
   | { type: 'SET_SIDEBAR_COLLAPSED'; payload: boolean }
+  | { type: 'SET_SIDEBAR_POSITION'; payload: 'left' | 'right' }
   | { type: 'SET_ACTIVE_TAB'; payload: string }
   | { type: 'OPEN_CATALOG_MODAL'; payload: { title: string; htmlPath: string } }
   | { type: 'CLOSE_CATALOG_MODAL' };
@@ -56,6 +58,7 @@ const initialState: AppState = {
   browseSortColumn: null,
   browseSortDirection: 'asc',
   sidebarCollapsed: false,
+  sidebarPosition: 'left',
   activeTab: 'create',
   catalogModalOpen: false,
   catalogModalTitle: '',
@@ -92,6 +95,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, browseSortDirection: action.payload };
     case 'SET_SIDEBAR_COLLAPSED':
       return { ...state, sidebarCollapsed: action.payload };
+    case 'SET_SIDEBAR_POSITION':
+      return { ...state, sidebarPosition: action.payload };
     case 'SET_ACTIVE_TAB':
       return { ...state, activeTab: action.payload };
     case 'OPEN_CATALOG_MODAL':

@@ -42,7 +42,8 @@ The application generates both JSON and HTML representations of directory struct
 ### 🆕 Recent Major Updates
 - **Complete React Refactor**: Modernized from HTMX to React 18 with TypeScript
 - **Enhanced UI Components**: Professional table components with filtering, sorting, and pagination
-- **Improved Theme System**: Comprehensive dark/light mode with automatic HTML catalog adaptation
+- **Comprehensive Theme System**: 11 beautiful themes including Dracula, Nord, Solarized, GitHub, and more
+- **Flexible Interface Layout**: Configurable sidebar positioning (left/right) with smart icon placement
 - **Better User Experience**: Modal catalog viewer, branded title bar, and redesigned settings panel
 
 ## ✨ Features
@@ -57,12 +58,13 @@ The application generates both JSON and HTML representations of directory struct
 ### User Interface
 - **🎨 Modern React UI**: Clean, responsive interface built with React and Ant Design components
 - **🏠 Branded Title Bar**: StorCat logo in the title bar with theme-aware styling
-- **⚙️ Enhanced Settings**: Redesigned settings panel with improved layout and accessibility
-- **🌙 Smart Dark/Light Mode**: Automatic theme switching for all components including catalog HTML content
+- **⚙️ Enhanced Settings**: Redesigned settings panel with comprehensive customization options
+- **🌈 Advanced Theme System**: 11 beautiful themes including StorCat Light/Dark, Dracula, Nord, Solarized Light/Dark, One Dark, Monokai, GitHub Light/Dark, and Gruvbox Dark
+- **📐 Flexible Layout**: Configurable sidebar positioning (left or right) with intelligent icon placement
 - **📱 Responsive Design**: Intelligent sidebar management with persistent icon bar when collapsed
 - **⚡ Real-time Updates**: Live search results and progress indicators
 - **💾 Persistent Preferences**: All settings automatically save and restore between sessions
-- **🎯 Consistent Branding**: Custom primary color scheme matching the StorCat logo palette
+- **🎯 Dynamic Theming**: Real-time theme switching with CSS variables for instant updates
 
 ### Technical Features
 - **⚛️ Modern React Architecture**: Built with React 18, TypeScript, and modern development practices
@@ -459,20 +461,30 @@ The build process is configured in `package.json` under the `build` section:
    - Click the **gear icon** in the top-right corner of the header
    - The settings modal will open with organized configuration options
 
-2. **Theme Management**:
-   - **Light Mode**: Move the slider to the left (shows "Light" highlighted)
-   - **Dark Mode**: Move the slider to the right (shows "Dark" highlighted)
-   - **Multiple Interaction Methods**:
-     - Click and drag the slider thumb
-     - Click the "Light" or "Dark" labels directly
-     - Click anywhere on the slider track
+2. **Theme Selection**:
+   - **Theme Dropdown**: Choose from 11 beautiful themes using the theme selector
+   - **Available Themes**:
+     - **StorCat Light/Dark**: Original application themes
+     - **Dracula**: Popular dark theme with purple accents
+     - **Solarized Light/Dark**: Low-contrast, easy on the eyes
+     - **Nord**: Arctic-inspired cool color palette
+     - **One Dark**: Popular VS Code theme
+     - **Monokai**: Classic dark theme with orange accents
+     - **GitHub Light/Dark**: Clean, professional themes
+     - **Gruvbox Dark**: Retro groove color scheme
+   - **Real-time Preview**: Themes apply instantly for immediate feedback
 
-3. **Settings Persistence**:
+3. **Sidebar Position**:
+   - **Position Toggle**: Choose between left or right sidebar placement
+   - **Smart Icon Placement**: Toggle and settings buttons automatically position based on sidebar location
+   - **Instant Updates**: Layout changes apply immediately without restart
+
+4. **Settings Persistence**:
    - **Automatic Saving**: All settings save immediately when changed
    - **Session Restoration**: Settings persist between application launches
    - **Visual Feedback**: Active settings are clearly highlighted
 
-4. **Closing Settings**:
+5. **Closing Settings**:
    - Click the **X** button in the modal header
    - Click outside the modal to close
    - Press **Escape** key
@@ -564,11 +576,19 @@ The build process is configured in `package.json` under the `build` section:
 - **Space Optimization**: Maximizes viewing area while keeping essential controls accessible
 - **Visual Hierarchy**: Clear separation between navigation and settings areas
 
-#### Enhanced Theme System
-- **Comprehensive Dark/Light Mode**: Affects all UI components including tables, modals, and HTML catalog content
+#### Advanced Theme System
+- **11 Professional Themes**: Choose from StorCat Light/Dark, Dracula, Nord, Solarized, One Dark, Monokai, GitHub, and Gruvbox themes
+- **Real-time Switching**: Themes apply instantly using CSS variables and dynamic styling
+- **Complete Coverage**: All UI components including tables, modals, and HTML catalog content adapt to selected theme
 - **Smart Content Adaptation**: Catalog HTML automatically adapts to current theme with proper text contrast
-- **Consistent Branding**: Custom color scheme derived from StorCat logo palette
-- **Title Bar Integration**: Branded header with theme-aware StorCat logo
+- **Persistent Selection**: Theme preference saves automatically and restores between sessions
+- **Migration Support**: Seamlessly migrates from old light/dark system to new theme selection
+
+#### Flexible Interface Layout
+- **Configurable Sidebar Position**: Choose between left or right sidebar placement via settings
+- **Smart Icon Positioning**: Toggle and settings buttons automatically position based on sidebar location
+- **Dynamic Layout Updates**: Position changes apply instantly without requiring application restart
+- **Consistent Spacing**: Content padding and borders adjust intelligently based on sidebar position
 
 #### Keyboard Shortcuts
 - **Escape**: Close modal dialogs (settings or catalog views)
