@@ -51,6 +51,17 @@ open StorCat-1.2.0-arm64.dmg  # or StorCat-1.2.0.dmg for Intel
 
 Then drag StorCat.app to your Applications folder as usual.
 
+**⚠️ Important: macOS "Damaged" App Fix**
+
+After manual installation, you may encounter a "damaged" error when launching StorCat. This is a macOS Gatekeeper security issue for unsigned apps. Fix it by removing quarantine attributes:
+
+```bash
+# Remove quarantine attributes to fix "damaged" error
+xattr -d com.apple.quarantine "/Applications/StorCat.app"
+```
+
+This command removes the quarantine flag that macOS applies to downloaded applications, allowing StorCat to launch normally.
+
 ### Option 2: Homebrew Cache Clearing
 
 Try clearing Homebrew's cache and updating:
