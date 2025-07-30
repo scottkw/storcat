@@ -1,6 +1,6 @@
 {
   "name": "storcat-electron",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "A modern Electron app for creating and searching directory catalogs",
   "main": "src/main.js",
   "scripts": {
@@ -88,8 +88,14 @@
       "category": "public.app-category.utilities",
       "icon": "build/icons/icon.icns",
       "identity": "Ken Scott (S2K7P43927)",
-      "hardenedRuntime": false,
+      "hardenedRuntime": true,
       "gatekeeperAssess": false,
+      "signIgnore": [
+        "node_modules"
+      ],
+      "notarize": {
+        "teamId": "S2K7P43927"
+      },
       "target": [
         {
           "target": "dmg",
