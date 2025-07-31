@@ -1,4 +1,7 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
+
+// V8 flags to work around ARM64 memory allocation issues
+app.commandLine.appendSwitch('--js-flags', '--jitless --no-opt');
 const path = require('path');
 const fs = require('fs').promises;
 const { createCatalog, searchCatalogs } = require('./catalog-service');
@@ -99,19 +102,70 @@ async function createWindow() {
     windowOptions.y = windowState.y;
   }
   
+  console.log('Creating main window with options:', windowOptions);
   mainWindow = new BrowserWindow(windowOptions);
+  console.log('Main window created successfully');
 
   // Load React app - use dev server in development, built files in production
   const isDev = process.env.NODE_ENV === 'development';
+  let indexPath;
+  
   if (isDev) {
+    console.log('Dev mode - Loading from Vite dev server');
     mainWindow.loadURL('http://localhost:5173');
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
+    // In production, try multiple possible locations
+    const possiblePaths = [
+      path.join(__dirname, 'index.html'),
+      path.join(__dirname, '../dist/index.html'), 
+      path.join(__dirname, 'dist/index.html'),
+      path.join(process.resourcesPath, 'app.asar.unpacked/dist/index.html'),
+      path.join(process.resourcesPath, 'dist/index.html')
+    ];
+    
+    let foundPath = null;
+    for (const testPath of possiblePaths) {
+      console.log('Testing path:', testPath);
+      if (require('fs').existsSync(testPath)) {
+        foundPath = testPath;
+        console.log('Found index.html at:', foundPath);
+        break;
+      }
+    }
+    
+    if (foundPath) {
+      // Use loadURL with file protocol to ensure proper asset loading
+      const fileUrl = `file://${foundPath}`;
+      console.log('Loading URL:', fileUrl);
+      mainWindow.loadURL(fileUrl);
+    } else {
+      console.error('Could not find index.html in any expected location');
+      console.log('__dirname:', __dirname);
+      console.log('process.resourcesPath:', process.resourcesPath);
+    }
   }
+  
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error('Failed to load:', errorCode, errorDescription);
+  });
+  
+  mainWindow.webContents.on('did-finish-load', () => {
+    console.log('Page finished loading');
+  });
 
   mainWindow.once('ready-to-show', () => {
+    console.log('Window ready-to-show event fired');
     mainWindow.show();
+    console.log('Window show() called');
   });
+
+  // Force show window after 3 seconds if ready-to-show doesn't fire
+  setTimeout(() => {
+    if (mainWindow && !mainWindow.isVisible()) {
+      console.log('Force showing window after timeout');
+      mainWindow.show();
+    }
+  }, 3000);
   
   // Save window state when it changes
   let saveTimeout;
@@ -128,10 +182,13 @@ async function createWindow() {
     saveWindowState();
   });
 
+  // Disable dev tools for now
+  // mainWindow.webContents.openDevTools();
+  
   // Only open dev tools if explicitly requested
-  if (process.argv.includes('--devtools')) {
-    mainWindow.webContents.openDevTools();
-  }
+  // if (process.argv.includes('--devtools')) {
+  //   mainWindow.webContents.openDevTools();
+  // }
 }
 
 app.whenReady().then(() => createWindow());
