@@ -77,8 +77,20 @@
       "src/preload.js",
       "src/catalog-service.js",
       "src/assets/**/*",
-      "dist/**/*",
-      "LICENSE"
+      "dist/index.html",
+      "dist/assets/**/*",
+      "!dist/win*",
+      "!dist/mac*",
+      "!dist/linux*",
+      "!dist/*.exe",
+      "!dist/*.dmg",
+      "!dist/*.AppImage",
+      "!dist/*.deb",
+      "!dist/*.rpm",
+      "!dist/*.snap",
+      "!dist/*.blockmap",
+      "!dist/*.yml",
+      "!dist/*.yaml"
     ],
     "extraResources": [
       "LICENSE"
@@ -92,18 +104,18 @@
       "signIgnore": [
         "node_modules"
       ],
-      "notarize": {
-        "teamId": "S2K7P43927"
-      },
       "target": [
         {
           "target": "dmg",
           "arch": [
-            "x64",
-            "arm64"
+            "universal"
           ]
         }
-      ]
+      ],
+      "notarize": {
+        "teamId": "S2K7P43927"
+      },
+      "mergeASARs": false
     },
     "win": {
       "target": [

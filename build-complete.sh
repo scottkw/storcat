@@ -52,13 +52,6 @@ else
     MSI_BUILT=false
 fi
 
-# macOS builds  
-echo "🍎 Building macOS x64 (Intel)..."
-npx electron-builder --mac --x64 --publish=never
-
-echo "🍎 Building macOS ARM64 (Apple Silicon)..."
-npx electron-builder --mac --arm64 --publish=never
-
 # Linux builds - AppImage and DEB (RPM has issues on macOS)
 echo "🐧 Building Linux AppImage x64..."
 npx electron-builder --linux appimage --x64 --publish=never
@@ -99,6 +92,12 @@ else
     LINUX_EXTRA_BUILT=false
 fi
 
+# macOS builds - build universal binary last (with notarization)
+echo ""
+echo "🍎 Building macOS Universal (Intel + Apple Silicon) with notarization..."
+echo "⚠️  This may take several minutes due to Apple notarization process..."
+npx electron-builder --mac --universal --publish=never
+
 echo ""
 echo "✅ Complete build process finished!"
 echo "=================================="
@@ -113,15 +112,14 @@ if [ "$MSI_BUILT" = true ]; then
     echo "  - Windows ARM64 MSI installer"
 fi
 
-echo "  - macOS x64 installer"
-echo "  - macOS ARM64 installer"
+echo "  - macOS Universal installer (notarized)"
 echo "  - Linux x64 AppImage"
 echo "  - Linux ARM64 AppImage"
 echo "  - Linux x64 DEB package"
 echo "  - Linux ARM64 DEB package"
 
 # Count total packages built
-TOTAL_BUILT=8  # Base: 2 Windows portable + 2 macOS + 4 Linux
+TOTAL_BUILT=7  # Base: 2 Windows portable + 1 macOS universal + 4 Linux
 
 if [ "$MSI_BUILT" = true ]; then
     echo "  - Windows x64 MSI installer"
@@ -139,11 +137,11 @@ fi
 
 echo ""
 if [ "$LINUX_EXTRA_BUILT" = true ] && [ "$MSI_BUILT" = true ]; then
-    echo "🎉 All 14 distributions ready for StorCat v$VERSION!"
+    echo "🎉 All 13 distributions ready for StorCat v$VERSION!"
 elif [ "$LINUX_EXTRA_BUILT" = true ] || [ "$MSI_BUILT" = true ]; then
-    echo "🎉 $TOTAL_BUILT out of 14 distributions ready for StorCat v$VERSION!"
+    echo "🎉 $TOTAL_BUILT out of 13 distributions ready for StorCat v$VERSION!"
 else
-    echo "🎉 8 out of 14 distributions ready for StorCat v$VERSION!"
+    echo "🎉 7 out of 13 distributions ready for StorCat v$VERSION!"
     echo "💡 Build MSI packages on Windows and RPM/Snap packages on Linux for complete coverage"
 fi
 
