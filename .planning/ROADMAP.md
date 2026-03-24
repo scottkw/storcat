@@ -32,7 +32,10 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. The HTML catalog output renders the root node with `└──` connector and size bracket, matching Electron's tree appearance
   4. `CreateCatalog` returns `fileCount`, `totalSize`, and output paths so the frontend can display post-creation metadata
   5. Traversing a directory containing symlinks produces the same entry count as Electron (symlinks followed, not skipped)
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 01-01-PLAN.md — Fix catalog models, JSON output, traversal, HTML root, CreateCatalog return type, and Wails bindings
+- [ ] 01-02-PLAN.md — Add browse metadata fields (size, RFC3339 dates, birth time) to CatalogMetadata
 
 ### Phase 2: Search Service + Browse Metadata
 **Goal**: The browse path returns complete, correctly-typed metadata so file listings display size and dates without type errors
@@ -110,7 +113,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Data Models + Catalog Service | 0/? | Not started | - |
+| 1. Data Models + Catalog Service | 0/2 | Planning complete | - |
 | 2. Search Service + Browse Metadata | 0/? | Not started | - |
 | 3. Config Manager | 0/? | Not started | - |
 | 4. App Layer + Lifecycle | 0/? | Not started | - |
