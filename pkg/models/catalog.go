@@ -5,7 +5,7 @@ type CatalogItem struct {
 	Type     string         `json:"type"`
 	Name     string         `json:"name"`
 	Size     int64          `json:"size"`
-	Contents []*CatalogItem `json:"contents,omitempty"`
+	Contents []*CatalogItem `json:"contents"`
 }
 
 // SearchResult represents a search result from catalog files
@@ -28,4 +28,14 @@ type CatalogMetadata struct {
 	Modified string `json:"modified"`
 	FilePath string `json:"path"`
 	HasHtml  bool   `json:"hasHtml"`
+}
+
+// CreateCatalogResult holds the output paths and statistics from a CreateCatalog call
+type CreateCatalogResult struct {
+	JsonPath     string `json:"jsonPath"`
+	HtmlPath     string `json:"htmlPath"`
+	FileCount    int    `json:"fileCount"`
+	TotalSize    int64  `json:"totalSize"`
+	CopyJsonPath string `json:"copyJsonPath,omitempty"`
+	CopyHtmlPath string `json:"copyHtmlPath,omitempty"`
 }

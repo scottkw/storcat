@@ -25,23 +25,30 @@ func NewService() *Service {
 }
 
 // CreateCatalog generates JSON and HTML catalogs for the specified directory
-func (s *Service) CreateCatalog(title, directoryPath, outputRoot string, copyToDirectory string, onProgress ProgressCallback) error {
+func (s *Service) CreateCatalog(title, directoryPath, outputRoot string, copyToDirectory string, onProgress ProgressCallback) (*models.CreateCatalogResult, error) {
 	// Traverse directory and build catalog
 	catalog, err := s.traverseDirectory(directoryPath, directoryPath, onProgress)
 	if err != nil {
-		return fmt.Errorf("failed to traverse directory: %w", err)
+		return nil, fmt.Errorf("failed to traverse directory: %w", err)
 	}
 
-	// Create JSON file (exact format: array with single root object)
+	// Create JSON file (bare object format)
 	jsonPath := filepath.Join(directoryPath, outputRoot+".json")
 	if err := s.writeJSONFile(catalog, jsonPath); err != nil {
-		return fmt.Errorf("failed to write JSON: %w", err)
+		return nil, fmt.Errorf("failed to write JSON: %w", err)
 	}
 
 	// Create HTML file
 	htmlPath := filepath.Join(directoryPath, outputRoot+".html")
 	if err := s.writeHTMLFile(catalog, title, htmlPath); err != nil {
-		return fmt.Errorf("failed to write HTML: %w", err)
+		return nil, fmt.Errorf("failed to write HTML: %w", err)
+	}
+
+	result := &models.CreateCatalogResult{
+		JsonPath:  jsonPath,
+		HtmlPath:  htmlPath,
+		FileCount: s.countFiles(catalog),
+		TotalSize: catalog.Size,
 	}
 
 	// Copy to secondary directory if specified
@@ -50,19 +57,22 @@ func (s *Service) CreateCatalog(title, directoryPath, outputRoot string, copyToD
 		copyHTMLPath := filepath.Join(copyToDirectory, outputRoot+".html")
 
 		if err := s.copyFile(jsonPath, copyJSONPath); err != nil {
-			return fmt.Errorf("failed to copy JSON: %w", err)
+			return nil, fmt.Errorf("failed to copy JSON: %w", err)
 		}
 		if err := s.copyFile(htmlPath, copyHTMLPath); err != nil {
-			return fmt.Errorf("failed to copy HTML: %w", err)
+			return nil, fmt.Errorf("failed to copy HTML: %w", err)
 		}
+
+		result.CopyJsonPath = copyJSONPath
+		result.CopyHtmlPath = copyHTMLPath
 	}
 
-	return nil
+	return result, nil
 }
 
 // traverseDirectory recursively builds catalog structure
 func (s *Service) traverseDirectory(dirPath, basePath string, onProgress ProgressCallback) (*models.CatalogItem, error) {
-	info, err := os.Lstat(dirPath)
+	info, err := os.Stat(dirPath)
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +147,10 @@ func (s *Service) traverseDirectory(dirPath, basePath string, onProgress Progres
 			totalSize += childItem.Size
 		}
 
+		if contents == nil {
+			contents = []*models.CatalogItem{}
+		}
+
 		return &models.CatalogItem{
 			Type:     "directory",
 			Name:     displayPath,
@@ -148,12 +162,9 @@ func (s *Service) traverseDirectory(dirPath, basePath string, onProgress Progres
 	return nil, fmt.Errorf("unsupported file type: %s", dirPath)
 }
 
-// writeJSONFile writes catalog in the exact format (array with single root object, no indentation)
+// writeJSONFile writes catalog in bare object format (no indentation)
 func (s *Service) writeJSONFile(catalog *models.CatalogItem, path string) error {
-	// Wrap in array to match bash script format
-	data := []*models.CatalogItem{catalog}
-
-	jsonBytes, err := json.Marshal(data)
+	jsonBytes, err := json.Marshal(catalog)
 	if err != nil {
 		return err
 	}
@@ -231,18 +242,6 @@ func (s *Service) generateTreeStructure(item *models.CatalogItem, isLast bool, p
 
 	sizeDisplay := s.formatBytesForDisplay(item.Size)
 	itemName := filepath.Base(item.Name)
-
-	// Handle root directory special case
-	if item.Name == "./" {
-		result.WriteString("./<br>\n")
-		if item.Contents != nil {
-			for i, child := range item.Contents {
-				childIsLast := i == len(item.Contents)-1
-				result.WriteString(s.generateTreeStructure(child, childIsLast, ""))
-			}
-		}
-		return result.String()
-	}
 
 	result.WriteString(fmt.Sprintf("%s%s%s&nbsp;&nbsp;%s<br>\n",
 		prefix, connector, sizeDisplay, html.EscapeString(itemName)))
