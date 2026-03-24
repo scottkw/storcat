@@ -78,32 +78,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | — | Pending |
-| DATA-02 | — | Pending |
-| DATA-03 | — | Pending |
-| DATA-04 | — | Pending |
-| DATA-05 | — | Pending |
-| CATL-01 | — | Pending |
-| CATL-02 | — | Pending |
-| CATL-03 | — | Pending |
-| CATL-04 | — | Pending |
-| API-01 | — | Pending |
-| API-02 | — | Pending |
-| API-03 | — | Pending |
-| WIN-01 | — | Pending |
-| WIN-02 | — | Pending |
-| WIN-03 | — | Pending |
-| WIN-04 | — | Pending |
-| PLAT-01 | — | Pending |
-| PLAT-02 | — | Pending |
-| REL-01 | — | Pending |
-| REL-02 | — | Pending |
+| DATA-01 | Phase 1 | Pending |
+| DATA-02 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Pending |
+| DATA-04 | Phase 1 | Pending |
+| DATA-05 | Phase 1 | Pending |
+| CATL-01 | Phase 2 | Pending |
+| CATL-02 | Phase 1 | Pending |
+| CATL-03 | Phase 1 | Pending |
+| CATL-04 | Phase 1 | Pending |
+| API-01 | Phase 4 | Pending |
+| API-02 | Phase 4 | Pending |
+| API-03 | Phase 4 | Pending |
+| WIN-01 | Phase 3 | Pending |
+| WIN-02 | Phase 3 | Pending |
+| WIN-03 | Phase 3 | Pending |
+| WIN-04 | Phase 4 | Pending |
+| PLAT-01 | Phase 6 | Pending |
+| PLAT-02 | Phase 6 | Pending |
+| REL-01 | Phase 7 | Pending |
+| REL-02 | Phase 7 | Pending |
 
 **Coverage:**
 - v1 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20 ⚠️
+- Mapped to phases: 20
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-03-24*
-*Last updated: 2026-03-24 after initial definition*
+*Last updated: 2026-03-24 after roadmap creation*
