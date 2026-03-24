@@ -9,8 +9,8 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 ### Data Models
 
-- [ ] **DATA-01**: Catalog JSON output uses bare object format `{...}`, matching Electron (not array-wrapped `[{...}]`)
-- [ ] **DATA-02**: Empty directory `contents` field serializes as `[]`, never `null` or omitted
+- [x] **DATA-01**: Catalog JSON output uses bare object format `{...}`, matching Electron (not array-wrapped `[{...}]`)
+- [x] **DATA-02**: Empty directory `contents` field serializes as `[]`, never `null` or omitted
 - [ ] **DATA-03**: Browse catalog metadata includes `size` field (file size in bytes)
 - [ ] **DATA-04**: Browse catalog `modified` field is a Date-compatible value, not an opaque string
 - [ ] **DATA-05**: Browse catalog `created` field uses actual creation time where available, not mtime
@@ -18,9 +18,9 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 ### Catalog Operations
 
 - [ ] **CATL-01**: `LoadCatalog` Go method exists and returns parsed catalog data for a given file path
-- [ ] **CATL-02**: `CreateCatalog` returns result metadata: `jsonPath`, `htmlPath`, `fileCount`, `totalSize`, `copyJsonPath`, `copyHtmlPath`
-- [ ] **CATL-03**: Directory traversal follows symlinks (matching Electron's `fs.stat` behavior)
-- [ ] **CATL-04**: HTML catalog root node renders with `└──` connector and size bracket, matching Electron format
+- [x] **CATL-02**: `CreateCatalog` returns result metadata: `jsonPath`, `htmlPath`, `fileCount`, `totalSize`, `copyJsonPath`, `copyHtmlPath`
+- [x] **CATL-03**: Directory traversal follows symlinks (matching Electron's `fs.stat` behavior)
+- [x] **CATL-04**: HTML catalog root node renders with `└──` connector and size bracket, matching Electron format
 
 ### API Surface
 
@@ -78,15 +78,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| DATA-01 | Phase 1 | Pending |
-| DATA-02 | Phase 1 | Pending |
+| DATA-01 | Phase 1 | Complete |
+| DATA-02 | Phase 1 | Complete |
 | DATA-03 | Phase 1 | Pending |
 | DATA-04 | Phase 1 | Pending |
 | DATA-05 | Phase 1 | Pending |
 | CATL-01 | Phase 2 | Pending |
-| CATL-02 | Phase 1 | Pending |
-| CATL-03 | Phase 1 | Pending |
-| CATL-04 | Phase 1 | Pending |
+| CATL-02 | Phase 1 | Complete |
+| CATL-03 | Phase 1 | Complete |
+| CATL-04 | Phase 1 | Complete |
 | API-01 | Phase 4 | Pending |
 | API-02 | Phase 4 | Pending |
 | API-03 | Phase 4 | Pending |
