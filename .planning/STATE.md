@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-03-24T21:56:29.375Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-03-24T21:59:35.240Z"
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # Project State
@@ -47,6 +47,7 @@ Plan: 2 of 2
 
 *Updated after each plan completion*
 | Phase 01 P01 | 231 | 2 tasks | 9 files |
+| Phase 01 P02 | 5 | 1 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -62,6 +63,9 @@ Recent decisions affecting current work:
 - [Phase 01]: JSON format uses bare object via json.Marshal(catalog) — array wrapping removed for DATA-01
 - [Phase 01]: CreateCatalog returns (*models.CreateCatalogResult, error) carrying JsonPath, HtmlPath, FileCount, TotalSize (CATL-02)
 - [Phase 01]: Removed omitempty from CatalogItem.Contents tag plus nil guard — empty dirs serialize as [] not null (DATA-02)
+- [Phase 01]: CatalogMetadata.Size is int64 populated via info.Size() in BrowseCatalogs (DATA-03)
+- [Phase 01]: Created field uses djherbis/times BirthTime() on macOS, falls back to ModTime() elsewhere (DATA-05)
+- [Phase 01]: Both Created and Modified use time.RFC3339 constant for JS Date-compatible strings (DATA-04)
 
 ### Pending Todos
 
@@ -74,6 +78,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T21:56:29.372Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-03-24T21:59:35.237Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None

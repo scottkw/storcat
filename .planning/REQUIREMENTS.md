@@ -11,9 +11,9 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 - [x] **DATA-01**: Catalog JSON output uses bare object format `{...}`, matching Electron (not array-wrapped `[{...}]`)
 - [x] **DATA-02**: Empty directory `contents` field serializes as `[]`, never `null` or omitted
-- [ ] **DATA-03**: Browse catalog metadata includes `size` field (file size in bytes)
-- [ ] **DATA-04**: Browse catalog `modified` field is a Date-compatible value, not an opaque string
-- [ ] **DATA-05**: Browse catalog `created` field uses actual creation time where available, not mtime
+- [x] **DATA-03**: Browse catalog metadata includes `size` field (file size in bytes)
+- [x] **DATA-04**: Browse catalog `modified` field is a Date-compatible value, not an opaque string
+- [x] **DATA-05**: Browse catalog `created` field uses actual creation time where available, not mtime
 
 ### Catalog Operations
 
@@ -80,9 +80,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 |-------------|-------|--------|
 | DATA-01 | Phase 1 | Complete |
 | DATA-02 | Phase 1 | Complete |
-| DATA-03 | Phase 1 | Pending |
-| DATA-04 | Phase 1 | Pending |
-| DATA-05 | Phase 1 | Pending |
+| DATA-03 | Phase 1 | Complete |
+| DATA-04 | Phase 1 | Complete |
+| DATA-05 | Phase 1 | Complete |
 | CATL-01 | Phase 2 | Pending |
 | CATL-02 | Phase 1 | Complete |
 | CATL-03 | Phase 1 | Complete |
