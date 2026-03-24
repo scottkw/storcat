@@ -47,6 +47,28 @@ export namespace models {
 	        this.hasHtml = source["hasHtml"];
 	    }
 	}
+	export class CreateCatalogResult {
+	    jsonPath: string;
+	    htmlPath: string;
+	    fileCount: number;
+	    totalSize: number;
+	    copyJsonPath?: string;
+	    copyHtmlPath?: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new CreateCatalogResult(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.jsonPath = source["jsonPath"];
+	        this.htmlPath = source["htmlPath"];
+	        this.fileCount = source["fileCount"];
+	        this.totalSize = source["totalSize"];
+	        this.copyJsonPath = source["copyJsonPath"];
+	        this.copyHtmlPath = source["copyHtmlPath"];
+	    }
+	}
 	export class SearchResult {
 	    catalog: string;
 	    catalogFilePath: string;

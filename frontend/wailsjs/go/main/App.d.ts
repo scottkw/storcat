@@ -5,7 +5,7 @@ import {config} from '../models';
 
 export function BrowseCatalogs(arg1:string):Promise<Array<models.CatalogMetadata>>;
 
-export function CreateCatalog(arg1:string,arg2:string,arg3:string,arg4:string):Promise<void>;
+export function CreateCatalog(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.CreateCatalogResult>;
 
 export function GetCatalogHtmlPath(arg1:string):Promise<string>;
 

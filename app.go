@@ -48,10 +48,10 @@ func (a *App) startup(ctx context.Context) {
 }
 
 // CreateCatalog creates a new catalog from a directory
-func (a *App) CreateCatalog(title string, directoryPath string, outputName string, copyToDirectory string) error {
+func (a *App) CreateCatalog(title string, directoryPath string, outputName string, copyToDirectory string) (*models.CreateCatalogResult, error) {
 	absPath, err := filepath.Abs(directoryPath)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	// Progress callback (could be used to send progress to frontend in future)
@@ -60,7 +60,11 @@ func (a *App) CreateCatalog(title string, directoryPath string, outputName strin
 		// In the future, we could use Wails events to send updates to frontend
 	}
 
-	return a.catalogService.CreateCatalog(title, absPath, outputName, copyToDirectory, progressCallback)
+	result, err := a.catalogService.CreateCatalog(title, absPath, outputName, copyToDirectory, progressCallback)
+	if err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 // SearchCatalogs searches across catalog files for a term
