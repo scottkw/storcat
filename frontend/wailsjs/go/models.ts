@@ -27,6 +27,7 @@ export namespace models {
 	    title: string;
 	    name: string;
 	    filename: string;
+	    size: number;
 	    created: string;
 	    modified: string;
 	    path: string;
@@ -41,6 +42,7 @@ export namespace models {
 	        this.title = source["title"];
 	        this.name = source["name"];
 	        this.filename = source["filename"];
+	        this.size = source["size"];
 	        this.created = source["created"];
 	        this.modified = source["modified"];
 	        this.path = source["path"];
