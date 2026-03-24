@@ -6,7 +6,9 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
+	"github.com/djherbis/times"
 	"storcat-wails/pkg/models"
 )
 
@@ -147,6 +149,15 @@ func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMeta
 			continue
 		}
 
+		// Get creation time (birth time on macOS/Windows, fallback to mtime)
+		var createdTime time.Time
+		t, err := times.Stat(filePath)
+		if err == nil && t.HasBirthTime() {
+			createdTime = t.BirthTime()
+		} else {
+			createdTime = info.ModTime()
+		}
+
 		// Check if HTML file exists (reuse htmlPath from above)
 		_, htmlErr := os.Stat(htmlPath)
 		hasHtml := htmlErr == nil
@@ -155,8 +166,9 @@ func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMeta
 			Title:    title,
 			Name:     entry.Name(),
 			Filename: entry.Name(),
-			Created:  info.ModTime().Format("2006-01-02 15:04:05"),
-			Modified: info.ModTime().Format("2006-01-02T15:04:05Z07:00"),
+			Size:     info.Size(),
+			Created:  createdTime.Format(time.RFC3339),
+			Modified: info.ModTime().Format(time.RFC3339),
 			FilePath: filePath,
 			HasHtml:  hasHtml,
 		})

@@ -24,6 +24,7 @@ type CatalogMetadata struct {
 	Title    string `json:"title"`
 	Name     string `json:"name"`
 	Filename string `json:"filename"`
+	Size     int64  `json:"size"`
 	Created  string `json:"created"`
 	Modified string `json:"modified"`
 	FilePath string `json:"path"`
