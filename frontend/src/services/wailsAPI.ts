@@ -2,6 +2,7 @@ import {
   CreateCatalog,
   SearchCatalogs,
   BrowseCatalogs,
+  LoadCatalog,
   GetConfig,
   SetTheme,
   SetSidebarPosition,
@@ -37,6 +38,15 @@ export const wailsAPI = {
     try {
       const catalogs = await BrowseCatalogs(catalogDir);
       return { success: true, catalogs };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
+    }
+  },
+
+  loadCatalog: async (filePath: string) => {
+    try {
+      const catalog = await LoadCatalog(filePath);
+      return { success: true, catalog };
     } catch (error: any) {
       return { success: false, error: error.message || 'Unknown error' };
     }

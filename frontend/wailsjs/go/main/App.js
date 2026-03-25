@@ -18,6 +18,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function LoadCatalog(arg1) {
+  return window['go']['main']['App']['LoadCatalog'](arg1);
+}
+
 export function OpenExternal(arg1) {
   return window['go']['main']['App']['OpenExternal'](arg1);
 }

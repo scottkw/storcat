@@ -87,6 +87,15 @@ func (a *App) BrowseCatalogs(catalogDir string) ([]*models.CatalogMetadata, erro
 	return a.searchService.BrowseCatalogs(absPath)
 }
 
+// LoadCatalog reads and parses a catalog JSON file
+func (a *App) LoadCatalog(filePath string) (*models.CatalogItem, error) {
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return a.searchService.LoadCatalog(absPath)
+}
+
 // GetConfig returns the current configuration
 func (a *App) GetConfig() *config.Config {
 	if a.configManager == nil {

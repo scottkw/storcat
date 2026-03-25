@@ -11,6 +11,8 @@ export function GetCatalogHtmlPath(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<config.Config>;
 
+export function LoadCatalog(arg1:string):Promise<models.CatalogItem>;
+
 export function OpenExternal(arg1:string):Promise<void>;
 
 export function ReadHtmlFile(arg1:string):Promise<string>;
