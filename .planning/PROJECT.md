@@ -27,20 +27,19 @@ Existing capabilities confirmed working in the Go/Wails branch:
 - ✓ v1.0 catalog backward compatibility (both JSON formats) — existing
 - ✓ Wails API wrapper maintaining window.electronAPI interface — existing
 - ✓ Cross-platform builds (macOS, Windows, Linux) — existing
+- ✓ LoadCatalog method with dual-format parsing (v1 array + v2 bare object) — Phase 2
+- ✓ Browse tab Size column with human-readable byte formatting — Phase 2
+- ✓ Browse metadata fields (size, modified, created) verified — Phase 1+2
 
 ### Active
 
-- [ ] Fix `loadCatalog` — missing Go method and wrapper
 - [ ] Fix `createCatalog` return metadata — Go returns void, should return fileCount/totalSize/paths
-- [ ] Fix JSON output format — Go writes `[{...}]`, must match Electron's `{...}`
 - [ ] Fix symlink handling — Go skips symlinks via `os.Lstat`, must follow them like Electron's `fs.stat`
 - [ ] Implement full window state persistence — size + position save/restore + settings toggle (currently stubs)
 - [ ] Fix `getCatalogHtmlPath` — must verify file existence and return `{success, htmlPath}` envelope
 - [ ] Fix `readHtmlFile` — must return `{success, content}` envelope
 - [ ] Fix header drag region — `WebkitAppRegion: 'drag'` missing for macOS titlebar
 - [ ] Fix HTML root node rendering — match Electron's tree format
-- [ ] Fix empty directory `contents` field — nil slice vs `[]` with omitempty
-- [ ] Fix browse metadata fields — add `size`, fix `modified` type, fix misleading `created` field
 - [ ] Fix version source — read from config/package.json instead of hardcoded constant
 - [ ] Clean merge to main — verified, no bloat, proper .gitignore
 
@@ -96,4 +95,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after Phase 1 completion — Data Models + Catalog Service verified*
+*Last updated: 2026-03-25 after Phase 2 completion — Search Service + Browse Metadata verified*
