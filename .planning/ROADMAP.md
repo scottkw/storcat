@@ -15,7 +15,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: Data Models + Catalog Service** - Fix Go structs and JSON output to match Electron's format (completed 2026-03-24)
 - [x] **Phase 2: Search Service + Browse Metadata** - Fix browse metadata fields and timestamp semantics (completed 2026-03-25)
 - [x] **Phase 3: Config Manager** - Add window state persistence fields and methods to config (completed 2026-03-25)
-- [ ] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose
+- [x] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose (completed 2026-03-25)
 - [ ] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes
 - [ ] **Phase 6: Platform Integration** - Fix macOS drag region and version sourcing
 - [ ] **Phase 7: Verification + Merge** - Cross-platform verification and clean merge to main
@@ -73,10 +73,10 @@ Plans:
   2. `ReadHtmlFile` always responds with a `{success, content}` shaped value; a missing file returns `{success: false}`, not a Promise rejection or `null`
   3. Window size restores to its last-saved value on app relaunch (verified by resizing, quitting, and relaunching)
   4. All IPC wrappers consistently return `{success, ...}` envelopes; no method returns a raw value or throws unhandled rejections
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 04-01-PLAN.md — Go GetCatalogHtmlPath os.Stat fix + all 7 wailsAPI wrapper envelope fixes
-- [ ] 04-02-PLAN.md — Consumer component updates for envelope responses + WIN-04 confirmation
+- [x] 04-02-PLAN.md — Consumer component updates for envelope responses + WIN-04 confirmation
 **UI hint**: yes
 
 ### Phase 5: Frontend Shim
@@ -124,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
 | 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
 | 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
-| 4. App Layer + Lifecycle | 1/2 | In Progress|  |
+| 4. App Layer + Lifecycle | 2/2 | Complete   | 2026-03-25 |
 | 5. Frontend Shim | 0/? | Not started | - |
 | 6. Platform Integration | 0/? | Not started | - |
 | 7. Verification + Merge | 0/? | Not started | - |

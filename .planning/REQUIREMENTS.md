@@ -33,7 +33,7 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 - [x] **WIN-01**: Window size (width, height) persists across app restarts via Go config
 - [x] **WIN-02**: Window position (x, y) persists across app restarts (size-only on macOS if coordinate drift unresolved)
 - [x] **WIN-03**: Settings toggle enables/disables window state persistence (not a stub)
-- [ ] **WIN-04**: Window state restores via `OnDomReady` hook (not `OnStartup`)
+- [x] **WIN-04**: Window state restores via `OnDomReady` hook (not `OnStartup`)
 
 ### Platform Integration
 
@@ -93,7 +93,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WIN-01 | Phase 3 | Complete |
 | WIN-02 | Phase 3 | Complete |
 | WIN-03 | Phase 3 | Complete |
-| WIN-04 | Phase 4 | Pending |
+| WIN-04 | Phase 4 | Complete |
 | PLAT-01 | Phase 6 | Pending |
 | PLAT-02 | Phase 6 | Pending |
 | REL-01 | Phase 7 | Pending |
