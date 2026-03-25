@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 03-02-PLAN.md
-last_updated: "2026-03-25T16:55:23.620Z"
+status: Ready to execute
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-03-25T20:01:57.947Z"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Full feature parity with Electron v1.2.3 — no regressions for users upgrading to Go/Wails.
-**Current focus:** Phase 03 — config-manager
+**Current focus:** Phase 04 — app-layer-lifecycle
 
 ## Current Position
 
-Phase: 4
-Plan: Not started
+Phase: 04 (app-layer-lifecycle) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -51,6 +51,7 @@ Plan: Not started
 | Phase 02 P01 | 174 | 3 tasks | 7 files |
 | Phase 03 P01 | 10 | 1 tasks | 2 files |
 | Phase 03 P02 | 10 | 2 tasks | 6 files |
+| Phase 04 P01 | 5 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,8 @@ Recent decisions affecting current work:
 - [Phase 03]: WindowPersistenceEnabled explicitly set to true in DefaultConfig to override Go zero-value false (Electron parity)
 - [Phase 03]: Use OnDomReady (not OnStartup) for window restoration — window not yet rendered at OnStartup
 - [Phase 03]: beforeClose returns false to allow close — returning true would cancel/block the close event
+- [Phase 04]: GetCatalogHtmlPath returns descriptive error 'HTML file not found: <path>' for missing files via os.Stat check
+- [Phase 04]: All 17 wailsAPI wrappers return {success,...} envelopes — consumers updated in Plan 02
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T16:33:31.407Z
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-25T20:01:57.944Z
+Stopped at: Completed 04-01-PLAN.md
 Resume file: None

@@ -24,9 +24,9 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 ### API Surface
 
-- [ ] **API-01**: `GetCatalogHtmlPath` verifies file existence and returns via wailsAPI wrapper as `{success, htmlPath}`
-- [ ] **API-02**: `ReadHtmlFile` returns via wailsAPI wrapper as `{success, content}`
-- [ ] **API-03**: All wailsAPI wrapper methods consistently return `{success, ...}` envelopes matching Electron's contract
+- [x] **API-01**: `GetCatalogHtmlPath` verifies file existence and returns via wailsAPI wrapper as `{success, htmlPath}`
+- [x] **API-02**: `ReadHtmlFile` returns via wailsAPI wrapper as `{success, content}`
+- [x] **API-03**: All wailsAPI wrapper methods consistently return `{success, ...}` envelopes matching Electron's contract
 
 ### Window Management
 
@@ -87,9 +87,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CATL-02 | Phase 1 | Complete |
 | CATL-03 | Phase 1 | Complete |
 | CATL-04 | Phase 1 | Complete |
-| API-01 | Phase 4 | Pending |
-| API-02 | Phase 4 | Pending |
-| API-03 | Phase 4 | Pending |
+| API-01 | Phase 4 | Complete |
+| API-02 | Phase 4 | Complete |
+| API-03 | Phase 4 | Complete |
 | WIN-01 | Phase 3 | Complete |
 | WIN-02 | Phase 3 | Complete |
 | WIN-03 | Phase 3 | Complete |
