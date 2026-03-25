@@ -106,6 +106,29 @@ func (s *Service) searchInCatalog(item *models.CatalogItem, catalogName, catalog
 	return results
 }
 
+// LoadCatalog reads and parses a catalog JSON file, returning the root CatalogItem.
+// Supports both bare-object format (v2.0.0) and array-wrapped format (v1.0 bash script).
+func (s *Service) LoadCatalog(filePath string) (*models.CatalogItem, error) {
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read catalog file: %w", err)
+	}
+
+	// Try array format first (v1.0 bash script compatibility)
+	var catalogArray []*models.CatalogItem
+	if err := json.Unmarshal(data, &catalogArray); err == nil && len(catalogArray) > 0 {
+		return catalogArray[0], nil
+	}
+
+	// Try bare object format (v2.0.0)
+	var catalogObj models.CatalogItem
+	if err := json.Unmarshal(data, &catalogObj); err != nil {
+		return nil, fmt.Errorf("failed to parse catalog JSON: %w", err)
+	}
+
+	return &catalogObj, nil
+}
+
 // BrowseCatalogs loads metadata for all catalogs in a directory
 func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMetadata, error) {
 	var catalogs []*models.CatalogMetadata

@@ -66,6 +66,71 @@ func TestBrowseCatalogsModified(t *testing.T) {
 	}
 }
 
+func TestLoadCatalog(t *testing.T) {
+	s := NewService()
+	_, filePath, _ := writeTestCatalog(t)
+
+	item, err := s.LoadCatalog(filePath)
+	if err != nil {
+		t.Fatalf("LoadCatalog failed: %v", err)
+	}
+	if item == nil {
+		t.Fatal("expected non-nil CatalogItem, got nil")
+	}
+	if item.Name != "./" {
+		t.Errorf("expected Name='./', got %q", item.Name)
+	}
+	if item.Type != "directory" {
+		t.Errorf("expected Type='directory', got %q", item.Type)
+	}
+}
+
+func TestLoadCatalogArrayFormat(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	content := []byte(`[{"type":"directory","name":"root","size":100,"contents":[]}]`)
+	filePath := filepath.Join(dir, "array-catalog.json")
+	if err := os.WriteFile(filePath, content, 0644); err != nil {
+		t.Fatalf("failed to write test catalog: %v", err)
+	}
+
+	item, err := s.LoadCatalog(filePath)
+	if err != nil {
+		t.Fatalf("LoadCatalog failed: %v", err)
+	}
+	if item == nil {
+		t.Fatal("expected non-nil CatalogItem, got nil")
+	}
+	if item.Name != "root" {
+		t.Errorf("expected Name='root', got %q", item.Name)
+	}
+	if item.Type != "directory" {
+		t.Errorf("expected Type='directory', got %q", item.Type)
+	}
+}
+
+func TestLoadCatalogNotFound(t *testing.T) {
+	s := NewService()
+	_, err := s.LoadCatalog("/nonexistent/path.json")
+	if err == nil {
+		t.Error("expected error for nonexistent file, got nil")
+	}
+}
+
+func TestLoadCatalogInvalidJSON(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "invalid.json")
+	if err := os.WriteFile(filePath, []byte("not json"), 0644); err != nil {
+		t.Fatalf("failed to write test file: %v", err)
+	}
+
+	_, err := s.LoadCatalog(filePath)
+	if err == nil {
+		t.Error("expected error for invalid JSON, got nil")
+	}
+}
+
 func TestBrowseCatalogsCreated(t *testing.T) {
 	s := NewService()
 	dir, _, _ := writeTestCatalog(t)
