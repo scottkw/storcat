@@ -59,9 +59,9 @@ Plans:
   1. Config file on disk contains `windowWidth`, `windowHeight`, `windowX`, `windowY`, and `windowPersistenceEnabled` fields after a settings change
   2. `GetWindowPersistence` and `SetWindowPersistence` config methods exist and round-trip correctly (set true → read back true)
   3. Window persistence toggle in settings writes to the config file (not a no-op stub)
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 03-01-PLAN.md — TDD: Config struct extension with WindowX, WindowY, WindowPersistenceEnabled fields and methods
+- [x] 03-01-PLAN.md — TDD: Config struct extension with WindowX, WindowY, WindowPersistenceEnabled fields and methods
 - [ ] 03-02-PLAN.md — App bound methods, lifecycle hooks (domReady/beforeClose), frontend stub replacement
 
 ### Phase 4: App Layer + Lifecycle
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
 | 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
-| 3. Config Manager | 0/2 | Not started | - |
+| 3. Config Manager | 1/2 | In Progress|  |
 | 4. App Layer + Lifecycle | 0/? | Not started | - |
 | 5. Frontend Shim | 0/? | Not started | - |
 | 6. Platform Integration | 0/? | Not started | - |

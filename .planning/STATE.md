@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 02-01-PLAN.md
-last_updated: "2026-03-25T15:10:36.785Z"
+status: Ready to execute
+stopped_at: Completed 03-01-PLAN.md
+last_updated: "2026-03-25T16:23:27.686Z"
 progress:
   total_phases: 7
   completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Full feature parity with Electron v1.2.3 — no regressions for users upgrading to Go/Wails.
-**Current focus:** Phase 02 — search-service-browse-metadata
+**Current focus:** Phase 03 — config-manager
 
 ## Current Position
 
-Phase: 3
-Plan: Not started
+Phase: 03 (config-manager) — EXECUTING
+Plan: 2 of 2
 
 ## Performance Metrics
 
@@ -49,6 +49,7 @@ Plan: Not started
 | Phase 01 P01 | 231 | 2 tasks | 9 files |
 | Phase 01 P02 | 5 | 1 tasks | 5 files |
 | Phase 02 P01 | 174 | 3 tasks | 7 files |
+| Phase 03 P01 | 10 | 1 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -69,6 +70,7 @@ Recent decisions affecting current work:
 - [Phase 01]: Both Created and Modified use time.RFC3339 constant for JS Date-compatible strings (DATA-04)
 - [Phase 02]: LoadCatalog tries array format first (v1 compat) then bare object (v2), matching existing searchInCatalogFile dual-format pattern
 - [Phase 02]: Size column uses 1024-based units (B/KB/MB/GB) with toFixed(1) formatting; value 0 renders as '0 B'
+- [Phase 03]: WindowPersistenceEnabled explicitly set to true in DefaultConfig to override Go zero-value false (Electron parity)
 
 ### Pending Todos
 
@@ -81,6 +83,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T15:06:32.819Z
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-25T16:23:27.678Z
+Stopped at: Completed 03-01-PLAN.md
 Resume file: None
