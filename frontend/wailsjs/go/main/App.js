@@ -18,6 +18,10 @@ export function GetConfig() {
   return window['go']['main']['App']['GetConfig']();
 }
 
+export function GetWindowPersistence() {
+  return window['go']['main']['App']['GetWindowPersistence']();
+}
+
 export function LoadCatalog(arg1) {
   return window['go']['main']['App']['LoadCatalog'](arg1);
 }
@@ -44,6 +48,14 @@ export function SetSidebarPosition(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
+}
+
+export function SetWindowPersistence(arg1) {
+  return window['go']['main']['App']['SetWindowPersistence'](arg1);
+}
+
+export function SetWindowPosition(arg1, arg2) {
+  return window['go']['main']['App']['SetWindowPosition'](arg1, arg2);
 }
 
 export function SetWindowSize(arg1, arg2) {

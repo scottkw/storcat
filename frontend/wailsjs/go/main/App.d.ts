@@ -11,6 +11,8 @@ export function GetCatalogHtmlPath(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<config.Config>;
 
+export function GetWindowPersistence():Promise<boolean>;
+
 export function LoadCatalog(arg1:string):Promise<models.CatalogItem>;
 
 export function OpenExternal(arg1:string):Promise<void>;
@@ -24,5 +26,9 @@ export function SelectDirectory():Promise<string>;
 export function SetSidebarPosition(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
+
+export function SetWindowPersistence(arg1:boolean):Promise<void>;
+
+export function SetWindowPosition(arg1:number,arg2:number):Promise<void>;
 
 export function SetWindowSize(arg1:number,arg2:number):Promise<void>;

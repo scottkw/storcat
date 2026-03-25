@@ -10,7 +10,9 @@ import {
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
-  OpenExternal
+  OpenExternal,
+  GetWindowPersistence,
+  SetWindowPersistence,
 } from '../../wailsjs/go/main/App';
 
 // Wrapper to match Electron API structure
@@ -152,13 +154,24 @@ export const wailsAPI = {
     }
   },
 
-  // Window persistence stubs (optional features)
+  // Window persistence
   getWindowPersistence: async () => {
-    return true; // Default to true for now
+    try {
+      return await GetWindowPersistence();
+    } catch (error) {
+      console.warn('Failed to get window persistence setting:', error);
+      return true; // default to enabled on error
+    }
   },
 
   setWindowPersistence: async (enabled: boolean) => {
-    return { success: true }; // Stub for now
+    try {
+      await SetWindowPersistence(enabled);
+      return { success: true };
+    } catch (error: any) {
+      console.error('Failed to save window persistence setting:', error);
+      return { success: false, error: error.message };
+    }
   },
 };
 
