@@ -128,6 +128,58 @@ func (a *App) SetWindowSize(width, height int) error {
 	return a.configManager.SetWindowSize(width, height)
 }
 
+// GetWindowPersistence returns whether window state persistence is enabled
+func (a *App) GetWindowPersistence() bool {
+	if a.configManager == nil {
+		return true
+	}
+	return a.configManager.GetWindowPersistence()
+}
+
+// SetWindowPersistence saves the window persistence preference
+func (a *App) SetWindowPersistence(enabled bool) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetWindowPersistence(enabled)
+}
+
+// SetWindowPosition saves the window position
+func (a *App) SetWindowPosition(x, y int) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetWindowPosition(x, y)
+}
+
+// domReady is called after the frontend DOM is ready
+func (a *App) domReady(ctx context.Context) {
+	cfg := a.configManager.Get()
+	if cfg == nil || !cfg.WindowPersistenceEnabled {
+		return
+	}
+	runtime.WindowSetSize(ctx, cfg.WindowWidth, cfg.WindowHeight)
+	// Restore position only if non-zero (skip OS default placement for 0,0)
+	if cfg.WindowX != 0 || cfg.WindowY != 0 {
+		runtime.WindowSetPosition(ctx, cfg.WindowX, cfg.WindowY)
+	}
+}
+
+// beforeClose is called before the application closes
+func (a *App) beforeClose(ctx context.Context) bool {
+	if a.configManager == nil {
+		return false
+	}
+	cfg := a.configManager.Get()
+	if cfg != nil && cfg.WindowPersistenceEnabled {
+		w, h := runtime.WindowGetSize(ctx)
+		x, y := runtime.WindowGetPosition(ctx)
+		_ = a.configManager.SetWindowSize(w, h)
+		_ = a.configManager.SetWindowPosition(x, y)
+	}
+	return false // false = allow close
+}
+
 // SelectDirectory opens a directory selection dialog
 func (a *App) SelectDirectory() (string, error) {
 	path, err := runtime.OpenDirectoryDialog(a.ctx, runtime.OpenDialogOptions{
