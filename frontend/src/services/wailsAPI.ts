@@ -57,37 +57,38 @@ export const wailsAPI = {
   // Directory selection
   selectDirectory: async () => {
     try {
-      const result = await SelectDirectory();
-      return result;
-    } catch (error) {
-      return null;
+      const path = await SelectDirectory();
+      return { success: true, path };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
   selectSearchDirectory: async () => {
     try {
-      const result = await SelectDirectory();
-      return result;
-    } catch (error) {
-      return null;
+      const path = await SelectDirectory();
+      return { success: true, path };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
   selectOutputDirectory: async () => {
     try {
-      const result = await SelectDirectory();
-      return result;
-    } catch (error) {
-      return null;
+      const path = await SelectDirectory();
+      return { success: true, path };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
   // Config operations
   getConfig: async () => {
     try {
-      return await GetConfig();
-    } catch (error) {
-      return null;
+      const config = await GetConfig();
+      return { success: true, config };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
@@ -121,17 +122,19 @@ export const wailsAPI = {
   // File operations
   getCatalogHtmlPath: async (catalogPath: string) => {
     try {
-      return await GetCatalogHtmlPath(catalogPath);
-    } catch (error) {
-      return null;
+      const htmlPath = await GetCatalogHtmlPath(catalogPath);
+      return { success: true, htmlPath };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
   readHtmlFile: async (filePath: string) => {
     try {
-      return await ReadHtmlFile(filePath);
-    } catch (error) {
-      return null;
+      const content = await ReadHtmlFile(filePath);
+      return { success: true, content };
+    } catch (error: any) {
+      return { success: false, error: error.message || 'Unknown error' };
     }
   },
 
@@ -157,10 +160,10 @@ export const wailsAPI = {
   // Window persistence
   getWindowPersistence: async () => {
     try {
-      return await GetWindowPersistence();
-    } catch (error) {
-      console.warn('Failed to get window persistence setting:', error);
-      return true; // default to enabled on error
+      const enabled = await GetWindowPersistence();
+      return { success: true, enabled };
+    } catch (error: any) {
+      return { success: false, enabled: true }; // default to enabled on error
     }
   },
 
