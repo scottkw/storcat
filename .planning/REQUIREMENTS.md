@@ -17,7 +17,7 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 ### Catalog Operations
 
-- [ ] **CATL-01**: `LoadCatalog` Go method exists and returns parsed catalog data for a given file path
+- [x] **CATL-01**: `LoadCatalog` Go method exists and returns parsed catalog data for a given file path
 - [x] **CATL-02**: `CreateCatalog` returns result metadata: `jsonPath`, `htmlPath`, `fileCount`, `totalSize`, `copyJsonPath`, `copyHtmlPath`
 - [x] **CATL-03**: Directory traversal follows symlinks (matching Electron's `fs.stat` behavior)
 - [x] **CATL-04**: HTML catalog root node renders with `└──` connector and size bracket, matching Electron format
@@ -83,7 +83,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DATA-03 | Phase 1 | Complete |
 | DATA-04 | Phase 1 | Complete |
 | DATA-05 | Phase 1 | Complete |
-| CATL-01 | Phase 2 | Pending |
+| CATL-01 | Phase 2 | Complete |
 | CATL-02 | Phase 1 | Complete |
 | CATL-03 | Phase 1 | Complete |
 | CATL-04 | Phase 1 | Complete |
