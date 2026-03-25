@@ -143,6 +143,18 @@ function BrowseCatalogsContent() {
       minWidth: 150,
     },
     {
+      key: 'size',
+      title: 'Size',
+      width: 120,
+      minWidth: 80,
+      render: (value: number) => {
+        if (value === 0) return '0 B';
+        const units = ['B', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(value) / Math.log(1024));
+        return `${(value / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+      },
+    },
+    {
       key: 'modified',
       title: 'Modified',
       width: 180,
@@ -164,8 +176,8 @@ function BrowseCatalogsContent() {
 
   // Test data to verify AG Grid is working
   const testData = [
-    { title: 'Test Catalog 1', name: 'test1.json', modified: new Date().toISOString(), path: '/test/1', hasHtml: true },
-    { title: 'Test Catalog 2', name: 'test2.json', modified: new Date().toISOString(), path: '/test/2', hasHtml: false },
+    { title: 'Test Catalog 1', name: 'test1.json', size: 1536, modified: new Date().toISOString(), path: '/test/1', hasHtml: true },
+    { title: 'Test Catalog 2', name: 'test2.json', size: 524288, modified: new Date().toISOString(), path: '/test/2', hasHtml: false },
   ];
 
   const actualData = state.browseCatalogs.length > 0 ? state.browseCatalogs : testData;
