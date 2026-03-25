@@ -95,4 +95,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after Phase 2 completion — Search Service + Browse Metadata verified*
+*Last updated: 2026-03-25 after Phase 4 completion — App Layer + Lifecycle verified (all IPC envelopes consistent, window persistence lifecycle complete)*
