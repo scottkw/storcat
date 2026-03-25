@@ -22,22 +22,23 @@ function CatalogModal({ visible, catalogPath, onClose }: CatalogModalProps) {
 
     setLoading(true);
     try {
-      // Get the HTML file path
-      const htmlPath = await window.electronAPI.getCatalogHtmlPath(catalogPath);
-      if (!htmlPath) {
-        message.error('HTML file not found for this catalog');
+      // Get the HTML file path -- now returns {success, htmlPath} envelope
+      const pathResult = await window.electronAPI.getCatalogHtmlPath(catalogPath);
+      if (!pathResult.success) {
+        message.error(pathResult.error || 'HTML file not found for this catalog');
         return;
       }
 
-      // Read the HTML content
-      const htmlContent = await window.electronAPI.readHtmlFile(htmlPath);
-      if (htmlContent) {
-        // Apply theme modifications to the HTML content
-        const modifiedHtml = modifyHtmlForTheme(htmlContent);
-        setHtmlContent(modifiedHtml);
-      } else {
-        message.error('Failed to read HTML file');
+      // Read the HTML content -- now returns {success, content} envelope
+      const readResult = await window.electronAPI.readHtmlFile(pathResult.htmlPath);
+      if (!readResult.success) {
+        message.error(readResult.error || 'Failed to read HTML file');
+        return;
       }
+
+      // Apply theme modifications to the HTML content
+      const modifiedHtml = modifyHtmlForTheme(readResult.content);
+      setHtmlContent(modifiedHtml);
     } catch (error) {
       message.error('Failed to load catalog HTML');
     } finally {
