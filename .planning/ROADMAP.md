@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Models + Catalog Service** - Fix Go structs and JSON output to match Electron's format (completed 2026-03-24)
 - [x] **Phase 2: Search Service + Browse Metadata** - Fix browse metadata fields and timestamp semantics (completed 2026-03-25)
-- [ ] **Phase 3: Config Manager** - Add window state persistence fields and methods to config
+- [x] **Phase 3: Config Manager** - Add window state persistence fields and methods to config (completed 2026-03-25)
 - [ ] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose
 - [ ] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes
 - [ ] **Phase 6: Platform Integration** - Fix macOS drag region and version sourcing
@@ -59,10 +59,10 @@ Plans:
   1. Config file on disk contains `windowWidth`, `windowHeight`, `windowX`, `windowY`, and `windowPersistenceEnabled` fields after a settings change
   2. `GetWindowPersistence` and `SetWindowPersistence` config methods exist and round-trip correctly (set true → read back true)
   3. Window persistence toggle in settings writes to the config file (not a no-op stub)
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [x] 03-01-PLAN.md — TDD: Config struct extension with WindowX, WindowY, WindowPersistenceEnabled fields and methods
-- [ ] 03-02-PLAN.md — App bound methods, lifecycle hooks (domReady/beforeClose), frontend stub replacement
+- [x] 03-02-PLAN.md — App bound methods, lifecycle hooks (domReady/beforeClose), frontend stub replacement
 
 ### Phase 4: App Layer + Lifecycle
 **Goal**: The complete IPC surface is exposed and the Wails lifecycle hooks save and restore window state, eliminating all runtime panics and missing-method errors
@@ -120,7 +120,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 |-------|----------------|--------|-----------|
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
 | 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
-| 3. Config Manager | 1/2 | In Progress|  |
+| 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
 | 4. App Layer + Lifecycle | 0/? | Not started | - |
 | 5. Frontend Shim | 0/? | Not started | - |
 | 6. Platform Integration | 0/? | Not started | - |

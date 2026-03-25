@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
 status: Ready to execute
-stopped_at: Completed 03-01-PLAN.md
-last_updated: "2026-03-25T16:23:27.686Z"
+stopped_at: Completed 03-02-PLAN.md
+last_updated: "2026-03-25T16:33:31.412Z"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # Project State
@@ -50,6 +50,7 @@ Plan: 2 of 2
 | Phase 01 P02 | 5 | 1 tasks | 5 files |
 | Phase 02 P01 | 174 | 3 tasks | 7 files |
 | Phase 03 P01 | 10 | 1 tasks | 2 files |
+| Phase 03 P02 | 10 | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -71,6 +72,8 @@ Recent decisions affecting current work:
 - [Phase 02]: LoadCatalog tries array format first (v1 compat) then bare object (v2), matching existing searchInCatalogFile dual-format pattern
 - [Phase 02]: Size column uses 1024-based units (B/KB/MB/GB) with toFixed(1) formatting; value 0 renders as '0 B'
 - [Phase 03]: WindowPersistenceEnabled explicitly set to true in DefaultConfig to override Go zero-value false (Electron parity)
+- [Phase 03]: Use OnDomReady (not OnStartup) for window restoration — window not yet rendered at OnStartup
+- [Phase 03]: beforeClose returns false to allow close — returning true would cancel/block the close event
 
 ### Pending Todos
 
@@ -83,6 +86,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T16:23:27.678Z
-Stopped at: Completed 03-01-PLAN.md
+Last session: 2026-03-25T16:33:31.407Z
+Stopped at: Completed 03-02-PLAN.md
 Resume file: None
