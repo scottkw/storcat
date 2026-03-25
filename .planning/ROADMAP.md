@@ -73,7 +73,10 @@ Plans:
   2. `ReadHtmlFile` always responds with a `{success, content}` shaped value; a missing file returns `{success: false}`, not a Promise rejection or `null`
   3. Window size restores to its last-saved value on app relaunch (verified by resizing, quitting, and relaunching)
   4. All IPC wrappers consistently return `{success, ...}` envelopes; no method returns a raw value or throws unhandled rejections
-**Plans**: TBD
+**Plans:** 2 plans
+Plans:
+- [ ] 04-01-PLAN.md — Go GetCatalogHtmlPath os.Stat fix + all 7 wailsAPI wrapper envelope fixes
+- [ ] 04-02-PLAN.md — Consumer component updates for envelope responses + WIN-04 confirmation
 **UI hint**: yes
 
 ### Phase 5: Frontend Shim
@@ -121,7 +124,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
 | 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
 | 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
-| 4. App Layer + Lifecycle | 0/? | Not started | - |
+| 4. App Layer + Lifecycle | 0/2 | Not started | - |
 | 5. Frontend Shim | 0/? | Not started | - |
 | 6. Platform Integration | 0/? | Not started | - |
 | 7. Verification + Merge | 0/? | Not started | - |
