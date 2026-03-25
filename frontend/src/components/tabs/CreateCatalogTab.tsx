@@ -30,10 +30,10 @@ function CreateCatalogSidebar() {
 
   const selectDirectory = async () => {
     try {
-      const directory = await window.electronAPI.selectDirectory();
-      if (directory) {
-        dispatch({ type: 'SET_SELECTED_DIRECTORY', payload: directory });
-        localStorage.setItem('storcat-last-create-directory', directory);
+      const result = await window.electronAPI.selectDirectory();
+      if (result.success) {
+        dispatch({ type: 'SET_SELECTED_DIRECTORY', payload: result.path });
+        localStorage.setItem('storcat-last-create-directory', result.path);
       }
     } catch (error) {
       message.error('Failed to select directory');
@@ -42,10 +42,10 @@ function CreateCatalogSidebar() {
 
   const selectOutputDirectory = async () => {
     try {
-      const directory = await window.electronAPI.selectOutputDirectory();
-      if (directory) {
-        dispatch({ type: 'SET_SELECTED_OUTPUT_DIRECTORY', payload: directory });
-        localStorage.setItem('storcat-last-output-directory', directory);
+      const result = await window.electronAPI.selectOutputDirectory();
+      if (result.success) {
+        dispatch({ type: 'SET_SELECTED_OUTPUT_DIRECTORY', payload: result.path });
+        localStorage.setItem('storcat-last-output-directory', result.path);
       }
     } catch (error) {
       message.error('Failed to select output directory');

@@ -49,10 +49,10 @@ function SearchCatalogsSidebar() {
 
   const selectSearchDirectory = async () => {
     try {
-      const directory = await window.electronAPI.selectSearchDirectory();
-      if (directory) {
-        dispatch({ type: 'SET_SELECTED_SEARCH_DIRECTORY', payload: directory });
-        localStorage.setItem('storcat-last-catalog-directory', directory);
+      const result = await window.electronAPI.selectSearchDirectory();
+      if (result.success) {
+        dispatch({ type: 'SET_SELECTED_SEARCH_DIRECTORY', payload: result.path });
+        localStorage.setItem('storcat-last-catalog-directory', result.path);
       }
     } catch (error) {
       message.error('Failed to select directory');

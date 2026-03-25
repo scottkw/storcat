@@ -57,10 +57,11 @@ function MainContent() {
     // Load window persistence setting
     const loadWindowPersistence = async () => {
       try {
-        const enabled = await window.electronAPI.getWindowPersistence();
-        setWindowPersistence(enabled);
+        const result = await window.electronAPI.getWindowPersistence();
+        setWindowPersistence(result.enabled);
       } catch (error) {
         console.warn('Failed to load window persistence setting:', error);
+        setWindowPersistence(true); // default to enabled
       }
     };
     loadWindowPersistence();
