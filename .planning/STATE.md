@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-03-25T14:23:59.696Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 02-01-PLAN.md
+last_updated: "2026-03-25T15:06:32.847Z"
 progress:
   total_phases: 7
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Full feature parity with Electron v1.2.3 — no regressions for users upgrading to Go/Wails.
-**Current focus:** Phase 01 — data-models-catalog-service
+**Current focus:** Phase 02 — search-service-browse-metadata
 
 ## Current Position
 
-Phase: 2
-Plan: Not started
+Phase: 02 (search-service-browse-metadata) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -48,6 +48,7 @@ Plan: Not started
 *Updated after each plan completion*
 | Phase 01 P01 | 231 | 2 tasks | 9 files |
 | Phase 01 P02 | 5 | 1 tasks | 5 files |
+| Phase 02 P01 | 174 | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,8 @@ Recent decisions affecting current work:
 - [Phase 01]: CatalogMetadata.Size is int64 populated via info.Size() in BrowseCatalogs (DATA-03)
 - [Phase 01]: Created field uses djherbis/times BirthTime() on macOS, falls back to ModTime() elsewhere (DATA-05)
 - [Phase 01]: Both Created and Modified use time.RFC3339 constant for JS Date-compatible strings (DATA-04)
+- [Phase 02]: LoadCatalog tries array format first (v1 compat) then bare object (v2), matching existing searchInCatalogFile dual-format pattern
+- [Phase 02]: Size column uses 1024-based units (B/KB/MB/GB) with toFixed(1) formatting; value 0 renders as '0 B'
 
 ### Pending Todos
 
@@ -78,6 +81,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-24T21:59:35.237Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-03-25T15:06:32.819Z
+Stopped at: Completed 02-01-PLAN.md
 Resume file: None

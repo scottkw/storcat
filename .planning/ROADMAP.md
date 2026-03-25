@@ -13,7 +13,7 @@ This milestone fixes correctness gaps between the Electron v1.2.3 backend and th
 Decimal phases appear between their surrounding integers in numeric order.
 
 - [x] **Phase 1: Data Models + Catalog Service** - Fix Go structs and JSON output to match Electron's format (completed 2026-03-24)
-- [ ] **Phase 2: Search Service + Browse Metadata** - Fix browse metadata fields and timestamp semantics
+- [x] **Phase 2: Search Service + Browse Metadata** - Fix browse metadata fields and timestamp semantics (completed 2026-03-25)
 - [ ] **Phase 3: Config Manager** - Add window state persistence fields and methods to config
 - [ ] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose
 - [ ] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes
@@ -45,9 +45,9 @@ Plans:
   1. The Browse tab displays a `size` column with byte values for each catalog entry
   2. The `modified` field in browse results is a Date-compatible RFC3339 string, not an opaque Go time string
   3. `LoadCatalog` (new Go method) reads and parses a catalog JSON file and returns its contents to the frontend
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 02-01-PLAN.md — LoadCatalog method (TDD), wailsAPI wrapper, Browse tab Size column
+- [x] 02-01-PLAN.md — LoadCatalog method (TDD), wailsAPI wrapper, Browse tab Size column
 
 **Note on DATA-03/DATA-04/DATA-05 dual coverage:** These model fields are defined in Phase 1 structs but their correctness is observable only through browse output, so verification belongs in Phase 2.
 
@@ -116,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
-| 2. Search Service + Browse Metadata | 0/1 | Planning complete | - |
+| 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
 | 3. Config Manager | 0/? | Not started | - |
 | 4. App Layer + Lifecycle | 0/? | Not started | - |
 | 5. Frontend Shim | 0/? | Not started | - |
