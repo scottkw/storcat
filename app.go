@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"path/filepath"
 
@@ -199,12 +200,19 @@ func (a *App) ReadHtmlFile(filePath string) (string, error) {
 
 // GetCatalogHtmlPath returns the HTML file path for a catalog
 func (a *App) GetCatalogHtmlPath(catalogPath string) (string, error) {
-	// Remove the .json extension and add .html
+	var htmlPath string
 	if filepath.Ext(catalogPath) == ".json" {
-		htmlPath := catalogPath[:len(catalogPath)-5] + ".html"
-		return htmlPath, nil
+		htmlPath = catalogPath[:len(catalogPath)-5] + ".html"
+	} else {
+		htmlPath = catalogPath + ".html"
 	}
-	return catalogPath + ".html", nil
+	if _, err := os.Stat(htmlPath); err != nil {
+		if os.IsNotExist(err) {
+			return "", fmt.Errorf("HTML file not found: %s", htmlPath)
+		}
+		return "", fmt.Errorf("cannot access HTML file: %w", err)
+	}
+	return htmlPath, nil
 }
 
 // OpenExternal opens a URL or file in the system's default application
