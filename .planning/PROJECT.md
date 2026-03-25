@@ -35,7 +35,7 @@ Existing capabilities confirmed working in the Go/Wails branch:
 
 - [ ] Fix `createCatalog` return metadata — Go returns void, should return fileCount/totalSize/paths
 - [ ] Fix symlink handling — Go skips symlinks via `os.Lstat`, must follow them like Electron's `fs.stat`
-- [ ] Implement full window state persistence — size + position save/restore + settings toggle (currently stubs)
+- [x] Implement full window state persistence — size + position save/restore + settings toggle — Phase 3
 - [ ] Fix `getCatalogHtmlPath` — must verify file existence and return `{success, htmlPath}` envelope
 - [ ] Fix `readHtmlFile` — must return `{success, content}` envelope
 - [ ] Fix header drag region — `WebkitAppRegion: 'drag'` missing for macOS titlebar
