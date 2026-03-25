@@ -45,7 +45,9 @@ Plans:
   1. The Browse tab displays a `size` column with byte values for each catalog entry
   2. The `modified` field in browse results is a Date-compatible RFC3339 string, not an opaque Go time string
   3. `LoadCatalog` (new Go method) reads and parses a catalog JSON file and returns its contents to the frontend
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 02-01-PLAN.md — LoadCatalog method (TDD), wailsAPI wrapper, Browse tab Size column
 
 **Note on DATA-03/DATA-04/DATA-05 dual coverage:** These model fields are defined in Phase 1 structs but their correctness is observable only through browse output, so verification belongs in Phase 2.
 
@@ -114,7 +116,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Data Models + Catalog Service | 2/2 | Complete   | 2026-03-24 |
-| 2. Search Service + Browse Metadata | 0/? | Not started | - |
+| 2. Search Service + Browse Metadata | 0/1 | Planning complete | - |
 | 3. Config Manager | 0/? | Not started | - |
 | 4. App Layer + Lifecycle | 0/? | Not started | - |
 | 5. Frontend Shim | 0/? | Not started | - |
