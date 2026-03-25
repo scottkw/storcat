@@ -58,27 +58,27 @@ export const wailsAPI = {
   selectDirectory: async () => {
     try {
       const path = await SelectDirectory();
-      return { success: true, path };
+      return { success: true as const, path };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
   selectSearchDirectory: async () => {
     try {
       const path = await SelectDirectory();
-      return { success: true, path };
+      return { success: true as const, path };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
   selectOutputDirectory: async () => {
     try {
       const path = await SelectDirectory();
-      return { success: true, path };
+      return { success: true as const, path };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
@@ -86,9 +86,9 @@ export const wailsAPI = {
   getConfig: async () => {
     try {
       const config = await GetConfig();
-      return { success: true, config };
+      return { success: true as const, config };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
@@ -123,18 +123,18 @@ export const wailsAPI = {
   getCatalogHtmlPath: async (catalogPath: string) => {
     try {
       const htmlPath = await GetCatalogHtmlPath(catalogPath);
-      return { success: true, htmlPath };
+      return { success: true as const, htmlPath };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
   readHtmlFile: async (filePath: string) => {
     try {
       const content = await ReadHtmlFile(filePath);
-      return { success: true, content };
+      return { success: true as const, content };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
@@ -161,9 +161,9 @@ export const wailsAPI = {
   getWindowPersistence: async () => {
     try {
       const enabled = await GetWindowPersistence();
-      return { success: true, enabled };
+      return { success: true as const, enabled };
     } catch (error: any) {
-      return { success: false, enabled: true }; // default to enabled on error
+      return { success: false as const, enabled: true }; // default to enabled on error
     }
   },
 
