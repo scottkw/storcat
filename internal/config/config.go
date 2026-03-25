@@ -8,19 +8,25 @@ import (
 
 // Config holds application settings
 type Config struct {
-	Theme           string `json:"theme"`            // "light" or "dark"
-	SidebarPosition string `json:"sidebarPosition"`  // "left" or "right"
-	WindowWidth     int    `json:"windowWidth"`
-	WindowHeight    int    `json:"windowHeight"`
+	Theme                   string `json:"theme"`                   // "light" or "dark"
+	SidebarPosition         string `json:"sidebarPosition"`         // "left" or "right"
+	WindowWidth             int    `json:"windowWidth"`
+	WindowHeight            int    `json:"windowHeight"`
+	WindowX                 int    `json:"windowX"`
+	WindowY                 int    `json:"windowY"`
+	WindowPersistenceEnabled bool  `json:"windowPersistenceEnabled"`
 }
 
 // DefaultConfig returns default application settings
 func DefaultConfig() *Config {
 	return &Config{
-		Theme:           "light",
-		SidebarPosition: "left",
-		WindowWidth:     1200,
-		WindowHeight:    800,
+		Theme:                    "light",
+		SidebarPosition:          "left",
+		WindowWidth:              1200,
+		WindowHeight:             800,
+		WindowX:                  0,
+		WindowY:                  0,
+		WindowPersistenceEnabled: true,
 	}
 }
 
@@ -117,4 +123,22 @@ func (m *Manager) SetWindowSize(width, height int) error {
 	m.config.WindowWidth = width
 	m.config.WindowHeight = height
 	return m.Save()
+}
+
+// SetWindowPosition updates window coordinates
+func (m *Manager) SetWindowPosition(x, y int) error {
+	m.config.WindowX = x
+	m.config.WindowY = y
+	return m.Save()
+}
+
+// SetWindowPersistence updates the window state persistence toggle
+func (m *Manager) SetWindowPersistence(enabled bool) error {
+	m.config.WindowPersistenceEnabled = enabled
+	return m.Save()
+}
+
+// GetWindowPersistence returns whether window state persistence is enabled
+func (m *Manager) GetWindowPersistence() bool {
+	return m.config.WindowPersistenceEnabled
 }
