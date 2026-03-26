@@ -119,7 +119,7 @@ Plans:
 **Plans:** 1/2 plans executed
 Plans:
 - [x] 07-01-PLAN.md — Pre-merge cleanup (go.mod, .gitignore, CI) and full verification audit (tests, build, bloat check)
-- [ ] 07-02-PLAN.md — Three-tab smoke test on macOS + merge to main with v2.0.0 tag
+- [x] 07-02-PLAN.md — Three-tab smoke test on macOS + merge to main with v2.0.0 tag
 
 ## Progress
 
