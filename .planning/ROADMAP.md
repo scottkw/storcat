@@ -103,4 +103,4 @@ Plans:
 | 8. CLI Foundation and Platform Compatibility | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete    | 2026-03-26 |
-| 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete   | 2026-03-26 |
+| 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete    | 2026-03-26 |
