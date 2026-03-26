@@ -102,7 +102,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. On macOS, clicking and dragging the application header moves the window (the drag region is functional)
   2. The version string shown in the app UI matches the version defined in the project's version source file, not a hardcoded Go constant
-**Plans**: TBD
+**Plans:** 1 plan
+Plans:
+- [ ] 06-01-PLAN.md — macOS header drag CSS + build-time version injection with GetVersion bound method
 **UI hint**: yes
 
 ### Phase 7: Verification + Merge
@@ -128,5 +130,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
 | 4. App Layer + Lifecycle | 2/2 | Complete   | 2026-03-25 |
 | 5. Frontend Shim | 1/1 | Complete   | 2026-03-26 |
-| 6. Platform Integration | 0/? | Not started | - |
+| 6. Platform Integration | 0/1 | In progress | - |
 | 7. Verification + Merge | 0/? | Not started | - |
