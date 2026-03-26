@@ -32,19 +32,23 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - ✓ 11 themes, collapsible sidebar, 3-tab navigation — existing
 - ✓ ModernTable with sort, filter, resize, pagination — existing
 - ✓ Cross-platform builds (macOS, Windows, Linux) — existing
+- ✓ CLI subcommands in unified binary (`storcat` = GUI, `storcat <cmd>` = CLI) — v2.1.0
+- ✓ `storcat create` — create catalog from directory — v2.1.0
+- ✓ `storcat search` — search catalogs for a term — v2.1.0
+- ✓ `storcat list` — list catalogs with metadata — v2.1.0
+- ✓ `storcat show` — display catalog tree structure — v2.1.0
+- ✓ `storcat open` — open catalog HTML in default browser — v2.1.0
+- ✓ `storcat version` — print version — v2.1.0
+- ✓ CLI dispatch, subcommand routing, `--help`, exit codes — v2.1.0
+- ✓ macOS `-psn_*` filtering, Windows console output, install script — v2.1.0
+- ✓ `--json` flag on list, search, create, show — v2.1.0
+- ✓ `--depth N` flag on show — v2.1.0
+- ✓ Colorized tree output with `--no-color` / `NO_COLOR` support — v2.1.0
+- ✓ Cross-platform `storcat open` (macOS/Linux/Windows) — v2.1.0
 
 ### Active
 
-<!-- v2.1.0 CLI Commands -->
-- [ ] CLI subcommands in unified binary (`storcat` = GUI, `storcat <cmd>` = CLI)
-- ✓ `storcat create` — create catalog from directory — Phase 9
-- ✓ `storcat search` — search catalogs for a term — Phase 9
-- ✓ `storcat list` — list catalogs with metadata — Phase 9
-- ✓ `storcat show` — display catalog tree structure — Phase 10
-- ✓ `storcat open` — open catalog HTML in default browser — Phase 10
-- ✓ `storcat version` — print version — Phase 11
-- ✓ CLI dispatch, subcommand routing, `--help`, exit codes — Phase 8
-- ✓ macOS `-psn_*` filtering, Windows console output, install script — Phase 8
+(None — define in next milestone)
 
 ### Out of Scope
 
@@ -54,29 +58,24 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
 
-## Current Milestone: v2.1.0 CLI Commands
+## Current State
 
-**Goal:** Add CLI subcommands to the unified StorCat binary so users can create, search, browse, and view catalogs from the command line.
+**Shipped:** v2.1.0 CLI Commands (2026-03-26)
 
-**Target features:**
-- `storcat create` — create catalog (JSON + HTML) from a directory
-- `storcat search` — search catalogs for a term
-- `storcat list` — list catalogs in a directory with metadata
-- `storcat show` — display a catalog's tree structure
-- `storcat open` — open catalog HTML in default browser
-- `storcat version` — print version
-- `storcat` (no args) — launch GUI as today
+StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`.
 
 ## Context
 
-Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js to Go/Wails.
+Shipped v2.1.0 on 2026-03-26 — added full CLI subcommand support to the Go/Wails binary.
+Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js to Go/Wails.
 
-**Codebase:** ~1,700 LOC Go + ~2,700 LOC TypeScript
+**Codebase:** ~2,500 LOC Go + ~2,700 LOC TypeScript
 **Tech stack:** Go 1.23, Wails v2, React 18, TypeScript 5, Ant Design 5
+**Dependencies:** tablewriter v1.1.4, fatih/color v1.18.0, pkg/browser
 **Platforms:** macOS (universal), Windows (x64/arm64), Linux (x64/arm64)
 **Build:** `wails build` with ldflags version injection
 
-**Known tech debt:** Phase 11 closed all v2.1.0 audit items (NO_COLOR test gap, stale import, help stream inconsistency, orphaned export). Remaining v2.0.0 items tracked in `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md`.
+**Known tech debt:** All v2.1.0 audit items resolved. 1 non-blocking procedural item (SUMMARY.md frontmatter convention). Remaining v2.0.0 items tracked in `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md`.
 
 ## Key Decisions
 
@@ -94,6 +93,13 @@ Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js 
 | CLI dispatch before wails.Run() | Known subcommands exit early, unknown args fall through to GUI | ✓ Good |
 | Dual-format LoadCatalog (array + object) | v1 backward compatibility with zero user friction | ✓ Good |
 | `{success,...}` envelope pattern | Consistent error handling, matches Electron contract | ✓ Good |
+| stdlib flag.FlagSet for CLI (no Cobra) | Zero deps, 6 subcommands don't justify ~2MB | ✓ Good |
+| CLI dispatch before wails.Run() | Known subcommands exit early, unknown fall through to GUI | ✓ Good |
+| tablewriter v1.1.4 for table output | Builder API, lightweight, good alignment | ✓ Good |
+| fatih/color for tree rendering | stdlib-compatible, respects NO_COLOR | ✓ Good |
+| pkg/browser for cross-platform open | Proven package, handles macOS/Linux/Windows | ✓ Good |
+| -windowsconsole for Windows CLI | Simpler than AttachConsole, no runtime complexity | ✓ Good |
+| Universal -psn_* filtering | One function on all platforms, no build tags | ✓ Good |
 
 ## Constraints
 
@@ -119,4 +125,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 11 (tech debt cleanup) complete — last phase in v2.1.0 milestone*
+*Last updated: 2026-03-26 after v2.1.0 milestone*
