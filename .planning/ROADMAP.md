@@ -38,9 +38,9 @@
   3. Running `storcat --help` or `storcat <cmd> --help` prints usage text and exits 0
   4. Running `storcat` from a Windows terminal produces visible output (not silently discarded by GUI subsystem)
   5. Running `storcat` from macOS Finder on first launch does not crash due to `-psn_*` argument injection, and `wails dev` hot-reload still opens the GUI
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 08-01-PLAN.md — CLI package: dispatch, version command, stub commands, tests
+- [x] 08-01-PLAN.md — CLI package: dispatch, version command, stub commands, tests
 - [ ] 08-02-PLAN.md — main.go integration, psn filtering, install script, Windows build
 
 ### Phase 9: Core Subcommands — Create, List, Search
@@ -78,6 +78,6 @@ Plans:
 | 5. Frontend Shim | v2.0.0 | 1/1 | Complete | 2026-03-26 |
 | 6. Platform Integration | v2.0.0 | 1/1 | Complete | 2026-03-26 |
 | 7. Verification + Merge | v2.0.0 | 2/2 | Complete | 2026-03-26 |
-| 8. CLI Foundation and Platform Compatibility | v2.1.0 | 0/2 | Not started | - |
+| 8. CLI Foundation and Platform Compatibility | v2.1.0 | 1/2 | In Progress|  |
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 0/? | Not started | - |
 | 10. Show, Open, and Output Polish | v2.1.0 | 0/? | Not started | - |

@@ -10,11 +10,11 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 ### CLI Foundation
 
 - [ ] **CLIP-01**: User can run `storcat` with no args to launch GUI (existing behavior preserved)
-- [ ] **CLIP-02**: User can run `storcat <command>` to execute CLI commands from the same binary
-- [ ] **CLIP-03**: CLI dispatch uses stdlib `flag.FlagSet` (no Cobra dependency)
-- [ ] **CLIP-04**: CLI commands output errors to stderr and results to stdout
-- [ ] **CLIP-05**: CLI commands exit with code 0 on success, non-zero on error
-- [ ] **CLIP-06**: All commands support `--help` / `-h` flag
+- [x] **CLIP-02**: User can run `storcat <command>` to execute CLI commands from the same binary
+- [x] **CLIP-03**: CLI dispatch uses stdlib `flag.FlagSet` (no Cobra dependency)
+- [x] **CLIP-04**: CLI commands output errors to stderr and results to stdout
+- [x] **CLIP-05**: CLI commands exit with code 0 on success, non-zero on error
+- [x] **CLIP-06**: All commands support `--help` / `-h` flag
 
 ### CLI Commands
 
@@ -23,7 +23,7 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 - [ ] **CLCM-03**: User can run `storcat list <dir>` to list catalogs with metadata
 - [ ] **CLCM-04**: User can run `storcat show <catalog.json>` to display catalog tree structure
 - [ ] **CLCM-05**: User can run `storcat open <catalog.json>` to open catalog HTML in default browser
-- [ ] **CLCM-06**: User can run `storcat version` to print version string
+- [x] **CLCM-06**: User can run `storcat version` to print version string
 
 ### Output Formatting
 
@@ -76,17 +76,17 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | CLIP-01 | Phase 8 | Pending |
-| CLIP-02 | Phase 8 | Pending |
-| CLIP-03 | Phase 8 | Pending |
-| CLIP-04 | Phase 8 | Pending |
-| CLIP-05 | Phase 8 | Pending |
-| CLIP-06 | Phase 8 | Pending |
+| CLIP-02 | Phase 8 | Complete |
+| CLIP-03 | Phase 8 | Complete |
+| CLIP-04 | Phase 8 | Complete |
+| CLIP-05 | Phase 8 | Complete |
+| CLIP-06 | Phase 8 | Complete |
 | CLCM-01 | Phase 9 | Pending |
 | CLCM-02 | Phase 9 | Pending |
 | CLCM-03 | Phase 9 | Pending |
 | CLCM-04 | Phase 10 | Pending |
 | CLCM-05 | Phase 10 | Pending |
-| CLCM-06 | Phase 8 | Pending |
+| CLCM-06 | Phase 8 | Complete |
 | CLOF-01 | Phase 9 | Pending |
 | CLOF-02 | Phase 10 | Pending |
 | CLOF-03 | Phase 9 | Pending |
