@@ -21,21 +21,6 @@ func runCreate(args []string) int {
 	return 1
 }
 
-func runSearch(args []string) int {
-	fs := flag.NewFlagSet("search", flag.ContinueOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: storcat search <term> <directory> [flags]\n\nSearch catalogs for a term.\n\nFlags:\n  --json   Output results as JSON\n")
-	}
-	if err := fs.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			return 0
-		}
-		return 2
-	}
-	fmt.Fprintf(os.Stderr, "storcat search: not yet implemented\n")
-	return 1
-}
-
 
 func runShow(args []string) int {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)
