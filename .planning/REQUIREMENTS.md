@@ -18,8 +18,8 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 
 ### CLI Commands
 
-- [ ] **CLCM-01**: User can run `storcat create <dir>` with `--title`, `--name`, `--output` flags to create a catalog
-- [ ] **CLCM-02**: User can run `storcat search <term> <dir>` to search catalogs for a term
+- [x] **CLCM-01**: User can run `storcat create <dir>` with `--title`, `--name`, `--output` flags to create a catalog
+- [x] **CLCM-02**: User can run `storcat search <term> <dir>` to search catalogs for a term
 - [x] **CLCM-03**: User can run `storcat list <dir>` to list catalogs with metadata
 - [ ] **CLCM-04**: User can run `storcat show <catalog.json>` to display catalog tree structure
 - [ ] **CLCM-05**: User can run `storcat open <catalog.json>` to open catalog HTML in default browser
@@ -29,7 +29,7 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 
 - [x] **CLOF-01**: `list` and `search` commands support `--json` flag for machine-readable output
 - [ ] **CLOF-02**: `show` command supports `--json` flag to output raw catalog JSON
-- [ ] **CLOF-03**: `create` command supports `--json` flag for structured result output
+- [x] **CLOF-03**: `create` command supports `--json` flag for structured result output
 - [ ] **CLOF-04**: `show` command supports `--depth N` flag to limit tree depth
 - [ ] **CLOF-05**: `show` command displays colorized tree output (directories bold/blue) on TTY
 - [ ] **CLOF-06**: All commands respect `--no-color` flag and `NO_COLOR` env var
@@ -81,15 +81,15 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLIP-04 | Phase 8 | Complete |
 | CLIP-05 | Phase 8 | Complete |
 | CLIP-06 | Phase 8 | Complete |
-| CLCM-01 | Phase 9 | Pending |
-| CLCM-02 | Phase 9 | Pending |
+| CLCM-01 | Phase 9 | Complete |
+| CLCM-02 | Phase 9 | Complete |
 | CLCM-03 | Phase 9 | Complete |
 | CLCM-04 | Phase 10 | Pending |
 | CLCM-05 | Phase 10 | Pending |
 | CLCM-06 | Phase 8 | Complete |
 | CLOF-01 | Phase 9 | Complete |
 | CLOF-02 | Phase 10 | Pending |
-| CLOF-03 | Phase 9 | Pending |
+| CLOF-03 | Phase 9 | Complete |
 | CLOF-04 | Phase 10 | Pending |
 | CLOF-05 | Phase 10 | Pending |
 | CLOF-06 | Phase 10 | Pending |

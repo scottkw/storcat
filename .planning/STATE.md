@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 09-01-PLAN.md
-last_updated: "2026-03-26T15:37:49.852Z"
+status: verifying
+stopped_at: Completed 09-02-PLAN.md
+last_updated: "2026-03-26T15:43:24.409Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 3
@@ -26,7 +26,7 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 
 Phase: 09 (core-subcommands-create-list-search) — EXECUTING
 Plan: 2 of 2
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-03-26
 
 ```
@@ -53,6 +53,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 08]: filterMacOSArgs applied universally on all platforms — one function, no-op on Windows/Linux, no build tags needed
 - [Phase 09-core-subcommands-create-list-search]: tablewriter v1.1.4 requires builder API (Header/Append/Render) not v0.x SetHeader methods
 - [Phase 09-core-subcommands-create-list-search]: Interspersed flag pattern: pre-separate positional from flags to support 'storcat list <dir> --json' ordering
+- [Phase 09]: Split-at-first-flag pattern for create command: positional args before first flag, everything after is flags — handles named flags with separate values
+- [Phase 09]: stubs.go now contains only runShow/runOpen — list, search, and create commands are fully implemented
 
 ### Pending Todos
 
@@ -66,6 +68,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T15:37:49.849Z
-Stopped at: Completed 09-01-PLAN.md
+Last session: 2026-03-26T15:43:24.406Z
+Stopped at: Completed 09-02-PLAN.md
 Resume file: None
