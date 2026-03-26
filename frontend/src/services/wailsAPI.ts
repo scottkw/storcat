@@ -20,10 +20,18 @@ export const wailsAPI = {
   // Catalog operations
   createCatalog: async (title: string, directoryPath: string, outputName: string, copyToDirectory: string) => {
     try {
-      await CreateCatalog(title, directoryPath, outputName, copyToDirectory);
-      return { success: true };
+      const result = await CreateCatalog(title, directoryPath, outputName, copyToDirectory);
+      return {
+        success: true as const,
+        jsonPath: result.jsonPath,
+        htmlPath: result.htmlPath,
+        fileCount: result.fileCount,
+        totalSize: result.totalSize,
+        copyJsonPath: result.copyJsonPath,
+        copyHtmlPath: result.copyHtmlPath,
+      };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 
