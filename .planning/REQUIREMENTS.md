@@ -42,8 +42,8 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 ### Merge & Release
 
-- [ ] **REL-01**: Clean branch merges to main with no bloat (no node_modules, binaries, or archive)
-- [ ] **REL-02**: `.gitignore` covers `node_modules/`, `build/bin/`, `.DS_Store`, `dist/`
+- [x] **REL-01**: Clean branch merges to main with no bloat (no node_modules, binaries, or archive)
+- [x] **REL-02**: `.gitignore` covers `node_modules/`, `build/bin/`, `.DS_Store`, `dist/`
 
 ## v2 Requirements
 
@@ -96,8 +96,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WIN-04 | Phase 4 | Complete |
 | PLAT-01 | Phase 6 | Complete |
 | PLAT-02 | Phase 6 | Complete |
-| REL-01 | Phase 7 | Pending |
-| REL-02 | Phase 7 | Pending |
+| REL-01 | Phase 7 | Complete |
+| REL-02 | Phase 7 | Complete |
 
 **Coverage:**
 - v1 requirements: 20 total
