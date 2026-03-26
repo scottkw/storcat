@@ -19,3 +19,9 @@ Thumbs.db
 
 # Misc
 storcat-icons/
+
+# Generated catalogs (example output, not source)
+storcat-project.*
+
+# Wails dev-mode plist
+build/darwin/Info.dev.plist

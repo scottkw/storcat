@@ -2,11 +2,13 @@ module storcat-wails
 
 go 1.23
 
-require github.com/wailsapp/wails/v2 v2.10.2
+require (
+	github.com/djherbis/times v1.6.0
+	github.com/wailsapp/wails/v2 v2.10.2
+)
 
 require (
 	github.com/bep/debounce v1.2.1 // indirect
-	github.com/djherbis/times v1.6.0 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.1.0 // indirect
 	github.com/google/uuid v1.6.0 // indirect
@@ -34,5 +36,3 @@ require (
 	golang.org/x/sys v0.30.0 // indirect
 	golang.org/x/text v0.22.0 // indirect
 )
-
-// replace github.com/wailsapp/wails/v2 v2.10.2 => /Users/ken/go/pkg/mod
