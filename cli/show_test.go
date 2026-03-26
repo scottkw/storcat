@@ -212,6 +212,26 @@ func TestRunShow_NoColor(t *testing.T) {
 	}
 }
 
+func TestRunShow_NOCOLOREnv(t *testing.T) {
+	dir := t.TempDir()
+	writeTestCatalog(t, dir, "my-catalog")
+	catalogPath := filepath.Join(dir, "my-catalog.json")
+
+	t.Setenv("NO_COLOR", "1")
+
+	exitCode := 0
+	stdout, _ := captureOutput(func() {
+		exitCode = cli.Run([]string{"show", catalogPath}, "2.0.0")
+	})
+	if exitCode != 0 {
+		t.Errorf("expected exit code 0, got %d", exitCode)
+	}
+	// No ANSI escape sequences when NO_COLOR is set
+	if strings.Contains(stdout, "\x1b") {
+		t.Errorf("expected no ANSI escape sequences with NO_COLOR=1, got %q", stdout)
+	}
+}
+
 func TestRunShow_DepthIgnoredForJSON(t *testing.T) {
 	dir := t.TempDir()
 	writeDeepTestCatalog(t, dir, "deep-catalog")

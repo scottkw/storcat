@@ -4,10 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-
-	// tablewriter imported here to ensure the dependency is registered;
-	// actual table creation happens in list.go and other command files.
-	_ "github.com/olekukonko/tablewriter"
 )
 
 // printJSON encodes v as indented JSON to stdout.
