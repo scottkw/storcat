@@ -19,7 +19,7 @@ created: 2026-03-26
 |----------|-------|
 | **Framework** | go test |
 | **Config file** | none — existing test infrastructure |
-| **Quick run command** | `go test ./internal/cli/...` |
+| **Quick run command** | `go test ./cli/...` |
 | **Full suite command** | `go test ./...` |
 | **Estimated runtime** | ~10 seconds |
 
@@ -27,7 +27,7 @@ created: 2026-03-26
 
 ## Sampling Rate
 
-- **After every task commit:** Run `go test ./internal/cli/...`
+- **After every task commit:** Run `go test ./cli/...`
 - **After every plan wave:** Run `go test ./...`
 - **Before `/gsd:verify-work`:** Full suite must be green
 - **Max feedback latency:** 10 seconds
@@ -38,12 +38,12 @@ created: 2026-03-26
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 1 | CLOF-04 | unit | `go test ./internal/cli/ -run TestShowCommand` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 1 | CLOF-05 | unit | `go test ./internal/cli/ -run TestShowDepth` | ❌ W0 | ⬜ pending |
-| 10-01-03 | 01 | 1 | CLOF-04 | unit | `go test ./internal/cli/ -run TestShowColor` | ❌ W0 | ⬜ pending |
-| 10-01-04 | 01 | 1 | CLOF-02 | unit | `go test ./internal/cli/ -run TestShowJSON` | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | CLCM-05 | unit | `go test ./internal/cli/ -run TestOpenCommand` | ❌ W0 | ⬜ pending |
-| 10-02-02 | 02 | 1 | CLPC-05 | unit | `go test ./internal/cli/ -run TestNoColor` | ❌ W0 | ⬜ pending |
+| 10-01-01 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestShowCommand` | ❌ W0 | ⬜ pending |
+| 10-01-02 | 01 | 1 | CLOF-05 | unit | `go test ./cli/ -run TestShowDepth` | ❌ W0 | ⬜ pending |
+| 10-01-03 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestShowColor` | ❌ W0 | ⬜ pending |
+| 10-01-04 | 01 | 1 | CLOF-02 | unit | `go test ./cli/ -run TestShowJSON` | ❌ W0 | ⬜ pending |
+| 10-02-01 | 02 | 1 | CLCM-05 | unit | `go test ./cli/ -run TestOpenCommand` | ❌ W0 | ⬜ pending |
+| 10-02-02 | 02 | 1 | CLPC-05 | unit | `go test ./cli/ -run TestNoColor` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
