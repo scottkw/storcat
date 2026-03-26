@@ -37,9 +37,9 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 <!-- v2.1.0 CLI Commands -->
 - [ ] CLI subcommands in unified binary (`storcat` = GUI, `storcat <cmd>` = CLI)
-- [ ] `storcat create` — create catalog from directory
-- [ ] `storcat search` — search catalogs for a term
-- [ ] `storcat list` — list catalogs with metadata
+- ✓ `storcat create` — create catalog from directory — Phase 9
+- ✓ `storcat search` — search catalogs for a term — Phase 9
+- ✓ `storcat list` — list catalogs with metadata — Phase 9
 - [ ] `storcat show` — display catalog tree structure
 - [ ] `storcat open` — open catalog HTML in default browser
 - [ ] `storcat version` — print version
@@ -124,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 8 (CLI foundation) complete*
+*Last updated: 2026-03-26 after Phase 9 (core subcommands — create, list, search) complete*
