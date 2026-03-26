@@ -9,7 +9,7 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 
 ### CLI Foundation
 
-- [ ] **CLIP-01**: User can run `storcat` with no args to launch GUI (existing behavior preserved)
+- [x] **CLIP-01**: User can run `storcat` with no args to launch GUI (existing behavior preserved)
 - [x] **CLIP-02**: User can run `storcat <command>` to execute CLI commands from the same binary
 - [x] **CLIP-03**: CLI dispatch uses stdlib `flag.FlagSet` (no Cobra dependency)
 - [x] **CLIP-04**: CLI commands output errors to stderr and results to stdout
@@ -36,10 +36,10 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 
 ### Platform Compatibility
 
-- [ ] **CLPC-01**: CLI output works in Windows terminals (console attachment for GUI subsystem binary)
-- [ ] **CLPC-02**: macOS Gatekeeper `-psn_*` argument injection is filtered before CLI dispatch
-- [ ] **CLPC-03**: `wails dev` hot-reload still works after CLI dispatch changes
-- [ ] **CLPC-04**: macOS install script creates `/usr/local/bin/storcat` symlink to `.app` bundle binary
+- [x] **CLPC-01**: CLI output works in Windows terminals (console attachment for GUI subsystem binary)
+- [x] **CLPC-02**: macOS Gatekeeper `-psn_*` argument injection is filtered before CLI dispatch
+- [x] **CLPC-03**: `wails dev` hot-reload still works after CLI dispatch changes
+- [x] **CLPC-04**: macOS install script creates `/usr/local/bin/storcat` symlink to `.app` bundle binary
 - [ ] **CLPC-05**: `storcat open` works cross-platform (macOS `open`, Linux `xdg-open`, Windows `start`)
 
 ## Future Requirements
@@ -75,7 +75,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLIP-01 | Phase 8 | Pending |
+| CLIP-01 | Phase 8 | Complete |
 | CLIP-02 | Phase 8 | Complete |
 | CLIP-03 | Phase 8 | Complete |
 | CLIP-04 | Phase 8 | Complete |
@@ -93,10 +93,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLOF-04 | Phase 10 | Pending |
 | CLOF-05 | Phase 10 | Pending |
 | CLOF-06 | Phase 10 | Pending |
-| CLPC-01 | Phase 8 | Pending |
-| CLPC-02 | Phase 8 | Pending |
-| CLPC-03 | Phase 8 | Pending |
-| CLPC-04 | Phase 8 | Pending |
+| CLPC-01 | Phase 8 | Complete |
+| CLPC-02 | Phase 8 | Complete |
+| CLPC-03 | Phase 8 | Complete |
+| CLPC-04 | Phase 8 | Complete |
 | CLPC-05 | Phase 10 | Pending |
 
 **Coverage:**
