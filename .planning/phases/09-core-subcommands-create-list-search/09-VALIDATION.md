@@ -1,9 +1,9 @@
 ---
 phase: 9
 slug: core-subcommands-create-list-search
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-26
 ---
 
@@ -38,17 +38,17 @@ created: 2026-03-26
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 09-01-01 | 01 | 1 | CLCM-01 | integration | `go test ./cli/... -run TestRunCreate -v` | ❌ W0 | ⬜ pending |
-| 09-01-02 | 01 | 1 | CLCM-01 | integration | `go test ./cli/... -run TestRunCreate_Flags -v` | ❌ W0 | ⬜ pending |
-| 09-01-03 | 01 | 1 | CLCM-01 | unit | `go test ./cli/... -run TestRunCreate_MissingArg -v` | ❌ W0 | ⬜ pending |
-| 09-02-01 | 02 | 1 | CLCM-02 | integration | `go test ./cli/... -run TestRunSearch -v` | ❌ W0 | ⬜ pending |
-| 09-02-02 | 02 | 1 | CLCM-02 | unit | `go test ./cli/... -run TestRunSearch_MissingArgs -v` | ❌ W0 | ⬜ pending |
-| 09-03-01 | 03 | 1 | CLCM-03 | integration | `go test ./cli/... -run TestRunList -v` | ❌ W0 | ⬜ pending |
-| 09-03-02 | 03 | 1 | CLCM-03 | unit | `go test ./cli/... -run TestRunList_NoArg -v` | ❌ W0 | ⬜ pending |
-| 09-04-01 | 01 | 1 | CLOF-01 | integration | `go test ./cli/... -run TestRunList_JSON -v` | ❌ W0 | ⬜ pending |
-| 09-04-02 | 01 | 1 | CLOF-01 | integration | `go test ./cli/... -run TestRunSearch_JSON -v` | ❌ W0 | ⬜ pending |
-| 09-05-01 | 01 | 1 | CLOF-03 | integration | `go test ./cli/... -run TestRunCreate_JSON -v` | ❌ W0 | ⬜ pending |
-| 09-06-01 | all | 1 | All | unit | `go test ./cli/... -run TestRun.*Error -v` | ❌ W0 | ⬜ pending |
+| 09-01-01 | 01 | 1 | CLCM-01 | integration | `go test ./cli/... -run TestRunCreate_Success -v` | ✅ cli/create_test.go | ✅ green |
+| 09-01-02 | 01 | 1 | CLCM-01 | integration | `go test ./cli/... -run TestRunCreate_WithFlags -v` | ✅ cli/create_test.go | ✅ green |
+| 09-01-03 | 01 | 1 | CLCM-01 | unit | `go test ./cli/... -run TestRunCreate_MissingArg -v` | ✅ cli/create_test.go | ✅ green |
+| 09-02-01 | 02 | 1 | CLCM-02 | integration | `go test ./cli/... -run TestRunSearch_WithResults -v` | ✅ cli/search_test.go | ✅ green |
+| 09-02-02 | 02 | 1 | CLCM-02 | unit | `go test ./cli/... -run TestRunSearch_MissingArgs -v` | ✅ cli/search_test.go | ✅ green |
+| 09-03-01 | 03 | 1 | CLCM-03 | integration | `go test ./cli/... -run TestRunList_WithCatalogs -v` | ✅ cli/list_test.go | ✅ green |
+| 09-03-02 | 03 | 1 | CLCM-03 | unit | `go test ./cli/... -run TestRunList_MissingDir_DefaultsCwd -v` | ✅ cli/list_test.go | ✅ green |
+| 09-04-01 | 01 | 1 | CLOF-01 | integration | `go test ./cli/... -run TestRunList_JSON -v` | ✅ cli/list_test.go | ✅ green |
+| 09-04-02 | 01 | 1 | CLOF-01 | integration | `go test ./cli/... -run TestRunSearch_JSON -v` | ✅ cli/search_test.go | ✅ green |
+| 09-05-01 | 01 | 1 | CLOF-03 | integration | `go test ./cli/... -run TestRunCreate_JSON -v` | ✅ cli/create_test.go | ✅ green |
+| 09-06-01 | all | 1 | All | unit | `go test ./cli/... -run "TestRun.*NonExistent\|TestRun.*MissingArg" -v` | ✅ multiple | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -56,10 +56,10 @@ created: 2026-03-26
 
 ## Wave 0 Requirements
 
-- [ ] `cli/create_test.go` — stubs for CLCM-01, CLOF-03
-- [ ] `cli/list_test.go` — stubs for CLCM-03, CLOF-01 (list)
-- [ ] `cli/search_test.go` — stubs for CLCM-02, CLOF-01 (search)
-- [ ] `go get github.com/olekukonko/tablewriter@v1.1.4 && go mod tidy` — must precede any import
+- [x] `cli/create_test.go` — 7 tests for CLCM-01, CLOF-03
+- [x] `cli/list_test.go` — 7 tests for CLCM-03, CLOF-01 (list)
+- [x] `cli/search_test.go` — 6 tests for CLCM-02, CLOF-01 (search)
+- [x] `go get github.com/olekukonko/tablewriter@v1.1.4 && go mod tidy` — installed in Plan 01
 
 *Existing `captureOutput` helper in `cli_test.go` is reusable across new test files — no new test infrastructure needed*
 
@@ -73,11 +73,23 @@ created: 2026-03-26
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-26
+
+---
+
+## Validation Audit 2026-03-26
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 11 validation entries mapped to existing tests. 20 phase-specific tests across 3 test files (create_test.go, list_test.go, search_test.go) all passing. Full CLI suite: 65 tests green.
