@@ -30,14 +30,14 @@ Existing capabilities confirmed working in the Go/Wails branch:
 - ✓ LoadCatalog method with dual-format parsing (v1 array + v2 bare object) — Phase 2
 - ✓ Browse tab Size column with human-readable byte formatting — Phase 2
 - ✓ Browse metadata fields (size, modified, created) verified — Phase 1+2
+- ✓ createCatalog returns fileCount, totalSize, and all path fields via shim wrapper — Phase 5
+- ✓ getCatalogHtmlPath returns `{success, htmlPath}` envelope with file existence check — Phase 4+5
+- ✓ readHtmlFile returns `{success, content}` envelope — Phase 4+5
 
 ### Active
 
-- [ ] Fix `createCatalog` return metadata — Go returns void, should return fileCount/totalSize/paths
 - [ ] Fix symlink handling — Go skips symlinks via `os.Lstat`, must follow them like Electron's `fs.stat`
 - [x] Implement full window state persistence — size + position save/restore + settings toggle — Phase 3
-- [ ] Fix `getCatalogHtmlPath` — must verify file existence and return `{success, htmlPath}` envelope
-- [ ] Fix `readHtmlFile` — must return `{success, content}` envelope
 - [ ] Fix header drag region — `WebkitAppRegion: 'drag'` missing for macOS titlebar
 - [ ] Fix HTML root node rendering — match Electron's tree format
 - [ ] Fix version source — read from config/package.json instead of hardcoded constant
@@ -95,4 +95,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-25 after Phase 4 completion — App Layer + Lifecycle verified (all IPC envelopes consistent, window persistence lifecycle complete)*
+*Last updated: 2026-03-26 after Phase 5 completion — Frontend Shim verified (all wailsAPI wrappers return correct envelopes with full field forwarding)*
