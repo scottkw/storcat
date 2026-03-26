@@ -75,35 +75,35 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CLIP-01 | — | Pending |
-| CLIP-02 | — | Pending |
-| CLIP-03 | — | Pending |
-| CLIP-04 | — | Pending |
-| CLIP-05 | — | Pending |
-| CLIP-06 | — | Pending |
-| CLCM-01 | — | Pending |
-| CLCM-02 | — | Pending |
-| CLCM-03 | — | Pending |
-| CLCM-04 | — | Pending |
-| CLCM-05 | — | Pending |
-| CLCM-06 | — | Pending |
-| CLOF-01 | — | Pending |
-| CLOF-02 | — | Pending |
-| CLOF-03 | — | Pending |
-| CLOF-04 | — | Pending |
-| CLOF-05 | — | Pending |
-| CLOF-06 | — | Pending |
-| CLPC-01 | — | Pending |
-| CLPC-02 | — | Pending |
-| CLPC-03 | — | Pending |
-| CLPC-04 | — | Pending |
-| CLPC-05 | — | Pending |
+| CLIP-01 | Phase 8 | Pending |
+| CLIP-02 | Phase 8 | Pending |
+| CLIP-03 | Phase 8 | Pending |
+| CLIP-04 | Phase 8 | Pending |
+| CLIP-05 | Phase 8 | Pending |
+| CLIP-06 | Phase 8 | Pending |
+| CLCM-01 | Phase 9 | Pending |
+| CLCM-02 | Phase 9 | Pending |
+| CLCM-03 | Phase 9 | Pending |
+| CLCM-04 | Phase 10 | Pending |
+| CLCM-05 | Phase 10 | Pending |
+| CLCM-06 | Phase 8 | Pending |
+| CLOF-01 | Phase 9 | Pending |
+| CLOF-02 | Phase 10 | Pending |
+| CLOF-03 | Phase 9 | Pending |
+| CLOF-04 | Phase 10 | Pending |
+| CLOF-05 | Phase 10 | Pending |
+| CLOF-06 | Phase 10 | Pending |
+| CLPC-01 | Phase 8 | Pending |
+| CLPC-02 | Phase 8 | Pending |
+| CLPC-03 | Phase 8 | Pending |
+| CLPC-04 | Phase 8 | Pending |
+| CLPC-05 | Phase 10 | Pending |
 
 **Coverage:**
 - v2.1.0 requirements: 23 total
-- Mapped to phases: 0
-- Unmapped: 23 ⚠️
+- Mapped to phases: 23
+- Unmapped: 0 — complete coverage
 
 ---
 *Requirements defined: 2026-03-26*
-*Last updated: 2026-03-26 after initial definition*
+*Last updated: 2026-03-26 after roadmap creation — traceability complete*
