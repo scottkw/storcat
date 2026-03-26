@@ -1,48 +1,49 @@
-# StorCat v2.0
+# StorCat v2.0.0
 
 **Storage Media Cataloging Tool**
 
 StorCat is a powerful desktop application for cataloging storage media contents (CDs, DVDs, USB drives, external hard drives, etc.) and searching through them later. Built with Go and React, StorCat provides a fast, native experience across all major platforms.
 
-## Why StorCat v2.0? The Migration from Electron to Go/Wails
+## Why StorCat v2.0.0? The Migration from Electron to Go/Wails
 
-StorCat v2.0 represents a complete architectural overhaul, migrating from Electron to Go with Wails framework. This decision was driven by several key factors:
+StorCat v2.0.0 represents a complete architectural overhaul, migrating from Electron to Go with the Wails framework. This decision was driven by several key factors:
 
 ### The Problem with Electron
 
-The original Electron-based version had significant limitations:
+The original Electron-based version (v1.2.3) had significant limitations:
 - **Large bundle size**: ~150-200MB+ due to bundling Chromium
 - **High memory usage**: Each instance loaded a full browser engine
 - **Slow startup**: Cold start times of 3-5 seconds
-- **Table rendering issues**: Couldn't achieve proper sticky headers with per-column filtering and sorting
+- **V8/ARM64 issues**: Required `--jitless --no-opt` workarounds on Apple Silicon
 
 ### The Solution: Go + Wails
 
 Go with the Wails framework provides the best of both worlds:
 
 **Performance Benefits:**
-- **90% smaller**: Apps are 8-11MB vs 150-200MB (Electron)
-- **50% faster startup**: Native webview loads instantly
+- **93% smaller**: Apps are 8-11MB vs 150-200MB (Electron)
+- **80% faster startup**: Native webview loads instantly
 - **Native memory footprint**: Uses system webview instead of bundling Chromium
-- **Excellent Go concurrency**: File scanning and searching are incredibly fast
+- **5x faster search**: Go concurrency for file scanning and searching
 
 **Development Benefits:**
 - **Preserved React UI**: All existing React components work with minimal changes
 - **Type-safe bindings**: Auto-generated TypeScript interfaces for Go functions
-- **True table headers**: Modern table with sticky headers, per-column filtering, sorting, and resizing finally works!
-- **Simpler architecture**: No IPC complexity, direct function calls
+- **True table headers**: Modern table with sticky headers, per-column filtering, sorting, and resizing
+- **Simpler architecture**: Direct function calls via Wails bindings instead of IPC
 
 **Cross-Platform:**
-- **macOS**: Uses WebKit (native)
-- **Windows**: Uses WebView2 (native)
-- **Linux**: Uses WebKitGTK
+- **macOS**: Uses WebKit (native) — Universal binary (Intel + Apple Silicon)
+- **Windows**: Uses WebView2 (native) — x64 and arm64
+- **Linux**: Uses WebKitGTK — x64 and arm64
 
 ## Features
 
 - **Create Catalogs**: Scan any directory and create searchable catalogs
-  - Recursive directory scanning
-  - File metadata capture (name, size, dates)
-  - Custom catalog titles and descriptions
+  - Recursive directory scanning with symlink following
+  - File metadata capture (name, size, dates, creation time)
+  - JSON and HTML output formats
+  - v1.0 catalog backward compatibility
 
 - **Advanced Search**: Fast search across all your catalogs
   - Search by filename patterns
@@ -51,15 +52,15 @@ Go with the Wails framework provides the best of both worlds:
   - Per-column filtering
 
 - **Browse Catalogs**: View catalog metadata
-  - See all available catalogs
+  - See all available catalogs with file size and dates
   - View catalog statistics
-  - Manage catalog collection
+  - Open HTML catalog viewer
 
 - **Modern UI**: React-based interface with Ant Design
   - Responsive table with sticky headers
-  - Column resizing and reordering
-  - Dark/light theme support
-  - Keyboard shortcuts
+  - Column resizing, sorting, and filtering
+  - 11 themes (StorCat Light/Dark, Dracula, Nord, Solarized, One Dark, Monokai, GitHub, Gruvbox)
+  - Collapsible sidebar with configurable positioning
 
 ## Installation
 
@@ -106,9 +107,9 @@ Download the latest release for your platform from the [Releases](https://github
 ### Prerequisites
 
 **Required:**
-- Go 1.21 or later
+- Go 1.23 or later
 - Node.js 16+ and npm
-- Wails CLI v2.10.2+
+- Wails CLI v2
 
 **Platform-Specific:**
 
@@ -147,8 +148,8 @@ export PATH=$PATH:$(go env GOPATH)/bin
 
 ```bash
 # Clone the repository
-git clone https://github.com/scottkw/storcat-wails.git
-cd storcat-wails
+git clone https://github.com/scottkw/storcat.git
+cd storcat
 
 # Install frontend dependencies
 cd frontend
@@ -162,9 +163,10 @@ wails dev
 wails build
 
 # Build for specific platform
-wails build -platform darwin/arm64   # macOS Apple Silicon
-wails build -platform darwin/amd64   # macOS Intel
-wails build -platform windows/amd64  # Windows 64-bit
+wails build -platform darwin/universal  # macOS Universal
+wails build -platform darwin/arm64      # macOS Apple Silicon
+wails build -platform darwin/amd64      # macOS Intel
+wails build -platform windows/amd64     # Windows 64-bit
 ```
 
 ### Build Scripts
@@ -217,9 +219,9 @@ Builds are located in `build/bin/`:
 ### Browsing Catalogs
 
 1. Click the "Browse Catalogs" tab
-2. View all available catalogs with metadata
-3. See file counts and dates
-4. Sort and filter catalog list
+2. View all available catalogs with metadata (size, dates)
+3. Click a catalog to open its HTML view
+4. Sort and filter the catalog list
 
 ## Configuration
 
@@ -232,74 +234,68 @@ Default catalog directory:
 - **macOS/Linux**: `~/StorCat/catalogs`
 - **Windows**: `%USERPROFILE%\StorCat\catalogs`
 
+### Window State Persistence
+
+StorCat remembers window size and position across restarts. This can be toggled in Settings.
+
 ## Architecture
 
 ### Technology Stack
 
-**Backend (Go):**
-- **Wails Framework**: Desktop app framework
+**Backend (Go 1.23):**
+- **Wails v2**: Desktop app framework with native webview
 - **Standard Library**: File I/O, JSON encoding, file walking
-- **Concurrent scanning**: Goroutines for fast directory traversal
+- **djherbis/times**: Cross-platform file creation time
 
-**Frontend (React):**
+**Frontend (React 18 + TypeScript 5):**
 - **React 18**: UI framework
-- **TypeScript**: Type safety
-- **Vite**: Build tool and dev server
-- **Ant Design**: UI component library
+- **TypeScript 5**: Type safety
+- **Vite 5**: Build tool and dev server
+- **Ant Design 5**: UI component library
 - **Custom components**: ModernTable with advanced features
 
 ### Project Structure
 
 ```
-storcat-wails/
-├── app.go                 # Main Wails app struct
-├── main.go               # Application entry point
-├── internal/             # Go backend packages
-│   ├── catalog/         # Catalog creation service
-│   ├── search/          # Search service
-│   └── config/          # Configuration management
+storcat/
+├── app.go                 # Main Wails app struct and bound methods
+├── main.go                # Application entry point
+├── version.go             # Build-time version injection
+├── app_test.go            # Go tests
+├── internal/              # Go backend packages
+│   ├── catalog/           # Catalog creation service
+│   ├── search/            # Search service
+│   └── config/            # Configuration management
 ├── pkg/
-│   └── models/          # Shared data models
-├── frontend/            # React frontend
+│   └── models/            # Shared data models
+├── frontend/              # React frontend
 │   ├── src/
-│   │   ├── components/  # React components
-│   │   ├── App.tsx     # Main application
-│   │   └── wailsjs/    # Auto-generated bindings
+│   │   ├── components/    # React components
+│   │   ├── contexts/      # AppContext state management
+│   │   ├── themes.ts      # 11 theme definitions
+│   │   └── App.tsx        # Main application
+│   ├── wailsjs/           # Auto-generated Wails bindings
 │   ├── package.json
 │   └── vite.config.ts
-├── build/               # Build assets and outputs
-│   ├── appicon.png     # Source icon
-│   └── bin/            # Compiled binaries
-├── scripts/             # Build scripts
-└── wails.json          # Wails configuration
+├── build/                 # Build assets and outputs
+│   ├── appicon.png        # Source icon
+│   └── bin/               # Compiled binaries
+├── scripts/               # Build scripts
+└── wails.json             # Wails configuration
 ```
 
 ### How It Works
 
-1. **Go Backend**: Handles all file I/O, catalog creation, and search
-2. **React Frontend**: Provides the UI and user interactions
-3. **Wails Bridge**: Auto-generates TypeScript bindings for Go functions
-4. **Native Webview**: Renders the React app using system webview
-
-**Example: Creating a Catalog**
-```typescript
-// TypeScript (Frontend)
-import { CreateCatalog } from './wailsjs/go/main/App';
-
-await CreateCatalog(directory, title, description);
-```
-
-```go
-// Go (Backend)
-func (a *App) CreateCatalog(directory, title, description string) error {
-    return catalog.Create(directory, title, description)
-}
-```
+1. **Go Backend**: Handles all file I/O, catalog creation, search, and configuration
+2. **React Frontend**: Provides the UI via `wailsAPI.ts` compatibility shim
+3. **Wails Bridge**: Auto-generates TypeScript bindings for Go methods
+4. **Native Webview**: Renders the React app using the system's webview
+5. **IPC Contract**: All API methods return `{success, ...}` envelopes for consistent error handling
 
 ## Performance Comparison
 
-| Metric | Electron v1.0 | Wails v2.0 | Improvement |
-|--------|---------------|------------|-------------|
+| Metric | Electron v1.2.3 | Wails v2.0.0 | Improvement |
+|--------|-----------------|--------------|-------------|
 | Bundle Size | ~150MB | ~8-11MB | **93% smaller** |
 | Memory Usage | ~200MB | ~50MB | **75% less** |
 | Startup Time | 3-5 seconds | <1 second | **80% faster** |
@@ -360,37 +356,38 @@ Contributions are welcome! Please:
 - Add tests for new features
 - Update documentation
 
-## Migration Notes
+## Migration from v1.x (Electron)
 
-For those familiar with StorCat v1.0 (Electron):
+For those upgrading from StorCat v1.x (Electron):
 
 ### What Changed
-- ✅ **Backend**: Same Go code, now integrated with Wails instead of Electron IPC
-- ✅ **Frontend**: Same React components, using Wails runtime instead of Electron
-- ✅ **Table**: Finally works correctly with sticky headers and per-column operations!
-- ✅ **API**: Simplified - direct function calls instead of IPC
-- ✅ **Performance**: Much faster, smaller, more efficient
+- **Backend**: Complete rewrite from Node.js to Go — all catalog operations are native Go
+- **Framework**: Electron replaced with Wails v2 — uses system webview instead of bundled Chromium
+- **Table**: Sticky headers with per-column filtering, sorting, and resizing work correctly
+- **API**: Direct Wails function calls instead of Electron IPC, with `{success,...}` envelope pattern
+- **Performance**: 93% smaller, 80% faster startup, 5x faster search
 
 ### What Stayed the Same
-- ✅ Catalog file format (v1.0 catalogs work in v2.0)
-- ✅ Search functionality
-- ✅ UI/UX design
-- ✅ Configuration structure
+- Catalog file format (v1.x catalogs work in v2.0.0 — both JSON formats supported)
+- Search functionality
+- UI/UX design (React + Ant Design)
+- 11 themes
+- Configuration structure
 
 ### Compatibility
 
-StorCat v2.0 can read catalogs created by v1.0. No migration needed!
+StorCat v2.0.0 can read catalogs created by any v1.x version. No migration needed.
 
 ## License
 
-Copyright © 2024 Ken Scott
+Copyright © 2024-2026 Ken Scott
 
 ## Links
 
-- **GitHub**: https://github.com/scottkw/storcat-wails
-- **Issues**: https://github.com/scottkw/storcat-wails/issues
+- **GitHub**: https://github.com/scottkw/storcat
+- **Issues**: https://github.com/scottkw/storcat/issues
 - **Wails**: https://wails.io
-- **Releases**: https://github.com/scottkw/storcat-wails/releases
+- **Releases**: https://github.com/scottkw/storcat/releases
 
 ## Acknowledgments
 
@@ -400,4 +397,4 @@ Copyright © 2024 Ken Scott
 
 ---
 
-**StorCat v2.0** - Fast, Native, Cross-Platform Storage Media Cataloging
+**StorCat v2.0.0** - Fast, Native, Cross-Platform Storage Media Cataloging
