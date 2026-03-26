@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 10-01-PLAN.md
-last_updated: "2026-03-26T16:19:28.286Z"
+stopped_at: Completed 10-02-PLAN.md
+last_updated: "2026-03-26T16:25:18.895Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
 ---
 
 # Project State
@@ -25,9 +25,9 @@ See: .planning/PROJECT.md (updated 2026-03-26)
 ## Current Position
 
 Phase: 10 (show-open-and-output-polish) — EXECUTING
-Plan: 1 of 2
-Status: Executing Phase 10
-Last activity: 2026-03-26 -- Phase 10 execution started
+Plan: 2 of 2
+Status: Ready to execute
+Last activity: 2026-03-26
 
 ```
 Phase 8  [          ] Not started
@@ -56,6 +56,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 09]: Split-at-first-flag pattern for create command: positional args before first flag, everything after is flags — handles named flags with separate values
 - [Phase 09]: stubs.go now contains only runShow/runOpen — list, search, and create commands are fully implemented
 - [Phase 10]: Depth semantics: maxDepth=0=root only, maxDepth=1=root+children; depth check at printTree entry skips both print and recursion
+- [Phase 10]: pkg/browser promoted to direct dependency after open.go implementation; stubs.go deleted — all 6 CLI subcommands now fully implemented
 
 ### Pending Todos
 
@@ -69,6 +70,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T16:19:24.550Z
-Stopped at: Completed 10-01-PLAN.md
+Last session: 2026-03-26T16:25:18.891Z
+Stopped at: Completed 10-02-PLAN.md
 Resume file: None

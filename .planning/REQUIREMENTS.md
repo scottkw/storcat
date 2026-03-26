@@ -22,7 +22,7 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 - [x] **CLCM-02**: User can run `storcat search <term> <dir>` to search catalogs for a term
 - [x] **CLCM-03**: User can run `storcat list <dir>` to list catalogs with metadata
 - [x] **CLCM-04**: User can run `storcat show <catalog.json>` to display catalog tree structure
-- [ ] **CLCM-05**: User can run `storcat open <catalog.json>` to open catalog HTML in default browser
+- [x] **CLCM-05**: User can run `storcat open <catalog.json>` to open catalog HTML in default browser
 - [x] **CLCM-06**: User can run `storcat version` to print version string
 
 ### Output Formatting
@@ -40,7 +40,7 @@ Requirements for CLI Commands milestone. Each maps to roadmap phases.
 - [x] **CLPC-02**: macOS Gatekeeper `-psn_*` argument injection is filtered before CLI dispatch
 - [x] **CLPC-03**: `wails dev` hot-reload still works after CLI dispatch changes
 - [x] **CLPC-04**: macOS install script creates `/usr/local/bin/storcat` symlink to `.app` bundle binary
-- [ ] **CLPC-05**: `storcat open` works cross-platform (macOS `open`, Linux `xdg-open`, Windows `start`)
+- [x] **CLPC-05**: `storcat open` works cross-platform (macOS `open`, Linux `xdg-open`, Windows `start`)
 
 ## Future Requirements
 
@@ -85,7 +85,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLCM-02 | Phase 9 | Complete |
 | CLCM-03 | Phase 9 | Complete |
 | CLCM-04 | Phase 10 | Complete |
-| CLCM-05 | Phase 10 | Pending |
+| CLCM-05 | Phase 10 | Complete |
 | CLCM-06 | Phase 8 | Complete |
 | CLOF-01 | Phase 9 | Complete |
 | CLOF-02 | Phase 10 | Complete |
@@ -97,7 +97,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CLPC-02 | Phase 8 | Complete |
 | CLPC-03 | Phase 8 | Complete |
 | CLPC-04 | Phase 8 | Complete |
-| CLPC-05 | Phase 10 | Pending |
+| CLPC-05 | Phase 10 | Complete |
 
 **Coverage:**
 - v2.1.0 requirements: 23 total
