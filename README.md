@@ -1,8 +1,10 @@
-# StorCat v2.0.0
+# StorCat v2.1.0
 
 **Storage Media Cataloging Tool**
 
-StorCat is a powerful desktop application for cataloging storage media contents (CDs, DVDs, USB drives, external hard drives, etc.) and searching through them later. Built with Go and React, StorCat provides a fast, native experience across all major platforms.
+StorCat is a cross-platform desktop and CLI application for creating, browsing, and searching directory catalogs. It generates JSON and HTML representations of directory trees. Built with Go and React, StorCat provides a fast, native experience across all major platforms.
+
+Run `storcat` with no arguments for the GUI, or use CLI subcommands (`storcat create`, `storcat search`, etc.) for scripting and terminal workflows.
 
 ## Why StorCat v2.0.0? The Migration from Electron to Go/Wails
 
@@ -39,6 +41,8 @@ Go with the Wails framework provides the best of both worlds:
 
 ## Features
 
+### GUI (Desktop Application)
+
 - **Create Catalogs**: Scan any directory and create searchable catalogs
   - Recursive directory scanning with symlink following
   - File metadata capture (name, size, dates, creation time)
@@ -62,6 +66,26 @@ Go with the Wails framework provides the best of both worlds:
   - 11 themes (StorCat Light/Dark, Dracula, Nord, Solarized, One Dark, Monokai, GitHub, Gruvbox)
   - Collapsible sidebar with configurable positioning
 
+### CLI (Command Line)
+
+The same binary provides full CLI access — no separate install needed:
+
+| Command | Description |
+|---------|-------------|
+| `storcat create <dir>` | Create a catalog from a directory |
+| `storcat search <term>` | Search catalogs for a filename pattern |
+| `storcat list [dir]` | List catalogs with metadata |
+| `storcat show <catalog>` | Display a catalog's tree structure |
+| `storcat open <catalog>` | Open a catalog's HTML in the default browser |
+| `storcat version` | Print the version |
+
+**CLI features:**
+- `--json` flag for machine-readable output (create, search, list, show)
+- `--depth N` flag to limit tree depth (show)
+- Colorized tree output with `--no-color` / `NO_COLOR` support
+- Cross-platform browser launch (macOS, Windows, Linux)
+- Standard exit codes (0 = success, 1 = error, 2 = usage)
+
 ## Installation
 
 ### Download Pre-built Binaries
@@ -77,6 +101,11 @@ Download the latest release for your platform from the [Releases](https://github
 1. Download `StorCat.app`
 2. Move to Applications folder
 3. Right-click and select "Open" (first time only, to bypass Gatekeeper)
+4. (Optional) Enable CLI access:
+   ```bash
+   ./scripts/install-cli.sh
+   # Creates /usr/local/bin/storcat -> StorCat.app binary
+   ```
 
 ### Windows Installation
 
@@ -246,6 +275,9 @@ StorCat remembers window size and position across restarts. This can be toggled 
 - **Wails v2**: Desktop app framework with native webview
 - **Standard Library**: File I/O, JSON encoding, file walking
 - **djherbis/times**: Cross-platform file creation time
+- **fatih/color**: Colorized CLI output
+- **tablewriter**: Tabular CLI output formatting
+- **pkg/browser**: Cross-platform browser launch
 
 **Frontend (React 18 + TypeScript 5):**
 - **React 18**: UI framework
@@ -259,9 +291,20 @@ StorCat remembers window size and position across restarts. This can be toggled 
 ```
 storcat/
 ├── app.go                 # Main Wails app struct and bound methods
-├── main.go                # Application entry point
+├── main.go                # Application entry point (GUI + CLI dispatch)
 ├── version.go             # Build-time version injection
 ├── app_test.go            # Go tests
+├── main_test.go           # CLI dispatch tests
+├── cli/                   # CLI subcommand package
+│   ├── cli.go             # Entry point and routing
+│   ├── create.go          # storcat create
+│   ├── search.go          # storcat search
+│   ├── list.go            # storcat list
+│   ├── show.go            # storcat show
+│   ├── open.go            # storcat open
+│   ├── version.go         # storcat version
+│   ├── output.go          # Shared output helpers
+│   └── *_test.go          # Per-command tests
 ├── internal/              # Go backend packages
 │   ├── catalog/           # Catalog creation service
 │   ├── search/            # Search service
@@ -280,17 +323,18 @@ storcat/
 ├── build/                 # Build assets and outputs
 │   ├── appicon.png        # Source icon
 │   └── bin/               # Compiled binaries
-├── scripts/               # Build scripts
+├── scripts/               # Build and install scripts
 └── wails.json             # Wails configuration
 ```
 
 ### How It Works
 
-1. **Go Backend**: Handles all file I/O, catalog creation, search, and configuration
-2. **React Frontend**: Provides the UI via `wailsAPI.ts` compatibility shim
-3. **Wails Bridge**: Auto-generates TypeScript bindings for Go methods
-4. **Native Webview**: Renders the React app using the system's webview
-5. **IPC Contract**: All API methods return `{success, ...}` envelopes for consistent error handling
+1. **Unified Binary**: Single binary serves both GUI and CLI modes — `storcat` (no args) launches the GUI, `storcat <command>` runs CLI
+2. **Go Backend**: Handles all file I/O, catalog creation, search, and configuration
+3. **React Frontend**: Provides the GUI via `wailsAPI.ts` compatibility shim
+4. **Wails Bridge**: Auto-generates TypeScript bindings for Go methods
+5. **Native Webview**: Renders the React app using the system's webview
+6. **IPC Contract**: All API methods return `{success, ...}` envelopes for consistent error handling
 
 ## Performance Comparison
 
@@ -363,12 +407,13 @@ For those upgrading from StorCat v1.x (Electron):
 ### What Changed
 - **Backend**: Complete rewrite from Node.js to Go — all catalog operations are native Go
 - **Framework**: Electron replaced with Wails v2 — uses system webview instead of bundled Chromium
+- **CLI**: Full command-line interface in the same binary (v2.1.0) — replaces the legacy `sdcat` bash scripts
 - **Table**: Sticky headers with per-column filtering, sorting, and resizing work correctly
 - **API**: Direct Wails function calls instead of Electron IPC, with `{success,...}` envelope pattern
 - **Performance**: 93% smaller, 80% faster startup, 5x faster search
 
 ### What Stayed the Same
-- Catalog file format (v1.x catalogs work in v2.0.0 — both JSON formats supported)
+- Catalog file format (v1.x catalogs work in v2.x — both JSON formats supported)
 - Search functionality
 - UI/UX design (React + Ant Design)
 - 11 themes
@@ -376,7 +421,7 @@ For those upgrading from StorCat v1.x (Electron):
 
 ### Compatibility
 
-StorCat v2.0.0 can read catalogs created by any v1.x version. No migration needed.
+StorCat v2.x can read catalogs created by any v1.x version. No migration needed.
 
 ## License
 
@@ -397,4 +442,4 @@ Copyright © 2024-2026 Ken Scott
 
 ---
 
-**StorCat v2.0.0** - Fast, Native, Cross-Platform Storage Media Cataloging
+**StorCat v2.1.0** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)

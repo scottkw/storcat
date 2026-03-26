@@ -12,7 +12,7 @@
 
 ## About StorCat
 
-StorCat is a cross-platform desktop application for creating, browsing, and searching directory catalogs. Built with Go/Wails and React 18/TypeScript, StorCat provides a fast, native experience with 93% smaller binaries and 5x faster search compared to the original Electron version. StorCat maintains 100% compatibility with catalog files created by earlier versions (including the original `sdcat.sh` bash script).
+StorCat is a cross-platform desktop and CLI application for creating, browsing, and searching directory catalogs. Built with Go/Wails and React 18/TypeScript, StorCat provides a fast, native experience with 93% smaller binaries and 5x faster search compared to the original Electron version. The unified binary serves both the GUI (no args) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). StorCat maintains 100% compatibility with catalog files created by earlier versions (including the original `sdcat.sh` bash script).
 
 ### Key Features
 
@@ -21,6 +21,7 @@ StorCat is a cross-platform desktop application for creating, browsing, and sear
 - **Browse Catalogs**: Interactive catalog browser with modern table interface
 - **Advanced Theming**: 11 themes including Dracula, Nord, Solarized, and more
 - **Flexible Layout**: Configurable sidebar positioning with intelligent icon placement
+- **CLI Access**: Full command-line interface (`storcat create`, `storcat search`, etc.) with `--json` output
 - **Cross-Platform**: Native experience on macOS (WebKit), Windows (WebView2), and Linux (WebKitGTK)
 
 ### Technology Stack
