@@ -35,7 +35,14 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-(None — define with next milestone)
+<!-- v2.1.0 CLI Commands -->
+- [ ] CLI subcommands in unified binary (`storcat` = GUI, `storcat <cmd>` = CLI)
+- [ ] `storcat create` — create catalog from directory
+- [ ] `storcat search` — search catalogs for a term
+- [ ] `storcat list` — list catalogs with metadata
+- [ ] `storcat show` — display catalog tree structure
+- [ ] `storcat open` — open catalog HTML in default browser
+- [ ] `storcat version` — print version
 
 ### Out of Scope
 
@@ -44,6 +51,19 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - macOS code signing/notarization — separate concern, needs Apple credentials
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
+
+## Current Milestone: v2.1.0 CLI Commands
+
+**Goal:** Add CLI subcommands to the unified StorCat binary so users can create, search, browse, and view catalogs from the command line.
+
+**Target features:**
+- `storcat create` — create catalog (JSON + HTML) from a directory
+- `storcat search` — search catalogs for a term
+- `storcat list` — list catalogs in a directory with metadata
+- `storcat show` — display a catalog's tree structure
+- `storcat open` — open catalog HTML in default browser
+- `storcat version` — print version
+- `storcat` (no args) — launch GUI as today
 
 ## Context
 
@@ -82,5 +102,22 @@ Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js 
 - **API surface**: `window.electronAPI` interface maintained via wailsAPI shim
 - **No Electron dependencies**: All functionality uses Go/Wails patterns
 
+## Evolution
+
+This document evolves at phase transitions and milestone boundaries.
+
+**After each phase transition** (via `/gsd:transition`):
+1. Requirements invalidated? → Move to Out of Scope with reason
+2. Requirements validated? → Move to Validated with phase reference
+3. New requirements emerged? → Add to Active
+4. Decisions to log? → Add to Key Decisions
+5. "What This Is" still accurate? → Update if drifted
+
+**After each milestone** (via `/gsd:complete-milestone`):
+1. Full review of all sections
+2. Core Value check — still the right priority?
+3. Audit Out of Scope — reasons still valid?
+4. Update Context with current state
+
 ---
-*Last updated: 2026-03-26 after v2.0.0 milestone*
+*Last updated: 2026-03-26 after v2.1.0 milestone started*

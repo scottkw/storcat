@@ -1,15 +1,15 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.0.0
-milestone_name: Go/Wails Migration
-status: Milestone complete
-stopped_at: v2.0.0 milestone archived
-last_updated: "2026-03-26T06:43:00.000Z"
+milestone: v2.1.0
+milestone_name: CLI Commands
+status: Defining requirements
+stopped_at: Milestone started, defining requirements
+last_updated: "2026-03-26T07:00:00.000Z"
 progress:
-  total_phases: 7
-  completed_phases: 7
-  total_plans: 11
-  completed_plans: 11
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
@@ -19,11 +19,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Fast, lightweight directory catalog management with full Electron feature parity.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v2.1.0 CLI Commands
 
 ## Current Position
 
-Milestone v2.0.0 shipped. No active phase.
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-26 — Milestone v2.1.0 started
 
 ## Accumulated Context
 
@@ -37,10 +40,10 @@ None.
 
 ### Blockers/Concerns
 
-None — milestone complete.
+None.
 
 ## Session Continuity
 
 Last session: 2026-03-26
-Stopped at: v2.0.0 milestone archived
+Stopped at: Milestone v2.1.0 started
 Resume file: None
