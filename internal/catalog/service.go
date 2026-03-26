@@ -273,6 +273,13 @@ func (s *Service) formatBytesForDisplay(bytes int64) string {
 	return fmt.Sprintf("[%4s]", formatted)
 }
 
+// FormatBytes converts bytes to human-readable format (e.g., "271M", "3.4M").
+// Exported for use by CLI output formatting.
+func FormatBytes(bytes int64) string {
+	s := &Service{}
+	return s.formatBytes(bytes)
+}
+
 // formatBytes converts bytes to human-readable format (e.g., "271M", "3.4M")
 func (s *Service) formatBytes(bytes int64) string {
 	if bytes == 0 {
