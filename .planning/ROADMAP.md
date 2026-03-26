@@ -16,7 +16,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Search Service + Browse Metadata** - Fix browse metadata fields and timestamp semantics (completed 2026-03-25)
 - [x] **Phase 3: Config Manager** - Add window state persistence fields and methods to config (completed 2026-03-25)
 - [x] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose (completed 2026-03-25)
-- [ ] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes
+- [x] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes (completed 2026-03-26)
 - [ ] **Phase 6: Platform Integration** - Fix macOS drag region and version sourcing
 - [ ] **Phase 7: Verification + Merge** - Cross-platform verification and clean merge to main
 
@@ -88,9 +88,9 @@ Plans:
   2. `wailsAPI.getCatalogHtmlPath` returns `{success: true, htmlPath: "..."}` when the file exists and `{success: false}` when it does not
   3. `wailsAPI.readHtmlFile` returns `{success: true, content: "..."}` for a valid file and `{success: false}` for a missing one
   4. Wails bindings (`wailsjs/`) are regenerated from the updated Go structs before any TypeScript edits are made
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 05-01-PLAN.md — Fix createCatalog wrapper to capture and return all CreateCatalogResult fields
+- [x] 05-01-PLAN.md — Fix createCatalog wrapper to capture and return all CreateCatalogResult fields
 **UI hint**: yes
 
 **Note on API-01/API-02/API-03 dual coverage:** Phase 4 delivers the Go methods; Phase 5 delivers the TypeScript wrappers that make them observable in the browser. The requirements are satisfied only when both layers are complete. Phase 5 is the observable completion point.
@@ -127,6 +127,6 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 2. Search Service + Browse Metadata | 1/1 | Complete   | 2026-03-25 |
 | 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
 | 4. App Layer + Lifecycle | 2/2 | Complete   | 2026-03-25 |
-| 5. Frontend Shim | 0/1 | In progress | - |
+| 5. Frontend Shim | 1/1 | Complete   | 2026-03-26 |
 | 6. Platform Integration | 0/? | Not started | - |
 | 7. Verification + Merge | 0/? | Not started | - |

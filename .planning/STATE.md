@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 04-02-PLAN.md
-last_updated: "2026-03-25T23:42:14.520Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 05-01-PLAN.md
+last_updated: "2026-03-26T02:51:32.651Z"
 progress:
   total_phases: 7
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 5
+  total_plans: 8
+  completed_plans: 8
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Full feature parity with Electron v1.2.3 — no regressions for users upgrading to Go/Wails.
-**Current focus:** Phase 04 — app-layer-lifecycle
+**Current focus:** Phase 05 — frontend-shim
 
 ## Current Position
 
-Phase: 5
-Plan: Not started
+Phase: 05 (frontend-shim) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -53,6 +53,7 @@ Plan: Not started
 | Phase 03 P02 | 10 | 2 tasks | 6 files |
 | Phase 04 P01 | 5 | 2 tasks | 2 files |
 | Phase 04 P02 | 8 | 2 tasks | 5 files |
+| Phase 05 P01 | 40 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -80,6 +81,7 @@ Recent decisions affecting current work:
 - [Phase 04]: All 17 wailsAPI wrappers return {success,...} envelopes — consumers updated in Plan 02
 - [Phase 04]: loadWindowPersistence catch block adds setWindowPersistence(true) default -- covers unexpected wrapper throws not covered by envelope's enabled:true error path
 - [Phase 04]: WIN-04 confirmed present from Phase 3 (OnDomReady/domReady) -- not re-implemented in Plan 02
+- [Phase 05]: createCatalog wrapper returns all six CreateCatalogResult fields with as const discriminated unions (jsonPath, htmlPath, fileCount, totalSize, copyJsonPath, copyHtmlPath)
 
 ### Pending Todos
 
@@ -92,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-25T20:52:24.967Z
-Stopped at: Completed 04-02-PLAN.md
+Last session: 2026-03-26T02:51:32.648Z
+Stopped at: Completed 05-01-PLAN.md
 Resume file: None
