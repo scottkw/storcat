@@ -1,98 +1,86 @@
-# StorCat v2.0.0 — Go/Wails Migration
+# StorCat
 
 ## What This Is
 
-StorCat is a cross-platform desktop application for creating, browsing, and searching directory catalogs. It generates JSON and HTML representations of directory trees. v2.0.0 is a complete backend rewrite from Electron/Node.js to Go/Wails, keeping the same React/TypeScript/Ant Design frontend.
+StorCat is a cross-platform desktop application for creating, browsing, and searching directory catalogs. It generates JSON and HTML representations of directory trees. Built with Go/Wails backend and React/TypeScript/Ant Design frontend.
 
 ## Core Value
 
-The Go/Wails v2.0.0 release must have exact feature parity with the Electron v1.2.3 release — no regressions, no missing functionality. Users switching from v1 to v2 should notice only improvements (speed, size), never missing features.
+Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search than the original Electron version, with full feature parity.
 
 ## Requirements
 
 ### Validated
 
-Existing capabilities confirmed working in the Go/Wails branch:
-
-- ✓ Create catalog (JSON + HTML) from directory tree — existing
-- ✓ Search across multiple catalogs (case-insensitive, substring) — existing
-- ✓ Browse catalog files with metadata — existing
-- ✓ HTML catalog modal viewer with dark mode injection — existing
-- ✓ 11 themes (StorCat Light/Dark, Dracula, Solarized, Nord, One Dark, Monokai, GitHub, Gruvbox) — existing
-- ✓ Collapsible sidebar with left/right positioning — existing
-- ✓ 3-tab navigation (Create, Search, Browse) — existing
+- ✓ Catalog JSON output: bare object format with v1 backward compatibility — v2.0.0
+- ✓ Empty directory contents serialize as `[]`, never `null` — v2.0.0
+- ✓ Browse metadata: size (bytes), modified (RFC3339), created (birth time) — v2.0.0
+- ✓ LoadCatalog with dual-format parsing (v1 array + v2 bare object) — v2.0.0
+- ✓ CreateCatalog returns full metadata (jsonPath, htmlPath, fileCount, totalSize) — v2.0.0
+- ✓ Directory traversal follows symlinks (matching Electron behavior) — v2.0.0
+- ✓ HTML catalog root node with `└──` connector and size bracket — v2.0.0
+- ✓ All 17 wailsAPI wrappers return `{success,...}` envelopes — v2.0.0
+- ✓ GetCatalogHtmlPath verifies file existence via os.Stat — v2.0.0
+- ✓ ReadHtmlFile returns `{success, content}` envelope — v2.0.0
+- ✓ Window size + position persistence via Go config — v2.0.0
+- ✓ Window persistence settings toggle (not a stub) — v2.0.0
+- ✓ Window state restores via OnDomReady hook — v2.0.0
+- ✓ macOS header draggable via `--wails-draggable` — v2.0.0
+- ✓ Version sourced at build time via ldflags — v2.0.0
+- ✓ Clean merge to main with no bloat — v2.0.0
+- ✓ .gitignore covers all build artifacts — v2.0.0
+- ✓ 11 themes, collapsible sidebar, 3-tab navigation — existing
 - ✓ ModernTable with sort, filter, resize, pagination — existing
-- ✓ AppContext state management via useReducer — existing
-- ✓ localStorage persistence of last-used directories and settings — existing
-- ✓ v1.0 catalog backward compatibility (both JSON formats) — existing
-- ✓ Wails API wrapper maintaining window.electronAPI interface — existing
 - ✓ Cross-platform builds (macOS, Windows, Linux) — existing
-- ✓ LoadCatalog method with dual-format parsing (v1 array + v2 bare object) — Phase 2
-- ✓ Browse tab Size column with human-readable byte formatting — Phase 2
-- ✓ Browse metadata fields (size, modified, created) verified — Phase 1+2
-- ✓ createCatalog returns fileCount, totalSize, and all path fields via shim wrapper — Phase 5
-- ✓ getCatalogHtmlPath returns `{success, htmlPath}` envelope with file existence check — Phase 4+5
-- ✓ readHtmlFile returns `{success, content}` envelope — Phase 4+5
 
 ### Active
 
-- [ ] Fix symlink handling — Go skips symlinks via `os.Lstat`, must follow them like Electron's `fs.stat`
-- [x] Implement full window state persistence — size + position save/restore + settings toggle — Phase 3
-- [ ] Fix header drag region — `WebkitAppRegion: 'drag'` missing for macOS titlebar
-- [ ] Fix HTML root node rendering — match Electron's tree format
-- [ ] Fix version source — read from config/package.json instead of hardcoded constant
-- [ ] Clean merge to main — verified, no bloat, proper .gitignore
+(None — define with next milestone)
 
 ### Out of Scope
 
-- New features beyond Electron parity — future milestones
-- Tailwind CSS migration — different design direction, not this milestone
-- macOS code signing/notarization setup — separate concern, may need Apple credentials
-- Automated test suite — important but separate milestone
-- Performance benchmarking — Go is already faster, no need to formalize
+- Wails v3 migration — still alpha as of March 2026, premature
+- Automated test suite — important, separate milestone (TEST-01 through TEST-03)
+- macOS code signing/notarization — separate concern, needs Apple credentials
+- Performance benchmarking — Go is already faster, no formal benchmarks needed
+- Tailwind CSS migration — different design direction, not prioritized
 
 ## Context
 
-- **Current state:** Clean branch `feature/go-refactor-2.0.0-clean` created from main with Go/Wails code, Electron files removed, bloat stripped (node_modules, binaries, archive)
-- **Original Go branch:** `origin/feature/go-refactor-2.0.0` has the source code but with 415MB of committed bloat
-- **Codebase map:** `.planning/codebase/` contains 7 analysis documents from the Electron version
-- **Comparison research:** Full API, frontend component, and backend logic comparisons completed in this session
-- **Go backend:** 6 Go source files in `main.go`, `app.go`, `internal/`, `pkg/models/`
-- **Frontend:** React/TypeScript under `frontend/src/` with Wails bindings in `frontend/wailsjs/`
+Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js to Go/Wails.
 
-## Constraints
+**Codebase:** ~1,700 LOC Go + ~2,700 LOC TypeScript
+**Tech stack:** Go 1.23, Wails v2, React 18, TypeScript 5, Ant Design 5
+**Platforms:** macOS (universal), Windows (x64/arm64), Linux (x64/arm64)
+**Build:** `wails build` with ldflags version injection
 
-- **Backward compatibility**: v1.0 catalog JSON/HTML files must remain readable
-- **API surface**: `window.electronAPI` interface must be maintained — frontend components depend on it
-- **Branch**: Work on `feature/go-refactor-2.0.0-clean`, merge to `main` when complete
-- **No Electron dependencies**: All fixes must use Go/Wails patterns, not Electron APIs
+**Known tech debt (11 items):**
+- testData hardcoded fallbacks in Search/Browse tabs show fake rows on first load
+- `if (result)` instead of `if (result.success)` in CreateCatalogTab getVersion
+- Phase 7 Nyquist VALIDATION.md in draft status
+- 3 human verification items outstanding (smoke test, cross-platform CI, clean build on main)
+- See `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md` for full list
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| Go/Wails over Electron | 93% smaller binaries, 5x faster search, no V8/ARM64 issues | — Pending |
-| JSON format: bare object `{...}` | Backward compatibility with existing catalogs and external tools | — Pending |
-| Full window persistence via Go config | Feature parity with Electron version, user expectation | — Pending |
+| Go/Wails over Electron | 93% smaller binaries, 5x faster search, no V8/ARM64 issues | ✓ Good |
+| JSON format: bare object `{...}` | Backward compatibility with existing catalogs and external tools | ✓ Good |
+| Full window persistence via Go config | Feature parity with Electron version, user expectation | ✓ Good |
 | Clean branch (not filter-branch) | Simpler, avoids rewriting git history | ✓ Good |
 | Strip node_modules/binaries/archive | 415MB of bloat prevented from entering main | ✓ Good |
+| OnDomReady for window restore (not OnStartup) | Window not yet rendered at OnStartup | ✓ Good |
+| ldflags for version injection | Standard Go pattern, overridable at build time | ✓ Good |
+| `//go:embed wails.json` for version | Simpler than ldflags, automatic from wails.json | ✓ Good (diverged from plan, functionally correct) |
+| Dual-format LoadCatalog (array + object) | v1 backward compatibility with zero user friction | ✓ Good |
+| `{success,...}` envelope pattern | Consistent error handling, matches Electron contract | ✓ Good |
 
-## Evolution
+## Constraints
 
-This document evolves at phase transitions and milestone boundaries.
-
-**After each phase transition** (via `/gsd:transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd:complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+- **Backward compatibility**: v1.0 catalog JSON/HTML files must remain readable
+- **API surface**: `window.electronAPI` interface maintained via wailsAPI shim
+- **No Electron dependencies**: All functionality uses Go/Wails patterns
 
 ---
-*Last updated: 2026-03-26 after Phase 5 completion — Frontend Shim verified (all wailsAPI wrappers return correct envelopes with full field forwarding)*
+*Last updated: 2026-03-26 after v2.0.0 milestone*
