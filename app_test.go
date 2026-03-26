@@ -117,3 +117,32 @@ func TestReadHtmlFile_ReturnsErrorForNonexistentFile(t *testing.T) {
 		t.Errorf("ReadHtmlFile returned non-empty string on error: %q", got)
 	}
 }
+
+// TestGetVersion_ReturnsVersionFromWailsJson verifies that GetVersion() returns
+// the productVersion embedded from wails.json, not an empty string or "dev".
+// In test context, version.go's //go:embed wails.json runs at package init,
+// so Version is populated from the real wails.json. Addresses PLAT-02.
+func TestGetVersion_ReturnsVersionFromWailsJson(t *testing.T) {
+	app := &App{}
+	got := app.GetVersion()
+
+	if got == "" {
+		t.Fatal("GetVersion() returned empty string; expected non-empty version string")
+	}
+
+	// Version is populated by parsing wails.json at init time.
+	// The embedded wails.json has productVersion "2.0.0"; if parsing ever fails
+	// the fallback is "dev". Neither outcome is an empty string, but we also
+	// verify it matches the package-level Version variable directly to confirm
+	// the method delegates correctly.
+	if got != Version {
+		t.Errorf("GetVersion() = %q, but package-level Version = %q; method must return Version", got, Version)
+	}
+
+	// Confirm parsing succeeded: the test-time wails.json should yield a semver
+	// string, not the "dev" fallback. If this assertion fails, the embedded
+	// wails.json or its productVersion field is missing/malformed.
+	if got == "dev" {
+		t.Errorf("GetVersion() returned fallback %q; wails.json productVersion may be missing or unparseable", got)
+	}
+}
