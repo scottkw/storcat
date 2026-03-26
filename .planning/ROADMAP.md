@@ -85,7 +85,9 @@ Plans:
   3. `open.go` and `version.go` write `--help` text to stdout (consistent with all other commands)
   4. `internal/catalog.FormatBytes()` is removed (orphaned export)
   5. ROADMAP.md Phase 9 status is correct (already fixed in this commit)
-Plans: 0/0
+**Plans:** 1 plan
+Plans:
+- [ ] 11-01-PLAN.md — NO_COLOR test, stale import cleanup, help stream fix, orphaned export removal
 
 ## Progress
 
@@ -101,4 +103,4 @@ Plans: 0/0
 | 8. CLI Foundation and Platform Compatibility | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete    | 2026-03-26 |
-| 11. Tech Debt Cleanup | v2.1.0 | 0/0 | Pending | |
+| 11. Tech Debt Cleanup | v2.1.0 | 0/1 | Pending | |
