@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: verifying
-stopped_at: Completed 08-02-PLAN.md
-last_updated: "2026-03-26T15:00:43.211Z"
+status: executing
+stopped_at: Completed 09-01-PLAN.md
+last_updated: "2026-03-26T15:37:49.852Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 4
+  completed_plans: 3
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and now full CLI scriptability.
-**Current focus:** Phase 08 — cli-foundation-and-platform-compatibility
+**Current focus:** Phase 09 — core-subcommands-create-list-search
 
 ## Current Position
 
-Phase: 9
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 09 (core-subcommands-create-list-search) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-26
 
 ```
@@ -51,6 +51,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 08]: version passed as parameter to cli.Run() — package main not importable; stdlib flag.FlagSet (not Cobra) locked for binary size
 - [Phase 08]: Use -windowsconsole build flag (not AttachConsole) for Windows CLI output — simpler, no runtime complexity
 - [Phase 08]: filterMacOSArgs applied universally on all platforms — one function, no-op on Windows/Linux, no build tags needed
+- [Phase 09-core-subcommands-create-list-search]: tablewriter v1.1.4 requires builder API (Header/Append/Render) not v0.x SetHeader methods
+- [Phase 09-core-subcommands-create-list-search]: Interspersed flag pattern: pre-separate positional from flags to support 'storcat list <dir> --json' ordering
 
 ### Pending Todos
 
@@ -64,6 +66,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T14:57:34.147Z
-Stopped at: Completed 08-02-PLAN.md
+Last session: 2026-03-26T15:37:49.849Z
+Stopped at: Completed 09-01-PLAN.md
 Resume file: None

@@ -53,9 +53,9 @@ Plans:
   3. User runs `storcat search <term> <dir>` and sees a table of matching files with path and catalog source
   4. User passes `--json` to `list`, `search`, or `create` and gets machine-readable JSON output to stdout, suitable for piping to `jq`
   5. Any command error (missing arg, unreadable directory) prints a message to stderr and exits non-zero
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 09-01-PLAN.md — Output helpers, tablewriter dep, list command with table/JSON output
+- [x] 09-01-PLAN.md — Output helpers, tablewriter dep, list command with table/JSON output
 - [ ] 09-02-PLAN.md — Search and create commands with table/JSON output
 
 ### Phase 10: Show, Open, and Output Polish
@@ -82,5 +82,5 @@ Plans:
 | 6. Platform Integration | v2.0.0 | 1/1 | Complete | 2026-03-26 |
 | 7. Verification + Merge | v2.0.0 | 2/2 | Complete | 2026-03-26 |
 | 8. CLI Foundation and Platform Compatibility | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
-| 9. Core Subcommands — Create, List, Search | v2.1.0 | 0/2 | Not started | - |
+| 9. Core Subcommands — Create, List, Search | v2.1.0 | 1/2 | In Progress|  |
 | 10. Show, Open, and Output Polish | v2.1.0 | 0/? | Not started | - |
