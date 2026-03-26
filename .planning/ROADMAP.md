@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 3: Config Manager** - Add window state persistence fields and methods to config (completed 2026-03-25)
 - [x] **Phase 4: App Layer + Lifecycle** - Complete IPC surface, add LoadCatalog, wire OnDomReady/OnBeforeClose (completed 2026-03-25)
 - [x] **Phase 5: Frontend Shim** - Update wailsAPI.ts to use new bindings and construct missing envelopes (completed 2026-03-26)
-- [ ] **Phase 6: Platform Integration** - Fix macOS drag region and version sourcing
+- [x] **Phase 6: Platform Integration** - Fix macOS drag region and version sourcing (completed 2026-03-26)
 - [ ] **Phase 7: Verification + Merge** - Cross-platform verification and clean merge to main
 
 ## Phase Details
@@ -102,9 +102,9 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. On macOS, clicking and dragging the application header moves the window (the drag region is functional)
   2. The version string shown in the app UI matches the version defined in the project's version source file, not a hardcoded Go constant
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 06-01-PLAN.md — macOS header drag CSS + build-time version injection with GetVersion bound method
+- [x] 06-01-PLAN.md — macOS header drag CSS + build-time version injection with GetVersion bound method
 **UI hint**: yes
 
 ### Phase 7: Verification + Merge
@@ -130,5 +130,5 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7
 | 3. Config Manager | 2/2 | Complete   | 2026-03-25 |
 | 4. App Layer + Lifecycle | 2/2 | Complete   | 2026-03-25 |
 | 5. Frontend Shim | 1/1 | Complete   | 2026-03-26 |
-| 6. Platform Integration | 0/1 | In progress | - |
+| 6. Platform Integration | 1/1 | Complete   | 2026-03-26 |
 | 7. Verification + Merge | 0/? | Not started | - |

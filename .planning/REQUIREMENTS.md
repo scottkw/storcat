@@ -37,8 +37,8 @@ Requirements for the v2.0.0 release. Each maps to roadmap phases.
 
 ### Platform Integration
 
-- [ ] **PLAT-01**: macOS header is draggable as window titlebar using `--wails-draggable: drag`
-- [ ] **PLAT-02**: App version is derived at build time (not hardcoded constant), displayed correctly in UI
+- [x] **PLAT-01**: macOS header is draggable as window titlebar using `--wails-draggable: drag`
+- [x] **PLAT-02**: App version is derived at build time (not hardcoded constant), displayed correctly in UI
 
 ### Merge & Release
 
@@ -94,8 +94,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WIN-02 | Phase 3 | Complete |
 | WIN-03 | Phase 3 | Complete |
 | WIN-04 | Phase 4 | Complete |
-| PLAT-01 | Phase 6 | Pending |
-| PLAT-02 | Phase 6 | Pending |
+| PLAT-01 | Phase 6 | Complete |
+| PLAT-02 | Phase 6 | Complete |
 | REL-01 | Phase 7 | Pending |
 | REL-02 | Phase 7 | Pending |
 

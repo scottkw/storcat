@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Completed 05-01-PLAN.md
-last_updated: "2026-03-26T03:00:18.363Z"
+status: Phase complete — ready for verification
+stopped_at: Completed 06-01-PLAN.md
+last_updated: "2026-03-26T04:00:50.703Z"
 progress:
   total_phases: 7
-  completed_phases: 5
-  total_plans: 8
-  completed_plans: 8
+  completed_phases: 6
+  total_plans: 9
+  completed_plans: 9
 ---
 
 # Project State
@@ -19,12 +19,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-24)
 
 **Core value:** Full feature parity with Electron v1.2.3 — no regressions for users upgrading to Go/Wails.
-**Current focus:** Phase 05 — frontend-shim
+**Current focus:** Phase 06 — platform-integration
 
 ## Current Position
 
-Phase: 6
-Plan: Not started
+Phase: 06 (platform-integration) — EXECUTING
+Plan: 1 of 1
 
 ## Performance Metrics
 
@@ -54,6 +54,7 @@ Plan: Not started
 | Phase 04 P01 | 5 | 2 tasks | 2 files |
 | Phase 04 P02 | 8 | 2 tasks | 5 files |
 | Phase 05 P01 | 40 | 2 tasks | 1 files |
+| Phase 06 P01 | 2 | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Recent decisions affecting current work:
 - [Phase 04]: loadWindowPersistence catch block adds setWindowPersistence(true) default -- covers unexpected wrapper throws not covered by envelope's enabled:true error path
 - [Phase 04]: WIN-04 confirmed present from Phase 3 (OnDomReady/domReady) -- not re-implemented in Plan 02
 - [Phase 05]: createCatalog wrapper returns all six CreateCatalogResult fields with as const discriminated unions (jsonPath, htmlPath, fileCount, totalSize, copyJsonPath, copyHtmlPath)
+- [Phase 06]: ldflags injection chosen for version embedding: var Version = 'dev' in version.go, overridden via wails build -ldflags '-X main.Version=2.0.0'
+- [Phase 06]: getVersion catch block returns version: 'dev' as fallback — component always gets a usable string, no error state needed
+- [Phase 06]: No no-drag overrides needed on header — header contains only non-interactive elements (icon + title text)
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-26T02:51:32.648Z
-Stopped at: Completed 05-01-PLAN.md
+Last session: 2026-03-26T04:00:50.700Z
+Stopped at: Completed 06-01-PLAN.md
 Resume file: None
