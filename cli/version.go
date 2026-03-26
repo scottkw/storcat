@@ -9,7 +9,7 @@ import (
 func runVersion(args []string, version string) int {
 	fs := flag.NewFlagSet("version", flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: storcat version\n\nPrint the StorCat version.\n")
+		fmt.Fprintf(os.Stdout, "Usage: storcat version\n\nPrint the StorCat version.\n")
 	}
 	if err := fs.Parse(args); err != nil {
 		if err == flag.ErrHelp {

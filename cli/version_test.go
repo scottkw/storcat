@@ -59,12 +59,12 @@ func TestRunVersion(t *testing.T) {
 	}
 }
 
-func TestRunVersion_HelpGoesToStderr(t *testing.T) {
-	_, stderr := captureOutput(func() {
+func TestRunVersion_HelpGoesToStdout(t *testing.T) {
+	stdout, _ := captureOutput(func() {
 		cli.Run([]string{"version", "--help"}, "2.0.0")
 	})
-	// Help text should be non-empty on stderr
-	if !strings.Contains(stderr, "storcat version") {
-		t.Errorf("expected help text on stderr, got %q", stderr)
+	// Help text should be non-empty on stdout
+	if !strings.Contains(stdout, "storcat version") {
+		t.Errorf("expected help text on stdout, got %q", stdout)
 	}
 }

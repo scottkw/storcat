@@ -13,7 +13,7 @@ import (
 func runOpen(args []string) int {
 	fs := flag.NewFlagSet("open", flag.ContinueOnError)
 	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: storcat open <catalog.json>\n\nOpen the catalog's HTML report in the default browser.\n")
+		fmt.Fprintf(os.Stdout, "Usage: storcat open <catalog.json>\n\nOpen the catalog's HTML report in the default browser.\n")
 	}
 
 	// Separate positional args from flags (interspersed flag pattern).
