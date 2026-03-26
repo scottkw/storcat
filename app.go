@@ -219,3 +219,8 @@ func (a *App) GetCatalogHtmlPath(catalogPath string) (string, error) {
 func (a *App) OpenExternal(url string) {
 	runtime.BrowserOpenURL(a.ctx, url)
 }
+
+// GetVersion returns the application version injected at build time
+func (a *App) GetVersion() string {
+	return Version
+}

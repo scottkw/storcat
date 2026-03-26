@@ -11,6 +11,8 @@ export function GetCatalogHtmlPath(arg1:string):Promise<string>;
 
 export function GetConfig():Promise<config.Config>;
 
+export function GetVersion():Promise<string>;
+
 export function GetWindowPersistence():Promise<boolean>;
 
 export function LoadCatalog(arg1:string):Promise<models.CatalogItem>;
