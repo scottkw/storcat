@@ -19,7 +19,18 @@ func runList(args []string) int {
 	fs.Usage = func() {
 		fmt.Fprintf(os.Stdout, "Usage: storcat list [directory] [flags]\n\nList catalogs in a directory.\nIf no directory is specified, the current directory is used.\n\nFlags:\n  --json   Output results as JSON\n")
 	}
-	if err := fs.Parse(args); err != nil {
+
+	// Separate positional args from flags so flags can appear after the directory.
+	var positional []string
+	var flagArgs []string
+	for _, a := range args {
+		if strings.HasPrefix(a, "-") {
+			flagArgs = append(flagArgs, a)
+		} else {
+			positional = append(positional, a)
+		}
+	}
+	if err := fs.Parse(flagArgs); err != nil {
 		if err == flag.ErrHelp {
 			return 0
 		}
@@ -27,8 +38,8 @@ func runList(args []string) int {
 	}
 
 	dir := "."
-	if fs.NArg() >= 1 {
-		dir = fs.Arg(0)
+	if len(positional) >= 1 {
+		dir = positional[0]
 	}
 
 	var err error
