@@ -36,20 +36,6 @@ func runSearch(args []string) int {
 	return 1
 }
 
-func runList(args []string) int {
-	fs := flag.NewFlagSet("list", flag.ContinueOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: storcat list <directory> [flags]\n\nList catalogs in a directory.\n\nFlags:\n  --json   Output results as JSON\n")
-	}
-	if err := fs.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			return 0
-		}
-		return 2
-	}
-	fmt.Fprintf(os.Stderr, "storcat list: not yet implemented\n")
-	return 1
-}
 
 func runShow(args []string) int {
 	fs := flag.NewFlagSet("show", flag.ContinueOnError)

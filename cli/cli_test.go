@@ -175,16 +175,16 @@ func TestRun_StubSearch(t *testing.T) {
 	}
 }
 
-func TestRun_StubList(t *testing.T) {
-	_, stderr := captureOutput(func() {
+func TestRun_ListDefaultsCwd(t *testing.T) {
+	// list with no args defaults to cwd; cwd has no .json catalogs so exits 0
+	stdout, _ := captureOutput(func() {
 		code := cli.Run([]string{"list"}, "2.0.0")
-		if code != 1 {
-			t.Errorf("expected exit code 1 for list stub, got %d", code)
+		if code != 0 {
+			t.Errorf("expected exit code 0 for list (cwd default), got %d", code)
 		}
 	})
-	if !strings.Contains(stderr, "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in stderr, got %q", stderr)
-	}
+	// Either "No catalogs found." or a table — both are valid responses
+	_ = stdout
 }
 
 func TestRun_StubShow(t *testing.T) {
@@ -212,7 +212,7 @@ func TestRun_StubOpen(t *testing.T) {
 }
 
 func TestRun_StubHelp(t *testing.T) {
-	// --help on stub commands should return 0
+	// --help on stub and implemented commands should return 0
 	stubs := []string{"create", "search", "list", "show", "open"}
 	for _, cmd := range stubs {
 		cmd := cmd
