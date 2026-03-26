@@ -152,26 +152,28 @@ func TestRun_NoArgs(t *testing.T) {
 }
 
 func TestRun_StubCreate(t *testing.T) {
+	// create is now implemented; no args means missing directory — exit 2 with usage error
 	_, stderr := captureOutput(func() {
 		code := cli.Run([]string{"create"}, "2.0.0")
-		if code != 1 {
-			t.Errorf("expected exit code 1 for create stub, got %d", code)
+		if code != 2 {
+			t.Errorf("expected exit code 2 for create with no args, got %d", code)
 		}
 	})
-	if !strings.Contains(stderr, "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in stderr, got %q", stderr)
+	if !strings.Contains(stderr, "directory argument required") {
+		t.Errorf("expected 'directory argument required' in stderr, got %q", stderr)
 	}
 }
 
 func TestRun_StubSearch(t *testing.T) {
+	// search is now implemented; no args means missing term — exit 2 with usage error
 	_, stderr := captureOutput(func() {
 		code := cli.Run([]string{"search"}, "2.0.0")
-		if code != 1 {
-			t.Errorf("expected exit code 1 for search stub, got %d", code)
+		if code != 2 {
+			t.Errorf("expected exit code 2 for search with no args, got %d", code)
 		}
 	})
-	if !strings.Contains(stderr, "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in stderr, got %q", stderr)
+	if !strings.Contains(stderr, "search term required") {
+		t.Errorf("expected 'search term required' in stderr, got %q", stderr)
 	}
 }
 

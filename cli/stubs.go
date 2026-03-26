@@ -6,20 +6,6 @@ import (
 	"os"
 )
 
-func runCreate(args []string) int {
-	fs := flag.NewFlagSet("create", flag.ContinueOnError)
-	fs.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: storcat create <directory> [flags]\n\nCreate a catalog from a directory.\n\nFlags:\n  --title    Catalog title\n  --name     Catalog filename\n  --output   Output directory\n  --json     Output result as JSON\n")
-	}
-	if err := fs.Parse(args); err != nil {
-		if err == flag.ErrHelp {
-			return 0
-		}
-		return 2
-	}
-	fmt.Fprintf(os.Stderr, "storcat create: not yet implemented\n")
-	return 1
-}
 
 
 func runShow(args []string) int {
