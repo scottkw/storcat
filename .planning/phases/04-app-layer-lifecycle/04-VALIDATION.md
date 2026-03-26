@@ -1,10 +1,11 @@
 ---
 phase: 4
 slug: app-layer-lifecycle
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-25
+updated: 2026-03-26
 ---
 
 # Phase 4 — Validation Strategy
@@ -17,41 +18,42 @@ created: 2026-03-25
 
 | Property | Value |
 |----------|-------|
-| **Framework** | None — no automated test framework in project |
-| **Config file** | None |
-| **Quick run command** | `wails dev` — manual test in running app |
-| **Full suite command** | Manual: exercise all IPC wrappers, verify envelope shapes in browser console, test catalog modal HTML flow |
-| **Estimated runtime** | ~120 seconds (manual) |
+| **Framework** | Go `testing` package (app_test.go) + bash script (scripts/verify-envelopes.sh) |
+| **Config file** | None (Go standard tooling) |
+| **Quick run command** | `go test -v -run "TestGetCatalogHtmlPath\|TestReadHtmlFile" ./...` |
+| **Full suite command** | `go test ./... && scripts/verify-envelopes.sh` |
+| **Estimated runtime** | ~2 seconds (automated) |
 
 ---
 
 ## Sampling Rate
 
-- **After every task commit:** Run `wails dev`, exercise the affected wrapper manually, verify envelope shape in browser console
-- **After every plan wave:** Full modal flow: browse -> click catalog -> verify HTML preview; plus window resize -> close -> reopen -> verify size
-- **Before `/gsd:verify-work`:** All 6 smoke behaviors confirmed
-- **Max feedback latency:** 120 seconds
+- **After every task commit:** Run `go test ./...` and `scripts/verify-envelopes.sh`
+- **After every plan wave:** Full automated suite + manual smoke for WIN-04 (window restore)
+- **Before `/gsd:verify-work`:** All automated checks green, WIN-04 confirmed manually
+- **Max feedback latency:** ~2 seconds (automated); ~120 seconds including WIN-04 manual
 
 ---
 
 ## Per-Task Verification Map
 
-| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 04-01-01 | 01 | 1 | API-01 | smoke | Manual — browse catalogs, click catalog with HTML, verify modal opens | N/A | ⬜ pending |
-| 04-01-02 | 01 | 1 | API-01 | smoke | Manual — delete `.html` file, click catalog, verify error message | N/A | ⬜ pending |
-| 04-01-03 | 01 | 1 | API-02 | smoke | Manual — verify HTML content renders in modal iframe | N/A | ⬜ pending |
-| 04-01-04 | 01 | 1 | API-02 | smoke | Manual — pass nonexistent path, verify error shown not crash | N/A | ⬜ pending |
-| 04-01-05 | 01 | 1 | API-03 | smoke | Manual — exercise all 7 wrapper paths in running app | N/A | ⬜ pending |
-| 04-01-06 | 01 | 1 | WIN-04 | smoke | Manual — resize, quit, relaunch, verify restored size | N/A | ⬜ pending |
+| Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File | Status |
+|---------|------|------|-------------|-----------|-------------------|------|--------|
+| 04-01-01 | 01 | 1 | API-01 | unit | `go test -v -run TestGetCatalogHtmlPath_ReturnsHtmlPathWhenFileExists ./...` | app_test.go | green |
+| 04-01-02 | 01 | 1 | API-01 | unit | `go test -v -run TestGetCatalogHtmlPath_ReturnsErrorWhenHtmlFileMissing ./...` | app_test.go | green |
+| 04-01-03 | 01 | 1 | API-01 | unit | `go test -v -run TestGetCatalogHtmlPath_NonJsonInputAppendsHtmlExtension ./...` | app_test.go | green |
+| 04-01-04 | 01 | 1 | API-02 | unit | `go test -v -run TestReadHtmlFile_ReturnsContentForValidFile ./...` | app_test.go | green |
+| 04-01-05 | 01 | 1 | API-02 | unit | `go test -v -run TestReadHtmlFile_ReturnsErrorForNonexistentFile ./...` | app_test.go | green |
+| 04-01-06 | 01 | 1 | API-03 | smoke | `scripts/verify-envelopes.sh` | scripts/verify-envelopes.sh | green |
+| 04-01-07 | 01 | 1 | WIN-04 | manual | Manual — resize, quit, relaunch, verify restored size | N/A | manual-only |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: green · red · flaky · manual-only*
 
 ---
 
 ## Wave 0 Requirements
 
-Existing infrastructure covers all phase requirements. No test framework exists and none is expected (TEST-01 through TEST-03 deferred per REQUIREMENTS.md). Manual verification protocol covers all requirements.
+No pre-existing automated infrastructure was needed. Tests created by Nyquist auditor on 2026-03-26 cover API-01, API-02, and API-03 directly. WIN-04 remains manual-only (requires full app restart cycle that cannot be automated without running the Wails desktop binary).
 
 ---
 
@@ -59,22 +61,17 @@ Existing infrastructure covers all phase requirements. No test framework exists 
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| `getCatalogHtmlPath` returns `{success, htmlPath}` for existing file | API-01 | No test framework; desktop app requires running Wails runtime | Browse catalogs, click one with HTML, verify modal opens with content |
-| `getCatalogHtmlPath` returns `{success: false}` for missing file | API-01 | Desktop app UI interaction required | Delete an `.html` file, click the catalog, verify error message shown |
-| `readHtmlFile` returns `{success, content}` for valid file | API-02 | Requires Wails runtime + browser rendering | Verify HTML content renders in modal iframe |
-| `readHtmlFile` returns `{success: false}` for missing file | API-02 | Desktop app error path verification | Pass nonexistent path, verify error shown not crash |
-| All 7 wrappers return `{success, ...}` envelopes | API-03 | Requires exercising each wrapper through UI | Call each wrapper, check console for envelope shape |
-| Window size restores on relaunch | WIN-04 | Requires app restart cycle | Resize, quit, relaunch, verify restored size |
+| Window size restores on relaunch | WIN-04 | Requires app restart cycle with running Wails desktop binary | Resize window, quit app, relaunch with `wails dev`, verify restored size |
 
 ---
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have automated verify or documented manual-only rationale
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] WIN-04 manual-only rationale documented (requires running desktop binary)
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s for automated checks
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** 2026-03-26 — Nyquist auditor gap fill complete (API-01, API-02, API-03 green)
