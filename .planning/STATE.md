@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
 status: verifying
-stopped_at: Completed 09-02-PLAN.md
-last_updated: "2026-03-26T15:46:59.828Z"
+stopped_at: Completed 10-01-PLAN.md
+last_updated: "2026-03-26T16:19:28.286Z"
 last_activity: 2026-03-26
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  total_plans: 6
+  completed_plans: 5
 ---
 
 # Project State
@@ -55,6 +55,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 09-core-subcommands-create-list-search]: Interspersed flag pattern: pre-separate positional from flags to support 'storcat list <dir> --json' ordering
 - [Phase 09]: Split-at-first-flag pattern for create command: positional args before first flag, everything after is flags — handles named flags with separate values
 - [Phase 09]: stubs.go now contains only runShow/runOpen — list, search, and create commands are fully implemented
+- [Phase 10]: Depth semantics: maxDepth=0=root only, maxDepth=1=root+children; depth check at printTree entry skips both print and recursion
 
 ### Pending Todos
 
@@ -68,6 +69,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T15:43:24.406Z
-Stopped at: Completed 09-02-PLAN.md
+Last session: 2026-03-26T16:19:24.550Z
+Stopped at: Completed 10-01-PLAN.md
 Resume file: None

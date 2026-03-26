@@ -68,9 +68,9 @@ Plans:
   3. On a TTY, `show` output renders directories in bold/blue color; passing `--no-color` or setting `NO_COLOR` env var suppresses all color on any command
   4. User runs `storcat open <catalog.json>` and the catalog's HTML file opens in the system default browser on macOS, Linux, and Windows
   5. User passes `--json` to `show` and receives the raw catalog JSON to stdout
-**Plans:** 2 plans
+**Plans:** 1/2 plans executed
 Plans:
-- [ ] 10-01-PLAN.md — Show command: tree rendering, color, depth, --json
+- [x] 10-01-PLAN.md — Show command: tree rendering, color, depth, --json
 - [ ] 10-02-PLAN.md — Open command: cross-platform browser launch, stubs cleanup
 
 ## Progress
@@ -86,4 +86,4 @@ Plans:
 | 7. Verification + Merge | v2.0.0 | 2/2 | Complete | 2026-03-26 |
 | 8. CLI Foundation and Platform Compatibility | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 1/2 | In Progress|  |
-| 10. Show, Open, and Output Polish | v2.1.0 | 0/2 | Not started | - |
+| 10. Show, Open, and Output Polish | v2.1.0 | 1/2 | In Progress|  |
