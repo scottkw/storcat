@@ -40,8 +40,8 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - ✓ `storcat create` — create catalog from directory — Phase 9
 - ✓ `storcat search` — search catalogs for a term — Phase 9
 - ✓ `storcat list` — list catalogs with metadata — Phase 9
-- [ ] `storcat show` — display catalog tree structure
-- [ ] `storcat open` — open catalog HTML in default browser
+- ✓ `storcat show` — display catalog tree structure — Phase 10
+- ✓ `storcat open` — open catalog HTML in default browser — Phase 10
 - [ ] `storcat version` — print version
 - ✓ CLI dispatch, subcommand routing, `--help`, exit codes — Phase 8
 - ✓ macOS `-psn_*` filtering, Windows console output, install script — Phase 8
@@ -124,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 9 (core subcommands — create, list, search) complete*
+*Last updated: 2026-03-26 after Phase 10 (show, open, and output polish) complete*
