@@ -2,16 +2,49 @@ package main
 
 import (
 	"embed"
+	"os"
+	"strings"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
+
+	"storcat-wails/cli"
 )
 
 //go:embed all:frontend/dist
 var assets embed.FS
 
 func main() {
+	// Filter macOS Gatekeeper -psn_* args before any inspection
+	args := filterMacOSArgs(os.Args[1:])
+
+	// CLI dispatch: known subcommand -> CLI mode, exit before GUI
+	if len(args) > 0 {
+		switch args[0] {
+		case "version", "create", "search", "list", "show", "open", "help", "--help", "-h":
+			os.Exit(cli.Run(args, Version))
+		}
+	}
+
+	// GUI mode: no args, or unrecognized args fall through
+	runGUI()
+}
+
+// filterMacOSArgs removes macOS Gatekeeper -psn_* arguments injected on first Finder launch.
+// Applied on all platforms (no-op on Windows/Linux).
+func filterMacOSArgs(args []string) []string {
+	filtered := make([]string, 0, len(args))
+	for _, arg := range args {
+		if !strings.HasPrefix(arg, "-psn_") {
+			filtered = append(filtered, arg)
+		}
+	}
+	return filtered
+}
+
+// runGUI starts the Wails GUI application.
+func runGUI() {
 	// Create an instance of the app structure
 	app := NewApp()
 
