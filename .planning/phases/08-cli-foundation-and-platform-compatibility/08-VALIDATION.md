@@ -7,7 +7,7 @@ wave_0_complete: false
 created: 2026-03-26
 ---
 
-# Phase 8 — Validation Strategy
+# Phase 8 -- Validation Strategy
 
 > Per-phase validation contract for feedback sampling during execution.
 
@@ -18,7 +18,7 @@ created: 2026-03-26
 | Property | Value |
 |----------|-------|
 | **Framework** | go test (stdlib) |
-| **Config file** | none — existing go test infrastructure |
+| **Config file** | none -- existing go test infrastructure |
 | **Quick run command** | `go test ./cli/...` |
 | **Full suite command** | `go test ./...` |
 | **Estimated runtime** | ~5 seconds |
@@ -38,26 +38,26 @@ created: 2026-03-26
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 8-01-01 | 01 | 1 | CLIP-01 | unit | `go test ./cli/ -run TestDispatch` | ❌ W0 | ⬜ pending |
-| 8-01-02 | 01 | 1 | CLIP-02 | unit | `go test ./cli/ -run TestHelp` | ❌ W0 | ⬜ pending |
-| 8-01-03 | 01 | 1 | CLIP-03 | unit | `go test ./cli/ -run TestExitCode` | ❌ W0 | ⬜ pending |
-| 8-01-04 | 01 | 1 | CLIP-04 | unit | `go test ./cli/ -run TestStdout` | ❌ W0 | ⬜ pending |
-| 8-01-05 | 01 | 1 | CLIP-05 | unit | `go test ./cli/ -run TestStderr` | ❌ W0 | ⬜ pending |
-| 8-01-06 | 01 | 1 | CLIP-06 | unit | `go test ./cli/ -run TestVersion` | ❌ W0 | ⬜ pending |
-| 8-02-01 | 02 | 1 | CLPC-01 | unit | `go test ./cli/ -run TestMacOSPsn` | ❌ W0 | ⬜ pending |
-| 8-02-02 | 02 | 1 | CLPC-02 | manual | N/A (Windows console) | N/A | ⬜ pending |
-| 8-02-03 | 02 | 1 | CLPC-03 | unit | `go test ./cli/ -run TestWailsDev` | ❌ W0 | ⬜ pending |
-| 8-02-04 | 02 | 1 | CLPC-04 | integration | `go test ./cli/ -run TestInstall` | ❌ W0 | ⬜ pending |
-| 8-03-01 | 03 | 1 | CLCM-06 | unit | `go test ./cli/ -run TestVersionCmd` | ❌ W0 | ⬜ pending |
+| 8-01-01 | 01 | 1 | CLIP-01 | unit | `go test ./cli/ -run TestDispatch` | W0 | pending |
+| 8-01-02 | 01 | 1 | CLIP-02 | unit | `go test ./cli/ -run TestHelp` | W0 | pending |
+| 8-01-03 | 01 | 1 | CLIP-03 | unit | `go test ./cli/ -run TestExitCode` | W0 | pending |
+| 8-01-04 | 01 | 1 | CLIP-04 | unit | `go test ./cli/ -run TestStdout` | W0 | pending |
+| 8-01-05 | 01 | 1 | CLIP-05 | unit | `go test ./cli/ -run TestStderr` | W0 | pending |
+| 8-01-06 | 01 | 1 | CLIP-06 | unit | `go test ./cli/ -run TestVersion` | W0 | pending |
+| 8-02-01 | 02 | 2 | CLPC-02 | unit | `go test ./cli/ -run TestMacOSPsn` | W0 | pending |
+| 8-02-02 | 02 | 2 | CLPC-01 | manual | N/A (Windows console / macOS Finder launch) | N/A | pending |
+| 8-02-03 | 02 | 2 | CLPC-03 | unit | `go test ./cli/ -run TestWailsDev` | W0 | pending |
+| 8-02-04 | 02 | 2 | CLPC-04 | integration | `go test ./cli/ -run TestInstall` | W0 | pending |
+| 8-03-01 | 03 | 1 | CLCM-06 | unit | `go test ./cli/ -run TestVersionCmd` | W0 | pending |
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+*Status: pending / green / red / flaky*
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] `cli/cli_test.go` — dispatch tests, help text tests, exit code tests
-- [ ] `cli/platform_test.go` — macOS psn filtering, Wails dev safety tests
+- [ ] `cli/cli_test.go` -- dispatch tests, help text tests, exit code tests
+- [ ] `cli/platform_test.go` -- macOS psn filtering, Wails dev safety tests
 
 *Existing `go test ./...` infrastructure is in place. Only new test files needed.*
 
@@ -67,7 +67,7 @@ created: 2026-03-26
 
 | Behavior | Requirement | Why Manual | Test Instructions |
 |----------|-------------|------------|-------------------|
-| Windows console output visible | CLPC-02 | Requires Windows hardware with GUI subsystem | Build with `-windowsconsole`, run `storcat version` in cmd.exe, verify output appears |
+| Windows console output visible | CLPC-01 | Requires Windows hardware with GUI subsystem | Build with `-windowsconsole`, run `storcat version` in cmd.exe, verify output appears |
 | macOS Finder launch | CLPC-01 | Requires macOS Finder double-click | Double-click StorCat.app, verify GUI launches without crash |
 
 ---
