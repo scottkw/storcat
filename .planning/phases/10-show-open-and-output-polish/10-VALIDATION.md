@@ -1,9 +1,9 @@
 ---
 phase: 10
 slug: show-open-and-output-polish
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: approved
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-26
 ---
 
@@ -38,12 +38,12 @@ created: 2026-03-26
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 10-01-01 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestShowCommand` | ❌ W0 | ⬜ pending |
-| 10-01-02 | 01 | 1 | CLOF-05 | unit | `go test ./cli/ -run TestShowDepth` | ❌ W0 | ⬜ pending |
-| 10-01-03 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestShowColor` | ❌ W0 | ⬜ pending |
-| 10-01-04 | 01 | 1 | CLOF-02 | unit | `go test ./cli/ -run TestShowJSON` | ❌ W0 | ⬜ pending |
-| 10-02-01 | 02 | 1 | CLCM-05 | unit | `go test ./cli/ -run TestOpenCommand` | ❌ W0 | ⬜ pending |
-| 10-02-02 | 02 | 1 | CLPC-05 | unit | `go test ./cli/ -run TestNoColor` | ❌ W0 | ⬜ pending |
+| 10-01-01 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestRunShow_TreeOutput` | ✅ | ✅ green |
+| 10-01-02 | 01 | 1 | CLOF-05 | unit | `go test ./cli/ -run TestRunShow_Depth` | ✅ | ✅ green |
+| 10-01-03 | 01 | 1 | CLOF-04 | unit | `go test ./cli/ -run TestRunShow_NoColor` | ✅ | ✅ green |
+| 10-01-04 | 01 | 1 | CLOF-02 | unit | `go test ./cli/ -run TestRunShow_JSON` | ✅ | ✅ green |
+| 10-02-01 | 02 | 1 | CLCM-05 | unit | `go test ./cli/ -run TestRunOpen` | ✅ | ✅ green |
+| 10-02-02 | 02 | 1 | CLPC-05 | unit | `go test ./cli/ -run TestRunShow_NoColor` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -51,8 +51,8 @@ created: 2026-03-26
 
 ## Wave 0 Requirements
 
-- [ ] `internal/cli/show_test.go` — stubs for show command tests
-- [ ] `internal/cli/open_test.go` — stubs for open command tests
+- [x] `cli/show_test.go` — show command tests (11 tests)
+- [x] `cli/open_test.go` — open command tests (6 tests)
 
 *Existing test infrastructure (captureOutput helper, catalog fixtures) covers shared needs.*
 
@@ -69,11 +69,21 @@ created: 2026-03-26
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 10s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 10s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-26
+
+---
+
+## Validation Audit 2026-03-26
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
