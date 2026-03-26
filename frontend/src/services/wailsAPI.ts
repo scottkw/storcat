@@ -13,6 +13,7 @@ import {
   OpenExternal,
   GetWindowPersistence,
   SetWindowPersistence,
+  GetVersion,
 } from '../../wailsjs/go/main/App';
 
 // Wrapper to match Electron API structure
@@ -182,6 +183,15 @@ export const wailsAPI = {
     } catch (error: any) {
       console.error('Failed to save window persistence setting:', error);
       return { success: false, error: error.message };
+    }
+  },
+
+  getVersion: async () => {
+    try {
+      const version = await GetVersion();
+      return { success: true as const, version };
+    } catch (error: any) {
+      return { success: false as const, version: 'dev' };
     }
   },
 };

@@ -16,8 +16,8 @@ function Header() {
           height: 'var(--header-height)',
           background: 'var(--header-bg)',
           borderBottom: 'none',
-          // macOS traffic light button spacing
-        } as React.CSSProperties & { WebkitAppRegion?: string }}
+          '--wails-draggable': 'drag',
+        } as React.CSSProperties & { '--wails-draggable'?: string }}
       >
         <div
           style={{

@@ -6,9 +6,6 @@ import { useAppContext } from '../../contexts/AppContext';
 
 const { Title, Text, Paragraph } = Typography;
 
-// Version constant (can be updated during build)
-const APP_VERSION = '2.0.0';
-
 function CreateCatalogSidebar() {
   const { state, dispatch } = useAppContext();
   const [catalogTitle, setCatalogTitle] = useState('');
@@ -193,6 +190,13 @@ function CreateCatalogSidebar() {
 }
 
 function CreateCatalogContent() {
+  const [appVersion, setAppVersion] = useState('...');
+  useEffect(() => {
+    window.electronAPI?.getVersion?.().then(result => {
+      if (result) setAppVersion(result.version);
+    });
+  }, []);
+
   return (
     <div style={{
       height: '100%',
@@ -246,7 +250,7 @@ function CreateCatalogContent() {
         {/* Version and Author Info */}
         <Space direction="vertical" size="small" style={{ width: '100%', marginBottom: '24px' }}>
           <Text strong style={{ color: 'var(--app-text)', fontSize: '1rem' }}>
-            Version {APP_VERSION}
+            Version {appVersion}
           </Text>
           <Text style={{ color: 'var(--app-text)', opacity: 0.8 }}>
             Created by Ken Scott
@@ -261,7 +265,7 @@ function CreateCatalogContent() {
               </Text>
               <Text 
                 style={{ color: 'var(--app-text)', opacity: 0.7, cursor: 'pointer' }}
-                onClick={() => window.electronAPI?.openExternal(`https://github.com/scottkw/storcat/releases/tag/${APP_VERSION}`)}
+                onClick={() => window.electronAPI?.openExternal(`https://github.com/scottkw/storcat/releases/tag/${appVersion}`)}
               >
                 📋 Release Notes
               </Text>
