@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: verifying
+status: executing
 stopped_at: Completed 10-01-PLAN.md
 last_updated: "2026-03-26T16:19:28.286Z"
 last_activity: 2026-03-26
@@ -20,14 +20,14 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and now full CLI scriptability.
-**Current focus:** Phase 09 — core-subcommands-create-list-search
+**Current focus:** Phase 10 — show-open-and-output-polish
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Phase complete — ready for verification
-Last activity: 2026-03-26
+Phase: 10 (show-open-and-output-polish) — EXECUTING
+Plan: 1 of 2
+Status: Executing Phase 10
+Last activity: 2026-03-26 -- Phase 10 execution started
 
 ```
 Phase 8  [          ] Not started
