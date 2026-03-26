@@ -42,7 +42,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - ✓ `storcat list` — list catalogs with metadata — Phase 9
 - ✓ `storcat show` — display catalog tree structure — Phase 10
 - ✓ `storcat open` — open catalog HTML in default browser — Phase 10
-- [ ] `storcat version` — print version
+- ✓ `storcat version` — print version — Phase 11
 - ✓ CLI dispatch, subcommand routing, `--help`, exit codes — Phase 8
 - ✓ macOS `-psn_*` filtering, Windows console output, install script — Phase 8
 
@@ -76,12 +76,7 @@ Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js 
 **Platforms:** macOS (universal), Windows (x64/arm64), Linux (x64/arm64)
 **Build:** `wails build` with ldflags version injection
 
-**Known tech debt (11 items):**
-- testData hardcoded fallbacks in Search/Browse tabs show fake rows on first load
-- `if (result)` instead of `if (result.success)` in CreateCatalogTab getVersion
-- Phase 7 Nyquist VALIDATION.md in draft status
-- 3 human verification items outstanding (smoke test, cross-platform CI, clean build on main)
-- See `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md` for full list
+**Known tech debt:** Phase 11 closed all v2.1.0 audit items (NO_COLOR test gap, stale import, help stream inconsistency, orphaned export). Remaining v2.0.0 items tracked in `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md`.
 
 ## Key Decisions
 
@@ -124,4 +119,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after Phase 10 (show, open, and output polish) complete*
+*Last updated: 2026-03-26 after Phase 11 (tech debt cleanup) complete — last phase in v2.1.0 milestone*
