@@ -43,6 +43,8 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - [ ] `storcat show` — display catalog tree structure
 - [ ] `storcat open` — open catalog HTML in default browser
 - [ ] `storcat version` — print version
+- ✓ CLI dispatch, subcommand routing, `--help`, exit codes — Phase 8
+- ✓ macOS `-psn_*` filtering, Windows console output, install script — Phase 8
 
 ### Out of Scope
 
@@ -93,6 +95,8 @@ Shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js 
 | OnDomReady for window restore (not OnStartup) | Window not yet rendered at OnStartup | ✓ Good |
 | ldflags for version injection | Standard Go pattern, overridable at build time | ✓ Good |
 | `//go:embed wails.json` for version | Simpler than ldflags, automatic from wails.json | ✓ Good (diverged from plan, functionally correct) |
+| stdlib flag.FlagSet for CLI (no Cobra) | Zero deps, project decision CLIP-03 | ✓ Good |
+| CLI dispatch before wails.Run() | Known subcommands exit early, unknown args fall through to GUI | ✓ Good |
 | Dual-format LoadCatalog (array + object) | v1 backward compatibility with zero user friction | ✓ Good |
 | `{success,...}` envelope pattern | Consistent error handling, matches Electron contract | ✓ Good |
 
@@ -120,4 +124,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v2.1.0 milestone started*
+*Last updated: 2026-03-26 after Phase 8 (CLI foundation) complete*
