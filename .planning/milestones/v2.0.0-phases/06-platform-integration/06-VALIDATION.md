@@ -1,9 +1,9 @@
 ---
 phase: 6
 slug: platform-integration
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-25
 ---
 
@@ -38,9 +38,9 @@ created: 2026-03-25
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 06-01-01 | 01 | 0 | PLAT-02 | unit | `go test . -run TestGetVersion` | ❌ W0 | ⬜ pending |
+| 06-01-01 | 01 | 0 | PLAT-02 | unit | `go test . -run TestGetVersion` | app_test.go | ✅ green |
 | 06-01-02 | 01 | 1 | PLAT-01 | manual | Manual: run `wails dev` and drag header | N/A | ⬜ pending |
-| 06-01-03 | 01 | 1 | PLAT-02 | unit | `go test . -run TestGetVersion` | ❌ W0 | ⬜ pending |
+| 06-01-03 | 01 | 1 | PLAT-02 | unit | `go test . -run TestGetVersion` | app_test.go | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,7 +48,7 @@ created: 2026-03-25
 
 ## Wave 0 Requirements
 
-- [ ] `version_test.go` — unit test for `GetVersion()` returning the package-level `Version` variable — covers PLAT-02
+- [x] `app_test.go` — `TestGetVersion_ReturnsVersionFromWailsJson` — unit test for `GetVersion()` returning the package-level `Version` variable — covers PLAT-02
 
 *Existing infrastructure covers PLAT-01 (manual-only — CSS drag requires native WebKit runtime).*
 
@@ -64,11 +64,11 @@ created: 2026-03-25
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** 2026-03-26 — Nyquist auditor (TestGetVersion passes green)
