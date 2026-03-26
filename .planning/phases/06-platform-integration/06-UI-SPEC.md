@@ -70,11 +70,13 @@ Exceptions:
 | Role | Size | Weight | Line Height |
 |------|------|--------|-------------|
 | Body | 16px (1rem) | 400 | 1.5 |
-| Label | 16px (1rem) | 500 | 1.4 |
+| Label | 16px (1rem) | 600 | 1.4 |
 | Monospace / path | ~13.6px (0.85rem) | 400 | 1.5 |
 | Heading (h4 — header title) | 20px (1.25rem) | 600 | 1.2 |
 
-Source: `Header.tsx` Title level={4} at fontSize: 1.25rem, fontWeight: 600. `CreateCatalogTab.tsx` label fontSize: 1rem, fontWeight: 500. `index.css` `.ant-table-tbody > tr > td` at font-size: 0.85rem. Body from `index.css` default.
+Source: `Header.tsx` Title level={4} at fontSize: 1.25rem, fontWeight: 600. `CreateCatalogTab.tsx` label uses `<Text strong>` which renders at semibold (600) — aligns with Ant Design component behavior. `index.css` `.ant-table-tbody > tr > td` at font-size: 0.85rem. Body from `index.css` default.
+
+Declared weights: 400 (body, monospace/path) and 600 (label, heading). Maximum 2 weights enforced.
 
 **Phase 6 typography contract:**
 - Version text in `CreateCatalogTab.tsx` uses `<Text strong>` at `fontSize: '1rem'` (16px), weight 600 via Ant Design `strong` prop. This does not change — only the data source changes (from constant to async call).
