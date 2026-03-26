@@ -228,25 +228,32 @@ func TestRun_StubHelp(t *testing.T) {
 }
 
 func TestRun_NoCobra(t *testing.T) {
-	// Verify no cobra import in any cli/*.go file
+	// Verify no cobra or wails import in non-test cli/*.go files
 	cliDir := filepath.Join(".") // package cli dir
 	entries, err := os.ReadDir(cliDir)
 	if err != nil {
 		t.Fatalf("failed to read cli dir: %v", err)
 	}
+	cobraImport := `"github.com/spf13/cobra"`
+	wailsImport := `"github.com/wailsapp`
 	for _, e := range entries {
-		if e.IsDir() || !strings.HasSuffix(e.Name(), ".go") {
+		if e.IsDir() {
 			continue
 		}
-		content, err := os.ReadFile(filepath.Join(cliDir, e.Name()))
+		name := e.Name()
+		// Skip test files — they may reference these strings in assertions
+		if !strings.HasSuffix(name, ".go") || strings.HasSuffix(name, "_test.go") {
+			continue
+		}
+		content, err := os.ReadFile(filepath.Join(cliDir, name))
 		if err != nil {
-			t.Fatalf("failed to read %s: %v", e.Name(), err)
+			t.Fatalf("failed to read %s: %v", name, err)
 		}
-		if strings.Contains(string(content), "github.com/spf13/cobra") {
-			t.Errorf("file %s contains cobra import — must use stdlib flag.FlagSet", e.Name())
+		if strings.Contains(string(content), cobraImport) {
+			t.Errorf("file %s contains cobra import — must use stdlib flag.FlagSet", name)
 		}
-		if strings.Contains(string(content), "wailsapp") {
-			t.Errorf("file %s contains wails import — cli/ must have zero wails dependencies", e.Name())
+		if strings.Contains(string(content), wailsImport) {
+			t.Errorf("file %s contains wails import — cli/ must have zero wails dependencies", name)
 		}
 	}
 }
