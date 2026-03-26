@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 10-02-PLAN.md
-last_updated: "2026-03-26T16:28:29.211Z"
+status: verifying
+stopped_at: Completed 11-01-PLAN.md
+last_updated: "2026-03-26T19:14:33.920Z"
 last_activity: 2026-03-26
 progress:
-  total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 4
+  completed_phases: 4
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-26)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and now full CLI scriptability.
-**Current focus:** Phase 10 — show-open-and-output-polish
+**Current focus:** Phase 11 — tech-debt-cleanup
 
 ## Current Position
 
-Phase: 10
-Plan: Not started
-Status: Ready to execute
+Phase: 11 (tech-debt-cleanup) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-03-26
 
 ```
@@ -57,6 +57,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 09]: stubs.go now contains only runShow/runOpen — list, search, and create commands are fully implemented
 - [Phase 10]: Depth semantics: maxDepth=0=root only, maxDepth=1=root+children; depth check at printTree entry skips both print and recursion
 - [Phase 10]: pkg/browser promoted to direct dependency after open.go implementation; stubs.go deleted — all 6 CLI subcommands now fully implemented
+- [Phase 11-tech-debt-cleanup]: All 6 CLI commands write --help text to os.Stdout (not os.Stderr) — consistent with Unix convention
+- [Phase 11-tech-debt-cleanup]: FormatBytes exported function removed from internal/catalog — cli package has own standalone formatBytes
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26T16:25:18.891Z
-Stopped at: Completed 10-02-PLAN.md
+Last session: 2026-03-26T19:14:33.918Z
+Stopped at: Completed 11-01-PLAN.md
 Resume file: None

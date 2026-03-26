@@ -25,7 +25,7 @@
 - [x] **Phase 8: CLI Foundation and Platform Compatibility** — Dispatch skeleton, platform fixes, version command, install script (completed 2026-03-26)
 - [x] **Phase 9: Core Subcommands — Create, List, Search** — Three primary scripting commands with table and JSON output (completed 2026-03-26)
 - [x] **Phase 10: Show, Open, and Output Polish** — Tree visualization, cross-platform browser open, color and depth flags (completed 2026-03-26)
-- [ ] **Phase 11: Tech Debt Cleanup** — Test gaps, stale imports, help stream consistency, orphaned exports
+- [x] **Phase 11: Tech Debt Cleanup** — Test gaps, stale imports, help stream consistency, orphaned exports (completed 2026-03-26)
 
 ## Phase Details
 
@@ -85,9 +85,9 @@ Plans:
   3. `open.go` and `version.go` write `--help` text to stdout (consistent with all other commands)
   4. `internal/catalog.FormatBytes()` is removed (orphaned export)
   5. ROADMAP.md Phase 9 status is correct (already fixed in this commit)
-**Plans:** 1 plan
+**Plans:** 1/1 plans complete
 Plans:
-- [ ] 11-01-PLAN.md — NO_COLOR test, stale import cleanup, help stream fix, orphaned export removal
+- [x] 11-01-PLAN.md — NO_COLOR test, stale import cleanup, help stream fix, orphaned export removal
 
 ## Progress
 
@@ -103,4 +103,4 @@ Plans:
 | 8. CLI Foundation and Platform Compatibility | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete   | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete    | 2026-03-26 |
-| 11. Tech Debt Cleanup | v2.1.0 | 0/1 | Pending | |
+| 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete   | 2026-03-26 |
