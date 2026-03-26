@@ -190,14 +190,15 @@ func TestRun_ListDefaultsCwd(t *testing.T) {
 }
 
 func TestRun_StubShow(t *testing.T) {
+	// show is now implemented; no args means missing catalog file — exit 2 with usage error
 	_, stderr := captureOutput(func() {
 		code := cli.Run([]string{"show"}, "2.0.0")
-		if code != 1 {
-			t.Errorf("expected exit code 1 for show stub, got %d", code)
+		if code != 2 {
+			t.Errorf("expected exit code 2 for show with no args, got %d", code)
 		}
 	})
-	if !strings.Contains(stderr, "not yet implemented") {
-		t.Errorf("expected 'not yet implemented' in stderr, got %q", stderr)
+	if !strings.Contains(stderr, "catalog file argument required") {
+		t.Errorf("expected 'catalog file argument required' in stderr, got %q", stderr)
 	}
 }
 
