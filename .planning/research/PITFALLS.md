@@ -1,91 +1,204 @@
-# Domain Pitfalls: Electron-to-Wails Migration
+# Pitfalls Research
 
-**Domain:** Desktop app migration (Electron/Node.js to Go/Wails)
-**Project:** StorCat v2.0.0
-**Researched:** 2026-03-24
+**Domain:** Adding CLI subcommands to an existing Go/Wails desktop app
+**Project:** StorCat v2.1.0
+**Researched:** 2026-03-26
+**Confidence:** MEDIUM-HIGH (Wails-specific sources + Go/Windows platform docs; some gaps noted)
 
 ---
 
 ## Critical Pitfalls
 
-Mistakes that cause silent data corruption, runtime panics, or feature regressions that are hard to detect in testing.
+---
+
+### Pitfall 1: Windows GUI Subsystem Swallows All CLI Output
+
+**What goes wrong:**
+`wails build` compiles with `-H windowsgui` in ldflags. On Windows this sets the PE subsystem to WINDOWS, which means the OS does not attach stdout/stderr to the parent console. Every `fmt.Println`, `fmt.Fprintf(os.Stderr, ...)`, and `os.Exit` in CLI mode produces zero output. The terminal hangs and the user sees nothing. This is not a code bug — the binary is running correctly, its output is simply discarded by the OS.
+
+**Why it happens:**
+Wails hardcodes the GUI subsystem flag to prevent a console window from flashing when users double-click the app. The flag is a binary linker-time decision; there is no runtime way to "re-attach" cleanly. Go developers coming from macOS/Linux are unaware of this distinction because it does not exist on those platforms.
+
+**How to avoid:**
+Two options, each with trade-offs:
+
+Option A — Build with `-windowsconsole` Wails flag:
+```bash
+wails build -windowsconsole
+```
+This removes `-H windowsgui`, giving CLI output. Cost: a console window briefly flashes when the app is double-clicked on Windows for GUI mode.
+
+Option B — Use Windows `AttachConsole` API at runtime (GUI subsystem preserved):
+```go
+//go:build windows
+
+package main
+
+import (
+    "os"
+    "syscall"
+    "unsafe"
+)
+
+func attachWindowsConsole() {
+    kernel32 := syscall.NewLazyDLL("kernel32.dll")
+    attachConsole := kernel32.NewProc("AttachConsole")
+    attachConsole.Call(uintptr(^uint32(0))) // ATTACH_PARENT_PROCESS = -1
+    // Reopen stdout/stderr to CONOUT$
+    conout, _ := os.OpenFile("CONOUT$", os.O_RDWR, 0)
+    os.Stdout = conout
+    os.Stderr = conout
+}
+```
+Call this at the top of `main()` before argument dispatch. Cost: stdin is unreliable; extra Enter keypress may be needed to release the terminal prompt after CLI subcommands complete. Does not work for piped output.
+
+**Recommendation for StorCat:** Option A with `-windowsconsole`. The flash is a known acceptable trade-off. StorCat CLI users are technically-oriented; they will not be confused by the brief console. Document it.
+
+**Warning signs:**
+- `storcat create .` on Windows produces no output at all
+- No error code from the terminal either — silence
+- Testing only on macOS misses this entirely
+
+**Phase to address:** Phase 1 (CLI dispatch skeleton). Must validate on Windows before any CLI implementation is considered done.
 
 ---
 
-### Pitfall 1: IPC Response Envelope Mismatch
+### Pitfall 2: macOS Gatekeeper Injects `-psn_*` Argument When Launching via Finder
 
-**What goes wrong:** Electron's `ipcMain`/`ipcRenderer` pattern conventionally wraps responses in `{success: boolean, data: any}` envelopes. Wails' IPC layer does not — bound Go methods return raw values directly (resolved as the Promise value) or throw errors (rejected as the Promise reason). When a Wails wrapper shim recreates `window.electronAPI`, it must manually construct the `{success, data}` envelope in the wrapper, not rely on the Go method to produce it.
+**What goes wrong:**
+When a macOS `.app` bundle is launched by Finder or the `open` command (as opposed to running the binary directly from terminal), macOS Gatekeeper injects a process serial number argument like `-psn_0_8423432`. If the CLI argument parser (Cobra, `flag`, or manual `os.Args` check) encounters this unrecognized flag, it will either crash, print a usage error, or misfire a CLI command. This only happens on the first launch of downloaded apps that carry the `com.apple.quarantine` extended attribute.
 
-**Why it happens:** Developers assume the IPC transport preserves the Electron contract. In Wails, a Go method returning `(string, error)` resolves the Promise with the raw `string`. The frontend's `.then(result => result.data)` silently gets `undefined`, because there is no `.data` property on a bare string.
+**Why it happens:**
+It is a macOS system behavior, not a Wails bug. The same process that handles Gatekeeper quarantine checks passes the PSN to identify the process. Standard CLI parsers have no reason to know about PSN and will treat it as an unknown flag.
 
-**Consequences:** Silent `undefined` failures throughout the frontend. Operations appear to succeed (Promise resolved, no rejection) but data is never rendered. Regression only visible at runtime, not in TypeScript compilation.
+**How to avoid:**
+Filter `-psn_*` arguments before any CLI dispatch:
+```go
+func filterMacOSArgs(args []string) []string {
+    filtered := make([]string, 0, len(args))
+    for _, arg := range args {
+        if !strings.HasPrefix(arg, "-psn_") {
+            filtered = append(filtered, arg)
+        }
+    }
+    return filtered
+}
 
-**Prevention:**
-- Every wrapper in the Wails API shim that replaces an Electron handler must explicitly construct `{success: true, data: result}` in the JavaScript wrapper function, not in Go.
-- Alternatively, define Go structs for every response type and have Go return them — then the TypeScript type system will enforce the shape.
-- Review every call site in the frontend that destructures `{success, data, ...}` from an API call; trace it back to the Go method and verify the shape is being constructed somewhere.
+// In main(), before dispatch:
+args := filterMacOSArgs(os.Args[1:])
+```
+Apply this filter on all platforms (it is a no-op on Windows/Linux) or guard it with `//go:build darwin`.
 
-**Detection:** TypeScript types for wailsjs bindings will show the raw Go return type. If the frontend expects `{success: boolean}` but the binding shows `string`, the wrapper layer is missing the envelope.
+**Warning signs:**
+- App works fine when tested from terminal but crashes or shows usage errors on fresh first launch from Finder/Downloads
+- Error message mentions `-psn_0_...` as an unknown flag
+- Only reproducible on macOS with a freshly downloaded/unsigned build
 
-**Phase:** Address in the wrapper/shim fix phase before any functional testing.
-
----
-
-### Pitfall 2: Nil Slice Serializes as JSON `null`, Not `[]`
-
-**What goes wrong:** In Go, a declared-but-uninitialized slice (`var contents []Item`) marshals to JSON `null`. An initialized-but-empty slice (`contents := make([]Item, 0)` or `contents := []Item{}`) marshals to `[]`. Electron's Node.js backend always produces `[]` for empty arrays, never `null`. Frontend code that does `items.map(...)` throws `TypeError: Cannot read properties of null` when Go returns `null`.
-
-**Why it happens:** Go's zero value for a slice is `nil`, which is JSON `null`. The distinction between "no items" and "not set" is meaningful in Go but invisible to the developer writing the struct definition. Adding `omitempty` to the struct tag makes it worse: it omits the field entirely, so the frontend gets no field at all rather than an empty array.
-
-**Consequences:** Directory entries with no children render broken. The specific case in StorCat: `contents` field of leaf nodes or empty directories becomes `null`, breaking `Array.isArray()` checks and `.map()` calls silently (when the array is null, `.map` throws; when missing with omitempty, accessing it returns `undefined`).
-
-**Prevention:**
-- Initialize all slice fields explicitly: `Contents: []FileNode{}` not `var Contents []FileNode`.
-- Do NOT use `omitempty` on slice fields unless `null` and missing are both acceptable to the frontend.
-- For the JSON output format: after marshaling, audit the output for `null` array values with a test fixture.
-
-**Detection:** Run the catalog creation against an empty directory and inspect raw JSON output. A `null` where `[]` is expected confirms the bug. TypeScript `Array.isArray(node.contents)` returning `false` at runtime is the symptom.
-
-**Phase:** Fix during JSON output format correctness work.
+**Phase to address:** Phase 1 (CLI dispatch skeleton). Add filter as part of the args-parsing setup.
 
 ---
 
-### Pitfall 3: filepath.Walk Skips Symlinks Silently
+### Pitfall 3: Wails `wails dev` Double-Executes main() During Binding Generation
 
-**What goes wrong:** `filepath.Walk` and `filepath.WalkDir` use `os.Lstat` internally and explicitly do NOT follow symbolic links. A directory tree containing symlinks to subdirectories will produce an incomplete catalog — symlinked directories appear as files with a symlink mode bit, not as traversed directories. Node.js's `fs.stat` follows symlinks by default. This is a silent discrepancy: no error is thrown, the catalog just misses content.
+**What goes wrong:**
+During development, `wails dev` runs the binary twice: once without arguments (to generate binding information) and once with the actual arguments. Any code in `main()` that validates argument presence or calls `os.Exit(1)` when no args are provided will cause `wails dev` to exit before the app launches. The developer sees a confusing immediate exit and cannot use the dev hot-reload workflow.
 
-**Why it happens:** Go's walk functions are designed this way intentionally, to avoid infinite loops from circular symlinks. The developer using `filepath.Walk` assumes "it walks everything" without reading the symlink caveat.
+**Why it happens:**
+Wails' development mode uses reflection-based binding generation, which requires a fresh process start. This is a `wails dev`-specific behavior; production builds run once. Developers writing "require subcommand or show usage and exit" logic in `main()` do not account for this double-execution.
 
-**Consequences:** A catalog created in Wails/Go will have fewer entries than one created in Electron for the same directory tree if any symlinks exist. Users with symlink-heavy project structures (monorepos, version-controlled dotfiles, NixOS/Nix-based systems) will see silent data loss.
+**How to avoid:**
+Use the `production` build tag to guard strict argument validation:
+```go
+//go:build production
 
-**Prevention:**
-- Replace any `filepath.Walk` or `filepath.WalkDir` with a custom recursive walker that uses `os.Stat` (follows symlinks) to get file info after detecting a symlink via `os.Lstat`.
-- Guard against circular symlinks by tracking visited real paths (via `os.Readlink` + `filepath.EvalSymlinks`).
-- The pattern: `info, err := os.Lstat(path)` to detect type; if `ModeSymlink` is set, call `os.Stat(path)` to resolve the target.
+package main
 
-**Detection:** Create a test directory with a symlink to a subdirectory. Compare Electron catalog output with Go catalog output. Missing entries = symlink traversal broken.
+func isProduction() bool { return true }
+```
+```go
+//go:build !production
 
-**Phase:** Fix during symlink handling work; add a test fixture with symlinks.
+package main
+
+func isProduction() bool { return false }
+```
+```go
+// In main():
+if isProduction() && len(args) == 0 {
+    // launch GUI
+}
+```
+Alternatively: never call `os.Exit` on missing args during the pre-dispatch phase in dev mode. Reserve strict validation for within subcommand handlers.
+
+The safest pattern: `os.Args` check dispatch should always fall through to GUI launch when no subcommand is recognized, not exit with an error. "Unknown args → launch GUI" is safer than "unknown args → exit 1".
+
+**Warning signs:**
+- `wails dev` exits immediately with a usage/help message
+- The app never opens the GUI window in dev mode after adding CLI dispatch
+- Works fine with `wails build` but not with `wails dev`
+
+**Phase to address:** Phase 1 (CLI dispatch skeleton). Test `wails dev` still works after dispatch code is added.
 
 ---
 
-### Pitfall 4: Window State Persistence Coordinate System Drift on macOS
+### Pitfall 4: `embed.FS` Fails to Compile If Frontend Assets Are Not Pre-Built
 
-**What goes wrong:** Wails v2 has a documented bug where `WindowGetPosition()` and `WindowSetPosition()` use inconsistent coordinate systems on macOS — `GetPosition` uses `visibleFrame` (which subtracts the menubar height) while `SetPosition` uses `frame`. Saving position on close and restoring it on open causes the window to drift upward by ~24px on each launch.
+**What goes wrong:**
+`main.go` has `//go:embed all:frontend/dist`. If `frontend/dist` does not exist when `go build` (or `wails build`) runs, the build fails with:
+```
+pattern all:frontend/dist: directory prefix frontend/dist does not exist
+```
+This is guaranteed to happen on a fresh clone, in CI without a frontend build step, or when running `go build` directly instead of `wails build`.
 
-**Why it happens:** macOS has two coordinate systems: screen frame (origin at bottom-left of physical screen) and visible frame (origin adjusted for menubar and dock). Wails internally mixed them. This was fixed in a patch release, but the fix requires being on a recent enough Wails version.
+**Why it happens:**
+`//go:embed` is a compile-time directive. The directory must exist at compile time. `wails build` handles this by building the frontend first. Running `go build` directly skips the frontend build step.
 
-**Consequences:** If window position persistence is implemented naively against an unfixed Wails version, the window migrates toward the top of the screen across launches. On multi-monitor setups, the behavior is compounded: `WindowSetPosition` and `WindowGetPosition` are relative to the monitor the window is currently on, not absolute screen coordinates. Moving to a different monitor invalidates saved position.
+**How to avoid:**
+- Never use `go build` directly for the full binary. Always use `wails build`.
+- For CI and cross-platform builds, ensure the frontend build step runs before the Go build: `cd frontend && npm install && npm run build`.
+- For CLI-only development, consider a build tag to stub out the embedded assets:
+  ```go
+  //go:build !production
 
-**Prevention:**
-- Verify the Wails version in use has the macOS coordinate fix (PR #3479 — "Fix Position() and SetPosition() using inconsistent coordinate systems on macOS").
-- When saving/restoring position, also save the monitor the window was on and validate that the monitor still exists before restoring position.
-- Clamp restored position to visible screen bounds as a safety net.
-- Use `OnDomReady` (not `OnStartup`) to restore window state — the runtime API is not reliably available in `OnStartup`.
+  package main
 
-**Detection:** Launch app, move window, close, reopen. Check if window position drifted. Test on multi-monitor setup.
+  import "embed"
 
-**Phase:** Address during window state persistence implementation.
+  //go:embed all:frontend/dist
+  var assets embed.FS  // Will fail if dist missing — use wails dev for GUI
+  ```
+  But only if you never need to run the binary directly in non-production mode.
+
+**Warning signs:**
+- `go build` fails on fresh clone with `directory prefix does not exist`
+- CI pipeline fails on the Go build step without an obvious Go error
+- `wails build` succeeds but direct `go build` fails
+
+**Phase to address:** Phase 1. Document in the build guide that `wails build` is required, not `go build`.
+
+---
+
+### Pitfall 5: CLI Mode Loads Embedded Frontend Assets Into Memory Unnecessarily
+
+**What goes wrong:**
+The `//go:embed all:frontend/dist` directive causes the entire compiled React app (~2-5MB) to be memory-mapped into the process when the binary starts. In CLI mode (`storcat create ...`), this overhead is paid even though no GUI is ever opened. For a fast CLI tool, this is wasted startup overhead and memory.
+
+**Why it happens:**
+Go's `embed.FS` is initialized at binary load time. The data is part of the binary's read-only data segment and is mapped into memory when the OS loads the process, before `main()` executes.
+
+**How to avoid:**
+This is a structural limitation of the unified binary approach and cannot be fully eliminated. The embedded assets are part of the binary's data segment regardless of execution mode.
+
+Mitigation: The assets are in read-only memory and do not contribute to heap usage. The OS may page them out if they are never accessed. For a desktop app binary, ~3-5MB of mapped-but-unused data is an acceptable trade-off. The alternative (build tag splitting) would require maintaining two separate binaries.
+
+Acceptable cost: Accept it. StorCat's binary is already ~10MB for a Go/Wails app. Adding the CLI does not change binary size. If startup time becomes measurable, revisit.
+
+**Warning signs:**
+- CLI commands feel noticeably slow to start (>200ms for simple operations)
+- Memory usage of CLI invocation is surprisingly high
+- This is not expected to be a real problem for StorCat's scale
+
+**Phase to address:** Not a blocker. Flag as accepted trade-off in architecture decisions.
 
 ---
 
@@ -93,163 +206,199 @@ Mistakes that cause silent data corruption, runtime panics, or feature regressio
 
 ---
 
-### Pitfall 5: Wails Drag Regions Require Different CSS Than Electron
+### Pitfall 6: Cobra/flag Argument Parsing Conflicts With Wails Internal Flags
 
-**What goes wrong:** Electron uses `-webkit-app-region: drag` (or `WebkitAppRegion: 'drag'` in React inline styles) for frameless window drag areas. Wails uses a custom CSS variable `--wails-draggable: drag`. These are not the same. Code migrated from Electron with the WebKit property applied but without the Wails CSS variable will produce a frameless window that cannot be dragged.
+**What goes wrong:**
+Wails injects its own internal flags into the process under certain conditions (primarily during `wails dev`). Using Go's `flag.Parse()` globally at startup will consume these flags and may produce errors or unintended side-effects. Additionally, `cobra` uses `pflag` which calls `flag.CommandLine.Parse()` — if both Cobra and any library that uses the standard `flag` package are in play, you can get "flag provided but not defined" panics.
 
-**Why it happens:** The property is different and there is no fallback — browsers simply ignore unknown CSS variables. No error is thrown in the console.
+**Why it happens:**
+Go's `flag` package uses a global `CommandLine` FlagSet. Any library that registers flags to `flag.CommandLine` (including `wails dev` infrastructure) will be seen by any code that calls `flag.Parse()`. Cobra's `pflag` is a separate implementation but if both are active, interactions are possible.
 
-**Consequences:** The macOS custom titlebar is rendered but cannot be used to drag the window. Users cannot move the window at all (on macOS frameless builds). This is a total regression of a basic windowing feature.
+**How to avoid:**
+- Use `cobra` for CLI dispatch and do NOT call `flag.Parse()` globally in `main()`.
+- Cobra handles its own parsing via `rootCmd.Execute()`.
+- Only call CLI parsing after the dispatch decision is made (i.e., after confirming we are in CLI mode, not GUI mode).
+- Avoid registering global flags to `flag.CommandLine`.
 
-**Prevention:**
-- Replace every instance of `WebkitAppRegion: 'drag'` with `'--wails-draggable': 'drag'` (note: CSS variable syntax in React inline styles requires the string key form).
-- Also replace `WebkitAppRegion: 'no-drag'` with `'--wails-draggable': 'no-drag'` for interactive elements inside the drag region.
-- Test by attempting to drag the window from the custom titlebar area on macOS.
+**Warning signs:**
+- `wails dev` produces "flag provided but not defined: -some-internal-flag"
+- Cobra panics with "use of uninitialized flag set"
+- CLI help output includes internal Wails flags not intended for users
 
-**Detection:** Frameless window on macOS cannot be moved by clicking and dragging the header area. Browser DevTools will not show any errors — the property silently does nothing.
-
-**Phase:** Fix during header/drag region implementation.
-
----
-
-### Pitfall 6: Wails-Generated TypeScript Bindings Are Not Automatically Kept in Sync
-
-**What goes wrong:** The `wailsjs/` directory contains auto-generated TypeScript bindings from the Go struct definitions. If Go methods or structs are changed without regenerating bindings (via `wails generate module` or `wails build`), the TypeScript types are stale. The frontend may compile cleanly against old types while the runtime behavior has changed.
-
-**Why it happens:** The generation step is separate from compilation. It is easy to edit Go code and rebuild without running the generation step, especially in a migration context where many methods are being added or changed.
-
-**Consequences:** TypeScript compiles with old types. Return value types are wrong. Method signatures mismatch at runtime despite passing type-checking. Bugs only appear when the specific function is called.
-
-**Prevention:**
-- Add `wails generate module` as a pre-build step or makefile target run before any frontend development.
-- After every Go struct or method signature change, immediately regenerate bindings before writing frontend code against the new shape.
-- Check `wailsjs/go/` output files into version control so diffs make stale bindings visible in PR review.
-
-**Detection:** Compare `wailsjs/go/models.ts` types against current Go struct definitions. Any discrepancy = stale bindings.
-
-**Phase:** Address at project setup; enforce in the build workflow.
+**Phase to address:** Phase 1 (CLI dispatch skeleton) when choosing the argument parsing approach.
 
 ---
 
-### Pitfall 7: Go time.Time Serializes as RFC3339, Not Unix Timestamp or Milliseconds
+### Pitfall 7: macOS `.app` Bundle Makes the Binary Inaccessible From PATH
 
-**What goes wrong:** Go's `time.Time` marshals to RFC3339 format by default (e.g., `"2024-01-15T10:30:00Z"`). Electron/Node.js backends typically return Unix timestamps (milliseconds since epoch) or locale-formatted strings. Frontend code written against the Electron API may use `new Date(timestamp)` where `timestamp` is a number. `new Date("2024-01-15T10:30:00Z")` also works, but `new Date(result.modified)` breaks if the frontend previously expected a number and now gets a string.
+**What goes wrong:**
+`wails build` on macOS produces `build/bin/storcat.app/Contents/MacOS/storcat` — a binary inside an `.app` bundle. Users who install by dragging to `/Applications` get the GUI app but the `storcat` CLI command is not on their PATH. Running `storcat create ...` in a terminal fails with "command not found". This defeats the purpose of adding CLI subcommands.
 
-**Why it happens:** The types are compatible in one direction (string parses fine) but the format is unexpected if the original backend returned numbers. Also, Wails' TypeScript binding generator produces its own `Time` type rather than TypeScript's `Date`, requiring manual handling.
+**Why it happens:**
+macOS `.app` bundles are not on PATH by default. The binary is buried inside the bundle's directory structure. This is intentional for GUI apps (users interact via Finder/dock) but is the wrong UX for CLI usage.
 
-**Consequences:** Date display works inconsistently. Relative time calculations (`Date.now() - file.modified`) break silently if `file.modified` is a string. The `created` field in StorCat specifically has a semantic mismatch: it reflects ctime (inode change time on Unix) not creation time, which is different behavior from macOS's birthtime that Electron's `fs.stat` may have exposed.
+**How to avoid:**
+Three approaches:
 
-**Prevention:**
-- Audit every date/time field in the API response surface. Define whether the frontend expects a number (milliseconds) or ISO string.
-- If the frontend expects numbers: use a custom struct with `MarshalJSON` returning Unix milliseconds, or compute the value in the Go method and return `int64`.
-- For the `created`/`modified` field semantic issue: document explicitly that `created` means ctime (inode change), not file creation time, and consider renaming to avoid confusion.
+Option A — Symlink documentation: Document `ln -s /Applications/storcat.app/Contents/MacOS/storcat /usr/local/bin/storcat`. Simple but requires user action.
 
-**Detection:** Render a file listing in the Browse tab and inspect the date values in browser DevTools. A string where a number is expected, or an unexpected date value, confirms the issue.
+Option B — Companion install script: A `scripts/install-cli.sh` that creates the symlink automatically. Can be included in the release and run post-install.
 
-**Phase:** Fix during browse metadata fields work.
+Option C — Separate CLI binary in release: Build both `storcat.app` (GUI) and a standalone `storcat` CLI binary. The CLI binary has no embedded assets (use build tags). Distribute both in the DMG. More complex build pipeline but cleanest user experience.
 
----
+**Recommendation:** Option A+B for v2.1.0 MVP. Document the symlink in the release notes and include a `scripts/install-cli.sh`. Option C is a v2.2.0 concern if users find the symlink approach burdensome.
 
-### Pitfall 8: Runtime API Unavailable in OnStartup
+**Warning signs:**
+- CLI feature ships but no installation path is documented
+- `storcat --help` only works if the user already knows about the `.app` bundle path
+- macOS users report "command not found" despite having the app installed
 
-**What goes wrong:** Calling Wails runtime functions (e.g., `runtime.WindowSetSize`, `runtime.EventsEmit`, dialog functions) from the `OnStartup` callback causes panics on Windows and unreliable behavior on all platforms because the window is still initializing in a separate goroutine.
-
-**Why it happens:** `OnStartup` is called after the frontend loads `index.html` but before the DOM is fully ready and the window is fully initialized. The runtime's window API requires the window to be in a usable state.
-
-**Consequences:** App panics on Windows on startup. On macOS, calls may silently fail or produce incorrect results. Window state restoration (size, position) applied in `OnStartup` may not take effect.
-
-**Prevention:**
-- Move all runtime API calls (especially window state restoration) to `OnDomReady`.
-- `OnStartup` is safe only for: reading config files, initializing Go-side state, non-window operations.
-- `OnDomReady` is safe for: window resize/reposition, emitting startup events, showing dialogs.
-
-**Detection:** App panics immediately on startup (Windows), or window size/position is not restored on first launch.
-
-**Phase:** Address during window state persistence implementation.
+**Phase to address:** Phase 1 (CLI dispatch skeleton) — settle the installation approach before implementing subcommands. Implement install script in same phase.
 
 ---
 
-## Minor Pitfalls
+### Pitfall 8: Windows PATH and File Path Separator Gotchas in CLI Output
+
+**What goes wrong:**
+On Windows, directory paths use backslash (`\`) but many Go standard library functions return forward-slash paths or mixed paths. When the CLI outputs paths (e.g., `storcat create C:\Users\ken\docs` → output: `Catalog saved to C:/Users/ken/docs/catalog.json`), the path format inconsistency looks wrong to Windows users. Additionally, when users supply paths with backslashes in CLI arguments, Go's `filepath` functions need to normalize them.
+
+Separate issue: On Windows, `os.Args[0]` may include the `.exe` extension or the full path to the binary. Any code that inspects `os.Args[0]` to determine the binary name (e.g., for help text) must strip the extension and path.
+
+**Why it happens:**
+Go uses OS-native path separators in `filepath` functions but uses forward slashes in URL contexts and some standard library outputs. Mixed-slash output is a common Go-on-Windows bug. `os.Args[0]` differences are a Windows-only quirk.
+
+**How to avoid:**
+- Always use `filepath.ToSlash()` and `filepath.FromSlash()` explicitly when outputting paths to users vs. passing paths to OS APIs.
+- For CLI help text that shows the binary name: `filepath.Base(strings.TrimSuffix(os.Args[0], ".exe"))`.
+- Test CLI output paths on Windows with directories that include spaces and backslashes.
+
+**Warning signs:**
+- CLI output on Windows shows forward slashes in file paths
+- Help text on Windows shows the full path to the binary or includes `.exe` extension
+- Path arguments with backslashes cause "file not found" errors
+
+**Phase to address:** Per-command implementation phases. Add Windows path normalization to each command's output logic.
 
 ---
 
-### Pitfall 9: File Dialog Behavior Differs by Platform
+### Pitfall 9: wails dev `-appargs` Does Not Properly Pass Flag-Style Arguments
 
-**What goes wrong:** Wails file dialogs have platform-specific option availability. Mac-only options (`CanCreateDirectories`, `ResolvesAliases`, `AllowDirectories`) are silently ignored on Windows and Linux. File extension filters work differently: on macOS, multiple `FileFilter` entries are merged into one pattern set; on Windows and Linux they appear as separate choosable filter entries.
+**What goes wrong:**
+When testing CLI commands during development using `wails dev -appargs "create /some/path"`, if any argument starts with a `-` (flag-style), Wails dev mode intercepts and fails to pass it through. Example: `wails dev -appargs "--output /tmp"` will fail because `--output` is parsed by the Wails CLI, not passed to the app binary.
 
-**Prevention:**
-- Use only cross-platform dialog options for the core flow.
-- Test file dialogs on all three target platforms before shipping.
-- Do not rely on `CanCreateDirectories` being available — handle the case where the user picks a non-existent path.
+**Why it happens:**
+This is a known Wails v2 bug (GitHub issue #1533). The `-appargs` parsing does not properly quote or escape flag-style arguments from the application's perspective.
 
-**Phase:** Verify during cross-platform testing.
+**How to avoid:**
+- During development, test CLI behavior using the built binary directly: `./build/bin/storcat create /some/path`.
+- For `wails dev`, use only positional arguments (no flags) in `-appargs` during development testing.
+- Add a Makefile target: `make cli-test` that runs `wails build` + exercises the binary directly.
 
----
+**Warning signs:**
+- `wails dev -appargs "--flag value"` exits immediately with Wails CLI usage
+- Arguments that are flags work in the built binary but not in dev mode
+- Only affects development workflow, not production behavior
 
-### Pitfall 10: JSON Root Object Format (Array vs Bare Object)
-
-**What goes wrong:** Go's `json.Marshal` on a slice produces `[{...}]` (a JSON array). The Electron version produces a bare object `{...}`. If the Go backend marshals the catalog root as a slice, existing v1 catalog files produced by Electron will be read correctly (different schema version), but new files produced by Go will be structurally different from what external tools or v1-format readers expect.
-
-**Why it happens:** The Go developer modeled the catalog as a `[]FileNode` and marshaled it directly. The Electron version returned a single root node object, not an array.
-
-**Consequences:** v2-produced catalogs cannot be loaded by v1 readers. External tools parsing the JSON format break. Backward compatibility is violated for future users who might load v2 catalogs in v1 or third-party tools.
-
-**Prevention:**
-- Wrap the root node in a struct and marshal that: `json.Marshal(RootObject{Root: tree})` or serialize the single root `FileNode` directly as an object.
-- Write a round-trip test: produce a catalog, read it back, verify the root is a JSON object not an array.
-- Add a test fixture comparing Go output format against a known-good Electron output file.
-
-**Phase:** Fix during JSON output format work (already identified as active requirement).
+**Phase to address:** Phase 1 — document the limitation in the development workflow. Do not block implementation on it.
 
 ---
 
-### Pitfall 11: webview Rendering Differences Across Platforms
+## Technical Debt Patterns
 
-**What goes wrong:** Wails uses the OS-native webview (WKWebView on macOS, WebView2 on Windows, WebKitGTK on Linux). Each has different CSS support, JavaScript engine versions, and rendering behavior. Electron bundles Chromium and is consistent across platforms.
+Shortcuts that seem reasonable but create long-term problems.
 
-**Why it happens:** This is inherent to Wails' architecture — it is a feature (smaller binary) but also a constraint.
-
-**Consequences:** CSS that works in Electron's Chromium may behave differently on older WebView2 (Windows) or WebKitGTK (Linux). Ant Design components generally work, but platform-specific CSS features (especially CSS grid subgrid, newer selectors) may render differently.
-
-**Prevention:**
-- Test the full UI on Windows and Linux after development on macOS, not just at release time.
-- Avoid cutting-edge CSS features not supported by WebView2 on Windows 10 (the oldest common target).
-- Use `wails doctor` to confirm the webview versions on each platform before starting testing.
-
-**Phase:** Verify during cross-platform testing pass.
+| Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
+|----------|-------------------|----------------|-----------------|
+| Single `main.go` dispatch with `if/else` instead of Cobra | Less code, no new dependency | Help text, completions, flag handling all manual; grows unmanageably | Never for more than 2-3 subcommands |
+| Testing CLI only on macOS (dev machine) | Fast iteration | Windows console subsystem bug ships; macOS `.app` PATH issue undiscovered | Never |
+| Using `fmt.Println` for structured CLI output | Simple to write | No `--json` output flag possible later; harder to test output programmatically | Acceptable for v2.1.0 MVP if `--json` is out of scope |
+| Hardcoding output directory defaults in CLI flags | Simpler UX | Conflicts with GUI defaults stored in config; users confused by two separate defaults | Never — read defaults from the same config.Manager the GUI uses |
+| Sharing `App` struct between GUI and CLI modes | Code reuse | `App.startup(ctx)` requires a Wails context; CLI mode has no context; panics if any runtime call is made | Never — create a separate CLI service layer that calls internal packages directly |
 
 ---
 
-## Phase-Specific Warnings
+## Integration Gotchas
 
-| Phase Topic | Likely Pitfall | Mitigation |
-|-------------|---------------|------------|
-| API wrapper / shim fixes | IPC envelope mismatch (Pitfall 1) | Explicitly wrap all Go return values in `{success, data}` in JS wrapper |
-| JSON output format | Nil-slice null vs `[]` (Pitfall 2), root array vs object (Pitfall 10) | Initialize all slices; write round-trip format test |
-| Symlink handling | Silent traversal skip (Pitfall 3) | Custom walker with os.Stat follow; cycle detection |
-| Window state persistence | Coordinate drift on macOS (Pitfall 4), OnStartup timing (Pitfall 8) | Use OnDomReady; validate Wails version has the coordinate fix |
-| Header drag region | Wrong CSS property (Pitfall 5) | Replace WebkitAppRegion with --wails-draggable |
-| Browse metadata fields | time.Time format (Pitfall 7), created/ctime semantics | Audit date types; document ctime vs birthtime difference |
-| Any Go struct changes | Stale wailsjs bindings (Pitfall 6) | Regenerate bindings immediately after struct changes |
-| Cross-platform testing | Platform webview differences (Pitfall 11), dialog options (Pitfall 9) | Test on all 3 platforms before declaring complete |
+| Integration | Common Mistake | Correct Approach |
+|-------------|----------------|------------------|
+| Wails build system | Running `go build` directly for full binary | Always use `wails build`; `go build` fails without pre-built frontend assets |
+| Cobra + Wails | Calling `flag.Parse()` globally before dispatch | Dispatch to Cobra only after CLI mode is confirmed; never call `flag.Parse()` globally |
+| Windows console | Assuming stdout works like macOS/Linux | Build with `-windowsconsole` or implement `AttachConsole`; test on real Windows |
+| macOS app bundle | Testing CLI via `./storcat` inside bundle path | Test via `storcat.app/Contents/MacOS/storcat`; provide symlink install script |
+| Internal services | Calling `App` methods from CLI (they use Wails ctx) | Call `internal/catalog` and `internal/search` packages directly; bypass the `App` struct |
+| Config manager | CLI mode using different defaults than GUI | CLI reads from the same `config.Manager` using `config.NewManager()`; no separate config |
+
+---
+
+## Performance Traps
+
+| Trap | Symptoms | Prevention | When It Breaks |
+|------|----------|------------|----------------|
+| `storcat search` scanning entire disk | Long hangs with no output; looks frozen | Always require explicit `-dir` flag or default to current directory; never default to `~` | Any directory with >10k files |
+| CLI output buffering | Final lines missing when piped | Use `os.Stdout.Sync()` or flush before `os.Exit`; Cobra handles this on `RunE` return | Any piped output |
+| Loading full catalog JSON for `storcat show` large catalogs | Slow `show` command for 1M-file catalogs | Stream or limit depth; add `--depth N` flag | Catalogs >100k entries |
+
+---
+
+## "Looks Done But Isn't" Checklist
+
+- [ ] **Windows CLI output:** `storcat version` prints something on Windows (not silent). Test with a real Windows terminal, not just macOS.
+- [ ] **macOS app bundle CLI:** Users can call `storcat create` from a terminal after a fresh macOS install — symlink or installer is documented and tested.
+- [ ] **`-psn_` filtering:** App launched from macOS Finder after fresh download does not crash or print a usage error.
+- [ ] **`wails dev` still works:** After adding CLI dispatch code, `wails dev` still opens the GUI window (double-execution regression check).
+- [ ] **GUI launch still works:** Running `storcat` with no arguments (double-click or bare terminal invocation) still opens the GUI, not a CLI help screen.
+- [ ] **Cobra root command:** Running `storcat --help` shows subcommands, not the Wails app. Running `storcat` with no args still launches GUI.
+- [ ] **Exit codes:** `storcat create /nonexistent` exits with code 1, not 0. `storcat version` exits with code 0.
+- [ ] **Path output on Windows:** `storcat create` output paths use Windows-native separators.
+- [ ] **Internal package isolation:** CLI commands call `internal/catalog` and `internal/search` directly — zero Wails runtime imports in CLI code paths.
+
+---
+
+## Recovery Strategies
+
+| Pitfall | Recovery Cost | Recovery Steps |
+|---------|---------------|----------------|
+| Windows console output silent | LOW | Add `-windowsconsole` to `wails build` flags; rebuild |
+| `wails dev` broken by CLI dispatch | LOW | Add `!isProduction()` guard around strict arg validation; test |
+| `-psn_` crash on macOS Finder launch | LOW | Add filter before dispatch; one function, one test |
+| GUI no longer launches (dispatch bug) | MEDIUM | Revert dispatch logic to explicit subcommand check; nil/empty args → GUI |
+| macOS PATH issue discovered post-release | MEDIUM | Add install script to patch release; document in GitHub README |
+| Cobra conflicts with Wails internal flags | MEDIUM | Move `rootCmd.Execute()` inside CLI branch only; never call at startup unconditionally |
+| `App` struct used in CLI (Wails ctx nil panic) | HIGH | Refactor — extract business logic into standalone functions; requires service layer |
+
+---
+
+## Pitfall-to-Phase Mapping
+
+| Pitfall | Prevention Phase | Verification |
+|---------|------------------|--------------|
+| Windows console output silent | Phase 1: CLI dispatch skeleton | `storcat version` on Windows prints version string |
+| macOS `-psn_` injection | Phase 1: CLI dispatch skeleton | Launch from Finder after fresh download; no crash |
+| `wails dev` double-execution | Phase 1: CLI dispatch skeleton | `wails dev` still opens GUI window |
+| `embed.FS` compile failure | Phase 1: build documentation | Fresh clone + `wails build` succeeds; `go build` documented as unsupported |
+| macOS `.app` bundle PATH | Phase 1: CLI dispatch skeleton | Install script exists; README documents symlink |
+| Cobra/flag conflicts | Phase 1: CLI dispatch skeleton | `wails dev` produces no flag-parse errors |
+| Wails dev `-appargs` flag issue | Phase 1: development workflow | Makefile `cli-test` target using built binary |
+| Windows path separators | Per-command phases (create, search, etc.) | CLI output paths on Windows use `\` |
+| App struct / Wails ctx in CLI | Phase 1: service layer design | CLI commands have zero imports from `wails/v2/pkg/runtime` |
 
 ---
 
 ## Sources
 
-- Wails frameless window docs: https://wails.io/docs/guides/frameless/
-- Wails window runtime API: https://wails.io/docs/reference/runtime/window/
-- Wails IPC internals: https://wails.io/docs/howdoesitwork/
-- Wails application development guide: https://wails.io/docs/guides/application-development/
-- Wails dialog reference: https://wails.io/docs/reference/runtime/dialog/
-- Wails macOS window position fix (PR #3479): https://github.com/wailsapp/wails/pull/3479
-- Wails window position multi-monitor issue #2739: https://github.com/wailsapp/wails/issues/2739
-- Wails TypeScript type mismatch issue #2258: https://github.com/wailsapp/wails/issues/2258
-- Wails OnStartup runtime panic issue #1660: https://github.com/wailsapp/wails/issues/1660
-- Go filepath.Walk symlink behavior (issue #4759): https://github.com/golang/go/issues/4759
-- Go nil slice JSON null vs empty array: https://apoorvam.github.io/blog/2017/golang-json-marshal-slice-as-empty-array-not-null/
-- Go JSON surprises and gotchas: https://www.alexedwards.net/blog/json-surprises-and-gotchas
-- Go os.Stat vs os.Lstat: https://dev.to/moseeh_52/understanding-osstat-vs-oslstat-in-go-file-and-symlink-handling-3p5d
-- Go time.Time JSON serialization: https://www.willem.dev/articles/change-time-format-json/
-- Wails as Electron alternative (migration overview): https://dev.to/kartik_patel/wails-as-electron-alternative-4dmn
-- Getting started with Wails replacing Electron: https://www.codingexplorations.com/blog/getting-started-with-wails-replacing-electron-app
+- Wails console output issue #544: https://github.com/wailsapp/wails/issues/544
+- Wails debug logging with `-windowsconsole` issue #3008: https://github.com/wailsapp/wails/issues/3008
+- Wails `-appargs` flag passthrough bug #1533: https://github.com/wailsapp/wails/issues/1533
+- Wails CLI args after build discussion #4175: https://github.com/wailsapp/wails/discussions/4175
+- Wails CLI with app discussion #3098: https://github.com/wailsapp/wails/discussions/3098
+- Wails build tags issue #1610: https://github.com/wailsapp/wails/issues/1610
+- Wails pass command line args to main.go issue #2353: https://github.com/wailsapp/wails/issues/2353
+- Windows AttachConsole API: https://learn.microsoft.com/en-us/windows/console/attachconsole
+- Windows dual-mode app technique: https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
+- macOS `-psn_` Gatekeeper injection (Godot fix): https://github.com/godotengine/godot/pull/37719
+- macOS app bundle CLI access: https://www.jviotti.com/2022/11/28/launching-macos-applications-from-the-command-line.html
+- Go Windows no println output with windowsgui: https://forum.golangbridge.org/t/no-println-output-with-go-build-ldflags-h-windowsgui/7633
+
+---
+*Pitfalls research for: Adding CLI subcommands to Go/Wails desktop app*
+*Researched: 2026-03-26*

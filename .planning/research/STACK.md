@@ -1,178 +1,149 @@
-# Technology Stack
+# Stack Research
 
-**Project:** StorCat v2.0.0 — Go/Wails Migration
-**Researched:** 2026-03-24
-
----
-
-## Recommended Stack
-
-### Core Framework
-
-| Technology | Version | Purpose | Why |
-|------------|---------|---------|-----|
-| Go | 1.23+ | Backend runtime | Required by Wails v2; already in go.mod. Compiles to single native binary, no runtime dependency. |
-| Wails v2 | 2.10.2 | Desktop app shell | Already in use. Latest stable v2 release. v3 is still alpha (v3.0.0-alpha.38 as of late 2025) — do not migrate. |
-| React | 18.2.0 | Frontend UI | Already in use. Preserved from Electron — no change needed. |
-| TypeScript | 4.6.4 | Type safety | Already in use. Wails auto-generates `.d.ts` binding files from Go structs. |
-| Vite | 3.0.7 | Frontend build | Already in use. `wails dev` uses `npm run dev` as the watcher; `wails build` calls `npm run build`. |
-| Ant Design | 5.27.4 | UI components | Already in use. Preserved from Electron version — exact parity target. |
-
-**Confidence:** HIGH — versions verified from existing go.mod and package.json.
+**Domain:** CLI subcommands in a Go/Wails unified desktop binary
+**Researched:** 2026-03-26
+**Confidence:** HIGH
 
 ---
 
-### Go Backend Packages
+## Context: What Stays, What Changes
 
-| Package | Version | Purpose | Why |
-|---------|---------|---------|-----|
-| `encoding/json` | stdlib | JSON marshal/unmarshal | No third-party JSON lib needed. stdlib is sufficient for the catalog format. |
-| `os`, `path/filepath` | stdlib | Filesystem operations | Standard library handles directory traversal, file read/write, symlink stat. |
-| `embed` | stdlib (Go 1.16+) | Bundle frontend assets into binary | Wails uses `//go:embed all:frontend/dist`. No separate asset server needed. |
-| `context` | stdlib | Wails lifecycle hooks | Required: `OnStartup`, `OnDomReady`, `OnBeforeClose` all receive `context.Context`. |
+This document covers **only the additions needed for v2.1.0 CLI features**. The existing stack (Go 1.23, Wails v2.10.2, React 18, TypeScript 5, Ant Design 5) is validated and unchanged. See the v2.0.0 STACK.md history for those decisions.
 
-**Confidence:** HIGH — all stdlib, no third-party risk.
+The new question: what libraries handle CLI argument parsing, table output, and color in a binary that must also launch a GUI?
 
 ---
 
-### Wails Runtime APIs in Use
+## Recommended Stack — New Additions Only
 
-| API | Purpose | Notes |
-|-----|---------|-------|
-| `runtime.OpenDirectoryDialog` | Native file picker | Already working. Returns empty string (not error) if user cancels. |
-| `runtime.BrowserOpenURL` | Open URL in system browser | Used by `OpenExternal`. Works cross-platform. |
-| `runtime.WindowGetSize` | Read window dimensions | Used for persistence save. Call from `OnBeforeClose`, not `OnStartup`. |
-| `runtime.WindowSetSize` | Restore window dimensions | Must be called from `OnDomReady` hook, not `OnStartup` — timing issue documented in Wails issues. |
-| `runtime.WindowGetPosition` | Read window position | Known macOS bug: position shifts slightly on each restore due to coordinate system quirks. Save/restore size only; skip position persistence for macOS. |
-| `runtime.WindowSetPosition` | Restore window position | LOW confidence for multi-monitor setups — position is relative to launching monitor with no monitor identity available. |
-| `runtime.EventsEmit` | Push events from Go to frontend | Available but currently not used. Useful for future progress reporting during catalog creation. |
+### Core Technologies
 
-**Confidence:** MEDIUM — APIs verified via official Wails docs. macOS position quirk verified via GitHub issues #3478 and #2739.
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `github.com/spf13/cobra` | v1.10.2 | CLI subcommand framework | De-facto standard for Go CLIs with subcommands. Used by kubectl, Hugo, GitHub CLI. Provides automatic `--help` generation, POSIX-compliant flags, shell completion, and command hierarchy. stdlib `flag` cannot model subcommands cleanly — it requires manual dispatch and reimplementing help text. For 6 subcommands (`create`, `search`, `list`, `show`, `open`, `version`), cobra is the right tool. |
+| `github.com/olekukonko/tablewriter` | v1.1.4 | Terminal table output | Best established Go table library. Renders ASCII/Unicode tables with column alignment, padding, borders. Used by `storcat list` (catalog metadata table). Already used in the ecosystem (Kubernetes, Helm, many CLIs). Do not use `text/tabwriter` — it only handles spacing, not borders or alignment. |
+| `github.com/fatih/color` | v1.19.0 | ANSI color output | Simplest, most widely adopted Go color library. 26,000+ dependents. Auto-detects TTY and disables color when piped (via `mattn/go-isatty` and `mattn/go-colorable`, which are **already in go.mod** as Wails indirect dependencies — zero net dependency cost). No unnecessary heavy deps. |
 
----
+### Supporting Pattern: Main Entry Point
 
-### Frontend-to-Go IPC Pattern
-
-| Layer | Technology | Purpose |
-|-------|-----------|---------|
-| Generated bindings | `wailsjs/go/main/App.js` + `App.d.ts` | Auto-generated by `wails dev`. Never edit manually — regenerated on each run. |
-| API wrapper | `frontend/src/services/wailsAPI.ts` | Translates raw Wails calls into `{success, data}` envelope matching the original `window.electronAPI` interface. |
-| Global shim | `window.electronAPI = wailsAPI` | Allows all React components to continue using `window.electronAPI.*` without modification — preserves Electron parity at zero cost. |
-
-This is the correct pattern. Do not change it.
-
-**Confidence:** HIGH — verified from existing codebase.
+| Concern | Approach | Why |
+|---------|---------|-----|
+| GUI vs CLI dispatch | Check `len(os.Args) > 1` before `wails.Run()` in `main.go` | Wails v2 runs the binary twice during `wails dev` (once for binding generation without args). The safe pattern: if `os.Args[1]` is a known subcommand, run CLI mode and `os.Exit(0)` before `wails.Run()` is ever called. GUI mode is the zero-args fallback. |
+| Build tag concern | No build tag needed | The `os.Args` check happens before `wails.Run()`. The binding generation pass (no args) safely falls through to GUI mode. No `//go:build production` split is required for this use case. |
+| CLI mode isolation | CLI commands in `cmd/` package, called directly from `main.go` dispatch | Keeps `main.go` thin. Each subcommand (`cmd/create.go`, `cmd/search.go`, etc.) reuses existing `internal/catalog` and `internal/search` packages unchanged. No new business logic needed. |
 
 ---
 
-### Build Toolchain
+### Development Tools — No Changes
 
-| Tool | Version | Purpose | Why |
-|------|---------|---------|-----|
-| `wails build` | v2.10.2 CLI | Production build | Compiles Go + bundles frontend into single `.app`/`.exe`/binary. Flags: `-platform darwin/universal -s -clean`. |
-| `wails dev` | v2.10.2 CLI | Development with hot reload | Runs Vite dev server + Go backend together. Regenerates `wailsjs/` bindings on each run. |
-| `go mod tidy` | Go stdlib | Dependency management | Keep `go.sum` clean. No `go mod vendor` needed for this project size. |
-| `npm` (via wails.json) | wails.json `frontend:install` | Frontend dependency install | wails.json specifies `npm install`. Project uses npm (not pnpm) for frontend — do not switch. |
-
-**Confidence:** HIGH — verified from wails.json and go.mod.
-
----
-
-### Config Storage
-
-| Approach | Location | Why |
-|----------|---------|-----|
-| JSON file via `os.UserConfigDir()` | macOS: `~/Library/Application Support/storcat/config.json` / Windows: `%APPDATA%\storcat\config.json` / Linux: `~/.config/storcat/config.json` | Already implemented in `internal/config/config.go`. Platform-appropriate, no third-party dependency. |
-| `localStorage` (frontend) | Browser storage in WebView | Used for last-used directories and per-session state. Wails WebView preserves localStorage between app runs — verified behavior. |
-
-**Confidence:** HIGH for the pattern. MEDIUM for localStorage persistence — Wails WebView data directory behavior varies slightly per platform but is documented as persistent.
-
----
-
-## Alternatives Considered
-
-| Category | Recommended | Alternative | Why Not |
-|----------|-------------|-------------|---------|
-| Desktop framework | Wails v2 | Wails v3 | v3 is alpha (v3.0.0-alpha.38); breaking API changes ongoing. Migration guide exists but the project is mid-milestone. Migrate after v3 stable. |
-| Desktop framework | Wails v2 | Tauri | Requires Rust backend. Go is already working. Tauri IPC is more verbose than Wails' auto-generated bindings. |
-| Desktop framework | Wails v2 | Electron | The entire point of this milestone is replacing Electron. 93% smaller binary, no V8/ARM64 crash risk. |
-| Frontend framework | React (keep) | Vue / Svelte | React frontend is feature-complete and tested. No migration value during a parity milestone. |
-| UI library | Ant Design (keep) | Tailwind + custom | Tailwind migration explicitly out of scope per PROJECT.md. |
-| Config serialization | stdlib `encoding/json` | `github.com/spf13/viper` | Viper is heavyweight for a simple JSON config. stdlib handles the 4-field config cleanly. |
-| JSON encoding | stdlib `encoding/json` | `github.com/json-iterator/go` | Performance not a bottleneck for config. stdlib is simpler and has zero dependencies. |
+| Tool | Notes |
+|------|-------|
+| `wails dev` | Works unchanged. CLI subcommands only execute in the production binary (`wails build` output) or direct `go run`. |
+| `wails build` | Build command unchanged. The unified binary contains embedded frontend + CLI dispatch. |
 
 ---
 
 ## Installation
 
 ```bash
-# Install Wails CLI (if not already installed)
-go install github.com/wailsapp/wails/v2/cmd/wails@latest
+# CLI framework
+go get github.com/spf13/cobra@v1.10.2
 
-# Install Go dependencies
-go mod tidy
+# Table output
+go get github.com/olekukonko/tablewriter@v1.1.4
 
-# Install frontend dependencies
-cd frontend && npm install && cd ..
-
-# Development (hot reload)
-wails dev
-
-# Production build (macOS universal binary)
-wails build -platform darwin/universal -s -clean
-
-# Production build (Windows AMD64)
-wails build -platform windows/amd64 -s -clean
-
-# Production build (Linux AMD64)
-wails build -platform linux/amd64 -s -clean
+# Color output (mattn/go-isatty and mattn/go-colorable already in go.mod via Wails)
+go get github.com/fatih/color@v1.19.0
 ```
 
-**Note on cross-compilation:** Wails cannot cross-compile to macOS from non-macOS hosts. macOS builds require a macOS runner (GitHub Actions `macos-latest` works). Windows and Linux can be built from Linux.
+After adding: `go mod tidy`
 
 ---
 
-## Platform-Specific Notes
+## Alternatives Considered
 
-### macOS
-
-- WebView uses WKWebView (Safari engine). CSS must be compatible with Safari — test `backdrop-filter`, grid/flex edge cases.
-- Custom drag region: use `--wails-draggable: drag` CSS property on the header div. This is the Wails v2 equivalent of Electron's `WebkitAppRegion: drag`. The fix for the missing drag region is a CSS property, not a Go change.
-- Window position restore has a known coordinate drift bug on macOS (issues #3478, #1702). Recommended approach: restore window size only, not position, on macOS.
-- Code signing/notarization: uses `notarytool` (not deprecated `altool`). Out of scope for this milestone per PROJECT.md.
-
-### Windows
-
-- WebView uses WebView2 (Chromium-based). Requires WebView2 runtime — either embed or bootstrap installer. Wails handles this via build flags.
-- 32-bit builds (GOARCH=386) have a known WebView2 crash bug. Build for AMD64 only.
-- Older WebView2 versions (pre-118.0.2088.76) can crash on window refocus. Include minimum version check.
-
-### Linux
-
-- WebView uses WebKitGTK. Requires `libgtk-3` and `libwebkit2gtk-4.0` (or `4.1`) dev packages at build time.
-- Can be built on Linux runners for all three platforms (macOS requires macOS runner).
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `cobra` | stdlib `flag` | Only for single-command tools with simple flags. For 6+ subcommands with help generation, flag is painful — manual dispatch, no help inheritance, no shell completion. |
+| `cobra` | `urfave/cli` | cli/v2 is a reasonable alternative. Cobra is better here because StorCat's subcommand surface is small and well-defined — cobra's command tree model is cleaner for this. |
+| `cobra` | `urfave/cli v3` | v3 was released late 2024. Would work, but cobra has more ecosystem examples and is the clear community default. No advantage for this project size. |
+| `olekukonko/tablewriter` | `charmbracelet/lipgloss` table | lipgloss is excellent for TUI apps. For a simple catalog listing table it is over-engineered. Adds heavy bubbletea dependency chain. tablewriter is the right complexity level. |
+| `olekukonko/tablewriter` | `jedib0t/go-pretty` | go-pretty supports more output formats (TSV, CSV, HTML). Would work, but StorCat only needs terminal text. tablewriter is simpler and more focused. |
+| `olekukonko/tablewriter` | `text/tabwriter` (stdlib) | tabwriter only aligns columns via whitespace; no borders, no padding control, no header separator. Too bare for a catalog listing. |
+| `fatih/color` | stdlib ANSI codes directly | Fragile. Requires manual TTY detection per-platform (especially Windows). fatih/color handles this correctly using dependencies already in go.mod. |
+| `fatih/color` | `charmbracelet/lipgloss` for color | lipgloss is a full layout/style system. Using it just for color in CLI output is overkill for this project. |
 
 ---
 
-## Version Pinning Strategy
+## What NOT to Use
 
-Keep Wails at `v2.10.2`. Do not upgrade to v3 alpha mid-milestone. After v2.0.0 ships:
-- Evaluate Wails v3 when it reaches stable release (no ETA as of March 2026).
-- React 18 → 19 migration is independent of Wails; defer.
-- Ant Design 5.x has no breaking changes planned near-term; pin at current minor.
+| Avoid | Why | Use Instead |
+|-------|-----|-------------|
+| `github.com/spf13/viper` | Config file management for CLI flags. StorCat CLI commands are one-shot invocations, not long-running services needing config files. Adds complexity with zero benefit. | Cobra's `Flags()` + `PersistentFlags()` |
+| `github.com/charmbracelet/bubbletea` | Interactive TUI framework (spinner, progress bar). CLI commands are fast (catalog creation is sub-second). Progress UI is over-engineered for this scope. | Plain `fmt.Fprintf` for progress hints |
+| `github.com/charmbracelet/lipgloss` | Full terminal layout/style system. Correct tool for TUIs, not for simple CLI table output. | tablewriter + fatih/color |
+| `github.com/mitchellh/go-homedir` | Home directory resolution. `os.UserHomeDir()` (stdlib, Go 1.12+) is sufficient and simpler. | stdlib `os.UserHomeDir()` |
+| Wails v3 migration | v3 is still alpha as of March 2026. The CLI pattern works cleanly on v2. Do not migrate mid-milestone. | Stay on Wails v2.10.2 |
+
+---
+
+## Stack Patterns by Variant
+
+**If the subcommand needs to output JSON (e.g., `storcat list --json`):**
+- Use stdlib `encoding/json` + `json.NewEncoder(os.Stdout)`
+- No additional library needed — already in use for catalog files
+
+**If the terminal is piped (e.g., `storcat list | grep foo`):**
+- `fatih/color` auto-disables color via `go-isatty`
+- `tablewriter` renders plain ASCII (no Unicode box chars) by default — pipe-safe
+- No special handling needed
+
+**If a subcommand needs to open HTML in the browser (storcat open):**
+- Use `github.com/pkg/browser` — already in go.mod as a Wails indirect dependency
+- Zero new dependency: `browser.OpenURL(htmlPath)`
+
+---
+
+## Version Compatibility
+
+| Package | Compatible With | Notes |
+|---------|-----------------|-------|
+| `cobra v1.10.2` | Go 1.23 | Requires Go 1.22+. v1.10.2 published December 2025. |
+| `tablewriter v1.1.4` | Go 1.23 | v1.0.0 is broken — avoid. Use v1.1.4. Published March 2026. |
+| `fatih/color v1.19.0` | Go 1.23 | Uses `mattn/go-isatty` and `mattn/go-colorable` already in go.mod via Wails. No version conflict. Published March 2026. |
+
+---
+
+## Integration Notes
+
+### Wails Build Does Not Change
+
+`wails build` compiles the whole `main` package including the CLI dispatch. The resulting binary:
+- Zero args → launches GUI (Wails behavior unchanged)
+- Known subcommand as first arg → runs CLI, exits before `wails.Run()`
+
+The embedded frontend (`//go:embed all:frontend/dist`) is still bundled but never loaded in CLI mode. Binary size is unchanged — the embedded assets are inert in CLI mode.
+
+### Existing Business Logic Is Reused As-Is
+
+`internal/catalog/service.go` and `internal/search/service.go` contain all the catalog creation and search logic. CLI commands are thin wrappers that call these packages directly — no duplication.
+
+### `storcat version` Is Already Implemented
+
+`version.go` handles version string injection via `//go:embed wails.json`. The `version` subcommand is a one-liner that prints `app.Version`.
 
 ---
 
 ## Sources
 
-- Wails v2 official docs: https://wails.io/docs/
-- Wails v2 options reference: https://wails.io/docs/reference/options/
-- Wails runtime window API: https://wails.io/docs/reference/runtime/window/
-- Wails cross-platform build guide: https://wails.io/docs/guides/crossplatform-build/
-- Wails v3 alpha status: https://v3alpha.wails.io/
-- GitHub issue #3478 (macOS position drift): https://github.com/wailsapp/wails/issues/3478
-- GitHub issue #2739 (multi-monitor position): https://github.com/wailsapp/wails/issues/2739
-- GitHub issue #1702 (window position on startup): https://github.com/wailsapp/wails/issues/1702
-- Wails releases: https://github.com/wailsapp/wails/releases
-- Wails frameless/drag guide: https://wails.io/docs/guides/frameless/
-- Wails code signing guide: https://wails.io/docs/guides/signing/
+- cobra GitHub (v1.10.2 latest): https://github.com/spf13/cobra — HIGH confidence
+- cobra pkg.go.dev: https://pkg.go.dev/github.com/spf13/cobra — HIGH confidence
+- tablewriter pkg.go.dev (v1.1.4): https://pkg.go.dev/github.com/olekukonko/tablewriter — HIGH confidence
+- fatih/color pkg.go.dev (v1.19.0): https://pkg.go.dev/github.com/fatih/color — HIGH confidence
+- Wails discussion #4175 (os.Args in production builds): https://github.com/wailsapp/wails/discussions/4175 — MEDIUM confidence (community discussion, not official docs)
+- Wails issue #2353 (CLI args pattern): https://github.com/wailsapp/wails/issues/2353 — MEDIUM confidence
+- Existing go.mod (indirect deps: pkg/browser, go-isatty, go-colorable): verified from codebase — HIGH confidence
+
+---
+*Stack research for: CLI subcommands in Go/Wails unified binary (StorCat v2.1.0)*
+*Researched: 2026-03-26*

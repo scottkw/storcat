@@ -1,220 +1,168 @@
 # Project Research Summary
 
-**Project:** StorCat v2.0.0 — Go/Wails Migration
-**Domain:** Electron-to-Wails desktop app migration (catalog manager)
-**Researched:** 2026-03-24
+**Project:** StorCat v2.1.0 — CLI Subcommands
+**Domain:** Adding CLI subcommands to a unified Go/Wails desktop binary
+**Researched:** 2026-03-26
 **Confidence:** HIGH
 
 ## Executive Summary
 
-StorCat v2.0.0 is a feature-parity milestone: replace the Electron v1.2.3 backend with a Go/Wails v2 backend while keeping the React/TypeScript/Ant Design frontend identical. The research confirms the current codebase is structurally sound — the right patterns (thin `App` coordinator, internal services, `wailsAPI.ts` compatibility shim) are already in place. The remaining work is a well-scoped set of correctness gaps between what the Electron backend returned and what the Go backend currently returns. None of these gaps require architectural changes; they all resolve within the existing layer boundaries.
+StorCat v2.1.0 adds a CLI layer to an existing, shipping Go/Wails desktop application. This is not a new product — all business logic (catalog creation, search, browse) already exists in `internal/catalog` and `internal/search` packages that have no Wails runtime dependencies. The CLI work is thin command wrappers over those services, plus a dispatch mechanism in `main.go` that routes known subcommands away from `wails.Run()` before the GUI ever starts. The pattern is well-understood: check `os.Args` before calling `wails.Run()`, route to a `cli.Run()` function that uses stdlib `flag.FlagSet` per subcommand, and `os.Exit()` before the Wails framework initializes. Total implementation is estimated at 2-3 hours of focused Go work.
 
-The recommended build order flows bottom-up through the dependency graph: fix data models first, then catalog and search services, then config manager additions, then the `App` API surface, then Wails lifecycle wiring, and finally the TypeScript shim and macOS-specific UI fixes. This order ensures no phase is blocked by an upstream gap and prevents the need to revisit already-completed layers. The most cross-cutting change — window state persistence — touches four layers (config, app, main.go lifecycle, wailsAPI.ts) and is correctly sequenced last among the Go-side changes.
+The recommended approach avoids the two most tempting over-engineering traps: don't add Cobra (6 subcommands with simple flags don't justify a ~2MB dependency in a binary where size is a selling point), and don't use the `App` struct from CLI mode (it requires a live Wails context and panics without one). Instead, instantiate `catalog.NewService()` and `search.NewService()` directly in CLI commands — exactly what `NewApp()` does, minus the Wails binding layer. A new `cli/` package encapsulates all subcommands and exposes a single `Run(args []string, version string) int` entry point.
 
-The primary risks are silent runtime failures: nil slices serializing as JSON `null`, IPC response envelope mismatches, and Wails runtime API calls placed in the wrong lifecycle hook. All three are well-documented patterns with clear mitigations. The macOS window position coordinate drift bug is fixed in the current Wails v2.10.2 release (PR #3479). Cross-platform webview differences (WKWebView/WebView2/WebKitGTK) require a final multi-platform testing pass before declaring parity complete.
-
----
+The primary risks are platform-specific and must be front-loaded: Windows GUI subsystem silencing all CLI output (requires `-windowsconsole` build flag or `AttachConsole` syscall), macOS Gatekeeper injecting `-psn_*` arguments on first Finder launch, and `wails dev` double-execution breaking if the dispatch logic is too strict. All three are well-documented patterns with known fixes that must be addressed in the first implementation phase before any per-subcommand work begins. The macOS `.app` bundle PATH issue is a distribution concern: users who install by dragging to `/Applications` won't have `storcat` on their PATH without a symlink, which requires a documented install script shipped with the release.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The stack is already fixed — the migration is in progress and the core technology choices (Go 1.23+, Wails v2.10.2, React 18, TypeScript, Vite, Ant Design 5) are correct and verified from the existing `go.mod` and `package.json`. Do not migrate to Wails v3 (still alpha as of March 2026). Do not switch the frontend package manager from npm to pnpm — `wails.json` specifies npm and the toolchain depends on it.
-
-The key toolchain note: `wails dev` regenerates `wailsjs/` bindings on every run. After any Go struct or method signature change, run `wails dev` (or `wails generate module`) before writing frontend code — stale bindings are a silent type safety failure.
+The existing stack (Go 1.23, Wails v2.10.2, React 18, TypeScript 5, Ant Design 5) is unchanged. The v2.1.0 additions are two targeted Go libraries: `github.com/olekukonko/tablewriter v1.1.4` for terminal table output in `list` and `search` commands, and `github.com/fatih/color v1.19.0` for optional colorized tree output in `show`. Both are lightweight and well-established. `github.com/pkg/browser` (already a Wails transitive dependency at zero new cost) handles cross-platform browser opening for `storcat open`. The architecture research explicitly recommends against adding Cobra — stdlib `flag.FlagSet` is sufficient for 6 subcommands and keeps binary size lean.
 
 **Core technologies:**
-- **Go 1.23 / Wails v2.10.2:** Desktop runtime and IPC layer — single native binary, typed auto-generated TS bindings, no V8 ARM64 crash risk
-- **React 18 / TypeScript 4.6 / Ant Design 5:** Frontend UI — unchanged from Electron version, zero migration cost
-- **`wailsAPI.ts` shim:** Compatibility adapter — translates Wails' Promise-based IPC into the `window.electronAPI` envelope interface all React components expect
-- **Go stdlib only:** `encoding/json`, `os`, `filepath`, `embed`, `context` — no third-party Go dependencies needed for this milestone
-- **`os.UserConfigDir()` JSON config:** Platform-appropriate config at `~/Library/Application Support/storcat/config.json` (macOS) — already implemented
+- `stdlib flag.FlagSet`: per-subcommand flag parsing — no external dependency, adequate for 6 well-defined subcommands with simple flag sets
+- `github.com/olekukonko/tablewriter v1.1.4`: ASCII table output for `list` and `search` — established library, pipe-safe; note v1.0.0 is broken, use v1.1.4
+- `github.com/fatih/color v1.19.0`: ANSI color for `show` tree — TTY auto-detection via `go-isatty` already in go.mod via Wails, zero net dependency cost
+- `github.com/pkg/browser`: cross-platform browser open for `storcat open` — already in go.sum as a Wails transitive dep, zero new dependency
 
 ### Expected Features
 
-All items are mandatory for v2.0.0 — this milestone's explicit goal is full feature parity. There are no defer items. See `.planning/research/FEATURES.md` for full detail and the dependency graph.
+**Must have (table stakes) — v2.1.0 launch:**
+- `storcat create <dir>` with `--output`, `--name`, `--title` flags — core catalog creation via existing service
+- `storcat search <term> <dir>` with `--json` flag — scriptable search
+- `storcat list <dir>` with `--json` flag — scriptable catalog discovery
+- `storcat show <catalog.json>` with `--depth N` flag — terminal tree visualization (requires new `GenerateTextTree` method on catalog.Service)
+- `storcat open <catalog.json>` — cross-platform browser launch via `pkg/browser`
+- `storcat version` — version string to stdout
+- `storcat` (no args) — GUI launches unchanged; preserving this behavior is a hard requirement, not a nice-to-have
+- Exit codes 0/1/2, errors to stderr, output to stdout — POSIX contract required for scripting
+- `--help` on all commands — stdlib `flag` provides this automatically
 
-**Must have (table stakes — all required for v2.0.0 parity):**
-- `loadCatalog` Go method — missing entirely; straightforward `os.ReadFile` + JSON unmarshal
-- `createCatalog` returns `{fileCount, totalSize, paths}` metadata — currently returns `error` only
-- JSON output format: bare root object `{...}` not array `[{...}]` — required for v1 backward compatibility
-- Empty directory `contents` field: `[]` not `null` — Go nil slice marshals as `null`, breaking frontend `.map()` calls
-- Symlink traversal: follow symlinks (use `os.Stat`), not skip (current `os.Lstat`) — silent data loss on symlink-heavy filesystems
-- Window state persistence (size + position) — save on `OnBeforeClose`, restore in `OnDomReady`
-- Window persistence toggle — currently stubbed as `return true`; needs real config persistence
-- `getCatalogHtmlPath` existence check + `{success, htmlPath}` envelope — currently returns bare string with no file check
-- `readHtmlFile` response envelope — wrapper silently returns `null` on error
-- Header drag region (macOS titlebar) — use `--wails-draggable: drag` CSS property, not Electron's `WebkitAppRegion`
-- Browse metadata `size` field and timestamp semantics — `CatalogMetadata` missing `size`; `Modified` type inconsistency
-- Version sourced from embedded build artifact — currently hardcoded constant
+**Should have (differentiators) — add after v2.1.0 ships:**
+- Auto-TTY detection: table output on terminal, JSON when piped — matches `gh` CLI behavior, defers need to remember `--json`
+- Colorized `show` tree output — directories bold/blue, matches `tree`/`eza` UX
+- `--no-color` + `NO_COLOR` env var — only needed once colorized output ships
 
-**Should have (differentiators already delivered by migration):**
-- Typed IPC via Wails binding generation (compile-time-checked method calls, no stringly-typed channels)
-- Native Go config file at OS-standard location (replaces Electron's split `window-state.json` + `preferences.json`)
-- No V8 JIT disable workaround — structural advantage of native Go binary
-- `ResolvesAliases: true` in file dialogs — macOS Finder aliases resolved transparently
-
-**Defer (v3+):**
-- Wails v3 migration — wait for stable release
-- Progress reporting via `runtime.EventsEmit` during catalog creation
-- Goroutine worker pool for catalogs with 100K+ files
+**Defer (v2.2+):**
+- Watch mode (`--watch` on `create`) — requires `fsnotify`, daemon concerns
+- Interactive TUI mode — pipe `storcat list` or `storcat search` to `fzf` instead
+- YAML output — `--json | yq` covers the use case
+- Shell completion via Cobra — only justified if subcommand count grows significantly
 
 ### Architecture Approach
 
-StorCat uses the standard Wails v2 single-bound-struct pattern. One `App` struct in `main` is the sole IPC surface exposed to the frontend. Three stateless internal services (`catalog.Service`, `search.Service`, `config.Manager`) handle business logic. Shared data types live in `pkg/models`. The auto-generated `wailsjs/` directory is the mechanical IPC boundary; `wailsAPI.ts` is the hand-written compatibility layer that reconstructs the `window.electronAPI` envelope interface. This architecture is correct — do not restructure it.
+The integration is a two-layer change to the existing codebase. First, `main.go` gains an `os.Args` dispatch block before `wails.Run()` — known subcommands route to `cli.Run(os.Args[1:], Version)` and exit; no-arg or unrecognized-arg invocations fall through to GUI launch unchanged. Second, a new `cli/` package provides one file per subcommand, each constructing services directly via `catalog.NewService()` or `search.NewService()`. All existing `internal/` packages and `app.go` remain unchanged except for one new exported method: `catalog.Service.GenerateTextTree()` for the `show` command. The version string is passed as a parameter to `cli.Run()` to keep the `//go:embed wails.json` directive in the `main` package where it belongs.
 
 **Major components:**
-1. `App` (main) — thin coordinator: routes IPC calls to services, calls `runtime.*` APIs, wires Wails lifecycle hooks
-2. `catalog.Service` (internal/catalog) — directory traversal, JSON + HTML generation, file copy; stateless
-3. `search.Service` (internal/search) — catalog reading, recursive search, browse metadata; stateless
-4. `config.Manager` (internal/config) — JSON config read/write at OS-standard path; stateless
-5. `pkg/models` — shared data types only (`CatalogItem`, `SearchResult`, `CatalogMetadata`, `CatalogResult`); no logic
-6. `wailsAPI.ts` — single frontend integration point; wraps all `wailsjs/` calls in `{success, data}` envelopes
+1. `main.go` (modified) — adds `-psn_*` filter, `os.Args` dispatch, extracts GUI init to `runGUI()` function
+2. `cli/` package (new) — `cli.go` root dispatcher + one file per subcommand (create, search, list, show, open, version) + `cli_windows.go` console attachment shim
+3. `internal/catalog/service.go` (minor change) — adds exported `GenerateTextTree(item *models.CatalogItem) string` method for plain-text tree rendering; all other services unchanged
+4. `pkg/cli/output.go` (optional) — shared table/tree/byte formatting helpers extracted only when real duplication emerges across commands
 
-**Hard isolation rules:**
-- `internal/*` packages must NOT import each other and must NOT import the Wails runtime
-- Only `App` calls `runtime.*` functions
-- Components never import from `wailsjs/` directly — always through `wailsAPI.ts`
+**Hard isolation rules that must not change:**
+- CLI commands must call `internal/catalog` and `internal/search` directly — never through `App`
+- `cli/` package must have zero imports from `wails/v2/pkg/runtime` — Wails runtime requires a live context
+- `App` struct is the Wails binding layer only; it is not a general CLI service facade
 
 ### Critical Pitfalls
 
-1. **IPC envelope mismatch** — Wails resolves Promises with raw Go return values; frontend expects `{success, data}`. The `wailsAPI.ts` shim must construct envelopes in TypeScript, not Go. Two methods currently missing this: `getCatalogHtmlPath` and `readHtmlFile`.
+1. **Windows GUI subsystem silences all CLI output** — `wails build` uses `-H windowsgui` which discards stdout/stderr from Windows terminals. Fix: build with `wails build -windowsconsole` (accepted trade-off: brief console flash on GUI double-click) or use `AttachConsole(-1)` + `CONOUT$` redirect in `cli_windows.go`. Must be validated on real Windows before any CLI feature is considered done.
 
-2. **Nil slice → JSON `null`** — Go nil slices marshal as `null`; Electron always returned `[]`. Remove `omitempty` from `Contents` and initialize with `make([]*CatalogItem, 0)`. Frontend `.map()` calls will panic on `null`.
+2. **macOS Gatekeeper injects `-psn_*` argument on first Finder launch** — Any arg parser encountering `-psn_0_8423432` will error or misfire a CLI command. Fix: filter args matching `-psn_*` prefix before dispatch. One function, apply on all platforms (no-op on non-macOS), add a test.
 
-3. **`filepath.Walk` silently skips symlinks** — Go's walk functions use `os.Lstat` and do not follow symlinks by design. Replace with a custom recursive walker using `os.Stat` for symlink targets. Missing entries produce no error — only catalog comparison reveals the gap.
+3. **`wails dev` double-executes `main()` during binding generation** — Strict "no args → exit 1" logic will break the dev hot-reload workflow. Fix: unknown args (or no args) must always fall through to GUI launch, never exit with an error. Reserve strict validation for inside subcommand handlers, not the dispatch layer.
 
-4. **Window runtime calls in `OnStartup`** — Wails runtime APIs (`WindowSetSize`, `WindowSetPosition`) are unreliable in `OnStartup` because the window is initializing in a separate goroutine. Use `OnDomReady` for all window state restoration. Causes panics on Windows; silent failures on macOS.
+4. **`embed.FS` compile failure on direct `go build`** — `//go:embed all:frontend/dist` requires pre-built frontend assets. Direct `go build` fails on fresh clones. Fix: document that `wails build` is the only supported build path; never use `go build` for the full binary.
 
-5. **Wrong CSS drag property** — Electron uses `WebkitAppRegion: drag`; Wails uses `--wails-draggable: drag`. The Electron property silently does nothing in a Wails WebView. Frameless window becomes undraggable on macOS with no console error.
-
----
+5. **macOS `.app` bundle binary not on PATH** — Users who drag to `/Applications` cannot run `storcat create` from terminal without a symlink. Fix: provide `scripts/install-cli.sh` that creates `/usr/local/bin/storcat → storcat.app/Contents/MacOS/storcat`, document in release notes.
 
 ## Implications for Roadmap
 
-Based on the dependency graph in ARCHITECTURE.md and the priority ordering in FEATURES.md, the correct phase structure flows strictly bottom-up. Each phase fully completes its layer before the next phase begins, ensuring no rework.
+Based on the research, the implementation is best structured in three phases. All platform gotchas must be resolved before per-subcommand work begins — the dispatch skeleton is the critical path dependency for every subsequent command.
 
-### Phase 1: Data Model Correctness
-**Rationale:** Every subsequent phase depends on `pkg/models` having the right shapes. Fix models first so all downstream changes are built on the correct foundation.
-**Delivers:** Correct `CatalogItem`, `CatalogMetadata`, and new `CatalogResult` structs. Removes `omitempty` from `Contents`. Adds `Size int64` to `CatalogMetadata`. Documents `Created`/`Modified` field semantics.
-**Addresses:** JSON null vs `[]` (Pitfall 2), browse metadata gaps, `createCatalog` return type
-**Avoids:** Reworking service layer after fixing models
+### Phase 1: CLI Foundation and Platform Compatibility
+**Rationale:** The three critical pitfalls (Windows console, macOS PSN, wails dev double-exec) all manifest at the dispatch layer. Building the CLI skeleton first lets you verify the integration is sound on all platforms before writing any command logic. This is the true critical path dependency — every subcommand shares the same dispatch mechanism.
+**Delivers:** A working `storcat version` and `storcat --help` on all three platforms (macOS, Windows, Linux). `wails dev` still opens the GUI. macOS Finder launch does not crash. Windows terminal shows output.
+**Addresses:** Table-stakes features: `storcat version`, exit codes, stderr/stdout split, `--help`; POSIX contract established
+**Avoids:** Windows console silent failure (Pitfall 1), macOS PSN crash (Pitfall 2), wails dev regression (Pitfall 3), embed.FS documentation gap (Pitfall 4)
+**Specific work:**
+- Modify `main.go`: add `-psn_*` filter, extract `runGUI()`, add `os.Args` dispatch switch, pass `Version` to `cli.Run()`
+- Create `cli/cli.go` with `Run(args []string, version string) int` entry point, help text, and subcommand routing
+- Create `cli/version.go` — trivial, one line of output
+- Create `cli/cli_windows.go` with `AttachConsole` shim
+- Decide and document Windows build approach (`-windowsconsole` flag recommended)
+- Create `scripts/install-cli.sh` for macOS symlink
+- Document that `wails build` is required, not `go build`
+- Verify `wails dev` still opens GUI after dispatch changes
 
-### Phase 2: Catalog Service Fixes
-**Rationale:** Core data generation logic. Fixing JSON output format here propagates correctly through the rest of the system.
-**Delivers:** Correct JSON output (bare root object, `[]` not `null` for empty dirs), symlink traversal, `CatalogResult` return with file count + total size + output paths
-**Addresses:** JSON format backward compatibility (Pitfall 10), symlink traversal (Pitfall 3), `createCatalog` metadata return
-**Avoids:** Stale bindings (regenerate after struct changes per Pitfall 6)
+### Phase 2: Core Subcommands (Create, List, Search)
+**Rationale:** These three commands cover the primary scripting use cases and all call existing services with no new business logic — just flag parsing and output formatting. `list` and `search` share the `search.Service` constructor pattern; all three share the table output approach. Implementing them together is efficient.
+**Delivers:** A fully scriptable CLI for the core catalog workflow: create a catalog, list what's cataloged, search for files. Human-readable table output on TTY, JSON output via `--json`.
+**Uses:** `olekukonko/tablewriter` for tabular output, `encoding/json` for `--json` flag (existing model structs already have `json:` tags), `stdlib flag.FlagSet` for parsing
+**Implements:** `cli/create.go`, `cli/list.go`, `cli/search.go`
+**Avoids:** App struct / Wails ctx misuse (instantiate services directly), Windows path separator inconsistency in output
 
-### Phase 3: Search Service + Browse Metadata
-**Rationale:** Independent of catalog service; depends only on models. Completes the backend read-path.
-**Delivers:** `BrowseCatalogs` with correct `size` field, consistent RFC3339 timestamps, documented `ctime` semantics
-**Addresses:** Browse metadata gaps, `time.Time` serialization (Pitfall 7)
-**Avoids:** Date format mismatch at the frontend rendering layer
-
-### Phase 4: Config Manager Additions
-**Rationale:** Window persistence and toggle features require config changes before `App` layer can wire them. Config is stateless and independent of the other services.
-**Delivers:** `WindowX`, `WindowY`, `WindowPersistenceEnabled` fields in config; `SetWindowPosition` and `SetWindowPersistence` methods
-**Addresses:** Window state persistence prerequisite
-**Avoids:** Partial implementation of persistence that stores size but not position
-
-### Phase 5: App Layer API Surface
-**Rationale:** `App` is the IPC surface. With models, services, and config correct, complete the `App` method set.
-**Delivers:** `LoadCatalog` method (new), corrected `CreateCatalog` signature returning `*CatalogResult`, `GetCatalogHtmlPath` with existence check, window position get/set methods, `GetWindowPersistence`/`SetWindowPersistence`, version from embedded source
-**Addresses:** Missing `loadCatalog` (table stakes), `getCatalogHtmlPath` existence check
-**Avoids:** IPC envelope mismatch (Pitfall 1) — Go methods return `(T, error)`, envelopes stay in TypeScript
-
-### Phase 6: Wails Lifecycle Wiring
-**Rationale:** Window state restoration requires `OnDomReady` to be registered. This is a `main.go` change that cannot be done until config additions (Phase 4) are complete.
-**Delivers:** `OnDomReady` registered and implemented in `app.go`; window size/position restored on launch; `OnBeforeClose` saves final window state; initial window dimensions passed to `options.App` to prevent resize flash
-**Addresses:** Window persistence (full), `OnStartup` timing trap (Pitfall 8), macOS coordinate drift (Pitfall 4 — fixed in Wails v2.10.2)
-**Avoids:** Runtime panics on Windows from premature `runtime.*` calls
-
-### Phase 7: Frontend Shim + TypeScript Updates
-**Rationale:** After all Go-side changes are complete and bindings regenerated, update `wailsAPI.ts` to match new method signatures and construct missing envelopes.
-**Delivers:** `createCatalog` response forwards `CatalogResult` fields; `getCatalogHtmlPath` wrapper returns `{success, htmlPath}`; `readHtmlFile` wrapper returns `{success, content}`; `getWindowPersistence`/`setWindowPersistence` stubs replaced with real calls
-**Addresses:** IPC envelope mismatch (Pitfall 1) for remaining two methods, persistence toggle stub
-**Avoids:** Stale type bindings (regenerate `wailsjs/` before writing shim)
-
-### Phase 8: macOS Titlebar + Drag Region
-**Rationale:** Independent of all Go changes — purely a CSS + `main.go` options change. Batched last to keep it isolated.
-**Delivers:** Functional drag region on macOS frameless window; `--wails-draggable: drag` on header element; `Mac.TitleBar` options in `main.go`
-**Addresses:** Drag region regression (Pitfall 5), macOS titlebar parity
-**Avoids:** Wrong CSS property (`WebkitAppRegion` silently does nothing in Wails)
-
-### Phase 9: Cross-Platform Verification
-**Rationale:** Wails uses OS-native webviews (WKWebView/WebView2/WebKitGTK) which have rendering differences. Verification must happen on all three platforms before declaring parity complete.
-**Delivers:** Confirmed parity on macOS, Windows, Linux; validated window state persistence behavior per platform; confirmed Ant Design rendering consistency
-**Addresses:** Platform webview differences (Pitfall 11), dialog option differences (Pitfall 9)
-**Avoids:** Shipping regressions only visible on non-dev platforms
+### Phase 3: Show and Open Subcommands
+**Rationale:** These two commands have distinct implementation requirements. `show` requires a new exported method on `catalog.Service` (the text tree renderer, since the existing `generateTreeStructure` is HTML-specific with `&nbsp;` and `html.EscapeString`). `open` requires cross-platform browser exec logic. Grouping them keeps the one service-layer change isolated to a single phase.
+**Delivers:** Complete CLI feature parity — users can inspect a catalog tree structure and open its HTML report without launching the GUI.
+**Implements:** `catalog.Service.GenerateTextTree()` (new exported method), `cli/show.go`, `cli/open.go`
+**Avoids:** Using `runtime.BrowserOpenURL` from Wails in CLI context (requires active Wails ctx, will panic) — use `pkg/browser` instead
 
 ### Phase Ordering Rationale
 
-- Phases 1-4 are the dependency foundation. Each is independent of the others (models, catalog service, search service, config are isolated) but all must complete before Phase 5.
-- Phase 5 (App layer) is the integration point. Do not start until Phases 1-4 are verified.
-- Phase 6 (lifecycle wiring) depends on Phase 4 (config) but can overlap with Phase 5 if window persistence config fields are done first.
-- Phase 7 (TypeScript shim) is explicitly last in the Go/backend sequence — always regenerate bindings before writing TypeScript.
-- Phase 8 (drag region) is independent and can be done at any time but is lowest risk so batched at the end.
-- Phase 9 (cross-platform) must be last — it validates the complete integrated system.
+- Phase 1 must precede all others. The `main.go` dispatch is a prerequisite for any CLI command to be invokable, and platform validation cannot be deferred — discovering Windows console failure after all commands are implemented is a much more expensive fix than discovering it on a one-liner `version` command.
+- Phases 2 and 3 are ordered by implementation complexity and service-layer change scope, not by relative user value (all commands are P1 features). Phase 2 commands are pure call-through with no new service methods; Phase 3 requires one service method addition.
+- Shell completion (`storcat completion`) is free only with Cobra. Staying with stdlib flag means deferring completion to a later milestone. This is the right trade-off at this scope — document the decision explicitly in Phase 1.
 
 ### Research Flags
 
-Phases with standard, well-documented patterns (skip deeper research):
-- **Phase 1 (models):** Standard Go struct modification, no unknowns
-- **Phase 2 (catalog service):** Custom recursive walker pattern is well-documented; the specific fix (`os.Stat` vs `os.Lstat`) is confirmed
-- **Phase 3 (search service):** Straightforward field population; date semantics documented
-- **Phase 4 (config):** Additive config fields, no architectural risk
-- **Phase 7 (TypeScript shim):** Wrapper pattern already established in `wailsAPI.ts`
-- **Phase 8 (drag region):** Single CSS property change + `main.go` options, documented in Wails frameless guide
+Phases likely needing deeper investigation during planning:
+- **Phase 1 (Windows console):** The `-windowsconsole` trade-off (console flash on GUI launch) vs. `AttachConsole` (stdin unreliability, piped output limitations) needs a Windows environment decision before committing. Recommend testing both on a real Windows build before choosing.
+- **Phase 3 (cross-platform browser exec):** `pkg/browser` handles macOS and Linux cleanly; Windows `cmd /c start` with paths containing spaces has known edge cases that need explicit testing.
 
-Phases that may need targeted investigation during execution:
-- **Phase 5 (App layer) — version embedding:** `//go:embed` of a version file needs a build-time artifact strategy; the exact approach (embed `wails.json`, separate `version.json`, or ldflags) should be decided before implementing
-- **Phase 6 (lifecycle wiring) — multi-monitor position restore:** Position clamping to visible screen bounds is recommended but the exact Wails API behavior for multi-monitor scenarios has MEDIUM confidence (Wails issue #2739 unresolved); recommend saving size only on first implementation and deferring position restore
-- **Phase 9 (cross-platform) — Windows WebView2 version check:** Older WebView2 versions (pre-118.0.2088.76) have a crash-on-refocus bug; need to confirm whether the Wails build configuration handles the minimum version requirement
-
----
+Phases with standard patterns (skip additional research):
+- **Phase 2:** `catalog.NewService()` and `search.NewService()` are already proven in the GUI context. Flag parsing and table output are standard Go patterns. JSON output is `json.Marshal` on existing structs with `json:` tags — nearly free.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Versions verified from existing `go.mod`, `package.json`, `wails.json`. All toolchain choices already in production use. |
-| Features | HIGH | Table stakes list derived directly from PROJECT.md active requirements and INTEGRATIONS.md IPC channel audit. No guesswork. |
-| Architecture | HIGH | Based on direct source code analysis of the actual codebase + verified Wails v2 official docs for lifecycle semantics. |
-| Pitfalls | HIGH (critical), MEDIUM (window persistence) | Critical pitfalls (nil slice, symlinks, IPC envelopes, OnStartup timing) are well-documented. macOS position coordinate drift is fixed in v2.10.2 (PR #3479 confirmed). Multi-monitor position behavior is MEDIUM — Wails issue #2739 open. |
+| Stack | HIGH | Existing stack validated and unchanged. Library choices (tablewriter, fatih/color) are well-established with high adoption. The Cobra vs stdlib flag recommendation is well-reasoned and reversible if scope grows. |
+| Features | HIGH | All business logic exists in proven services. CLI conventions are well-established via CLIG and reference tools (tree, fd, eza, rg). Feature set is tightly scoped. |
+| Architecture | HIGH | Based on direct source code analysis confirming service layer has zero Wails runtime imports. Dispatch pattern is confirmed via Wails community discussions. |
+| Pitfalls | MEDIUM-HIGH | Windows and macOS gotchas documented from multiple Wails community sources and platform docs. Some platform edge cases (piped output on Windows after AttachConsole, multi-monitor behavior) may surface during testing. |
 
 **Overall confidence:** HIGH
 
 ### Gaps to Address
 
-- **Version embedding strategy:** The exact mechanism to embed a build-time version string (ldflags vs `//go:embed` vs `wails.json` parse) is not decided. Recommend deciding this in Phase 5 planning before implementation.
-- **Window position restore on multi-monitor:** Wails `WindowGetPosition`/`WindowSetPosition` coordinates are monitor-relative with no monitor identity API. Safe approach: implement size-only persistence first; add position restore as a follow-on after cross-platform testing confirms behavior.
-- **`Created` field semantics cross-platform:** Go's `os.Stat` does not expose birthtime portably. macOS has `birthtime`, Linux generally does not. `CatalogMetadata.Created` will reflect `ctime` (inode change time) on Linux. This is an acceptable semantic difference but should be documented in the struct definition.
-- **WebView2 minimum version enforcement on Windows:** Confirm whether the current Wails build flags handle minimum WebView2 version or whether an explicit check is needed.
-
----
+- **Windows `-windowsconsole` vs `AttachConsole` choice:** Both approaches are documented with known trade-offs, but the right choice for StorCat's user base needs a real Windows environment test in Phase 1 before the rest of the implementation is built around it.
+- **Shell completion without Cobra:** `storcat completion` is listed as P1 in FEATURES.md but is only free with Cobra. This is a scope decision: accept the loss of completion for v2.1.0 (document it), adopt Cobra for completion support, or implement manual completion scripts. Must be decided explicitly in Phase 1 before implementation begins.
+- **`storcat list` and `storcat search` default directory behavior:** When no `<dir>` argument is provided, what is the default? Current directory? Last-used directory from config? Research recommends reading from `config.Manager` (same defaults as GUI) rather than hardcoding, but the exact UX decision needs confirmation during Phase 2 planning.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- Wails v2 official docs: https://wails.io/docs/ — options, runtime window API, application lifecycle, frameless guide
-- Wails v2 GitHub issues #2242, #3301 — error return type → Promise rejection behavior
-- Wails v2 PR #3479 — macOS window position coordinate fix (visibleFrame vs frame)
-- Direct source analysis: `app.go`, `main.go`, `internal/`, `pkg/`, `frontend/src/services/wailsAPI.ts`
-- StorCat `.planning/codebase/INTEGRATIONS.md` — IPC channel audit
-- StorCat `.planning/codebase/CONCERNS.md` — known technical debt
+- Direct source analysis: `main.go`, `app.go`, `internal/catalog/service.go`, `internal/search/service.go`, `pkg/models/catalog.go` — confirmed no Wails runtime imports in service layer
+- `github.com/olekukonko/tablewriter` pkg.go.dev (v1.1.4) — table output library
+- `github.com/fatih/color` pkg.go.dev (v1.19.0) — color output library
+- [Command Line Interface Guidelines (clig.dev)](https://clig.dev/) — exit codes, stdout/stderr separation, `--json` flag, piping conventions, color/TTY detection
+- Wails v2 build system reference: https://wails.io/docs/reference/cli/
 
 ### Secondary (MEDIUM confidence)
-- Wails GitHub issues #3478, #2739, #1702 — macOS position drift, multi-monitor behavior, window restoration
-- Wails GitHub issue #1660 — OnStartup runtime panic
-- Go issue #4759 — `filepath.Walk` symlink behavior (documented language behavior, not a bug)
+- Wails issue #544 — Windows console output limitation with `-H windowsgui` linker flag
+- Wails issue #3008 — `-windowsconsole` debug logging build flag
+- Wails discussion #4175 — `os.Args` behavior in production builds and `wails dev` double-execution
+- Wails issue #1533 — `-appargs` flag passthrough bug in dev mode
+- Wails discussion #3098 — CLI integration patterns with Wails apps
+- macOS `-psn_*` Gatekeeper injection documented via Godot engine fix: https://github.com/godotengine/godot/pull/37719
+- Windows `AttachConsole` technique: https://www.tillett.info/2013/05/13/how-to-create-a-windows-program-that-works-as-both-as-a-gui-and-console-application/
 
-### Tertiary (reference)
-- Go nil slice JSON serialization: https://apoorvam.github.io/blog/2017/golang-json-marshal-slice-as-empty-array-not-null/
-- Go `time.Time` JSON format: https://www.willem.dev/articles/change-time-format-json/
-- Wails as Electron alternative overview: https://dev.to/kartik_patel/wails-as-electron-alternative-4dmn
+### Tertiary (reference / needs validation)
+- `wails build -windowsconsole` flag — referenced in issue #3008 but not in official docs; validate on real Windows build before committing
+- macOS app bundle CLI access: https://www.jviotti.com/2022/11/28/launching-macos-applications-from-the-command-line.html
+- Cobra alternatives analysis: https://www.glukhov.org/post/2025/11/go-cli-applications-with-cobra-and-viper/
 
 ---
-
-*Research completed: 2026-03-24*
+*Research completed: 2026-03-26*
 *Ready for roadmap: yes*
