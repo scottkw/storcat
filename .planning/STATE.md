@@ -56,7 +56,7 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260327-ncx | Fix title bar showing 'storcat-wails' instead of 'StorCat' and version 2.1.0→2.2.0 | 2026-03-27 | pending | [260327-ncx](./quick/260327-ncx-fix-title-bar-showing-storcat-wails-inst/) |
+| 260327-ncx | Fix title bar showing 'storcat-wails' instead of 'StorCat' and version 2.1.0→2.2.0 | 2026-03-27 | aa70dbce | [260327-ncx](./quick/260327-ncx-fix-title-bar-showing-storcat-wails-inst/) |
 
 ## Session Continuity
 
