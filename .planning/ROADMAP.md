@@ -103,7 +103,7 @@ Plans:
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
-| 12. Repo Consolidation | v2.2.0 | 3/3 | Complete   | 2026-03-27 |
+| 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 0/? | Not started | - |
 | 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
