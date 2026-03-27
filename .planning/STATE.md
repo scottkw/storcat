@@ -7,7 +7,7 @@ stopped_at: null
 last_updated: "2026-03-27"
 last_activity: 2026-03-27
 progress:
-  total_phases: 0
+  total_phases: 4
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -20,14 +20,19 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Defining requirements for v2.2.0
+**Current focus:** Phase 12 — Repo Consolidation
 
 ## Current Position
 
-Phase: Not started (defining requirements)
+Phase: 12 — Repo Consolidation
 Plan: —
-Status: Defining requirements
-Last activity: 2026-03-27 — Milestone v2.2.0 started
+Status: Ready to plan
+Last activity: 2026-03-27 — Roadmap created for v2.2.0
+
+```
+Progress: Phase 12 of 15 total | v2.2.0: 0/4 phases complete
+[░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░░] 0%
+```
 
 ## Accumulated Context
 
@@ -35,9 +40,22 @@ Last activity: 2026-03-27 — Milestone v2.2.0 started
 
 Decisions are logged in PROJECT.md Key Decisions table.
 
+### Key Research Findings (carry forward to execution)
+
+- NSIS requires `windows-latest` runner — silently fails on macOS/Linux
+- Linux WebKit requires `ubuntu-22.04` pin — ubuntu-latest resolves to 24.04 which drops libwebkit2gtk-4.0-dev
+- Fan-in pattern is mandatory for release jobs — parallel release upload causes race condition
+- SHA-pin all community actions — first-party `actions/*` may use version tags
+- Homebrew SHA256 must be computed locally before release upload — never re-download from CDN
+- WinGet first submission to winget-pkgs must be manual — automation only works after package exists
+- `GITHUB_TOKEN` is insufficient for cross-repo operations — separate classic PATs required for Homebrew and WinGet
+- `upload-artifact@v4` and `download-artifact@v4` must match version — v3 stopped working Jan 2025
+- AppImage WebKit bundling is a known Wails issue (#4313) — requires execution-time test on clean Ubuntu VM as Phase 14 gate
+
 ### Pending Todos
 
-None.
+- Verify whether `scottkw.StorCat` (or `KenScott.StorCat`) already exists in `microsoft/winget-pkgs` before Phase 15 begins
+- Confirm `macos-14` produces `darwin/universal` fat binary with `lipo -info` during Phase 13
 
 ### Blockers/Concerns
 
@@ -46,5 +64,5 @@ None.
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Milestone v2.2.0 initialization
+Stopped at: Roadmap created — ready to plan Phase 12
 Resume file: None

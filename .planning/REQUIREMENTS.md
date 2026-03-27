@@ -61,29 +61,29 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| REPO-01 | — | Pending |
-| REPO-02 | — | Pending |
-| REPO-03 | — | Pending |
-| REPO-04 | — | Pending |
-| CICD-01 | — | Pending |
-| CICD-02 | — | Pending |
-| CICD-03 | — | Pending |
-| CICD-04 | — | Pending |
-| CICD-05 | — | Pending |
-| CICD-06 | — | Pending |
-| PKG-01 | — | Pending |
-| PKG-02 | — | Pending |
-| PKG-03 | — | Pending |
-| PKG-04 | — | Pending |
-| DIST-01 | — | Pending |
-| DIST-02 | — | Pending |
-| DIST-03 | — | Pending |
+| REPO-01 | Phase 12 | Pending |
+| REPO-02 | Phase 12 | Pending |
+| REPO-03 | Phase 12 | Pending |
+| REPO-04 | Phase 12 | Pending |
+| CICD-01 | Phase 13 | Pending |
+| CICD-02 | Phase 13 | Pending |
+| CICD-03 | Phase 13 | Pending |
+| CICD-04 | Phase 13 | Pending |
+| CICD-05 | Phase 13 | Pending |
+| CICD-06 | Phase 13 | Pending |
+| PKG-01 | Phase 14 | Pending |
+| PKG-02 | Phase 14 | Pending |
+| PKG-03 | Phase 14 | Pending |
+| PKG-04 | Phase 14 | Pending |
+| DIST-01 | Phase 15 | Pending |
+| DIST-02 | Phase 15 | Pending |
+| DIST-03 | Phase 15 | Pending |
 
 **Coverage:**
 - v2.2.0 requirements: 17 total
-- Mapped to phases: 0
-- Unmapped: 17
+- Mapped to phases: 17
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after initial definition*
+*Last updated: 2026-03-27 after roadmap creation*
