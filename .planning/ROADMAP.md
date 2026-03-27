@@ -49,7 +49,11 @@
   2. `packaging/homebrew/storcat.rb.template` and `update-tap.sh` exist in main repo and execute correctly from their new paths
   3. `winget-storcat` repo is archived and its README links to `packaging/winget/` in main repo
   4. `homebrew-storcat` README states the tap is auto-managed and links to main repo for source of truth
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs
+- [ ] 12-02-PLAN.md — Migrate Homebrew cask template and update script
+- [ ] 12-03-PLAN.md — Archive winget-storcat and update homebrew-storcat README
 
 ### Phase 13: CI Scaffold and Multi-Platform Build
 **Goal**: Release workflow fires on tag push and produces raw binaries on correct runners with fan-in release assembly
@@ -99,7 +103,7 @@
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
-| 12. Repo Consolidation | v2.2.0 | 0/? | Not started | - |
+| 12. Repo Consolidation | v2.2.0 | 0/3 | Not started | - |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 0/? | Not started | - |
 | 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
