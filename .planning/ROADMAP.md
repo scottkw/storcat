@@ -51,8 +51,8 @@
   4. `homebrew-storcat` README states the tap is auto-managed and links to main repo for source of truth
 **Plans**: 3 plans
 Plans:
-- [x] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs
-- [ ] 12-02-PLAN.md — Migrate Homebrew cask template and update script
+- [x] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs (complete 2026-03-27)
+- [x] 12-02-PLAN.md — Migrate Homebrew cask template and update script (complete 2026-03-27)
 - [ ] 12-03-PLAN.md — Archive winget-storcat and update homebrew-storcat README
 
 ### Phase 13: CI Scaffold and Multi-Platform Build
@@ -103,7 +103,7 @@ Plans:
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
-| 12. Repo Consolidation | v2.2.0 | 0/3 | Not started | - |
+| 12. Repo Consolidation | v2.2.0 | 2/3 | In Progress | - |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 0/? | Not started | - |
 | 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
