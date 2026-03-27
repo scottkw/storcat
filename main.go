@@ -59,7 +59,7 @@ func runGUI() {
 
 	// Create application with options
 	err := wails.Run(&options.App{
-		Title:  "storcat-wails",
+		Title:  "StorCat",
 		Width:  startWidth,
 		Height: startHeight,
 		AssetServer: &assetserver.Options{

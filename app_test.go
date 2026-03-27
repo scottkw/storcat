@@ -131,7 +131,7 @@ func TestGetVersion_ReturnsVersionFromWailsJson(t *testing.T) {
 	}
 
 	// Version is populated by parsing wails.json at init time.
-	// The embedded wails.json has productVersion "2.1.0"; if parsing ever fails
+	// The embedded wails.json has productVersion "2.2.0"; if parsing ever fails
 	// the fallback is "dev". Neither outcome is an empty string, but we also
 	// verify it matches the package-level Version variable directly to confirm
 	// the method delegates correctly.
