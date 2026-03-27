@@ -50,8 +50,8 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 - [ ] Merge WinGet manifests into main repo under `packaging/winget/`
 - [ ] Move Homebrew template and update script into main repo under `packaging/homebrew/`
-- [ ] GitHub Actions release workflow builds all platforms on tag/release
-- [ ] Full installer packaging: DMG (macOS), MSI (Windows), AppImage+deb (Linux)
+- [x] GitHub Actions release workflow builds all platforms on tag push — Phase 13
+- [ ] Full installer packaging: DMG (macOS), NSIS (Windows), AppImage+deb (Linux)
 - [ ] Auto-update `homebrew-storcat` repo on release via GitHub Action
 - [ ] Auto-generate WinGet manifests on release
 - [ ] Archive `winget-storcat` repo after migration
@@ -79,7 +79,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 **Shipped:** v2.1.0 CLI Commands (2026-03-26)
 
-StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Packaging metadata consolidated: WinGet manifests and Homebrew cask template now live in `packaging/` in main repo. `winget-storcat` archived; `homebrew-storcat` marked auto-managed.
+StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Packaging metadata consolidated: WinGet manifests and Homebrew cask template now live in `packaging/` in main repo. `winget-storcat` archived; `homebrew-storcat` marked auto-managed. CI/CD pipeline in place: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux amd64/arm64) with fan-in draft release. `build.yml` fixed and SHA-pinned.
 
 ## Context
 
