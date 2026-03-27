@@ -51,7 +51,7 @@
   4. `homebrew-storcat` README states the tap is auto-managed and links to main repo for source of truth
 **Plans**: 3 plans
 Plans:
-- [ ] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs
+- [x] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs
 - [ ] 12-02-PLAN.md — Migrate Homebrew cask template and update script
 - [ ] 12-03-PLAN.md — Archive winget-storcat and update homebrew-storcat README
 
