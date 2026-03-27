@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=StorCat
+Comment=Storage Media Cataloging Tool
+Exec=StorCat
+Icon=appicon
+Categories=Utility;FileManager;
+Terminal=false
