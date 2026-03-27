@@ -1,4 +1,4 @@
-# StorCat v2.1.0
+# StorCat v2.2.1
 
 **Storage Media Cataloging Tool**
 
@@ -88,48 +88,74 @@ The same binary provides full CLI access — no separate install needed:
 
 ## Installation
 
+### macOS (Homebrew)
+
+```bash
+brew tap scottkw/storcat
+brew install --cask storcat
+```
+
+Or download the DMG from the [Releases](https://github.com/scottkw/storcat/releases) page, open it, and drag StorCat to Applications.
+
+### Windows (WinGet)
+
+```powershell
+winget install scottkw.StorCat
+```
+
+Or download the installer from the [Releases](https://github.com/scottkw/storcat/releases) page and run it.
+
+### Linux
+
+**Debian/Ubuntu (.deb):**
+```bash
+# Download the .deb for your architecture from the Releases page
+sudo dpkg -i storcat_*.deb
+# Install WebKitGTK dependency if needed
+sudo apt-get install -f
+```
+
+**AppImage (x64):**
+```bash
+# Download the AppImage from the Releases page
+chmod +x StorCat-*.AppImage
+./StorCat-*.AppImage
+```
+
+Requires GTK3 and WebKitGTK:
+```bash
+# Debian/Ubuntu
+sudo apt-get install libgtk-3-0 libwebkit2gtk-4.0-37
+
+# Fedora
+sudo dnf install gtk3 webkit2gtk3
+
+# Arch
+sudo pacman -S gtk3 webkit2gtk
+```
+
 ### Download Pre-built Binaries
 
-Download the latest release for your platform from the [Releases](https://github.com/scottkw/storcat/releases) page:
+All installers and raw binaries are available on the [Releases](https://github.com/scottkw/storcat/releases) page:
 
-- **macOS**: `StorCat.app` (Universal: Intel + Apple Silicon)
-- **Windows**: `StorCat.exe` (64-bit)
-- **Linux**: `StorCat-linux-amd64` or `StorCat-linux-arm64`
+| Platform | Installer | Raw Binary |
+|----------|-----------|------------|
+| **macOS** (Universal) | `.dmg` | `StorCat.app` in `.tar.gz` |
+| **Windows** (x64) | NSIS `.exe` installer | `StorCat.exe` |
+| **Linux** (x64) | `.deb`, `.AppImage` | `StorCat-linux-amd64` |
+| **Linux** (arm64) | `.deb` | `StorCat-linux-arm64` |
 
-### macOS Installation
+### CLI Access
 
-1. Download `StorCat.app`
-2. Move to Applications folder
-3. Right-click and select "Open" (first time only, to bypass Gatekeeper)
-4. (Optional) Enable CLI access:
-   ```bash
-   ./scripts/install-cli.sh
-   # Creates /usr/local/bin/storcat -> StorCat.app binary
-   ```
+StorCat is a single binary for both GUI and CLI. After installing:
 
-### Windows Installation
+```bash
+# macOS — symlink the app binary
+sudo ln -sf /Applications/StorCat.app/Contents/MacOS/StorCat /usr/local/bin/storcat
 
-1. Download `StorCat.exe`
-2. Run the executable
-3. Windows may show SmartScreen warning (click "More info" → "Run anyway")
-4. Ensure WebView2 Runtime is installed (usually pre-installed on Windows 10/11)
-
-### Linux Installation
-
-1. Download `StorCat-linux-amd64` (or `arm64` for ARM systems)
-2. Make executable: `chmod +x StorCat-linux-amd64`
-3. Run: `./StorCat-linux-amd64`
-4. Requires GTK3 and WebKitGTK:
-   ```bash
-   # Debian/Ubuntu
-   sudo apt-get install libgtk-3-0 libwebkit2gtk-4.0-37
-
-   # Fedora
-   sudo dnf install gtk3 webkit2gtk3
-
-   # Arch
-   sudo pacman -S gtk3 webkit2gtk
-   ```
+# Windows — the installer adds StorCat to PATH
+# Linux — the .deb installs to /usr/bin/StorCat
+```
 
 ## Building from Source
 
@@ -442,4 +468,4 @@ Copyright © 2024-2026 Ken Scott
 
 ---
 
-**StorCat v2.1.0** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
+**StorCat v2.2.1** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
