@@ -39,18 +39,15 @@ jobs:
       - name: Create macOS tarball
         run: cd build/bin && tar czf StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.tar.gz StorCat.app
 
-      - name: Install create-dmg
-        run: npm install --global create-dmg
-
       - name: Create macOS DMG
         run: |
           cd build/bin
-          create-dmg \
-            --overwrite \
-            --dmg-title "StorCat" \
-            --no-code-sign \
-            "StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg" \
-            "StorCat.app"
+          hdiutil create \
+            -volname "StorCat" \
+            -srcfolder StorCat.app \
+            -ov \
+            -format UDZO \
+            "StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg"
 
       - name: Upload macOS artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
