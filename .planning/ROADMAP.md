@@ -36,7 +36,7 @@
 - [x] **Phase 12: Repo Consolidation** — Move WinGet manifests and Homebrew files into main repo; archive satellite (completed 2026-03-27)
 - [x] **Phase 13: CI Scaffold and Multi-Platform Build** — Release workflow with fan-in DAG, correct runners, SHA pinning (completed 2026-03-27)
 - [x] **Phase 14: Platform Packaging** — DMG, NSIS installer, AppImage, and .deb produced and attached to release (completed 2026-03-27)
-- [ ] **Phase 15: Distribution Channel Automation** — Homebrew tap and WinGet manifests auto-updated on release
+- [x] **Phase 15: Distribution Channel Automation** — Homebrew tap and WinGet manifests auto-updated on release (completed 2026-03-27)
 
 ## Phase Details
 
@@ -93,7 +93,7 @@ Plans:
 **Plans**: 2 plans
 Plans:
 - [x] 15-01-PLAN.md — Fix filename mismatches and create distribute.yml workflow
-- [ ] 15-02-PLAN.md — Human prerequisites: PAT secrets and first WinGet submission
+- [x] 15-02-PLAN.md — Human prerequisites: PAT secrets and first WinGet submission
 
 ## Progress
 
@@ -113,4 +113,4 @@ Plans:
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
-| 15. Distribution Channel Automation | v2.2.0 | 1/2 | In Progress|  |
+| 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete    | 2026-03-27 |
