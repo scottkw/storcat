@@ -90,7 +90,10 @@ Plans:
   1. After a release tag is pushed, `homebrew-storcat` cask is updated with new version and locally-computed SHA256 (no CDN re-download) within minutes, and `brew upgrade storcat` installs the new version
   2. After a release tag is pushed, a PR is auto-submitted to `microsoft/winget-pkgs` with the new version manifest
   3. `packaging/winget/` manifests in main repo are auto-updated with the new version on release
-**Plans**: TBD
+**Plans**: 2 plans
+Plans:
+- [ ] 15-01-PLAN.md — Fix filename mismatches and create distribute.yml workflow
+- [ ] 15-02-PLAN.md — Human prerequisites: PAT secrets and first WinGet submission
 
 ## Progress
 
@@ -110,4 +113,4 @@ Plans:
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
-| 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
+| 15. Distribution Channel Automation | v2.2.0 | 0/2 | Not started | - |
