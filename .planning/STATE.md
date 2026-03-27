@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2.0
 milestone_name: Repo Consolidation & CI/CD
-status: verifying
-stopped_at: Completed 14-platform-packaging/14-01-PLAN.md
-last_updated: "2026-03-27T19:36:27.285Z"
+status: executing
+stopped_at: Completed 15-01-PLAN.md
+last_updated: "2026-03-27T20:00:43.175Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 4
   completed_phases: 3
-  total_plans: 5
-  completed_plans: 5
+  total_plans: 7
+  completed_plans: 6
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 14 — platform-packaging
+**Current focus:** Phase 15 — distribution-channel-automation
 
 ## Current Position
 
-Phase: 15
-Plan: Not started
-Status: Phase complete — ready for verification
+Phase: 15 (distribution-channel-automation) — EXECUTING
+Plan: 2 of 2
+Status: Ready to execute
 Last activity: 2026-03-27
 
 ```
@@ -51,6 +51,9 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 13-01]: draft: true on release job to require manual publish review before public release
 - [Phase 14-platform-packaging]: windows-2022 pinned for NSIS builds (NSIS removed from windows-2025 image Sept 2025)
 - [Phase 14-platform-packaging]: AppImage declares libwebkit2gtk-4.0-37 as system dependency (WebKit subprocess paths hardcoded, bundling not feasible)
+- [Phase 15-distribution-channel-automation]: Use release:published trigger for distribute.yml so distribution fires only after draft is manually promoted
+- [Phase 15-distribution-channel-automation]: winget-releaser SHA-pinned to 4ffc7888 (v2), verified live against GitHub API
+- [Phase 15-distribution-channel-automation]: WinGet InstallerType changed from portable to nullsoft for NSIS installer
 
 ### Key Research Findings (carry forward to execution)
 
@@ -75,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T19:33:37.505Z
-Stopped at: Completed 14-platform-packaging/14-01-PLAN.md
+Last session: 2026-03-27T20:00:43.170Z
+Stopped at: Completed 15-01-PLAN.md
 Resume file: None

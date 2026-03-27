@@ -32,9 +32,9 @@ Requirements for repo consolidation and CI/CD pipeline. Each maps to roadmap pha
 
 ### Distribution Automation
 
-- [ ] **DIST-01**: Homebrew cask in `homebrew-storcat` auto-updated on release (SHA256 computed locally)
-- [ ] **DIST-02**: WinGet manifest auto-submitted to `microsoft/winget-pkgs` on release
-- [ ] **DIST-03**: WinGet manifests in main repo auto-updated with new version on release
+- [x] **DIST-01**: Homebrew cask in `homebrew-storcat` auto-updated on release (SHA256 computed locally)
+- [x] **DIST-02**: WinGet manifest auto-submitted to `microsoft/winget-pkgs` on release
+- [x] **DIST-03**: WinGet manifests in main repo auto-updated with new version on release
 
 ## Future Requirements
 
@@ -75,9 +75,9 @@ Which phases cover which requirements. Updated during roadmap creation.
 | PKG-02 | Phase 14 | Complete |
 | PKG-03 | Phase 14 | Complete |
 | PKG-04 | Phase 14 | Complete |
-| DIST-01 | Phase 15 | Pending |
-| DIST-02 | Phase 15 | Pending |
-| DIST-03 | Phase 15 | Pending |
+| DIST-01 | Phase 15 | Complete |
+| DIST-02 | Phase 15 | Complete |
+| DIST-03 | Phase 15 | Complete |
 
 **Coverage:**
 - v2.2.0 requirements: 17 total

@@ -92,7 +92,7 @@ Plans:
   3. `packaging/winget/` manifests in main repo are auto-updated with the new version on release
 **Plans**: 2 plans
 Plans:
-- [ ] 15-01-PLAN.md — Fix filename mismatches and create distribute.yml workflow
+- [x] 15-01-PLAN.md — Fix filename mismatches and create distribute.yml workflow
 - [ ] 15-02-PLAN.md — Human prerequisites: PAT secrets and first WinGet submission
 
 ## Progress
@@ -113,4 +113,4 @@ Plans:
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
-| 15. Distribution Channel Automation | v2.2.0 | 0/2 | Not started | - |
+| 15. Distribution Channel Automation | v2.2.0 | 1/2 | In Progress|  |
