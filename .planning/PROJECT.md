@@ -45,16 +45,19 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - ✓ `--depth N` flag on show — v2.1.0
 - ✓ Colorized tree output with `--no-color` / `NO_COLOR` support — v2.1.0
 - ✓ Cross-platform `storcat open` (macOS/Linux/Windows) — v2.1.0
+- ✓ WinGet manifests consolidated in main repo under `packaging/winget/` — v2.2.0
+- ✓ Homebrew cask template and update script in main repo under `packaging/homebrew/` — v2.2.0
+- ✓ `winget-storcat` repo archived with redirect to main repo — v2.2.0
+- ✓ `homebrew-storcat` marked auto-managed — v2.2.0
+- ✓ Tag-triggered release workflow with 4-platform parallel builds and fan-in draft release — v2.2.0
+- ✓ macOS DMG, Windows NSIS installer, Linux AppImage + .deb packaging — v2.2.0
+- ✓ Homebrew cask auto-updated on release (SHA256-verified) — v2.2.0
+- ✓ WinGet manifest auto-submitted on release — v2.2.0
+- ✓ All GitHub Actions SHA-pinned — v2.2.0
 
 ### Active
 
-- [ ] Merge WinGet manifests into main repo under `packaging/winget/`
-- [ ] Move Homebrew template and update script into main repo under `packaging/homebrew/`
-- [x] GitHub Actions release workflow builds all platforms on tag push — Phase 13
-- [x] Full installer packaging: DMG (macOS), NSIS (Windows), AppImage+deb (Linux) — Phase 14
-- [ ] Auto-update `homebrew-storcat` repo on release via GitHub Action
-- [ ] Auto-generate WinGet manifests on release
-- [ ] Archive `winget-storcat` repo after migration
+(None — next milestone defines new requirements)
 
 ### Out of Scope
 
@@ -64,35 +67,26 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
 
-## Current Milestone: v2.2.0 Repo Consolidation & CI/CD
-
-**Goal:** Consolidate three repos into one (+ thin Homebrew satellite), automate builds and packaging via GitHub Actions.
-
-**Target features:**
-- Merge WinGet manifests into main repo
-- Move Homebrew template + update script into main repo
-- GitHub Actions release workflow with full installer packaging
-- Auto-update homebrew-storcat and winget manifests on release
-- Archive winget-storcat repo
-
 ## Current State
 
-**Shipped:** v2.1.0 CLI Commands (2026-03-26)
+**Shipped:** v2.2.0 Repo Consolidation & CI/CD (2026-03-27)
 
-StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Packaging metadata consolidated: WinGet manifests and Homebrew cask template now live in `packaging/` in main repo. `winget-storcat` archived; `homebrew-storcat` marked auto-managed. CI/CD pipeline in place: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux amd64/arm64) with fan-in draft release. `build.yml` fixed and SHA-pinned. Platform packaging complete: macOS DMG (create-dmg), Windows NSIS installer (wails -nsis), Linux AppImage (linuxdeploy, x64) and .deb packages (dpkg-deb, x64+arm64). Distribution automation complete: `distribute.yml` triggers on release publish, auto-updates Homebrew tap (SHA256-verified cask push to `homebrew-storcat`) and submits WinGet PR via `winget-releaser`, plus commits new version manifests back to main repo.
+StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite). Full CI/CD pipeline: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64) with fan-in draft release. Platform packaging: macOS DMG, Windows NSIS installer, Linux AppImage + .deb. Distribution automation: `distribute.yml` auto-updates Homebrew cask and submits WinGet PR on release publish.
 
 ## Context
 
-Shipped v2.1.0 on 2026-03-26 — added full CLI subcommand support to the Go/Wails binary.
+Shipped v2.2.0 on 2026-03-27 — repo consolidation, CI/CD pipeline, platform packaging, and distribution automation.
+Previously shipped v2.1.0 on 2026-03-26 — full CLI subcommand support.
 Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js to Go/Wails.
 
-**Codebase:** ~2,500 LOC Go + ~2,700 LOC TypeScript
+**Codebase:** ~2,500 LOC Go + ~2,700 LOC TypeScript + ~800 LOC YAML (CI/CD workflows)
 **Tech stack:** Go 1.23, Wails v2, React 18, TypeScript 5, Ant Design 5
 **Dependencies:** tablewriter v1.1.4, fatih/color v1.18.0, pkg/browser
 **Platforms:** macOS (universal), Windows (x64/arm64), Linux (x64/arm64)
 **Build:** `wails build` with ldflags version injection
+**CI/CD:** GitHub Actions — `build.yml` (CI), `release.yml` (release), `distribute.yml` (distribution)
 
-**Known tech debt:** All v2.1.0 audit items resolved. 1 non-blocking procedural item (SUMMARY.md frontmatter convention). Remaining v2.0.0 items tracked in `.planning/milestones/v2.0.0-MILESTONE-AUDIT.md`.
+**Known tech debt:** 7 informational items from v2.2.0 audit (0 critical). See `.planning/milestones/v2.2.0-MILESTONE-AUDIT.md`. First WinGet submission to microsoft/winget-pkgs is a manual prerequisite.
 
 ## Key Decisions
 
@@ -117,6 +111,13 @@ Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electr
 | pkg/browser for cross-platform open | Proven package, handles macOS/Linux/Windows | ✓ Good |
 | -windowsconsole for Windows CLI | Simpler than AttachConsole, no runtime complexity | ✓ Good |
 | Universal -psn_* filtering | One function on all platforms, no build tags | ✓ Good |
+| Tag-push trigger (not release-publish) for builds | Creates release draft automatically, avoids chicken-and-egg | ✓ Good |
+| SHA-pin all third-party actions | Supply chain security — no tag-only references | ✓ Good |
+| Fan-in release pattern | Prevents race conditions on parallel release uploads | ✓ Good |
+| windows-2022 for NSIS builds | NSIS removed from Windows Server 2025 image | ✓ Good |
+| AppImage with system WebKit dependency | WebKit subprocess paths hardcoded, bundling not feasible for Wails | ✓ Good |
+| release:published trigger for distribute.yml | Distribution fires only after manual draft promotion | ✓ Good |
+| winget-releaser for WinGet submission | Maintained action, SHA-pinned to v2 | ✓ Good |
 
 ## Constraints
 
@@ -142,4 +143,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 15 (Distribution Channel Automation) complete — v2.2.0 milestone complete*
+*Last updated: 2026-03-27 after v2.2.0 milestone*

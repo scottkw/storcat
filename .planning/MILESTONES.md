@@ -1,5 +1,19 @@
 # Milestones
 
+## v2.2.0 Repo Consolidation & CI/CD (Shipped: 2026-03-27)
+
+**Phases completed:** 4 phases, 7 plans, 11 tasks
+
+**Key accomplishments:**
+
+- Consolidated WinGet manifests and Homebrew cask template into main repo under `packaging/`
+- Archived `winget-storcat` satellite repo; marked `homebrew-storcat` as auto-managed
+- Tag-triggered `release.yml` with 4 parallel platform builds (macOS universal, Windows, Linux x64+arm64) and fan-in draft release
+- Platform packaging: macOS DMG (create-dmg), Windows NSIS installer, Linux AppImage + .deb
+- `distribute.yml` auto-updates Homebrew cask and submits WinGet PR on release publish
+
+---
+
 ## v2.1.0 CLI Commands (Shipped: 2026-03-26)
 
 **Phases completed:** 4 phases, 7 plans, 9 tasks

@@ -88,21 +88,67 @@
 
 ---
 
+## Milestone: v2.2.0 — Repo Consolidation & CI/CD
+
+**Shipped:** 2026-03-27
+**Phases:** 4 | **Plans:** 7 | **Tasks:** 11
+
+### What Was Built
+- Repo consolidation: WinGet manifests and Homebrew cask template moved from satellite repos into main repo `packaging/`
+- `winget-storcat` archived; `homebrew-storcat` marked auto-managed
+- `release.yml`: tag-triggered workflow with 4 parallel platform builds (macOS universal, Windows, Linux x64+arm64) and fan-in draft release
+- Platform packaging: macOS DMG (create-dmg), Windows NSIS installer, Linux AppImage + .deb
+- `distribute.yml`: auto-updates Homebrew cask (SHA256-verified) and submits WinGet PR on release publish
+
+### What Worked
+- Research-first approach for each phase identified critical gotchas before planning (NSIS runner requirements, WebKit bundling limitations, fan-in race condition)
+- Linear phase dependency chain (12→13→14→15) naturally built on previous work without rework
+- SHA-pinning all actions upfront avoided supply chain concerns
+- Nyquist validation achieved COMPLIANT status across all 4 phases — improvement over prior milestones
+- Milestone audit with `tech_debt` status correctly identified all 7 informational items without blocking the release
+
+### What Was Inefficient
+- Some SUMMARY.md one-liner fields still empty (12-01, 14-01, 15-02) — same recurring gap from v2.0.0 and v2.1.0
+- Stale checkboxes in REQUIREMENTS.md (REPO-01 through REPO-04) only caught during audit — should be updated during execution
+- Several decisions accumulated in STATE.md that were resolved but not cleared
+
+### Patterns Established
+- `release:published` trigger for distribution (not tag push) — ensures draft review before public distribution
+- SHA-pinned actions with comment annotation for human readability
+- Fan-in pattern: platform builds upload artifacts → single release job downloads and attaches all
+- Template-based packaging: `storcat.rb.template` with sed substitution for version/SHA256
+
+### Key Lessons
+1. CI/CD workflows can't be tested locally — plan for human verification items and document them upfront
+2. Runner image deprecation (NSIS on Windows 2025, WebKit on Ubuntu 24.04) makes pinning runner versions essential
+3. Cross-repo automation requires classic PATs — `GITHUB_TOKEN` is scoped to the current repo only
+4. First WinGet submission must be manual — automation only works after the package exists in the registry
+
+### Cost Observations
+- Model mix: Primarily Opus for planning/execution, Sonnet for subagents
+- Sessions: ~2 sessions in 1 day
+- Notable: All 4 phases completed in a single day — CI/CD work is mostly workflow YAML, minimal Go code changes
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
-| Metric | v2.0.0 | v2.1.0 |
-|--------|--------|--------|
-| Phases | 7 | 4 |
-| Plans | 11 | 7 |
-| Tasks | 15 | 9 |
-| Timeline | 3 days | 1 day |
-| Requirements | 20/20 | 23/23 |
-| Tech Debt Items | 11 | 6 (5 resolved) |
+| Metric | v2.0.0 | v2.1.0 | v2.2.0 |
+|--------|--------|--------|--------|
+| Phases | 7 | 4 | 4 |
+| Plans | 11 | 7 | 7 |
+| Tasks | 15 | 9 | 11 |
+| Timeline | 3 days | 1 day | 1 day |
+| Requirements | 20/20 | 23/23 | 17/17 |
+| Tech Debt Items | 11 | 6 (5 resolved) | 7 (0 critical) |
+| Nyquist | Partial | Partial | COMPLIANT |
 
 ### Recurring Themes
 - Bottom-up dependency ordering is effective for migration work
-- Nyquist validation needs enforcement for final phases, not just middle ones
-- SUMMARY.md one_liner/requirements_completed fields consistently empty — template gap persists across milestones
+- Nyquist validation improved: v2.2.0 achieved full compliance (was partial in v2.0.0 and v2.1.0)
+- SUMMARY.md one_liner/requirements_completed fields still inconsistently populated — template gap persists across all 3 milestones
 - Audit-then-cleanup two-step is a reliable pattern for shipping quality
+- Research-first approach for unfamiliar domains (CI/CD, packaging) prevents costly rework
+- Same-day milestone execution is achievable with well-scoped phases and clear success criteria
