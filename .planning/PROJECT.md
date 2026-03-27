@@ -79,7 +79,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 **Shipped:** v2.1.0 CLI Commands (2026-03-26)
 
-StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Packaging metadata consolidated: WinGet manifests and Homebrew cask template now live in `packaging/` in main repo. `winget-storcat` archived; `homebrew-storcat` marked auto-managed. CI/CD pipeline in place: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux amd64/arm64) with fan-in draft release. `build.yml` fixed and SHA-pinned. Platform packaging complete: macOS DMG (create-dmg), Windows NSIS installer (wails -nsis), Linux AppImage (linuxdeploy, x64) and .deb packages (dpkg-deb, x64+arm64).
+StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Packaging metadata consolidated: WinGet manifests and Homebrew cask template now live in `packaging/` in main repo. `winget-storcat` archived; `homebrew-storcat` marked auto-managed. CI/CD pipeline in place: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux amd64/arm64) with fan-in draft release. `build.yml` fixed and SHA-pinned. Platform packaging complete: macOS DMG (create-dmg), Windows NSIS installer (wails -nsis), Linux AppImage (linuxdeploy, x64) and .deb packages (dpkg-deb, x64+arm64). Distribution automation complete: `distribute.yml` triggers on release publish, auto-updates Homebrew tap (SHA256-verified cask push to `homebrew-storcat`) and submits WinGet PR via `winget-releaser`, plus commits new version manifests back to main repo.
 
 ## Context
 
@@ -142,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after Phase 14 (Platform Packaging) complete*
+*Last updated: 2026-03-27 after Phase 15 (Distribution Channel Automation) complete — v2.2.0 milestone complete*
