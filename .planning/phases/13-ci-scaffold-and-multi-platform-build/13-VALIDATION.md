@@ -1,10 +1,11 @@
 ---
 phase: 13
 slug: ci-scaffold-and-multi-platform-build
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-27
+validated: 2026-03-27
 ---
 
 # Phase 13 — Validation Strategy
@@ -38,13 +39,13 @@ created: 2026-03-27
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 13-01-01 | 01 | 1 | CICD-01 | smoke | `test -f .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-02 | 01 | 1 | CICD-01 | grep | `grep "push:" .github/workflows/release.yml && grep "v\\*\\.\\*\\.\\*" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-03 | 01 | 1 | CICD-06 | grep | `grep -cE "uses:.*@[0-9a-f]{40}" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-04 | 01 | 1 | CICD-02 | grep | `grep "darwin/universal" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-05 | 01 | 1 | CICD-03 | grep | `grep "windowsconsole" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-06 | 01 | 1 | CICD-04 | grep | `grep "ubuntu-22.04" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 13-01-07 | 01 | 1 | CICD-05 | grep | `grep "needs:" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
+| 13-01-01 | 01 | 1 | CICD-01 | smoke | `test -f .github/workflows/release.yml` | ✅ | ✅ green |
+| 13-01-02 | 01 | 1 | CICD-01 | grep | `grep "push:" .github/workflows/release.yml && grep "v\\*\\.\\*\\.\\*" .github/workflows/release.yml` | ✅ | ✅ green |
+| 13-01-03 | 01 | 1 | CICD-06 | grep | `grep -cE "uses:.*@[0-9a-f]{40}" .github/workflows/release.yml` (returns 18) | ✅ | ✅ green |
+| 13-01-04 | 01 | 1 | CICD-02 | grep | `grep "darwin/universal" .github/workflows/release.yml` | ✅ | ✅ green |
+| 13-01-05 | 01 | 1 | CICD-03 | grep | `grep "windowsconsole" .github/workflows/release.yml` | ✅ | ✅ green |
+| 13-01-06 | 01 | 1 | CICD-04 | grep | `grep "ubuntu-22.04" .github/workflows/release.yml` | ✅ | ✅ green |
+| 13-01-07 | 01 | 1 | CICD-05 | grep | `grep "needs:" .github/workflows/release.yml` | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -52,8 +53,8 @@ created: 2026-03-27
 
 ## Wave 0 Requirements
 
-- [ ] `.github/workflows/release.yml` — covers CICD-01 through CICD-06
-- [ ] Update `.github/workflows/build.yml` — fix Windows runner, fix ubuntu-latest → ubuntu-22.04, SHA-pin all actions
+- [x] `.github/workflows/release.yml` — covers CICD-01 through CICD-06
+- [x] Update `.github/workflows/build.yml` — fix Windows runner, fix ubuntu-latest -> ubuntu-22.04, SHA-pin all actions
 
 *Note: No test files to create — validation is CI workflow execution and grep verification, not unit tests.*
 
@@ -72,11 +73,23 @@ created: 2026-03-27
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 300s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 300s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
+
+---
+
+## Validation Audit 2026-03-27
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 7 automated verification commands executed successfully. Both `.github/workflows/release.yml` (18 SHA pins) and `.github/workflows/build.yml` (12 SHA pins) pass all acceptance criteria. No test files needed — this phase validates via grep commands against workflow YAML artifacts.
