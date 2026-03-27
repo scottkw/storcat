@@ -39,15 +39,30 @@ jobs:
       - name: Create macOS tarball
         run: cd build/bin && tar czf StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.tar.gz StorCat.app
 
+      - name: Install create-dmg
+        run: npm install --global create-dmg
+
+      - name: Create macOS DMG
+        run: |
+          cd build/bin
+          create-dmg \
+            --overwrite \
+            --dmg-title "StorCat" \
+            --no-code-sign \
+            "StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg" \
+            "StorCat.app"
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: StorCat-darwin-universal
-          path: build/bin/StorCat-*-darwin-universal.tar.gz
+          path: |
+            build/bin/StorCat-*-darwin-universal.tar.gz
+            build/bin/StorCat-*-darwin-universal.dmg
           retention-days: 1
 
   build-windows:
-    runs-on: windows-latest
+    runs-on: windows-2022
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
@@ -69,18 +84,24 @@ jobs:
         shell: bash
         run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
 
-      - name: Build Windows
-        run: wails build -clean -platform windows/amd64 -windowsconsole
+      - name: Build Windows with NSIS installer
+        run: wails build -clean -platform windows/amd64 -windowsconsole -nsis
 
       - name: Rename Windows binary
         shell: bash
         run: mv build/bin/StorCat.exe build/bin/StorCat-${{ steps.version.outputs.VERSION }}-windows-amd64.exe
 
+      - name: Rename NSIS installer
+        shell: bash
+        run: mv build/bin/StorCat-amd64-installer.exe build/bin/StorCat-${{ steps.version.outputs.VERSION }}-windows-amd64-installer.exe
+
       - name: Upload Windows artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: StorCat-windows-amd64
-          path: build/bin/StorCat-*-windows-amd64.exe
+          path: |
+            build/bin/StorCat-*-windows-amd64.exe
+            build/bin/StorCat-*-windows-amd64-installer.exe
           retention-days: 1
 
   build-linux-amd64:
@@ -116,11 +137,53 @@ jobs:
       - name: Create Linux amd64 tarball
         run: cd build/bin && tar czf StorCat-${{ steps.version.outputs.VERSION }}-linux-amd64.tar.gz StorCat
 
+      - name: Install AppImage tools
+        run: |
+          sudo apt-get install -y libfuse2
+          wget -q -O linuxdeploy https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          wget -q -O linuxdeploy-plugin-appimage https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage
+          wget -q -O linuxdeploy-plugin-gtk.sh https://raw.githubusercontent.com/linuxdeploy/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+          chmod +x linuxdeploy linuxdeploy-plugin-appimage linuxdeploy-plugin-gtk.sh
+
+      - name: Create AppImage
+        run: |
+          export ARCH=x86_64
+          export OUTPUT=StorCat-x86_64.AppImage
+          ./linuxdeploy \
+            --appdir AppDir \
+            --executable build/bin/StorCat \
+            --icon-file build/appicon.png \
+            --desktop-file build/linux/storcat.desktop \
+            --plugin gtk \
+            --output appimage
+          mv StorCat-x86_64.AppImage \
+            build/bin/StorCat-${{ steps.version.outputs.VERSION }}-linux-x86_64.AppImage
+
+      - name: Create .deb package
+        run: |
+          ARCH=$(dpkg --print-architecture)
+          VERSION_CLEAN="${{ steps.version.outputs.VERSION }}"
+          VERSION_CLEAN="${VERSION_CLEAN#v}"
+          PKG_DIR="deb-pkg"
+          mkdir -p "$PKG_DIR/DEBIAN" "$PKG_DIR/usr/bin" \
+                   "$PKG_DIR/usr/share/applications" "$PKG_DIR/usr/share/pixmaps"
+          cp build/bin/StorCat "$PKG_DIR/usr/bin/StorCat"
+          cp build/linux/storcat.desktop "$PKG_DIR/usr/share/applications/storcat.desktop"
+          cp build/appicon.png "$PKG_DIR/usr/share/pixmaps/storcat.png"
+          chmod 755 "$PKG_DIR/usr/bin/StorCat"
+          printf 'Package: storcat\nVersion: %s\nArchitecture: %s\nMaintainer: Ken Scott <kenscott@gmail.com>\nDescription: Storage Media Cataloging Tool\n StorCat creates, browses, and searches directory catalogs.\n Generates JSON and HTML representations of directory trees.\nDepends: libgtk-3-0, libwebkit2gtk-4.0-37\nSection: utils\nPriority: optional\n' \
+            "$VERSION_CLEAN" "$ARCH" > "$PKG_DIR/DEBIAN/control"
+          dpkg-deb --root-owner-group --build "$PKG_DIR" \
+            "build/bin/storcat_${VERSION_CLEAN}_${ARCH}.deb"
+
       - name: Upload Linux amd64 artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: StorCat-linux-amd64
-          path: build/bin/StorCat-*-linux-amd64.tar.gz
+          path: |
+            build/bin/StorCat-*-linux-amd64.tar.gz
+            build/bin/StorCat-*-linux-x86_64.AppImage
+            build/bin/storcat_*_amd64.deb
           retention-days: 1
 
   build-linux-arm64:
@@ -156,11 +219,30 @@ jobs:
       - name: Create Linux arm64 tarball
         run: cd build/bin && tar czf StorCat-${{ steps.version.outputs.VERSION }}-linux-arm64.tar.gz StorCat
 
+      - name: Create .deb package
+        run: |
+          ARCH=$(dpkg --print-architecture)
+          VERSION_CLEAN="${{ steps.version.outputs.VERSION }}"
+          VERSION_CLEAN="${VERSION_CLEAN#v}"
+          PKG_DIR="deb-pkg"
+          mkdir -p "$PKG_DIR/DEBIAN" "$PKG_DIR/usr/bin" \
+                   "$PKG_DIR/usr/share/applications" "$PKG_DIR/usr/share/pixmaps"
+          cp build/bin/StorCat "$PKG_DIR/usr/bin/StorCat"
+          cp build/linux/storcat.desktop "$PKG_DIR/usr/share/applications/storcat.desktop"
+          cp build/appicon.png "$PKG_DIR/usr/share/pixmaps/storcat.png"
+          chmod 755 "$PKG_DIR/usr/bin/StorCat"
+          printf 'Package: storcat\nVersion: %s\nArchitecture: %s\nMaintainer: Ken Scott <kenscott@gmail.com>\nDescription: Storage Media Cataloging Tool\n StorCat creates, browses, and searches directory catalogs.\n Generates JSON and HTML representations of directory trees.\nDepends: libgtk-3-0, libwebkit2gtk-4.0-37\nSection: utils\nPriority: optional\n' \
+            "$VERSION_CLEAN" "$ARCH" > "$PKG_DIR/DEBIAN/control"
+          dpkg-deb --root-owner-group --build "$PKG_DIR" \
+            "build/bin/storcat_${VERSION_CLEAN}_${ARCH}.deb"
+
       - name: Upload Linux arm64 artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: StorCat-linux-arm64
-          path: build/bin/StorCat-*-linux-arm64.tar.gz
+          path: |
+            build/bin/StorCat-*-linux-arm64.tar.gz
+            build/bin/storcat_*_arm64.deb
           retention-days: 1
 
   release:
