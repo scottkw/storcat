@@ -1,33 +1,33 @@
 ---
 gsd_state_version: 1.0
-milestone: v2.1.0
-milestone_name: CLI Commands
-status: complete
-stopped_at: Milestone v2.1.0 archived
-last_updated: "2026-03-26"
-last_activity: 2026-03-26
+milestone: v2.2.0
+milestone_name: Repo Consolidation & CI/CD
+status: active
+stopped_at: null
+last_updated: "2026-03-27"
+last_activity: 2026-03-27
 progress:
-  total_phases: 4
-  completed_phases: 4
-  total_plans: 7
-  completed_plans: 7
+  total_phases: 0
+  completed_phases: 0
+  total_plans: 0
+  completed_plans: 0
 ---
 
 # Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-03-26)
+See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Planning next milestone
+**Current focus:** Defining requirements for v2.2.0
 
 ## Current Position
 
-Phase: Complete
-Plan: Complete
-Status: v2.1.0 milestone shipped
-Last activity: 2026-03-26
+Phase: Not started (defining requirements)
+Plan: —
+Status: Defining requirements
+Last activity: 2026-03-27 — Milestone v2.2.0 started
 
 ## Accumulated Context
 
@@ -45,6 +45,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-26
-Stopped at: Milestone v2.1.0 archived
+Last session: 2026-03-27
+Stopped at: Milestone v2.2.0 initialization
 Resume file: None

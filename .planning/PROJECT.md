@@ -48,21 +48,38 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-(None — define in next milestone)
+- [ ] Merge WinGet manifests into main repo under `packaging/winget/`
+- [ ] Move Homebrew template and update script into main repo under `packaging/homebrew/`
+- [ ] GitHub Actions release workflow builds all platforms on tag/release
+- [ ] Full installer packaging: DMG (macOS), MSI (Windows), AppImage+deb (Linux)
+- [ ] Auto-update `homebrew-storcat` repo on release via GitHub Action
+- [ ] Auto-generate WinGet manifests on release
+- [ ] Archive `winget-storcat` repo after migration
 
 ### Out of Scope
 
 - Wails v3 migration — still alpha as of March 2026, premature
 - Automated test suite — important, separate milestone (TEST-01 through TEST-03)
-- macOS code signing/notarization — separate concern, needs Apple credentials
+- Code signing (macOS notarization + Windows Authenticode) — future milestone, needs credential pipeline
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
+
+## Current Milestone: v2.2.0 Repo Consolidation & CI/CD
+
+**Goal:** Consolidate three repos into one (+ thin Homebrew satellite), automate builds and packaging via GitHub Actions.
+
+**Target features:**
+- Merge WinGet manifests into main repo
+- Move Homebrew template + update script into main repo
+- GitHub Actions release workflow with full installer packaging
+- Auto-update homebrew-storcat and winget manifests on release
+- Archive winget-storcat repo
 
 ## Current State
 
 **Shipped:** v2.1.0 CLI Commands (2026-03-26)
 
-StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`.
+StorCat is a fully functional cross-platform desktop + CLI application. The unified binary supports both GUI mode (`storcat` with no args) and 6 CLI subcommands: `create`, `search`, `list`, `show`, `open`, `version`. Three repos exist: main source, winget manifests, homebrew cask — to be consolidated.
 
 ## Context
 
@@ -125,4 +142,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-26 after v2.1.0 milestone*
+*Last updated: 2026-03-27 after v2.2.0 milestone start*
