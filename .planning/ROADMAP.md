@@ -78,7 +78,9 @@ Plans:
   2. Windows release asset is an NSIS installer `.exe` that installs StorCat to Program Files on Windows
   3. Linux release includes an AppImage for x64 that launches without system WebKit dependency
   4. Linux release includes a `.deb` package installable via `dpkg -i` on x64 and arm64
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 14-01-PLAN.md — Prerequisite assets + release workflow packaging for all platforms (DMG, NSIS, AppImage, .deb)
 
 ### Phase 15: Distribution Channel Automation
 **Goal**: Homebrew and WinGet package indexes update themselves on every release with no manual steps
@@ -107,5 +109,5 @@ Plans:
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
-| 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
+| 14. Platform Packaging | v2.2.0 | 0/1 | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
