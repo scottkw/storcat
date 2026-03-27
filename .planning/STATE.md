@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.2.0
 milestone_name: Repo Consolidation & CI/CD
 status: verifying
-stopped_at: Completed 13-01-PLAN.md — CI scaffold and multi-platform build
-last_updated: "2026-03-27T19:10:02.072Z"
+stopped_at: Completed 14-platform-packaging/14-01-PLAN.md
+last_updated: "2026-03-27T19:33:37.509Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 3
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 13 — ci-scaffold-and-multi-platform-build
+**Current focus:** Phase 14 — platform-packaging
 
 ## Current Position
 
-Phase: 14
-Plan: Not started
+Phase: 14 (platform-packaging) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-27
 
@@ -49,6 +49,8 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 13-01]: Use ubuntu-22.04-arm native runner for Linux arm64 (no -skipbindings cross-compile hack)
 - [Phase 13-01]: Pin Wails to v2.10.2 via go install @v2.10.2, matching go.mod version
 - [Phase 13-01]: draft: true on release job to require manual publish review before public release
+- [Phase 14-platform-packaging]: windows-2022 pinned for NSIS builds (NSIS removed from windows-2025 image Sept 2025)
+- [Phase 14-platform-packaging]: AppImage declares libwebkit2gtk-4.0-37 as system dependency (WebKit subprocess paths hardcoded, bundling not feasible)
 
 ### Key Research Findings (carry forward to execution)
 
@@ -73,6 +75,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27T19:06:41.520Z
-Stopped at: Completed 13-01-PLAN.md — CI scaffold and multi-platform build
+Last session: 2026-03-27T19:33:37.505Z
+Stopped at: Completed 14-platform-packaging/14-01-PLAN.md
 Resume file: None

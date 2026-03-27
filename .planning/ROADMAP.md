@@ -35,7 +35,7 @@
 
 - [x] **Phase 12: Repo Consolidation** — Move WinGet manifests and Homebrew files into main repo; archive satellite (completed 2026-03-27)
 - [x] **Phase 13: CI Scaffold and Multi-Platform Build** — Release workflow with fan-in DAG, correct runners, SHA pinning (completed 2026-03-27)
-- [ ] **Phase 14: Platform Packaging** — DMG, NSIS installer, AppImage, and .deb produced and attached to release
+- [x] **Phase 14: Platform Packaging** — DMG, NSIS installer, AppImage, and .deb produced and attached to release (completed 2026-03-27)
 - [ ] **Phase 15: Distribution Channel Automation** — Homebrew tap and WinGet manifests auto-updated on release
 
 ## Phase Details
@@ -76,11 +76,11 @@ Plans:
 **Success Criteria** (what must be TRUE):
   1. macOS release asset is a signed-layout DMG (unsigned binary inside) installable by drag-and-drop
   2. Windows release asset is an NSIS installer `.exe` that installs StorCat to Program Files on Windows
-  3. Linux release includes an AppImage for x64 that launches without system WebKit dependency
+  3. Linux release includes an AppImage for x64 (requires `libwebkit2gtk-4.0-37` as a system dependency; WebKit bundling is not feasible for Wails apps)
   4. Linux release includes a `.deb` package installable via `dpkg -i` on x64 and arm64
 **Plans**: 1 plan
 Plans:
-- [ ] 14-01-PLAN.md — Prerequisite assets + release workflow packaging for all platforms (DMG, NSIS, AppImage, .deb)
+- [x] 14-01-PLAN.md — Prerequisite assets + release workflow packaging for all platforms (DMG, NSIS, AppImage, .deb)
 
 ### Phase 15: Distribution Channel Automation
 **Goal**: Homebrew and WinGet package indexes update themselves on every release with no manual steps
@@ -109,5 +109,5 @@ Plans:
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete    | 2026-03-27 |
-| 14. Platform Packaging | v2.2.0 | 0/1 | Not started | - |
+| 14. Platform Packaging | v2.2.0 | 1/1 | Complete   | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |

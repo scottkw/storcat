@@ -18,17 +18,17 @@ Requirements for repo consolidation and CI/CD pipeline. Each maps to roadmap pha
 
 - [x] **CICD-01**: Release workflow triggers on GitHub release publish event
 - [x] **CICD-02**: macOS builds on `macos-14` runner producing universal binary
-- [x] **CICD-03**: Windows builds on `windows-latest` runner with `-windowsconsole` preserved
+- [x] **CICD-03**: Windows builds on `windows-2022` runner with `-windowsconsole` preserved (changed from `windows-latest` in Phase 14 — NSIS removed from Windows Server 2025 image)
 - [x] **CICD-04**: Linux builds on `ubuntu-22.04` runner for x64 and arm64
 - [x] **CICD-05**: Fan-in release pattern: all platform builds complete before release upload
 - [x] **CICD-06**: All third-party GitHub Actions SHA-pinned (not tag-referenced)
 
 ### Installer Packaging
 
-- [ ] **PKG-01**: macOS DMG installer produced via `create-dmg`
-- [ ] **PKG-02**: Windows NSIS installer produced via `wails build -nsis`
-- [ ] **PKG-03**: Linux AppImage produced for x64
-- [ ] **PKG-04**: Linux .deb package produced for x64 and arm64
+- [x] **PKG-01**: macOS DMG installer produced via `create-dmg`
+- [x] **PKG-02**: Windows NSIS installer produced via `wails build -nsis`
+- [x] **PKG-03**: Linux AppImage produced for x64
+- [x] **PKG-04**: Linux .deb package produced for x64 and arm64
 
 ### Distribution Automation
 
@@ -71,10 +71,10 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CICD-04 | Phase 13 | Complete |
 | CICD-05 | Phase 13 | Complete |
 | CICD-06 | Phase 13 | Complete |
-| PKG-01 | Phase 14 | Pending |
-| PKG-02 | Phase 14 | Pending |
-| PKG-03 | Phase 14 | Pending |
-| PKG-04 | Phase 14 | Pending |
+| PKG-01 | Phase 14 | Complete |
+| PKG-02 | Phase 14 | Complete |
+| PKG-03 | Phase 14 | Complete |
+| PKG-04 | Phase 14 | Complete |
 | DIST-01 | Phase 15 | Pending |
 | DIST-02 | Phase 15 | Pending |
 | DIST-03 | Phase 15 | Pending |
