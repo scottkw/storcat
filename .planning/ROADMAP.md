@@ -33,7 +33,7 @@
 
 ### v2.2.0 Repo Consolidation & CI/CD (Phases 12-15)
 
-- [ ] **Phase 12: Repo Consolidation** — Move WinGet manifests and Homebrew files into main repo; archive satellite
+- [x] **Phase 12: Repo Consolidation** — Move WinGet manifests and Homebrew files into main repo; archive satellite (completed 2026-03-27)
 - [ ] **Phase 13: CI Scaffold and Multi-Platform Build** — Release workflow with fan-in DAG, correct runners, SHA pinning
 - [ ] **Phase 14: Platform Packaging** — DMG, NSIS installer, AppImage, and .deb produced and attached to release
 - [ ] **Phase 15: Distribution Channel Automation** — Homebrew tap and WinGet manifests auto-updated on release
@@ -53,7 +53,7 @@
 Plans:
 - [x] 12-01-PLAN.md — Migrate WinGet manifests and create v2.1.0 stubs (complete 2026-03-27)
 - [x] 12-02-PLAN.md — Migrate Homebrew cask template and update script (complete 2026-03-27)
-- [ ] 12-03-PLAN.md — Archive winget-storcat and update homebrew-storcat README
+- [x] 12-03-PLAN.md — Archive winget-storcat and update homebrew-storcat README
 
 ### Phase 13: CI Scaffold and Multi-Platform Build
 **Goal**: Release workflow fires on tag push and produces raw binaries on correct runners with fan-in release assembly
@@ -103,7 +103,7 @@ Plans:
 | 9. Core Subcommands — Create, List, Search | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
-| 12. Repo Consolidation | v2.2.0 | 2/3 | In Progress | - |
+| 12. Repo Consolidation | v2.2.0 | 3/3 | Complete   | 2026-03-27 |
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 0/? | Not started | - |
 | 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |
