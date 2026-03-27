@@ -1,0 +1,78 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.2.1
+PackageLocale: en-US
+Publisher: Ken Scott
+PublisherUrl: https://github.com/scottkw
+PublisherSupportUrl: https://github.com/scottkw/storcat/issues
+PackageName: StorCat
+PackageUrl: https://github.com/scottkw/storcat
+License: MIT
+LicenseUrl: https://github.com/scottkw/storcat/blob/main/LICENSE
+ShortDescription: Directory Catalog Manager - Create, search, and browse directory catalogs
+Description: |-
+  StorCat is a modern Electron-based directory catalog management application that provides a clean, intuitive GUI interface for creating, searching, and browsing directory catalogs. Generate both JSON and HTML representations of directory structures for easy documentation and sharing.
+  
+  Features:
+  - Create comprehensive directory catalogs with detailed file information
+  - Fast full-text search across multiple catalog files
+  - Interactive catalog browser with modern table interface
+  - Dark/Light mode with complete theme support
+  - Professional table components with filtering, sorting, and pagination
+  - Cross-platform compatibility (Windows, macOS, Linux)
+  - 100% compatible with existing bash script catalog files
+Moniker: storcat
+Tags:
+- catalog
+- directory
+- file-manager
+- electron
+- search
+- documentation
+- json
+- html
+ReleaseNotes: |-
+  StorCat v1.2.1
+  
+  # StorCat 1.2.1 Release Notes\r
+\r
+**Release Date**: July 29, 2025  \r
+**Version**: 1.2.1  \r
+**Type**: Patch Release\r
+\r
+---\r
+\r
+## 🔗 Bug Fixes & Improvements\r
+\r
+### External Link Functionality\r
+- **Fixed GitHub Links**: Repository, release notes, and wiki links in the Create Catalog tab now open properly in your default browser\r
+- **Dynamic Release Notes**: Release notes link automatically points to the correct version-specific GitHub release page\r
+- **Enhanced IPC Communication**: Added proper `openExternal` functionality between renderer and main process\r
+\r
+### User Interface Enhancements\r
+- **Improved Create Tab Layout**: Better organization of links and information in the Create Catalog welcome section\r
+- **Working Documentation Access**: Users can now easily access GitHub repository, version-specific release notes, and wiki documentation\r
+- **Clickable External Links**: All external links are now functional with proper cursor styling and hover states\r
+\r
+---\r
+\r
+## 🔧 Technical Changes\r
+\r
+### IPC (Inter-Process Communication)\r
+- **Added `openExternal` Handler**: New IPC handler in main process for opening external URLs securely\r
+- **Enhanced Preload Script**: Added `openExternal` function to the secure bridge between renderer and main process\r
+- **Shell Integration**: Proper integration with Electron's `shell.openExternal()` for cross-platform URL opening\r
+\r
+### Code Signing\r
+- **macOS Signing**: Both Intel (x64) and Apple Silicon (ARM64) builds are properly code-signed with Developer ID\r
+- **Security Compliance**: Eliminates \
+ReleaseNotesUrl: https://github.com/scottkw/storcat/releases/tag/1.2.1
+Documentations:
+- DocumentLabel: User Guide
+  DocumentUrl: https://github.com/scottkw/storcat#readme
+- DocumentLabel: Build Instructions
+  DocumentUrl: https://github.com/scottkw/storcat#building-the-application
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

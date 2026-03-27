@@ -1,0 +1,121 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.2.3
+PackageLocale: en-US
+Publisher: Ken Scott
+PublisherUrl: https://github.com/scottkw
+PublisherSupportUrl: https://github.com/scottkw/storcat/issues
+PackageName: StorCat
+PackageUrl: https://github.com/scottkw/storcat
+License: MIT
+LicenseUrl: https://github.com/scottkw/storcat/blob/main/LICENSE
+ShortDescription: Directory Catalog Manager - Create, search, and browse directory catalogs
+Description: |-
+  StorCat is a modern Electron-based directory catalog management application that provides a clean, intuitive GUI interface for creating, searching, and browsing directory catalogs. Generate both JSON and HTML representations of directory structures for easy documentation and sharing.
+  
+  Features:
+  - Create comprehensive directory catalogs with detailed file information
+  - Fast full-text search across multiple catalog files
+  - Interactive catalog browser with modern table interface
+  - Dark/Light mode with complete theme support
+  - Professional table components with filtering, sorting, and pagination
+  - Cross-platform compatibility (Windows, macOS, Linux)
+  - 100% compatible with existing bash script catalog files
+Moniker: storcat
+Tags:
+- catalog
+- directory
+- file-manager
+- electron
+- search
+- documentation
+- json
+- html
+ReleaseNotes: |-
+  StorCat v1.2.3
+  
+  # StorCat v1.2.3 Release Notes\r
+\r
+**Release Date:** August 2, 2025  \r
+**Build Type:** Patch Release  \r
+\r
+## 🚀 Major Fixes\r
+\r
+### ✅ **Apple Silicon ARM64 Support Fixed**\r
+- **Fixed critical issue where ARM64 builds displayed blank screens on Apple Silicon Macs**\r
+- **Resolved V8 JavaScript engine memory allocation errors on M1/M2/M3 processors**\r
+- ARM64 version now runs natively without crashes or display issues\r
+\r
+### 🔧 **Technical Improvements**\r
+\r
+#### JavaScript Engine Optimization\r
+- **Implemented JIT-less mode** to prevent V8 memory allocation failures on ARM64\r
+- Added `--jitless --no-opt` flags to ensure compatibility with Apple Silicon architecture\r
+- Maintained full application functionality while resolving stability issues\r
+\r
+#### Electron Framework Update\r
+- **Updated Electron from v28.0.0 to v35.7.2**\r
+- Latest version includes native ARM64 optimizations and security patches\r
+- Better memory management and performance on Apple Silicon\r
+\r
+#### Application Stability\r
+- Fixed blank window issues that affected ARM64 builds in previous versions\r
+- Improved file loading mechanism for better asset resolution\r
+- Enhanced error handling and debugging output\r
+\r
+#### Build System Improvements\r
+- **Fixed circular file inclusion issue** that caused excessive build sizes\r
+- **Resolved ASAR file size limit errors** during Linux ARM64 builds\r
+- **Optimized build configuration** to prevent dist directory recursion\r
+- **Enhanced multi-platform build process** with proper file exclusions\r
+\r
+## 📦 **Build Artifacts**\r
+\r
+### macOS\r
+- **StorCat-1.2.3-universal.dmg** - Universal binary (Intel x64 + Apple Silicon ARM64)\r
+- Native performance on both Intel Macs and Apple Silicon (M1/M2/M3)\r
+- Code-signed with Developer ID and ready for notarization\r
+\r
+### Windows\r
+- **StorCat 1.2.3.exe** - Portable executable (x64 and ARM64 versions)\r
+- No installation required, runs directly\r
+\r
+### Linux\r
+- **StorCat-1.2.3.AppImage** - x64 AppImage for universal Linux compatibility\r
+- **StorCat-1.2.3-arm64.AppImage** - ARM64 AppImage for ARM-based Linux systems\r
+- **storcat-electron_1.2.3_amd64.deb** - Debian package for x64 systems\r
+- **storcat-electron_1.2.3_arm64.deb** - Debian package for ARM64 systems\r
+\r
+All builds are code-signed and ready for distribution across platforms.\r
+\r
+## 🔄 **Migration Notes**\r
+\r
+### From v1.2.2 to v1.2.3\r
+- **No breaking changes** - existing catalogs and settings are fully compatible\r
+- **No user action required** - the update only affects internal engine behavior\r
+- Previous window positions and preferences are preserved\r
+\r
+### All Mac Users\r
+- **Universal Binary:** Single DMG (`StorCat-1.2.3-universal.dmg`) works on all Mac architectures\r
+- **Automatic Detection:** Runs natively on both Intel and Apple Silicon without user intervention\r
+- **No Rosetta Required:** Native ARM64 performance on Apple Silicon Macs\r
+\r
+## 🐛 **Resolved Issues**\r
+\r
+| Issue | Description | Resolution |\r
+|-------|-------------|------------|\r
+| Blank Screen | ARM64 builds showed empty window | Fixed with JIT-less V8 mode |\r
+| V8 OOM Errors | Memory allocation failures on Apple Silicon | Resolved with Electron 35 + engine flags |\r
+| Garbled Text | Corrupted content in some builds | Fixed asset loading mechanism |\r
+| Build Size Bloat | Linux ARM64 builds exceeded 4.2GB limit | Fixed circular file inclusion in build config |\r
+| ASAR Errors | Build process failed with \
+ReleaseNotesUrl: https://github.com/scottkw/storcat/releases/tag/1.2.3
+Documentations:
+- DocumentLabel: User Guide
+  DocumentUrl: https://github.com/scottkw/storcat#readme
+- DocumentLabel: Build Instructions
+  DocumentUrl: https://github.com/scottkw/storcat#building-the-application
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
