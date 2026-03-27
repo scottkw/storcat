@@ -16,12 +16,12 @@ Requirements for repo consolidation and CI/CD pipeline. Each maps to roadmap pha
 
 ### CI/CD Pipeline
 
-- [ ] **CICD-01**: Release workflow triggers on GitHub release publish event
-- [ ] **CICD-02**: macOS builds on `macos-14` runner producing universal binary
-- [ ] **CICD-03**: Windows builds on `windows-latest` runner with `-windowsconsole` preserved
-- [ ] **CICD-04**: Linux builds on `ubuntu-22.04` runner for x64 and arm64
-- [ ] **CICD-05**: Fan-in release pattern: all platform builds complete before release upload
-- [ ] **CICD-06**: All third-party GitHub Actions SHA-pinned (not tag-referenced)
+- [x] **CICD-01**: Release workflow triggers on GitHub release publish event
+- [x] **CICD-02**: macOS builds on `macos-14` runner producing universal binary
+- [x] **CICD-03**: Windows builds on `windows-latest` runner with `-windowsconsole` preserved
+- [x] **CICD-04**: Linux builds on `ubuntu-22.04` runner for x64 and arm64
+- [x] **CICD-05**: Fan-in release pattern: all platform builds complete before release upload
+- [x] **CICD-06**: All third-party GitHub Actions SHA-pinned (not tag-referenced)
 
 ### Installer Packaging
 
@@ -65,12 +65,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REPO-02 | Phase 12 | Pending |
 | REPO-03 | Phase 12 | Pending |
 | REPO-04 | Phase 12 | Pending |
-| CICD-01 | Phase 13 | Pending |
-| CICD-02 | Phase 13 | Pending |
-| CICD-03 | Phase 13 | Pending |
-| CICD-04 | Phase 13 | Pending |
-| CICD-05 | Phase 13 | Pending |
-| CICD-06 | Phase 13 | Pending |
+| CICD-01 | Phase 13 | Complete |
+| CICD-02 | Phase 13 | Complete |
+| CICD-03 | Phase 13 | Complete |
+| CICD-04 | Phase 13 | Complete |
+| CICD-05 | Phase 13 | Complete |
+| CICD-06 | Phase 13 | Complete |
 | PKG-01 | Phase 14 | Pending |
 | PKG-02 | Phase 14 | Pending |
 | PKG-03 | Phase 14 | Pending |

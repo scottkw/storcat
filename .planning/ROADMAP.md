@@ -34,7 +34,7 @@
 ### v2.2.0 Repo Consolidation & CI/CD (Phases 12-15)
 
 - [x] **Phase 12: Repo Consolidation** — Move WinGet manifests and Homebrew files into main repo; archive satellite (completed 2026-03-27)
-- [ ] **Phase 13: CI Scaffold and Multi-Platform Build** — Release workflow with fan-in DAG, correct runners, SHA pinning
+- [x] **Phase 13: CI Scaffold and Multi-Platform Build** — Release workflow with fan-in DAG, correct runners, SHA pinning (completed 2026-03-27)
 - [ ] **Phase 14: Platform Packaging** — DMG, NSIS installer, AppImage, and .deb produced and attached to release
 - [ ] **Phase 15: Distribution Channel Automation** — Homebrew tap and WinGet manifests auto-updated on release
 
@@ -67,7 +67,7 @@ Plans:
   5. Release assets are only uploaded once (fan-in job completes after all platform builds); all third-party actions are SHA-pinned
 **Plans**: 1 plan
 Plans:
-- [ ] 13-01-PLAN.md — Create release.yml workflow and fix build.yml runners/SHA-pinning
+- [x] 13-01-PLAN.md — Create release.yml workflow and fix build.yml runners/SHA-pinning
 
 ### Phase 14: Platform Packaging
 **Goal**: Every supported platform produces an installable package attached to the GitHub release automatically
@@ -106,6 +106,6 @@ Plans:
 | 10. Show, Open, and Output Polish | v2.1.0 | 2/2 | Complete | 2026-03-26 |
 | 11. Tech Debt Cleanup | v2.1.0 | 1/1 | Complete | 2026-03-26 |
 | 12. Repo Consolidation | v2.2.0 | 3/3 | Complete    | 2026-03-27 |
-| 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 0/1 | Not started | - |
+| 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete   | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 0/? | Not started | - |
 | 15. Distribution Channel Automation | v2.2.0 | 0/? | Not started | - |

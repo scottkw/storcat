@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.2.0
 milestone_name: Repo Consolidation & CI/CD
-status: executing
-stopped_at: Completed Wave 1 (12-01 + 12-02) — WinGet + Homebrew migration
-last_updated: "2026-03-27T18:42:24.093Z"
+status: verifying
+stopped_at: Completed 13-01-PLAN.md — CI scaffold and multi-platform build
+last_updated: "2026-03-27T19:06:41.525Z"
 last_activity: 2026-03-27
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 12 — repo-consolidation
+**Current focus:** Phase 13 — ci-scaffold-and-multi-platform-build
 
 ## Current Position
 
-Phase: 13
-Plan: Not started
-Status: Executing Phase 12 — Wave 1 complete, Wave 2 pending
+Phase: 13 (ci-scaffold-and-multi-platform-build) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-03-27
 
 ```
@@ -45,6 +45,10 @@ Decisions are logged in PROJECT.md Key Decisions table.
 - [Phase 12-02]: Copy update-tap.sh as-is from satellite repo — cross-repo path adaptation deferred to Phase 15
 - [Phase 12-02]: Template uses {{VERSION}}/{{SHA256}} shell placeholders + #{version} Ruby interpolation for URL (distinct roles)
 - [Phase 12-02]: REPO-02 satisfied: packaging/homebrew/ populated with template and update script
+- [Phase 13-01]: SHA-pin all actions to full 40-char commit SHAs for supply chain security
+- [Phase 13-01]: Use ubuntu-22.04-arm native runner for Linux arm64 (no -skipbindings cross-compile hack)
+- [Phase 13-01]: Pin Wails to v2.10.2 via go install @v2.10.2, matching go.mod version
+- [Phase 13-01]: draft: true on release job to require manual publish review before public release
 
 ### Key Research Findings (carry forward to execution)
 
@@ -69,6 +73,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-27
-Stopped at: Completed Wave 1 (12-01 + 12-02) — WinGet + Homebrew migration
+Last session: 2026-03-27T19:06:41.520Z
+Stopped at: Completed 13-01-PLAN.md — CI scaffold and multi-platform build
 Resume file: None
