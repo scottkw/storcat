@@ -1,77 +1,184 @@
 # Stack Research
 
-**Domain:** CLI subcommands in a Go/Wails unified desktop binary
-**Researched:** 2026-03-26
-**Confidence:** HIGH
+**Domain:** CI/CD release pipeline for cross-platform Go/Wails desktop app
+**Researched:** 2026-03-27
+**Confidence:** HIGH (GitHub Actions toolchain well-documented; versions verified via direct fetch and official sources)
 
 ---
 
-## Context: What Stays, What Changes
+## Scope Note
 
-This document covers **only the additions needed for v2.1.0 CLI features**. The existing stack (Go 1.23, Wails v2.10.2, React 18, TypeScript 5, Ant Design 5) is validated and unchanged. See the v2.0.0 STACK.md history for those decisions.
-
-The new question: what libraries handle CLI argument parsing, table output, and color in a binary that must also launch a GUI?
+This document covers ONLY the new stack additions for the v2.2.0 milestone. The existing validated stack (Go 1.23, Wails v2.10.2, React 18, TypeScript 5, Ant Design 5, `wails build` with ldflags) is not re-researched. Focus: GitHub Actions release automation, installer packaging (DMG, NSIS, AppImage, deb), Homebrew tap automation, WinGet manifest generation.
 
 ---
 
 ## Recommended Stack — New Additions Only
 
-### Core Technologies
+### Core GitHub Actions (Required Version Upgrades)
 
 | Technology | Version | Purpose | Why Recommended |
 |------------|---------|---------|-----------------|
-| `github.com/spf13/cobra` | v1.10.2 | CLI subcommand framework | De-facto standard for Go CLIs with subcommands. Used by kubectl, Hugo, GitHub CLI. Provides automatic `--help` generation, POSIX-compliant flags, shell completion, and command hierarchy. stdlib `flag` cannot model subcommands cleanly — it requires manual dispatch and reimplementing help text. For 6 subcommands (`create`, `search`, `list`, `show`, `open`, `version`), cobra is the right tool. |
-| `github.com/olekukonko/tablewriter` | v1.1.4 | Terminal table output | Best established Go table library. Renders ASCII/Unicode tables with column alignment, padding, borders. Used by `storcat list` (catalog metadata table). Already used in the ecosystem (Kubernetes, Helm, many CLIs). Do not use `text/tabwriter` — it only handles spacing, not borders or alignment. |
-| `github.com/fatih/color` | v1.19.0 | ANSI color output | Simplest, most widely adopted Go color library. 26,000+ dependents. Auto-detects TTY and disables color when piped (via `mattn/go-isatty` and `mattn/go-colorable`, which are **already in go.mod** as Wails indirect dependencies — zero net dependency cost). No unnecessary heavy deps. |
+| `actions/checkout` | v4 | Repo checkout in all jobs | v3 deprecated Jan 2025; v4 is current standard — already used in existing build.yml |
+| `actions/setup-go` | v5 | Go toolchain + module cache | v5 has default module caching built-in; no separate `actions/cache` step needed; already used in build.yml |
+| `actions/setup-node` | v4 | Node.js for Wails frontend build | Matches existing build.yml; v4 is current |
+| `actions/upload-artifact` | v4 | Upload build artifacts between jobs | v3 deprecated Jan 2025, stopped working; v4 required; up to 98% faster upload |
+| `actions/download-artifact` | v4 | Download artifacts in the publish job | Must match upload-artifact version — v3 and v4 artifacts are not cross-compatible |
+| `softprops/action-gh-release` | v2 | Create GitHub release and upload all assets | Industry standard; v2.5.0 (Dec 2024); supports draft-until-complete pattern; `GITHUB_TOKEN` is sufficient for asset upload |
 
-### Supporting Pattern: Main Entry Point
+### macOS DMG Packaging
 
-| Concern | Approach | Why |
-|---------|---------|-----|
-| GUI vs CLI dispatch | Check `len(os.Args) > 1` before `wails.Run()` in `main.go` | Wails v2 runs the binary twice during `wails dev` (once for binding generation without args). The safe pattern: if `os.Args[1]` is a known subcommand, run CLI mode and `os.Exit(0)` before `wails.Run()` is ever called. GUI mode is the zero-args fallback. |
-| Build tag concern | No build tag needed | The `os.Args` check happens before `wails.Run()`. The binding generation pass (no args) safely falls through to GUI mode. No `//go:build production` split is required for this use case. |
-| CLI mode isolation | CLI commands in `cmd/` package, called directly from `main.go` dispatch | Keeps `main.go` thin. Each subcommand (`cmd/create.go`, `cmd/search.go`, etc.) reuses existing `internal/catalog` and `internal/search` packages unchanged. No new business logic needed. |
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `create-dmg` (shell script) | v1.2.3 (Nov 2025) | Wrap `.app` bundle in a DMG with drag-to-Applications UI | `brew install create-dmg` on macOS runner; pure shell, no Node.js dependency; handles volume name, window layout, icon positioning, Applications symlink; v1.2.3 is the latest stable as of Nov 2025; actively maintained |
+
+**Install in CI:** `brew install create-dmg` on `macos-latest` runner. Takes ~10 seconds.
+
+**Key command pattern:**
+```bash
+create-dmg \
+  --volname "StorCat" \
+  --app-drop-link 400 200 \
+  "StorCat-${VERSION}-macOS-universal.dmg" \
+  "build/bin/StorCat.app"
+```
+
+### Windows NSIS Installer
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| NSIS via `wails build -nsis` | Bundled with Wails v2 | Generate a Windows `.exe` installer | Wails has native NSIS support; produces `build/bin/StorCat-amd64-installer.exe` alongside the bare `.exe`; no external toolchain to install; config lives in `build/windows/installer/` |
+
+**Key command:** `wails build -clean -platform windows/amd64 -nsis`
+
+**Critical runner requirement:** Must run on `windows-latest`. The existing `build.yml` runs Windows builds on `macos-latest` (cross-compile) — NSIS installer generation requires a Windows environment. This is a required fix for the release workflow.
+
+### Linux AppImage Packaging
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `linuxdeploy` + `linuxdeploy-plugin-appimage` | `continuous` (rolling release) | Bundle binary + libs into AppImage | Standard AppImage toolchain; `--output appimage` flag on `linuxdeploy` automatically invokes the plugin; CI-friendly (reads environment variables from GitHub Actions); simpler than `appimage-builder` for a Go binary with no heavy framework deps |
+
+**Pattern on ubuntu runner:**
+```bash
+wget -q "https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage"
+wget -q "https://github.com/linuxdeploy/linuxdeploy-plugin-appimage/releases/download/continuous/linuxdeploy-plugin-appimage-x86_64.AppImage"
+chmod +x linuxdeploy*.AppImage
+
+./linuxdeploy-x86_64.AppImage \
+  --appdir AppDir \
+  --executable build/bin/StorCat \
+  --desktop-file packaging/linux/storcat.desktop \
+  --icon-file build/appicon.png \
+  --output appimage
+```
+
+**Requires:** A `storcat.desktop` file and an app icon. Both must be created as part of the `packaging/linux/` directory structure.
+
+### Linux deb Packaging
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `nfpm` (goreleaser/nfpm) | v2.x (latest) | Generate `.deb` (and optionally `.rpm`) from a single declarative YAML config | Pure Go, zero system dependencies (no `dpkg-buildpackage` setup, no Debian packaging toolchain); supports deb/rpm/apk; configured via `nfpm.yaml`; GitHub Action available; actively maintained by the GoReleaser team |
+
+**Install in CI:**
+```bash
+curl -sLO "https://github.com/goreleaser/nfpm/releases/latest/download/nfpm_amd64.deb"
+sudo dpkg -i nfpm_amd64.deb
+```
+
+**Usage:**
+```bash
+VERSION=${GITHUB_REF_NAME#v} nfpm package --config packaging/linux/nfpm.yaml --packager deb
+```
+
+### Homebrew Tap Automation
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `gh` CLI (pre-installed on GitHub runners) + shell script | Built-in on all runners | Push updated cask to `homebrew-storcat` on release | The existing `update-tap.sh` already handles SHA256 calculation and cask template substitution. Wire it via a PAT secret. No third-party action needed — the script logic is already written and validated. |
+
+**Why not `mislav/bump-homebrew-formula-action@v4.1`:** That action explicitly documents "limited support for Homebrew casks." StorCat distributes a pre-built binary DMG (a cask, not a formula). The action is designed for source-build formulas. Custom script is simpler and already exists.
+
+**Pattern:**
+```yaml
+- name: Update Homebrew tap
+  env:
+    HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
+  run: ./packaging/update-tap.sh "${{ github.ref_name }}"
+```
+
+The `update-tap.sh` script pushes a commit to `scottkw/homebrew-storcat` using the PAT for authentication.
+
+### WinGet Manifest Automation
+
+| Technology | Version | Purpose | Why Recommended |
+|------------|---------|---------|-----------------|
+| `vedantmgoyal9/winget-releaser` | v2 | Submit updated manifests to `microsoft/winget-pkgs` via PR | Uses Komac under the hood; runs on Linux/macOS runners (not Windows-only); v2 is current; only requires `identifier` (e.g., `scottkw.StorCat`) and a PAT; 284 stars, 13+ contributors, actively maintained; community standard for WinGet automation |
+
+**Usage:**
+```yaml
+- uses: vedantmgoyal9/winget-releaser@v2
+  with:
+    identifier: scottkw.StorCat
+    token: ${{ secrets.WINGET_TOKEN }}
+```
+
+The action detects version and installer URLs from the GitHub release automatically.
 
 ---
 
-### Development Tools — No Changes
+## Development Tools — No Changes
 
 | Tool | Notes |
 |------|-------|
-| `wails dev` | Works unchanged. CLI subcommands only execute in the production binary (`wails build` output) or direct `go run`. |
-| `wails build` | Build command unchanged. The unified binary contains embedded frontend + CLI dispatch. |
+| `wails dev` | Unchanged. CI pipeline doesn't affect local development workflow. |
+| `wails build` | Used as-is. Release workflow adds `-nsis` on Windows and wraps macOS output with `create-dmg`. |
 
 ---
 
-## Installation
+## Secrets Required
 
-```bash
-# CLI framework
-go get github.com/spf13/cobra@v1.10.2
+| Secret Name | Value | Used By |
+|-------------|-------|---------|
+| `GITHUB_TOKEN` | Auto-provided by GitHub Actions | `softprops/action-gh-release` for asset upload |
+| `HOMEBREW_TAP_TOKEN` | Classic PAT: `public_repo` + `workflow` scopes on `scottkw/homebrew-storcat` | `update-tap.sh` push to homebrew-storcat repo |
+| `WINGET_TOKEN` | Classic PAT: `public_repo` scope on a fork of `microsoft/winget-pkgs` | `vedantmgoyal9/winget-releaser@v2` |
 
-# Table output
-go get github.com/olekukonko/tablewriter@v1.1.4
+---
 
-# Color output (mattn/go-isatty and mattn/go-colorable already in go.mod via Wails)
-go get github.com/fatih/color@v1.19.0
+## Workflow Architecture
+
+Two workflows total. The existing `build.yml` is updated; a new `release.yml` is added.
+
+**`build.yml` (update existing)** — Triggers on push to main, PRs:
+- Keep existing structure
+- Fix: Move Windows job to `windows-latest` runner (currently incorrectly on `macos-latest`)
+- No installer packaging — CI check only
+
+**`release.yml` (new)** — Triggers on `release: published`:
 ```
+Job: build-macos    (macos-latest)
+  - wails build -platform darwin/universal
+  - brew install create-dmg
+  - create-dmg → StorCat-{version}-macOS-universal.dmg
+  - upload-artifact: dmg + .app.zip
 
-After adding: `go mod tidy`
+Job: build-windows  (windows-latest)       ← must be windows-latest
+  - wails build -platform windows/amd64 -nsis
+  - upload-artifact: .exe + installer.exe
 
----
+Job: build-linux    (ubuntu-latest, matrix: amd64/arm64)
+  - wails build -platform linux/{arch}
+  - linuxdeploy → AppImage
+  - nfpm → .deb
+  - upload-artifact: binary + AppImage + .deb
 
-## Alternatives Considered
-
-| Recommended | Alternative | When to Use Alternative |
-|-------------|-------------|-------------------------|
-| `cobra` | stdlib `flag` | Only for single-command tools with simple flags. For 6+ subcommands with help generation, flag is painful — manual dispatch, no help inheritance, no shell completion. |
-| `cobra` | `urfave/cli` | cli/v2 is a reasonable alternative. Cobra is better here because StorCat's subcommand surface is small and well-defined — cobra's command tree model is cleaner for this. |
-| `cobra` | `urfave/cli v3` | v3 was released late 2024. Would work, but cobra has more ecosystem examples and is the clear community default. No advantage for this project size. |
-| `olekukonko/tablewriter` | `charmbracelet/lipgloss` table | lipgloss is excellent for TUI apps. For a simple catalog listing table it is over-engineered. Adds heavy bubbletea dependency chain. tablewriter is the right complexity level. |
-| `olekukonko/tablewriter` | `jedib0t/go-pretty` | go-pretty supports more output formats (TSV, CSV, HTML). Would work, but StorCat only needs terminal text. tablewriter is simpler and more focused. |
-| `olekukonko/tablewriter` | `text/tabwriter` (stdlib) | tabwriter only aligns columns via whitespace; no borders, no padding control, no header separator. Too bare for a catalog listing. |
-| `fatih/color` | stdlib ANSI codes directly | Fragile. Requires manual TTY detection per-platform (especially Windows). fatih/color handles this correctly using dependencies already in go.mod. |
-| `fatih/color` | `charmbracelet/lipgloss` for color | lipgloss is a full layout/style system. Using it just for color in CLI output is overkill for this project. |
+Job: publish        (ubuntu-latest, needs: [build-macos, build-windows, build-linux])
+  - download-artifact: all build outputs
+  - softprops/action-gh-release@v2: upload all assets
+  - update-tap.sh: push cask to homebrew-storcat
+  - vedantmgoyal9/winget-releaser@v2: submit winget PR
+```
 
 ---
 
@@ -79,28 +186,15 @@ After adding: `go mod tidy`
 
 | Avoid | Why | Use Instead |
 |-------|-----|-------------|
-| `github.com/spf13/viper` | Config file management for CLI flags. StorCat CLI commands are one-shot invocations, not long-running services needing config files. Adds complexity with zero benefit. | Cobra's `Flags()` + `PersistentFlags()` |
-| `github.com/charmbracelet/bubbletea` | Interactive TUI framework (spinner, progress bar). CLI commands are fast (catalog creation is sub-second). Progress UI is over-engineered for this scope. | Plain `fmt.Fprintf` for progress hints |
-| `github.com/charmbracelet/lipgloss` | Full terminal layout/style system. Correct tool for TUIs, not for simple CLI table output. | tablewriter + fatih/color |
-| `github.com/mitchellh/go-homedir` | Home directory resolution. `os.UserHomeDir()` (stdlib, Go 1.12+) is sufficient and simpler. | stdlib `os.UserHomeDir()` |
-| Wails v3 migration | v3 is still alpha as of March 2026. The CLI pattern works cleanly on v2. Do not migrate mid-milestone. | Stay on Wails v2.10.2 |
-
----
-
-## Stack Patterns by Variant
-
-**If the subcommand needs to output JSON (e.g., `storcat list --json`):**
-- Use stdlib `encoding/json` + `json.NewEncoder(os.Stdout)`
-- No additional library needed — already in use for catalog files
-
-**If the terminal is piped (e.g., `storcat list | grep foo`):**
-- `fatih/color` auto-disables color via `go-isatty`
-- `tablewriter` renders plain ASCII (no Unicode box chars) by default — pipe-safe
-- No special handling needed
-
-**If a subcommand needs to open HTML in the browser (storcat open):**
-- Use `github.com/pkg/browser` — already in go.mod as a Wails indirect dependency
-- Zero new dependency: `browser.OpenURL(htmlPath)`
+| GoReleaser | Cannot build Wails apps — GoReleaser's build hooks skip Darwin cross-compile, and the Wails toolchain requires its own `wails build` command. Tested Dec 2025, confirmed fails with bindings generation errors. | `wails build` per-platform on native runners |
+| `dAppServer/wails-build-action` | Unmaintained community fork; README says "USE: host-uk/build@v4" with no clear owner; opaque wrapper hides what wails flags are used | Direct `wails build` commands — transparent and debuggable |
+| `actions/upload-artifact@v3` | Deprecated Jan 2025; stopped working | `actions/upload-artifact@v4` |
+| `actions/checkout@v3` | Deprecated | `actions/checkout@v4` |
+| WiX Toolset (MSI) | Wails uses NSIS natively; WiX requires separate manifest authoring and .wxs XML files | `wails build -nsis` |
+| `mislav/bump-homebrew-formula-action` for casks | Action documents "limited support for Homebrew casks"; designed for source-build formulas not pre-built binaries | Custom shell script (already exists as `update-tap.sh`) |
+| `appimage-builder` (Python) | Heavier Python-based tool; requires a recipe YAML with apt packages specified; over-engineered for a simple Go binary | `linuxdeploy` + plugin |
+| Code signing tools (gon, rcodesign, Authenticode) | Out of scope for this milestone per PROJECT.md — future milestone | N/A |
+| Hardcoded PATs in workflow YAML | Security risk; secrets exposed in git history | `${{ secrets.HOMEBREW_TAP_TOKEN }}` etc. |
 
 ---
 
@@ -108,42 +202,44 @@ After adding: `go mod tidy`
 
 | Package | Compatible With | Notes |
 |---------|-----------------|-------|
-| `cobra v1.10.2` | Go 1.23 | Requires Go 1.22+. v1.10.2 published December 2025. |
-| `tablewriter v1.1.4` | Go 1.23 | v1.0.0 is broken — avoid. Use v1.1.4. Published March 2026. |
-| `fatih/color v1.19.0` | Go 1.23 | Uses `mattn/go-isatty` and `mattn/go-colorable` already in go.mod via Wails. No version conflict. Published March 2026. |
+| `actions/upload-artifact@v4` | `actions/download-artifact@v4` | Must use matching v4; v3 and v4 artifacts are not cross-compatible — mixing versions silently fails |
+| `wails build -nsis` | `windows-latest` runner only | NSIS requires Windows; macOS cross-compile to Windows does not support `-nsis` flag |
+| `create-dmg v1.2.3` | `macos-latest` (Homebrew available) | `brew install create-dmg` installs cleanly on macOS GitHub runners |
+| Wails v2.10.2 | Go 1.23, Node 18+ | Existing validated combination; do not upgrade — v2.10.0 is known broken (search results Nov 2024); v3 is alpha |
+| `nfpm` | ubuntu-latest | Pure Go binary, no system dependencies needed |
+| `linuxdeploy` (continuous) | ubuntu-latest amd64 | `continuous` tag is the AppImage project's rolling release; use architecture-specific binary (`linuxdeploy-x86_64.AppImage` or `linuxdeploy-aarch64.AppImage`) |
 
 ---
 
-## Integration Notes
+## Alternatives Considered
 
-### Wails Build Does Not Change
-
-`wails build` compiles the whole `main` package including the CLI dispatch. The resulting binary:
-- Zero args → launches GUI (Wails behavior unchanged)
-- Known subcommand as first arg → runs CLI, exits before `wails.Run()`
-
-The embedded frontend (`//go:embed all:frontend/dist`) is still bundled but never loaded in CLI mode. Binary size is unchanged — the embedded assets are inert in CLI mode.
-
-### Existing Business Logic Is Reused As-Is
-
-`internal/catalog/service.go` and `internal/search/service.go` contain all the catalog creation and search logic. CLI commands are thin wrappers that call these packages directly — no duplication.
-
-### `storcat version` Is Already Implemented
-
-`version.go` handles version string injection via `//go:embed wails.json`. The `version` subcommand is a one-liner that prints `app.Version`.
+| Recommended | Alternative | When to Use Alternative |
+|-------------|-------------|-------------------------|
+| `wails build -nsis` | WiX Toolset MSI | When enterprise deployment requires `.msi` format specifically (Group Policy, SCCM); consumer app NSIS `.exe` installer is sufficient |
+| `create-dmg` shell tool | `sindresorhus/create-dmg` (Node.js) | Node.js version is also viable; shell version preferred — no Node.js dependency, directly installable via Homebrew |
+| `vedantmgoyal9/winget-releaser@v2` | `microsoft/wingetcreate` CLI directly | wingetcreate gives more control over manifest YAML structure; releaser action is simpler for standard cases and handles URL/SHA256 detection automatically |
+| Custom shell script for Homebrew | `mislav/bump-homebrew-formula-action@v4.1` | Use the action if distributing a Homebrew formula (source build); for casks (pre-built binary DMG), the action's cask support is limited per its own docs |
+| `nfpm` for deb | `dpkg-deb` directly | `dpkg-deb` is fine but requires manual `DEBIAN/control` file construction; nfpm is declarative YAML and handles both deb and rpm from one config |
+| `linuxdeploy` for AppImage | `appimage-builder` | `appimage-builder` handles complex apps with Python/Qt deps; for a simple Go binary with GTK from Wails, `linuxdeploy` is the right complexity level |
+| Two separate workflows | Single workflow with all jobs | Splitting keeps CI fast (build.yml is quick feedback) and release clean (release.yml only runs on tags) |
 
 ---
 
 ## Sources
 
-- cobra GitHub (v1.10.2 latest): https://github.com/spf13/cobra — HIGH confidence
-- cobra pkg.go.dev: https://pkg.go.dev/github.com/spf13/cobra — HIGH confidence
-- tablewriter pkg.go.dev (v1.1.4): https://pkg.go.dev/github.com/olekukonko/tablewriter — HIGH confidence
-- fatih/color pkg.go.dev (v1.19.0): https://pkg.go.dev/github.com/fatih/color — HIGH confidence
-- Wails discussion #4175 (os.Args in production builds): https://github.com/wailsapp/wails/discussions/4175 — MEDIUM confidence (community discussion, not official docs)
-- Wails issue #2353 (CLI args pattern): https://github.com/wailsapp/wails/issues/2353 — MEDIUM confidence
-- Existing go.mod (indirect deps: pkg/browser, go-isatty, go-colorable): verified from codebase — HIGH confidence
+- [create-dmg GitHub](https://github.com/create-dmg/create-dmg) — v1.2.3 Nov 2025 (HIGH — fetched directly)
+- [softprops/action-gh-release](https://github.com/softprops/action-gh-release) — v2.5.0, current standard (HIGH — multiple search sources)
+- [winget-releaser action](https://github.com/marketplace/actions/winget-releaser) — v2 with Komac, Linux-compatible (HIGH — fetched directly from Marketplace)
+- [mislav/bump-homebrew-formula-action](https://github.com/mislav/bump-homebrew-formula-action) — v4.1 Mar 2026, limited cask support documented (HIGH — fetched directly)
+- [actions/upload-artifact deprecation](https://github.blog/changelog/2024-04-16-deprecation-notice-v3-of-the-artifact-actions/) — v3 deprecated Jan 2025 (HIGH — official GitHub changelog)
+- [Wails NSIS docs](https://wails.io/docs/guides/windows-installer/) — `-nsis` flag confirmation (MEDIUM — search results; direct fetch returned 403)
+- [nfpm goreleaser](https://github.com/goreleaser/nfpm) — Go-native deb/rpm packager, active 2025 (MEDIUM — search results)
+- [linuxdeploy AppImage toolchain](https://docs.appimage.org/packaging-guide/from-source/linuxdeploy-user-guide.html) — standard AppImage pipeline (MEDIUM — search results)
+- [GoReleaser + Wails cross-compile failure](https://chriswheeler.dev/posts/cross-compilation-with-wails/) — Dec 2025 confirmed incompatibility (MEDIUM — community blog, recent date)
+- [storcat-repo-consolidation.md](../storcat-repo-consolidation.md) — existing scripts, Option A decision (HIGH — local file, already validated plan)
+- Existing `.github/workflows/build.yml` — current workflow structure and runner choices (HIGH — codebase)
+- `go.mod` — confirms Wails v2.10.2 in use (HIGH — codebase)
 
 ---
-*Stack research for: CLI subcommands in Go/Wails unified binary (StorCat v2.1.0)*
-*Researched: 2026-03-26*
+*Stack research for: StorCat v2.2.0 Repo Consolidation and CI/CD Release Pipeline*
+*Researched: 2026-03-27*

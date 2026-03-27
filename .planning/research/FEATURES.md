@@ -1,20 +1,21 @@
 # Feature Research
 
-**Domain:** CLI subcommands for a directory catalog tool (StorCat v2.1.0)
-**Researched:** 2026-03-26
-**Confidence:** HIGH (CLI conventions are well-established; all business logic already exists in Go services)
+**Domain:** CI/CD release pipeline + repo consolidation for a Go/Wails cross-platform desktop app
+**Researched:** 2026-03-27
+**Confidence:** HIGH (core pipeline patterns), MEDIUM (Linux .deb packaging specifics)
 
 ---
 
 ## Context
 
-This research covers CLI-specific features only. The GUI (v2.0.0) already ships all core functionality.
-The v2.1.0 CLI layer exposes those same operations as subcommands of the unified `storcat` binary.
+StorCat v2.2.0 is adding automated build + release infrastructure to an existing Go/Wails desktop
+app. The existing `build.yml` does CI checks (build on push/PR) but no packaging or release
+automation. Three repos currently exist: `scottkw/storcat` (source), `scottkw/homebrew-storcat`
+(tap), `scottkw/winget-storcat` (manifests). All three must be consolidated to two (thin homebrew
+satellite stays, winget manifests move into main), and the manual release process must be
+automated.
 
-**Existing Go service layer** (`internal/catalog`, `internal/search`) provides all business logic.
-The CLI needs thin command wrappers, output formatting, and POSIX conventions — not new business logic.
-
-**Reference tools studied:** `tree`, `fd`, `eza`, `rg` (ripgrep), Cobra (Go CLI framework), CLIG (https://clig.dev/).
+This document focuses **only on the new features** needed for v2.2.0.
 
 ---
 
@@ -22,147 +23,147 @@ The CLI needs thin command wrappers, output formatting, and POSIX conventions �
 
 ### Table Stakes (Users Expect These)
 
-Features users assume exist. Missing these = product feels broken or non-scriptable.
+Features the pipeline must have to be considered complete. Missing any of these means the release
+process still requires manual intervention.
 
-| Feature | Why Expected | Complexity | Depends On |
-|---------|--------------|------------|------------|
-| `storcat create <dir>` — create catalog from directory | Core operation; without it the CLI has no value | LOW | `internal/catalog.Service.CreateCatalog` (existing) |
-| `storcat search <term> <dir>` — search catalogs for a term | Core operation; mirrors GUI search tab | LOW | `internal/search.Service.SearchCatalogs` (existing) |
-| `storcat list <dir>` — list catalogs with metadata | Users need to discover what's cataloged before using other commands | LOW | `internal/search.Service.BrowseCatalogs` (existing) |
-| `storcat show <catalog.json>` — print catalog tree | Mirror of GUI tree view; enables inspection without launching GUI | MEDIUM | `internal/search.Service.LoadCatalog` (existing) + new tree printer |
-| `storcat open <catalog.json>` — open HTML in default browser | Power-user shortcut matching the GUI "Open HTML" button | LOW | `os/exec` per platform + `GetCatalogHtmlPath` (existing) |
-| `storcat version` — print version string to stdout | Expected by every CLI tool; needed for scripting/CI | LOW | `version.go` (existing) |
-| `storcat` (no args) — launch GUI as today | Current behavior must not change; users who double-click the app must get GUI | LOW | No change to Wails startup path |
-| Exit code 0 on success, non-zero on error | POSIX contract; scripts and CI break without it | LOW | Cobra default behavior |
-| Errors to stderr, output to stdout | POSIX contract; piping breaks without this separation | LOW | `fmt.Fprintln(os.Stderr, ...)` pattern |
-| `--help` / `-h` on all commands | Users expect self-documenting CLI; flag required for discoverability | LOW | Cobra built-in (automatic) |
-| Human-readable default output on TTY | Tools like `eza`, `fd`, `gh` default to readable text when writing to a terminal | LOW | Detect TTY via `os.Stdout.Stat()` |
-| `--json` flag on output commands (list, search, show) | Scripts and agents need structured output for piping to `jq` or other tools | LOW | `encoding/json` marshal of existing model structs |
+| Feature | Why Expected | Complexity | Notes |
+|---------|--------------|------------|-------|
+| Tag/release-triggered release workflow | Industry standard: GH release published triggers full build + packaging | LOW | `on: release: types: [published]` in `release.yml`; separate from existing `build.yml` |
+| macOS DMG packaging | macOS users expect a .dmg for drag-to-Applications install | MEDIUM | Post-process `.app` with `create-dmg` or `hdiutil`; no code signing in this milestone |
+| Windows NSIS installer | Windows users expect an .exe installer, not a bare binary | LOW | Wails native support: `wails build -nsis`; generates `build/bin/StorCat-*-installer.exe` |
+| Linux AppImage | Most portable Linux format; runs on Ubuntu, Fedora, Arch, etc. without changes | MEDIUM | Wails v2 generates AppImage with `wails build -platform linux/amd64`; arm64 needs QEMU or native runner |
+| Linux .deb package | Expected by Ubuntu/Debian users (dominant desktop Linux install base) | MEDIUM | Wails v2 does NOT natively produce .deb; requires `dpkg-deb` post-build step or `fpm` tool |
+| Multi-platform matrix build | All platforms must build in one workflow, in parallel | LOW | `strategy.matrix` with `macos-latest`, `windows-latest`, `ubuntu-latest` runners |
+| SHA256 checksums as release asset | Required by Homebrew and WinGet for artifact verification; users also rely on these | LOW | `shasum -a 256 dist/*` before upload; include `checksums.txt` in release assets |
+| All artifacts attached to GitHub Release | Release assets available for download; Homebrew/WinGet consume URLs from the release | LOW | `softprops/action-gh-release` or `actions/upload-release-asset` |
+| Homebrew cask auto-update on release | Mac users install via `brew install storcat`; cask must be updated on every release | MEDIUM | Render `storcat.rb` from template in main repo; push to `scottkw/homebrew-storcat` via PAT |
+| WinGet manifest update on release | Windows users install via `winget install scottkw.StorCat`; manifests must stay current | MEDIUM | Commit updated YAML manifests under `packaging/winget/manifests/`; optionally PR `microsoft/winget-pkgs` |
+| `packaging/homebrew/storcat.rb.template` in main repo | Homebrew template lives with the code that produces the binary it describes | LOW | Copy from `homebrew-storcat`; parameterize `version`, `url`, `sha256` |
+| WinGet manifests migrated to `packaging/winget/` | Three YAML files per version live alongside source; `winget-storcat` repo becomes redundant | LOW | Copy from `winget-storcat`; update paths in update script |
+| `winget-storcat` repo archived | Eliminates stale satellite repo once automation is proven | LOW | GitHub repo Settings → Archive; one-time action after first automated release succeeds |
 
 ### Differentiators (Competitive Advantage)
 
-Features that make StorCat CLI stand out. Not required for initial launch but add real value.
+Features beyond the minimum that make this pipeline better than a simple manual process.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
-| `storcat completion [bash\|zsh\|fish\|powershell]` | Tab completion for subcommands and flags; nearly free via Cobra | LOW | Cobra provides `completion` command generator out of the box |
-| Auto-detect TTY: table format on terminal, JSON when piped | Eliminates the need to remember `--json` in scripts; matches `gh` CLI behavior | MEDIUM | `os.Stdout.Stat()` + `syscall.S_IFCHR`; worth doing for `list` and `search` |
-| `--depth N` flag on `show` | Control tree verbosity; matches `tree -L N` and `eza --level N` conventions | LOW | Pass int to recursive tree printer; minimal code |
-| `--no-color` flag + `NO_COLOR` env var | CI/CD compatibility; respects https://no-color.org standard | LOW | Only needed if colorized output is added; check env var first |
-| `--output <dir>` flag on `create` | Scriptable output path control; mirrors GUI "output directory" field | LOW | Pass through to `CreateCatalog` `copyToDirectory` param |
-| `--name <filename>` flag on `create` | Control output filename in scripts | LOW | Pass through `outputName` param (already a `CreateCatalog` arg) |
-| `--title <string>` flag on `create` | Set catalog display name; mirrors GUI "Catalog Title" input | LOW | Pass through `title` param (already a `CreateCatalog` arg) |
-| Colorized `show` tree output | Directories in bold/blue, files plain; matches `tree`/`eza` UX | MEDIUM | ANSI escape codes; must respect `--no-color` and non-TTY detection |
+| `vedantmgoyal9/winget-releaser` action | Handles manifest generation + PR submission to `microsoft/winget-pkgs` via Komac; eliminates manual manifest authoring | LOW | Requires classic PAT (`public_repo` scope); prerequisite: package already listed in `winget-pkgs` |
+| `homebrew-bump-cask` or `update-homebrew-action` | Tested, maintained action handles SHA calc + formula update; avoids custom push script | LOW | `garden-io/update-homebrew-action` or `NSHipster/update-homebrew-formula-action` are proven alternatives to hand-rolled scripts |
+| Separate build jobs from release/packaging job | Build jobs run in parallel; release job depends on all via `needs:`; one platform failure does not block others | MEDIUM | Use `needs: [build-macos, build-windows, build-linux]` + artifact download pattern |
+| `workflow_dispatch` trigger | Allows re-running release packaging without cutting a new tag; useful when a packaging step fails after binaries are good | LOW | Add alongside `on: release:` |
+| Version consistency check | Fail fast if git tag does not match `wails.json productVersion` before any builds run | LOW | `bash` step: compare `git describe --tags` vs `jq -r .info.productVersion wails.json` |
+| Per-platform artifact names with version | Release assets named `StorCat-v2.2.0-macOS.dmg`, `StorCat-v2.2.0-Windows-x64-installer.exe` | LOW | `github.ref_name` gives the tag; embed in artifact name |
 
 ### Anti-Features (Commonly Requested, Often Problematic)
 
 | Feature | Why Requested | Why Problematic | Alternative |
 |---------|---------------|-----------------|-------------|
-| Interactive TUI mode (fuzzy finder, cursor nav) | "Like fzf or lazygit" | Scope explosion; conflicts with pipe-friendliness; separate tool concern | Pipe `storcat list` or `storcat search` output to `fzf` |
-| Config file for CLI defaults (`~/.storcatrc`) | Avoid retyping `--json` or common directories | Adds hidden state; debugging pain; not needed at this scale | Shell aliases or shell functions |
-| Watch mode / `--watch` on `create` | Auto-recatalog when directory changes | Requires `fsnotify`, daemon-like behavior; out of scope for v2.1.0 | `watchexec storcat create ...` or cron |
-| Progress bar on `create` | Visual feedback for large directories | TTY-only; breaks in pipes; Go traversal is fast enough (~100ms for most dirs) | `--verbose` printing files as scanned; or nothing |
-| Glob/regex filter on `list` | Show only catalogs matching a pattern | Pipe composability principle: `storcat list <dir> | grep pattern` is correct | Pipe to `grep`; don't embed filtering into `list` |
-| YAML output format | Some users prefer YAML over JSON | JSON is the universal machine-readable format; YAML adds a dependency | `--json` + `yq` for YAML conversion |
-| `storcat search` reading from stdin | Pipe catalog paths in | Ambiguous: are you piping a list of dirs, or content? No clear convention | Explicit positional arg `storcat search <term> <dir>` |
-| Separate `storcat-cli` binary | Clean separation of GUI and CLI | Defeats the "unified binary" goal; complicates distribution and PATH | Detect subcommands before Wails startup in `main.go` |
+| macOS code signing + notarization in v2.2.0 | Required for Gatekeeper-clean installs | Needs Apple Developer Program cert, provisioning profile, App Store Connect API key, `codesign`, `xcrun notarytool` — multi-day setup with Apple account dependencies | Out of scope; deliver unsigned DMG; create dedicated CODE-SIGNING milestone |
+| Windows Authenticode signing in v2.2.0 | Removes SmartScreen "unknown publisher" warning | Requires EV cert ($200-500/yr) or Microsoft Partner Center enrollment; own milestone | Out of scope; deliver unsigned NSIS installer |
+| GoReleaser for the release pipeline | Popular Go release tool with Homebrew and deb/rpm support | GoReleaser cannot drive `wails build` (Wails wraps frontend compilation; GoReleaser only handles pure `go build`). Incompatible at the build step. | Stick with native `wails build` + per-platform jobs; GoReleaser is only appropriate for the pure CLI binary path |
+| Auto-creating GitHub Release from the workflow | One less manual step | Removes human editorial control over release notes; creates a release before notes are written | Trigger on already-published release (`on: release: types: [published]`); developer writes release notes manually, then publishes to trigger pipeline |
+| Immediately auto-submitting to `microsoft/winget-pkgs` | One less manual step | First submission requires Microsoft review via PR; auto-submission can fail silently or be rejected without context. WinGet Releaser handles this for subsequent versions, but first version must be manually submitted. | Use `winget-releaser` for updates once package is listed; document first-submission as a one-time manual step |
+| Linux RPM packaging in v2.2.0 | Fedora/RHEL user request | Low demand relative to AppImage; adds packaging complexity; AppImage runs on RPM-based distros too | Deliver AppImage (universal) + .deb; RPM deferred to P3/future request |
+| Self-hosted runners for Linux arm64 | Faster arm64 Linux builds | Requires persistent infra, runner credentials, maintenance, security surface | Cross-compile with QEMU via `docker/setup-qemu-action` on `ubuntu-latest`; acceptable for release cadence |
+| Merging `build.yml` and `release.yml` into one file | Fewer workflow files | Mixing CI checks (runs on every push) with release packaging (runs on release) creates confusion, inflated CI times, and harder debugging | Keep separate: `build.yml` for CI checks, `release.yml` for release packaging |
 
 ---
 
 ## Feature Dependencies
 
 ```
-storcat create <dir>
-    requires  --> internal/catalog.Service.CreateCatalog (existing)
-    requires  --> Cobra subcommand structure (new, shared across all commands)
-    optional  --> --output <dir> flag
-    optional  --> --name <filename> flag
-    optional  --> --title <string> flag
+[Developer creates GitHub Release manually — writes release notes, publishes]
+    └──triggers──> [release.yml workflow: on: release: types: [published]]
+                       │
+                       ├──[Pre-flight job]
+                       │       └──validates: git tag matches wails.json productVersion
+                       │
+                       ├──[macOS build job: macos-latest]
+                       │       ├──wails build -platform darwin/universal
+                       │       ├──create-dmg / hdiutil → StorCat-vX.Y.Z-macOS.dmg
+                       │       └──upload artifact: DMG
+                       │
+                       ├──[Windows build job: windows-latest]
+                       │       ├──wails build -platform windows/amd64 -nsis
+                       │       ├──produces: StorCat-vX.Y.Z-Windows-x64-installer.exe
+                       │       └──upload artifact: NSIS installer
+                       │
+                       ├──[Linux build job: ubuntu-latest]
+                       │       ├──wails build -platform linux/amd64
+                       │       ├──produces: AppImage (wails native output)
+                       │       ├──dpkg-deb / fpm → .deb package
+                       │       └──upload artifacts: AppImage + .deb
+                       │
+                       └──[Release assembly job: needs all build jobs]
+                               ├──download all artifacts
+                               ├──compute SHA256 checksums.txt
+                               ├──attach all artifacts + checksums to GitHub Release
+                               ├──[Homebrew update job]
+                               │       ├──requires: DMG URL + SHA256
+                               │       ├──renders: storcat.rb from packaging/homebrew/storcat.rb.template
+                               │       └──pushes to: scottkw/homebrew-storcat Casks/storcat.rb
+                               │               └──requires secret: HOMEBREW_TAP_TOKEN (PAT)
+                               └──[WinGet manifest job]
+                                       ├──requires: Windows installer URL + SHA256
+                                       ├──generates: 3 YAML manifests for new version
+                                       ├──commits to: packaging/winget/manifests/s/scottkw/StorCat/vX.Y.Z/
+                                       └──optionally PRs: microsoft/winget-pkgs
+                                               └──requires secret: WINGET_TOKEN (classic PAT, public_repo scope)
 
-storcat search <term> <dir>
-    requires  --> internal/search.Service.SearchCatalogs (existing)
-    requires  --> Cobra subcommand structure
-    optional  --> --json flag
-    optional  --> auto-TTY detection (enhances default output)
+[packaging/homebrew/storcat.rb.template] (migrated from homebrew-storcat)
+    └──used by──> Homebrew update job
 
-storcat list <dir>
-    requires  --> internal/search.Service.BrowseCatalogs (existing)
-    requires  --> Cobra subcommand structure
-    optional  --> --json flag
-    optional  --> auto-TTY detection
+[packaging/winget/manifests/] (migrated from winget-storcat)
+    └──base for──> WinGet manifest job (adds new version directory)
 
-storcat show <catalog.json>
-    requires  --> internal/search.Service.LoadCatalog (existing)
-    requires  --> Cobra subcommand structure
-    requires  --> tree printer function (new; ~30 LOC recursive)
-    optional  --> --depth N flag
-    optional  --> colorized output
-    optional  --> --no-color flag (only needed if colorized output is added)
-
-storcat open <catalog.json>
-    requires  --> GetCatalogHtmlPath (existing in app.go)
-    requires  --> cross-platform browser exec (new; os/exec open/xdg-open/start)
-    requires  --> Cobra subcommand structure
-
-storcat version
-    requires  --> version string from version.go (existing)
-    requires  --> Cobra subcommand structure
-
-storcat completion [shell]
-    requires  --> Cobra completion built-in (free; zero implementation work)
-    enhances  --> all subcommands (tab-complete args and flags)
-
-Cobra subcommand structure (CRITICAL PATH)
-    required by  --> ALL CLI commands above
-    requires     --> os.Args inspection before Wails startup in main.go
-    note: main.go currently passes ALL args to Wails; CLI detection must
-          intercept subcommands (len(os.Args) > 1 && os.Args[1] != "") before
-          calling wails.Run()
-
---no-color / NO_COLOR env var
-    enhances  --> storcat show (colorized tree)
-    enhances  --> storcat list (table formatting)
-    conflicts --> progress bar (both are TTY-only; simplify: omit progress bar entirely)
+[scottkw/winget-storcat] (archived after first successful automated release)
 ```
 
 ### Dependency Notes
 
-- **Cobra subcommand structure is the critical path dependency for all CLI features.** The current `main.go` passes all args to Wails unconditionally. The CLI integration requires intercepting `os.Args` before calling `wails.Run()`. This is the single structural change that unlocks everything else.
-- **`show` requires a tree printer.** `LoadCatalog` returns `*models.CatalogItem` (a recursive struct). A small `printTree(item, prefix, depth, maxDepth)` function (~30 LOC) is the only new business logic needed.
-- **`open` requires cross-platform browser launch.** Wails's `runtime.BrowserOpenURL` is only available inside a Wails GUI context. CLI `open` needs `os/exec` with `open` (macOS), `xdg-open` (Linux), `start` (Windows) — standard Go pattern.
-- **Auto-TTY detection enhances but does not block.** `list` and `search` can default to plain text and add TTY detection as a polish step. Do not block shipping on it.
-- **All output commands should emit valid JSON with `--json`.** The existing model structs (`SearchResult`, `CatalogMetadata`, `CreateCatalogResult`) already have `json:` tags; JSON output is `json.Marshal` on the existing slice/struct — nearly free.
+- **Pre-flight validation is a hard gate.** A mismatch between the git tag and `wails.json productVersion` would produce a binary reporting the wrong version. This check must pass before any build starts.
+- **All build jobs must complete before release assembly.** The assembly job uses `needs: [build-macos, build-windows, build-linux]` and downloads artifacts using `actions/download-artifact`.
+- **Homebrew update requires the DMG to be attached to the release.** The cask formula needs an exact URL and SHA256; this is available only after the release assembly job completes.
+- **WinGet manifest job requires the Windows installer to be attached to the release.** Same pattern as Homebrew.
+- **`winget-storcat` archive is a one-time post-verification step.** Do not archive until at least one automated release has successfully committed manifests to `packaging/winget/`.
+- **Windows NSIS build must run on `windows-latest`.** The existing `build.yml` runs Windows builds on `macos-latest` via cross-compile. NSIS packaging requires a Windows runner.
 
 ---
 
 ## MVP Definition
 
-This is a subsequent milestone on a shipping product. "MVP" means the minimum that makes the CLI genuinely useful for scripting and power users.
+This is a subsequent milestone on a shipping product.
 
-### Launch With (v2.1.0)
+### Launch With (v2.2.0)
 
-- [ ] Cobra subcommand structure with `os.Args` dispatch before Wails — enables all other CLI features
-- [ ] `storcat create <dir>` with `--output`, `--name`, `--title` flags — core catalog creation
-- [ ] `storcat search <term> <dir>` with `--json` flag — scriptable search
-- [ ] `storcat list <dir>` with `--json` flag — scriptable catalog discovery
-- [ ] `storcat show <catalog.json>` with `--depth N` flag — tree visualization
-- [ ] `storcat open <catalog.json>` — cross-platform browser launch
-- [ ] `storcat version` — version string to stdout
-- [ ] `storcat completion [bash|zsh|fish|powershell]` — shell completion (Cobra provides for free)
-- [ ] Exit code 0 / non-zero, errors to stderr, output to stdout — POSIX contract
-- [ ] `--help` on all commands — Cobra provides automatically
+Minimum viable automated pipeline — zero manual steps after publishing the GitHub release.
 
-### Add After Validation (v2.1.x)
+- [ ] `release.yml` triggered on `on: release: types: [published]`
+- [ ] Pre-flight: version consistency check (wails.json vs git tag)
+- [ ] macOS universal build → unsigned DMG attached to release
+- [ ] Windows amd64 build → NSIS installer attached to release
+- [ ] Linux amd64 build → AppImage attached to release
+- [ ] Linux amd64 build → .deb attached to release
+- [ ] SHA256 checksums.txt attached to release
+- [ ] Homebrew cask auto-updated in `scottkw/homebrew-storcat`
+- [ ] WinGet manifests committed to `packaging/winget/` on release
+- [ ] `packaging/homebrew/storcat.rb.template` in main repo
+- [ ] WinGet manifests migrated from `winget-storcat` to `packaging/winget/`
+- [ ] `winget-storcat` repo archived
 
-- [ ] Auto-TTY detection (table on terminal, JSON when piped) for `list` and `search` — once v2.1.0 ships and usage patterns are observed
-- [ ] Colorized tree output in `show` — quality-of-life polish
-- [ ] `--no-color` + `NO_COLOR` env var — only needed once colorized output is added
+### Add After Validation (v2.2.x)
 
-### Future Consideration (v2.2+)
+- [ ] Auto-PR to `microsoft/winget-pkgs` via `winget-releaser` — trigger once package is confirmed listed in official registry
+- [ ] Linux arm64 AppImage + .deb — add QEMU cross-compile or native arm64 runner
+- [ ] `workflow_dispatch` trigger for release re-runs
 
-- [ ] Watch mode (`--watch` on `create`) — requires `fsnotify`, daemon concerns, separate scope
-- [ ] Interactive TUI mode — use `fzf` as an integration target; not storcat's responsibility
-- [ ] `--stats` aggregate output — show totals across all matched results
+### Future Consideration (v3+, own milestones)
+
+- [ ] macOS code signing + notarization — dedicated CODE-SIGNING milestone; Apple credential pipeline
+- [ ] Windows Authenticode signing — dedicated milestone; EV cert procurement
+- [ ] Linux RPM packaging — add if user demand materializes
+- [ ] Release notes auto-generation from conventional commits
 
 ---
 
@@ -170,113 +171,61 @@ This is a subsequent milestone on a shipping product. "MVP" means the minimum th
 
 | Feature | User Value | Implementation Cost | Priority |
 |---------|------------|---------------------|----------|
-| Cobra subcommand structure + os.Args dispatch | HIGH | LOW | P1 |
-| `storcat create` | HIGH | LOW | P1 |
-| `storcat search` | HIGH | LOW | P1 |
-| `storcat list` | HIGH | LOW | P1 |
-| `storcat show` + tree printer | HIGH | LOW | P1 |
-| `storcat open` | MEDIUM | LOW | P1 |
-| `storcat version` | HIGH | LOW | P1 |
-| `--json` flag on list/search/show | HIGH | LOW | P1 |
-| Exit codes + stderr/stdout split | HIGH | LOW (POSIX plumbing) | P1 |
-| `storcat completion` | MEDIUM | LOW (Cobra built-in) | P1 |
-| `--depth N` on show | MEDIUM | LOW | P2 |
-| Auto-TTY detection (table vs JSON) | MEDIUM | MEDIUM | P2 |
-| Colorized `show` tree output | LOW | MEDIUM | P3 |
-| `--no-color` + `NO_COLOR` | LOW | LOW (only if P3 added) | P3 |
+| release.yml triggered on GH release published | HIGH | LOW | P1 |
+| macOS DMG (unsigned) | HIGH | MEDIUM | P1 |
+| Windows NSIS installer (unsigned) | HIGH | LOW | P1 |
+| Linux AppImage amd64 | HIGH | MEDIUM | P1 |
+| Linux .deb amd64 | MEDIUM | MEDIUM | P1 |
+| SHA256 checksums.txt | HIGH | LOW | P1 |
+| Homebrew cask auto-update | HIGH | MEDIUM | P1 |
+| WinGet manifests migrated to main repo | HIGH | LOW | P1 |
+| WinGet manifest commit on release | HIGH | LOW | P1 |
+| `winget-storcat` repo archived | MEDIUM | LOW | P1 |
+| Version consistency pre-flight check | MEDIUM | LOW | P1 |
+| Auto-PR to microsoft/winget-pkgs | MEDIUM | LOW | P2 |
+| Linux arm64 AppImage + .deb | MEDIUM | MEDIUM | P2 |
+| `workflow_dispatch` re-run trigger | LOW | LOW | P2 |
+| macOS code signing + notarization | HIGH | HIGH | P3 (own milestone) |
+| Windows Authenticode signing | HIGH | HIGH | P3 (own milestone) |
+| Linux RPM packaging | LOW | MEDIUM | P3 (on request) |
 
-**Priority key:** P1 = must have for v2.1.0 launch; P2 = should have, add when P1 done; P3 = nice to have, v2.1.x+
-
----
-
-## Competitor Feature Analysis
-
-| Feature | `tree` | `fd` / `rg` | `eza` | StorCat CLI approach |
-|---------|--------|-------------|-------|----------------------|
-| Output format | ASCII tree; `-J` for JSON | Plain lines; `--json` | Color table; `--json` | Human table default; `--json` flag on all output commands |
-| Color | Default on TTY; `-n` to disable | Default on TTY; `--no-color` | Default on TTY; `--no-color` | Default on TTY; `--no-color` + `NO_COLOR` env var |
-| Exit codes | 0 success, 1+ error | 0 match, 1 no-match, 2 error | 0/1/2 | 0 success, 1 runtime error, 2 usage/invalid args |
-| Shell completion | None | Built-in | Built-in | Via Cobra `completion` subcommand (bash/zsh/fish/pwsh) |
-| Depth control | `-L N` | N/A | `--level N` | `--depth N` on `storcat show` |
-| Piping | Plain text | Plain text | Plain text / JSON | JSON with `--json`; plain text default |
-| Stats summary | `--du` disk usage | N/A | `--total-size` | `storcat create` always prints fileCount + totalSize |
-| Help | `-h` / `--help` | `-h` / `--help` | `-h` / `--help` | Cobra auto-generates `-h` / `--help` per subcommand |
+**Priority key:**
+- P1: Must have for v2.2.0 launch
+- P2: Should have, add in v2.2.x
+- P3: Valuable but own milestone or deferred by demand
 
 ---
 
-## Output Format Specifications
+## Existing Infrastructure Notes
 
-Concrete output shapes for each command — informs implementation directly.
-
-### `storcat create` — human output (TTY default)
-```
-Created: My Project
-  JSON:  /path/to/my-project.json
-  HTML:  /path/to/my-project.html
-  Files: 1,234
-  Size:  45.2 MB
-```
-
-### `storcat create` — `--json` output (stdout)
-Marshals existing `CreateCatalogResult` struct directly:
-```json
-{
-  "jsonPath": "/path/to/my-project.json",
-  "htmlPath": "/path/to/my-project.html",
-  "fileCount": 1234,
-  "totalSize": 47399936
-}
-```
-
-### `storcat list <dir>` — human output (TTY default)
-```
-TITLE              FILENAME              MODIFIED
-My Project         my-project.json       2026-03-25
-Another Catalog    another.json          2026-03-20
-```
-
-### `storcat list <dir>` — `--json` output
-Marshals `[]*CatalogMetadata` directly — all fields already have `json:` tags.
-
-### `storcat search <term> <dir>` — human output (TTY default)
-```
-CATALOG          TYPE   PATH
-my-project       file   src/main.go
-my-project       file   src/app.go
-another          dir    build/output
-```
-
-### `storcat search <term> <dir>` — `--json` output
-Marshals `[]*SearchResult` directly — all fields already have `json:` tags.
-
-### `storcat show <catalog.json>` — tree output (default)
-```
-My Project  (1,234 files, 45.2 MB)
-├── src/
-│   ├── main.go  (12 KB)
-│   └── app.go   (8 KB)
-└── README.md    (2 KB)
-```
-
-### `storcat version` — output
-```
-storcat 2.1.0
-```
+| Existing Item | Impact on New Features |
+|---------------|------------------------|
+| `build.yml` — CI checks on push/PR | Keep as-is; new `release.yml` is a separate file; do not merge them |
+| `wails build` invocations in `scripts/` | Release workflow reuses the same `wails build` commands; no changes to build scripts |
+| `//go:embed wails.json` for version | `wails.json productVersion` must be bumped before tagging; pre-flight check enforces this |
+| macOS `darwin/universal` build on `macos-latest` | Continue using this runner and platform flag |
+| Windows build on `macos-latest` (cross-compile, no NSIS) | Move Windows build to `windows-latest` runner; NSIS tool requires Windows |
+| Linux build on `ubuntu-latest` | Continue using; add AppImage + .deb packaging steps after binary build |
+| `scottkw/homebrew-storcat` repo | Stays alive; auto-updated by pipeline; README updated to note it is auto-managed |
+| `scottkw/winget-storcat` repo | Manifests migrated to main repo; repo archived after first successful automated release |
 
 ---
 
 ## Sources
 
-- [Command Line Interface Guidelines (clig.dev)](https://clig.dev/) — exit codes, stdout/stderr separation, --json flag, color/TTY detection, piping conventions
-- [Cobra Shell Completion docs](https://cobra.dev/docs/how-to-guides/shell-completion/) — built-in bash/zsh/fish/powershell completion generation
-- [Modern Rust CLI Tools: eza, bat, fd, zoxide (32blog)](https://32blog.com/en/cli/cli-modern-rust-tools) — output format and flag conventions from reference tools
-- [Building CLI Apps in Go with Cobra & Viper (2025)](https://www.glukhov.org/post/2025/11/go-cli-applications-with-cobra-and-viper/) — Go-specific persistent flag patterns
-- [ripgrep manpage (Debian)](https://manpages.debian.org/testing/ripgrep/rg.1.en.html) — flag design patterns (--no-color, --json, --count)
-- [Understanding stdin/stdout: Building CLI Tools Like a Pro](https://dev.to/sudiip__17/understanding-stdinstdout-building-cli-tools-like-a-pro-2njk) — pipe conventions and isatty behavior
-- [tree manpage (mankier)](https://www.mankier.com/1/tree) — -J JSON flag, -L depth flag, tree output conventions
-- [no-color.org](https://no-color.org/) — NO_COLOR env var standard
+- [Wails Build GitHub Action (marketplace)](https://github.com/marketplace/actions/wails-build) — HIGH confidence
+- [Wails Action CI/CD (marketplace)](https://github.com/marketplace/actions/wails-action-ci-cd) — HIGH confidence
+- [WinGet Releaser action (vedantmgoyal9)](https://github.com/vedantmgoyal9/winget-releaser) — HIGH confidence
+- [microsoft/winget-create](https://github.com/microsoft/winget-create) — HIGH confidence
+- [Homebrew Bump Cask action (marketplace)](https://github.com/marketplace/actions/homebrew-bump-cask) — HIGH confidence
+- [garden-io/update-homebrew-action](https://github.com/garden-io/update-homebrew-action) — MEDIUM confidence
+- [NSHipster/update-homebrew-formula-action](https://github.com/NSHipster/update-homebrew-formula-action) — MEDIUM confidence
+- [create-dmg/create-dmg](https://github.com/create-dmg/create-dmg) — HIGH confidence
+- [AppImage-builder GitHub Actions guide](https://appimage-builder.readthedocs.io/en/latest/hosted-services/github-actions.html) — MEDIUM confidence
+- [GoReleaser GitHub Action](https://github.com/goreleaser/goreleaser-action) — HIGH confidence (evaluated and excluded: incompatible with Wails build pipeline)
+- [storcat-repo-consolidation.md](/Users/ken/dev/storcat/storcat-repo-consolidation.md) — project-internal context, HIGH confidence
 
 ---
 
-*Feature research for: StorCat v2.1.0 CLI subcommands*
-*Researched: 2026-03-26*
+*Feature research for: StorCat v2.2.0 CI/CD release pipeline + repo consolidation*
+*Researched: 2026-03-27*
