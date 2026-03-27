@@ -26,8 +26,8 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 Phase: All complete
 Plan: N/A
-Status: Milestone v2.2.0 shipped
-Last activity: 2026-03-27 - Completed quick task 260327-ncx: Fix title bar and version number
+Status: Milestone v2.2.1 shipped
+Last activity: 2026-03-27 - Completed quick task 260327-nh6: Bump version to 2.2.1 and trigger release
 
 ```
 Progress: 15 phases complete across 3 milestones (v2.0.0, v2.1.0, v2.2.0)
@@ -56,10 +56,11 @@ None.
 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
-| 260327-ncx | Fix title bar showing 'storcat-wails' instead of 'StorCat' and version 2.1.0→2.2.0 | 2026-03-27 | aa70dbce | [260327-ncx](./quick/260327-ncx-fix-title-bar-showing-storcat-wails-inst/) |
+| 260327-ncx | Fix title bar showing 'storcat-wails' instead of 'StorCat' and version 2.1.0->2.2.0 | 2026-03-27 | aa70dbce | [260327-ncx](./quick/260327-ncx-fix-title-bar-showing-storcat-wails-inst/) |
+| 260327-nh6 | Bump version to 2.2.1, delete buggy v2.2.0 release, push v2.2.1 tag to trigger release build | 2026-03-27 | 6035972a | [260327-nh6](./quick/260327-nh6-bump-version-to-2-2-1-push-bugfix-and-cr/) |
 
 ## Session Continuity
 
 Last session: 2026-03-27
-Stopped at: Milestone v2.2.0 archived
+Stopped at: Completed quick task 260327-nh6: Bump version to 2.2.1
 Resume file: None
