@@ -1,0 +1,60 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.1.1
+PackageLocale: en-US
+Publisher: Ken Scott
+PublisherUrl: https://github.com/scottkw
+PublisherSupportUrl: https://github.com/scottkw/storcat/issues
+PackageName: StorCat
+PackageUrl: https://github.com/scottkw/storcat
+License: MIT
+LicenseUrl: https://github.com/scottkw/storcat/blob/main/LICENSE
+ShortDescription: Directory Catalog Manager - Create, search, and browse directory catalogs
+Description: |-
+  StorCat is a modern Electron-based directory catalog management application that provides a clean, intuitive GUI interface for creating, searching, and browsing directory catalogs. Generate both JSON and HTML representations of directory structures for easy documentation and sharing.
+  
+  Features:
+  - Create comprehensive directory catalogs with detailed file information
+  - Fast full-text search across multiple catalog files
+  - Interactive catalog browser with modern table interface
+  - Dark/Light mode with complete theme support
+  - Professional table components with filtering, sorting, and pagination
+  - Cross-platform compatibility (Windows, macOS, Linux)
+  - 100% compatible with existing bash script catalog files
+Moniker: storcat
+Tags:
+- catalog
+- directory
+- file-manager
+- electron
+- search
+- documentation
+- json
+- html
+ReleaseNotes: |-
+  StorCat v1.1.1 - Minor Update
+  
+  ## Updates
+  - Updated project URL on Create Catalog welcome screen to point to official GitHub repository
+  - Enhanced user experience with direct access to project source and documentation
+  
+  ## Available Packages
+  - Windows: Portable executable and MSI installer (x64/ARM64)
+  - macOS: DMG installers for Intel and Apple Silicon 
+  - Linux: AppImage, DEB, RPM, and Snap packages (x64/ARM64)
+  
+  ## Installation
+  For the easiest installation experience:
+  - macOS: Use Homebrew with `brew install scottkw/storcat/storcat`
+  - Windows: Use winget with `winget install scottkw.StorCat`
+  - Linux: Download AppImage or package from GitHub releases
+ReleaseNotesUrl: https://github.com/scottkw/storcat/releases/tag/1.1.1
+Documentations:
+- DocumentLabel: User Guide
+  DocumentUrl: https://github.com/scottkw/storcat#readme
+- DocumentLabel: Build Instructions
+  DocumentUrl: https://github.com/scottkw/storcat#building-the-application
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

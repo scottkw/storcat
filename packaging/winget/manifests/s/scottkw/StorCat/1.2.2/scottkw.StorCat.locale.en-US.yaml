@@ -1,0 +1,181 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.2.2
+PackageLocale: en-US
+Publisher: Ken Scott
+PublisherUrl: https://github.com/scottkw
+PublisherSupportUrl: https://github.com/scottkw/storcat/issues
+PackageName: StorCat
+PackageUrl: https://github.com/scottkw/storcat
+License: MIT
+LicenseUrl: https://github.com/scottkw/storcat/blob/main/LICENSE
+ShortDescription: Directory Catalog Manager - Create, search, and browse directory catalogs
+Description: |-
+  StorCat is a modern Electron-based directory catalog management application that provides a clean, intuitive GUI interface for creating, searching, and browsing directory catalogs. Generate both JSON and HTML representations of directory structures for easy documentation and sharing.
+  
+  Features:
+  - Create comprehensive directory catalogs with detailed file information
+  - Fast full-text search across multiple catalog files
+  - Interactive catalog browser with modern table interface
+  - Dark/Light mode with complete theme support
+  - Professional table components with filtering, sorting, and pagination
+  - Cross-platform compatibility (Windows, macOS, Linux)
+  - 100% compatible with existing bash script catalog files
+Moniker: storcat
+Tags:
+- catalog
+- directory
+- file-manager
+- electron
+- search
+- documentation
+- json
+- html
+ReleaseNotes: |-
+  StorCat v1.2.2
+  
+  # StorCat 1.2.2 Release Notes\r
+\r
+**Release Date**: July 30, 2025  \r
+**Version**: 1.2.2  \r
+**Type**: Patch Release\r
+\r
+---\r
+\r
+## 🔐 Security & Distribution Improvements\r
+\r
+### Apple Notarization Support\r
+- **Full macOS Notarization**: StorCat DMG files are now completely notarized by Apple\r
+- **Zero Security Warnings**: Eliminates all security warnings when downloading and installing on macOS\r
+- **Seamless Installation**: Users can install directly without bypassing security settings\r
+- **Enhanced App Security**: Added hardened runtime support for improved application security\r
+- **Automated Process**: Notarization is now integrated into the build pipeline\r
+\r
+### Code Signing Enhancements\r
+- **Enhanced Security Compliance**: Updated to meet Apple's latest security requirements for app distribution\r
+- **Universal Architecture Support**: Both Intel (x64) and Apple Silicon (ARM64) builds are fully notarized\r
+- **Professional Distribution**: Meets enterprise-grade security standards for macOS deployment\r
+\r
+---\r
+\r
+## 🛠️ Technical Changes\r
+\r
+### Build System Improvements\r
+- **Hardened Runtime**: Enabled `hardenedRuntime: true` in electron-builder configuration\r
+- **Notarization Configuration**: Added automatic notarization with Team ID integration\r
+- **Enhanced Entitlements**: Optimized entitlements file for notarization compatibility\r
+- **Build Reliability**: Improved build process stability for multi-architecture releases\r
+\r
+### Distribution Pipeline\r
+- **Automated Notarization**: Build process now automatically submits to Apple for notarization\r
+- **Timestamping Integration**: Proper timestamp server integration for code signing\r
+- **Apple Developer Integration**: Full integration with Apple Developer account services\r
+\r
+---\r
+\r
+## 🎯 User Experience Impact\r
+\r
+### Before 1.2.2\r
+- ⚠️ macOS showed security warnings when installing StorCat\r
+- ⚠️ Users had to manually bypass Gatekeeper security settings\r
+- ⚠️ Corporate environments might block unsigned applications\r
+- ⚠️ Installation required additional steps and security overrides\r
+\r
+### After 1.2.2\r
+- ✅ Clean, warning-free installation on all macOS versions\r
+- ✅ No security prompts or manual overrides required\r
+- ✅ Enterprise-friendly distribution for corporate environments\r
+- ✅ Professional app store quality installation experience\r
+- ✅ Improved user trust and adoption rates\r
+\r
+---\r
+\r
+## 📋 Compatibility\r
+\r
+### System Requirements\r
+- **Operating Systems**: Windows 10+, macOS 10.14+, Linux (Ubuntu 18.04+)\r
+- **Memory**: 4GB RAM minimum, 8GB recommended\r
+- **Disk Space**: 200MB for application installation\r
+- **macOS Security**: Compatible with all Gatekeeper security levels\r
+\r
+### File Compatibility\r
+- **100% Backward Compatible**: All existing catalog files work without changes\r
+- **Cross-Version Compatible**: Catalogs created in 1.2.2 work with previous versions\r
+- **No Breaking Changes**: All existing functionality preserved\r
+- **Security Enhanced**: Same functionality with improved security posture\r
+\r
+---\r
+\r
+## 🔄 Upgrade Information\r
+\r
+### From 1.2.1 to 1.2.2\r
+- **Automatic**: No user action required\r
+- **Settings Preserved**: All themes, layout preferences, and settings maintained\r
+- **Data Integrity**: No changes to catalog file formats or storage\r
+- **Security Enhanced**: Improved installation experience only\r
+\r
+### Installation Methods\r
+- **Homebrew (macOS)**: `brew upgrade storcat` - now with notarized binaries!\r
+- **WinGet (Windows)**: `winget upgrade scottkw.StorCat`\r
+- **Manual Download**: Download notarized DMG from [GitHub Releases](https://github.com/scottkw/storcat/releases/tag/1.2.2)\r
+\r
+---\r
+\r
+## 🔒 Security Enhancements\r
+\r
+### macOS Security Integration\r
+- **Apple Notarization**: Full compliance with Apple's notarization requirements\r
+- **Malware Scanning**: Automatic malware scanning by Apple's security systems\r
+- **Digital Signatures**: Enhanced digital signature validation\r
+- **Gatekeeper Compatible**: Full compatibility with macOS Gatekeeper security\r
+\r
+### Enterprise Benefits\r
+- **Corporate Deployment**: Suitable for enterprise and corporate environments\r
+- **Security Policy Compliance**: Meets strict organizational security requirements\r
+- **No Manual Overrides**: Eliminates need for IT security exceptions\r
+- **Professional Distribution**: Enterprise-grade application distribution\r
+\r
+---\r
+\r
+## 🚀 What's Next\r
+\r
+### Planned for v1.3.0\r
+- **Custom Themes**: User-defined color schemes and theme creation tools\r
+- **Advanced Search**: Enhanced search capabilities with filters and regex support\r
+- **Export Features**: Additional export formats and sharing options\r
+- **Performance Optimizations**: Improved handling of large directory catalogs\r
+\r
+---\r
+\r
+## 📞 Support & Resources\r
+\r
+- **GitHub Repository**: [scottkw/storcat](https://github.com/scottkw/storcat)\r
+- **Release Notes**: [Version 1.2.2](https://github.com/scottkw/storcat/releases/tag/1.2.2)\r
+- **Wiki & Documentation**: [StorCat Wiki](https://github.com/scottkw/storcat/wiki)\r
+- **Issue Tracker**: [Report Bugs](https://github.com/scottkw/storcat/issues)\r
+\r
+---\r
+\r
+## 📈 Build Information\r
+\r
+- **Apple Notarized**: ✅ Full notarization for both Intel and Apple Silicon builds\r
+- **Code Signed**: ✅ Enhanced code signing with hardened runtime\r
+- **Cross-Platform**: ✅ Windows, macOS, and Linux distributions\r
+- **Security**: ✅ Zero security warnings on macOS installation\r
+- **Quality**: ✅ Enterprise-grade distribution standards\r
+\r
+---\r
+\r
+**Download StorCat 1.2.2** from the [GitHub Releases](https://github.com/scottkw/storcat/releases/tag/1.2.2) page.\r
+\r
+*Enjoy secure, warning-free installation on macOS!* 🔐✨
+ReleaseNotesUrl: https://github.com/scottkw/storcat/releases/tag/1.2.2
+Documentations:
+- DocumentLabel: User Guide
+  DocumentUrl: https://github.com/scottkw/storcat#readme
+- DocumentLabel: Build Instructions
+  DocumentUrl: https://github.com/scottkw/storcat#building-the-application
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

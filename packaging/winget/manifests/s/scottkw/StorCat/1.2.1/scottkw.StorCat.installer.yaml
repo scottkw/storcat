@@ -1,0 +1,15 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.2.1
+InstallerType: portable
+Commands:
+- storcat
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/scottkw/storcat/releases/download/1.2.1/StorCat.1.2.1.exe
+  InstallerSha256: 📥 Downloading: https://github.com/scottkw/storcat/releases/download/1.2.1/StorCat.1.2.1.exe
+8feb85d15fff5c6b23d69e358c02c36acdc293a17e738d07d31e51eaed7088ab
+ManifestType: installer
+ManifestVersion: 1.6.0

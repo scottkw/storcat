@@ -1,0 +1,57 @@
+# Created using winget-create 1.6.0.0
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 1.1.2
+PackageLocale: en-US
+Publisher: Ken Scott
+PublisherUrl: https://github.com/scottkw
+PublisherSupportUrl: https://github.com/scottkw/storcat/issues
+PackageName: StorCat
+PackageUrl: https://github.com/scottkw/storcat
+License: MIT
+LicenseUrl: https://github.com/scottkw/storcat/blob/main/LICENSE
+ShortDescription: Directory Catalog Manager - Create, search, and browse directory catalogs
+Description: |-
+  StorCat is a modern Electron-based directory catalog management application that provides a clean, intuitive GUI interface for creating, searching, and browsing directory catalogs. Generate both JSON and HTML representations of directory structures for easy documentation and sharing.
+  
+  Features:
+  - Create comprehensive directory catalogs with detailed file information
+  - Fast full-text search across multiple catalog files
+  - Interactive catalog browser with modern table interface
+  - Dark/Light mode with complete theme support
+  - Professional table components with filtering, sorting, and pagination
+  - Cross-platform compatibility (Windows, macOS, Linux)
+  - 100% compatible with existing bash script catalog files
+Moniker: storcat
+Tags:
+- catalog
+- directory
+- file-manager
+- electron
+- search
+- documentation
+- json
+- html
+ReleaseNotes: |-
+  StorCat v1.1.2
+  
+  # StorCat v1.1.2 Release Notes\r
+\r
+**Release Date:** July 27, 2025  \r
+**Version:** 1.1.2  \r
+**Build:** Bug fix release for macOS Apple Silicon\r
+\r
+---\r
+\r
+## 🐛 Bug Fixes\r
+\r
+### **🍎 Fixed macOS Apple Silicon \
+ReleaseNotesUrl: https://github.com/scottkw/storcat/releases/tag/1.1.2
+Documentations:
+- DocumentLabel: User Guide
+  DocumentUrl: https://github.com/scottkw/storcat#readme
+- DocumentLabel: Build Instructions
+  DocumentUrl: https://github.com/scottkw/storcat#building-the-application
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0
