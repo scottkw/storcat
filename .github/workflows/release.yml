@@ -156,8 +156,21 @@ jobs:
       - name: Build Windows with NSIS installer
         run: wails build -clean -platform windows/amd64 -windowsconsole -nsis
 
+      - name: Check signing credentials
+        id: signing
+        shell: bash
+        env:
+          ES_USERNAME: ${{ secrets.ES_USERNAME }}
+        run: |
+          if [ -n "$ES_USERNAME" ]; then
+            echo "available=true" >> $GITHUB_OUTPUT
+          else
+            echo "available=false" >> $GITHUB_OUTPUT
+            echo "::warning::Windows signing skipped — eSigner secrets not configured"
+          fi
+
       - name: Sign portable exe
-        if: ${{ secrets.ES_USERNAME != '' }}
+        if: steps.signing.outputs.available == 'true'
         uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
         with:
           command: sign
@@ -170,7 +183,7 @@ jobs:
           override: true
 
       - name: Sign NSIS installer
-        if: ${{ secrets.ES_USERNAME != '' }}
+        if: steps.signing.outputs.available == 'true'
         uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
         with:
           command: sign
@@ -183,7 +196,7 @@ jobs:
           override: true
 
       - name: Verify Authenticode signatures
-        if: ${{ secrets.ES_USERNAME != '' }}
+        if: steps.signing.outputs.available == 'true'
         shell: cmd
         run: |
           signtool verify /pa /v build\bin\StorCat.exe
