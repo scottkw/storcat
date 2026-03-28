@@ -122,6 +122,21 @@ Plans:
 Plans:
 - [x] 20-01-PLAN.md — Create custom NSIS installer with EnVar PATH registration and update WinGet template
 
+### Phase 21: Auto version and auto distribution
+**Goal**: Automate the full release pipeline so that merging a release-please PR is the only manual step — conventional commits drive version bumps, tag creation, artifact builds, publishing, and distribution to Homebrew + WinGet
+**Depends on:** Phase 20
+**Requirements**: AUTOREL-01, AUTOREL-02, AUTOREL-03, AUTOREL-04, AUTOREL-05
+**Success Criteria** (what must be TRUE):
+  1. release-please config files exist and target wails.json productVersion as the single source of truth
+  2. release-please workflow runs on pushes to main and maintains a release PR with CHANGELOG
+  3. Merging the release PR creates a git tag and GitHub release automatically
+  4. release.yml uploads build artifacts to the existing release and publishes it (draft: false)
+  5. distribute.yml fires automatically on release published — no manual publish step
+**Plans**: 1 plan
+
+Plans:
+- [ ] 21-01-PLAN.md — Create release-please config/workflow and refactor release.yml to upload-and-publish
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -146,3 +161,4 @@ Plans:
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
+| 21. Auto version and auto distribution | v2.3.0 | 0/1 | Planning    | — |
