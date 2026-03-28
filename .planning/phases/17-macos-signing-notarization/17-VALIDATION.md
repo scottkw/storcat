@@ -1,9 +1,9 @@
 ---
 phase: 17
 slug: macos-signing-notarization
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-27
 ---
 
@@ -38,9 +38,9 @@ created: 2026-03-27
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 17-01-T1 | 01 | 1 | SIGN-05 | unit | `plutil -lint build/darwin/entitlements.plist && test "$(grep -c 'com.apple.security' build/darwin/entitlements.plist)" -eq 4` | ❌ W0 | ⬜ pending |
-| 17-01-T2 | 01 | 1 | SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-06 | integration | `grep -q "apple-actions/import-codesign-certs" .github/workflows/release.yml && grep -q "notarytool" .github/workflows/release.yml && grep -q "stapler staple" .github/workflows/release.yml && grep -q "spctl --assess" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 17-01-T3 | 01 | 1 | ALL | checkpoint | User verifies APPLE_ID secret set, pipeline passes | N/A | ⬜ pending |
+| 17-01-T1 | 01 | 1 | SIGN-05 | unit | `plutil -lint build/darwin/entitlements.plist && test "$(grep -c 'com.apple.security' build/darwin/entitlements.plist)" -eq 4` | ✅ | ✅ green |
+| 17-01-T2 | 01 | 1 | SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-06 | integration | `grep -q "apple-actions/import-codesign-certs" .github/workflows/release.yml && grep -q "environment: release" .github/workflows/release.yml && grep -q "notarytool" .github/workflows/release.yml && grep -q "stapler staple" .github/workflows/release.yml && grep -q "spctl --assess" .github/workflows/release.yml && grep -q "entitlements.plist" .github/workflows/release.yml` | ✅ | ✅ green |
+| 17-01-T3 | 01 | 1 | ALL | checkpoint | User verifies APPLE_ID secret set, pipeline passes (CI run 23677752782) | ✅ | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -48,8 +48,8 @@ created: 2026-03-27
 
 ## Wave 0 Requirements
 
-- [ ] `build/darwin/entitlements.plist` — entitlements file for hardened runtime
-- [ ] APPLE_ID secret or hardcoded email — required for notarytool credentials
+- [x] `build/darwin/entitlements.plist` — entitlements file for hardened runtime
+- [x] APPLE_ID secret or hardcoded email — required for notarytool credentials
 
 *Existing CI infrastructure (release.yml) covers workflow scaffolding.*
 
@@ -66,11 +66,23 @@ created: 2026-03-27
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 600s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 600s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
+
+---
+
+## Validation Audit 2026-03-28
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 3 tasks pass automated verification. CI run 23677752782 confirmed full pipeline green. No test gaps to fill — phase is infrastructure (YAML + plist), verified via shell commands and live CI execution.
