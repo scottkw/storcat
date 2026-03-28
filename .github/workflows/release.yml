@@ -148,6 +148,7 @@ jobs:
         run: wails build -clean -platform windows/amd64 -windowsconsole -nsis
 
       - name: Sign portable exe
+        if: ${{ secrets.ES_USERNAME != '' }}
         uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
         with:
           command: sign
@@ -160,6 +161,7 @@ jobs:
           override: true
 
       - name: Sign NSIS installer
+        if: ${{ secrets.ES_USERNAME != '' }}
         uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
         with:
           command: sign
@@ -172,6 +174,7 @@ jobs:
           override: true
 
       - name: Verify Authenticode signatures
+        if: ${{ secrets.ES_USERNAME != '' }}
         shell: cmd
         run: |
           signtool verify /pa /v build\bin\StorCat.exe
