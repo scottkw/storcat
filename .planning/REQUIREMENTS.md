@@ -13,8 +13,8 @@ Requirements for Code Signing & Package Manager CLI milestone. Each maps to road
 - [ ] **CRED-02**: User can export Developer ID cert as .p12 and store base64-encoded in GitHub secret
 - [ ] **CRED-03**: User can locate or acquire Windows OV code signing certificate (RSA, not ECDSA)
 - [ ] **CRED-04**: User can store Windows cert as base64-encoded PFX in GitHub secret
-- [ ] **CRED-05**: All 9 signing secrets stored in GitHub Actions `release` environment with protection rules
-- [ ] **CRED-06**: Credential rotation runbook documents what to do when certs expire
+- [x] **CRED-05**: All 9 signing secrets stored in GitHub Actions `release` environment with protection rules
+- [x] **CRED-06**: Credential rotation runbook documents what to do when certs expire
 
 ### macOS Signing
 
@@ -72,8 +72,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRED-02 | Phase 16 | Pending |
 | CRED-03 | Phase 16 | Pending |
 | CRED-04 | Phase 16 | Pending |
-| CRED-05 | Phase 16 | Pending |
-| CRED-06 | Phase 16 | Pending |
+| CRED-05 | Phase 16 | Complete |
+| CRED-06 | Phase 16 | Complete |
 | SIGN-01 | Phase 17 | Pending |
 | SIGN-02 | Phase 17 | Pending |
 | SIGN-03 | Phase 17 | Pending |

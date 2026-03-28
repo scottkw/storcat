@@ -67,7 +67,7 @@
   6. Credential rotation runbook document exists describing what to do when each cert expires
 **Plans**: 3 plans
 Plans:
-- [ ] 16-01-PLAN.md — Create GitHub release environment and credential rotation runbook
+- [x] 16-01-PLAN.md — Create GitHub release environment and credential rotation runbook
 - [ ] 16-02-PLAN.md — Apple certificate verification, export, and secret storage
 - [ ] 16-03-PLAN.md — Windows signing vendor decision, enrollment, and secret storage
 
@@ -133,7 +133,7 @@ Plans:
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
-| 16. Secrets & Certificate Procurement | v2.3.0 | 0/3 | Not started | - |
+| 16. Secrets & Certificate Procurement | v2.3.0 | 1/3 | In Progress|  |
 | 17. macOS Signing & Notarization | v2.3.0 | 0/TBD | Not started | - |
 | 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
