@@ -1,0 +1,14 @@
+{
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "extra-files": [
+        {
+          "type": "json",
+          "path": "wails.json",
+          "jsonpath": "$.info.productVersion"
+        }
+      ]
+    }
+  }
+}
