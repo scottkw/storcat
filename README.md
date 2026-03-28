@@ -1,4 +1,4 @@
-# StorCat v2.2.1
+# StorCat v2.3.0
 
 **Storage Media Cataloging Tool**
 
@@ -147,14 +147,25 @@ All installers and raw binaries are available on the [Releases](https://github.c
 
 ### CLI Access
 
-StorCat is a single binary for both GUI and CLI. After installing:
+StorCat is a single binary for both GUI and CLI. Package manager installs put `storcat` on PATH automatically:
 
+```bash
+# macOS (Homebrew) — storcat is on PATH immediately after install
+brew tap scottkw/storcat
+brew install --cask storcat
+storcat version  # works in any new terminal
+
+# Windows (WinGet) — NSIS installer adds storcat to PATH
+winget install scottkw.StorCat
+storcat version  # works in any new terminal
+
+# Linux — the .deb installs to /usr/bin/StorCat
+```
+
+If you installed from a DMG or raw binary instead:
 ```bash
 # macOS — symlink the app binary
 sudo ln -sf /Applications/StorCat.app/Contents/MacOS/StorCat /usr/local/bin/storcat
-
-# Windows — the installer adds StorCat to PATH
-# Linux — the .deb installs to /usr/bin/StorCat
 ```
 
 ## Building from Source
@@ -426,6 +437,16 @@ Contributions are welcome! Please:
 - Add tests for new features
 - Update documentation
 
+## Code Signing
+
+**macOS**: StorCat releases are signed with Developer ID, notarized by Apple, and stapled. Gatekeeper accepts the DMG without prompting.
+
+**Windows**: Authenticode signing pipeline is built and ready — will be activated once signing credentials are provisioned.
+
+## Releases
+
+StorCat uses [release-please](https://github.com/googleapis/release-please) for automated releases. Conventional commits on `main` automatically maintain a release PR. Merging creates a git tag and GitHub release, triggers builds on all platforms, and publishes to Homebrew and WinGet.
+
 ## Migration from v1.x (Electron)
 
 For those upgrading from StorCat v1.x (Electron):
@@ -434,6 +455,8 @@ For those upgrading from StorCat v1.x (Electron):
 - **Backend**: Complete rewrite from Node.js to Go — all catalog operations are native Go
 - **Framework**: Electron replaced with Wails v2 — uses system webview instead of bundled Chromium
 - **CLI**: Full command-line interface in the same binary (v2.1.0) — replaces the legacy `sdcat` bash scripts
+- **Code Signing**: macOS releases are Developer ID signed and notarized (v2.3.0)
+- **Release Automation**: Conventional commits drive version bumps, builds, and distribution (v2.3.0)
 - **Table**: Sticky headers with per-column filtering, sorting, and resizing work correctly
 - **API**: Direct Wails function calls instead of Electron IPC, with `{success,...}` envelope pattern
 - **Performance**: 93% smaller, 80% faster startup, 5x faster search
@@ -468,4 +491,4 @@ Copyright © 2024-2026 Ken Scott
 
 ---
 
-**StorCat v2.2.1** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
+**StorCat v2.3.0** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
