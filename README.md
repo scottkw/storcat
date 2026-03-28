@@ -445,7 +445,9 @@ Contributions are welcome! Please:
 
 ## Releases
 
-StorCat uses [release-please](https://github.com/googleapis/release-please) for automated releases. Conventional commits on `main` automatically maintain a release PR. Merging creates a git tag and GitHub release, triggers builds on all platforms, and publishes to Homebrew and WinGet.
+StorCat uses [release-please](https://github.com/googleapis/release-please) for automated releases. Conventional commits on `main` automatically maintain a release PR. Merging the PR creates a git tag, builds all platforms, publishes the release, and distributes to Homebrew and WinGet — fully automated.
+
+See [docs/release-pipeline.md](docs/release-pipeline.md) for the full pipeline documentation, code signing details, secrets configuration, and manual trigger instructions.
 
 ## Migration from v1.x (Electron)
 
