@@ -1,9 +1,9 @@
 # Pitfalls Research
 
-**Domain:** CI/CD release pipeline, cross-platform packaging, and repo consolidation for a Go/Wails desktop app
-**Project:** StorCat v2.2.0
+**Domain:** macOS/Windows code signing, notarization, and package manager CLI PATH setup for Go/Wails desktop app
+**Project:** StorCat v2.3.0
 **Researched:** 2026-03-27
-**Confidence:** HIGH (verified against official Wails docs, GitHub Actions docs, Homebrew docs, and WinGet sources)
+**Confidence:** HIGH (verified against Apple official docs, Wails signing guide, GitHub Actions docs, Homebrew Cask Cookbook, multiple community post-mortems)
 
 ---
 
@@ -11,392 +11,362 @@
 
 ---
 
-### Pitfall 1: NSIS Installer Requires a Native Windows Runner — No Cross-Compilation
+### Pitfall 1: macOS Codesign Hangs in Headless CI Without Keychain ACL Setup
 
 **What goes wrong:**
-`wails build -nsis` silently fails or errors with `ERROR: cannot build nsis installer - no windows targets` when run on macOS or Linux runners, even when `-platform windows/amd64` is specified. You get an `.exe` without an installer, or nothing at all. The failure mode is inconsistent — sometimes it just skips the NSIS step silently.
+`codesign` blocks waiting for a UI password dialog that never appears in GitHub Actions. The CI job hangs at the signing step until the job timeout kills it. There is no error — the step just never completes. This is the single most common macOS signing failure mode.
 
 **Why it happens:**
-The Wails NSIS flag requires NSIS to be installed locally AND requires the build to be executing on a Windows host. Cross-compilation of the NSIS installer from Linux/macOS is not supported. The `-nsis` flag is effectively a "run NSIS packager" instruction, not a "build NSIS installer format" instruction.
+macOS requires user confirmation before a private key can be used for signing. In a headless environment with no UI, the dialog never fires, and `codesign` waits indefinitely. Simply importing the certificate into a keychain is insufficient — the keychain must also be unlocked and the codesign tool must be explicitly added to the key partition list.
 
 **How to avoid:**
-Always run Windows installer builds (`-nsis`) on `windows-latest` GitHub Actions runner. Use a matrix strategy:
-```yaml
-strategy:
-  matrix:
-    include:
-      - os: macos-latest
-        platform: darwin/universal
-      - os: windows-latest
-        platform: windows/amd64
-        nsis: true
-      - os: ubuntu-latest
-        platform: linux/amd64
-```
-On the Windows job, add `-nsis` to the wails build command. On other jobs, omit it.
-
-**Warning signs:**
-- Single-runner workflow (e.g., ubuntu-only) building "all platforms"
-- NSIS step produces no `.exe_installer` file, only the raw `.exe`
-- Workflow "succeeds" but release assets are missing the MSI/NSIS file
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Lock down runner-per-platform matrix before implementing packaging steps.
-
----
-
-### Pitfall 2: macOS Universal Binary Cannot Be Built on Non-macOS Runners
-
-**What goes wrong:**
-Running `wails build -platform darwin/universal` on a Linux or Windows runner produces a build failure because CGO for Darwin requires Apple's Xcode toolchain. There is no supported cross-compilation path to macOS. Wails will skip the darwin target with a warning: `WARNING Crosscompiling to Mac not currently supported`.
-
-**Why it happens:**
-Wails depends on Cocoa/WebKit frameworks that require the macOS SDK. CGO binds to system libraries at build time. GitHub's hosted Linux/Windows runners do not include the macOS SDK.
-
-**How to avoid:**
-Always build macOS artifacts on `macos-latest`. The `macos-latest` runner is currently arm64 (Apple Silicon). Building `darwin/universal` on an arm64 runner requires the Intel cross-compilation toolchain — verify the runner image includes it. If universal builds fail on `macos-latest`, pin to `macos-13` (last Intel runner) or use `macos-latest-xlarge` (M1, paid).
-
-Also note: `macos-14` and newer are arm64-only. `macos-13` is the last x86_64 runner. For universal binaries (combining arm64+x86), the runner must be able to compile for both architectures.
-
-**Warning signs:**
-- macOS build step on ubuntu/windows runner
-- `darwin/universal` flag used without a macOS runner
-- Workflow matrix sends all platforms to a single Linux runner
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Verify runner selection in the matrix before any build work.
-
----
-
-### Pitfall 3: Linux WebKit Version Mismatch on Ubuntu 24.04+ Runners
-
-**What goes wrong:**
-On Ubuntu 24.04 (which `ubuntu-latest` now resolves to as of 2024-2025), `libwebkit2gtk-4.0-dev` is removed. The standard Wails build command fails with `libwebkit not found`. AppImage bundles may also have runtime failures where `WebKitNetworkProcess` cannot be found.
-
-**Why it happens:**
-Ubuntu 24.04 ships `libwebkit2gtk-4.1` (GTK4 variant), dropping the GTK3 `4.0` version. Wails v2 defaults to `4.0`. If the wails-build-action or your manual setup does not account for this, the build fails.
-
-**How to avoid:**
-Option A — Use `ubuntu-22.04` runner explicitly (still supported, has 4.0):
-```yaml
-- os: ubuntu-22.04
-  platform: linux/amd64
-```
-
-Option B — On Ubuntu 24.04, install `libwebkit2gtk-4.1-dev` and add the build tag:
+After importing the certificate, run all three of these commands in sequence:
 ```bash
-sudo apt-get install libwebkit2gtk-4.1-dev
-wails build -tags webkit2_41
+security create-keychain -p "$CI_KEYCHAIN_PWD" build.keychain
+security default-keychain -s build.keychain
+security unlock-keychain -p "$CI_KEYCHAIN_PWD" build.keychain
+security import certificate.p12 -k build.keychain -P "$MACOS_CERT_PWD" -T /usr/bin/codesign
+security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$CI_KEYCHAIN_PWD" build.keychain
 ```
 
-Option C — Use the community `wails-build-action` which handles the tag detection automatically on Ubuntu 24.04.
+The `set-key-partition-list` step is the one most often omitted. It grants codesign access without a UI prompt. Use `apple-actions/import-codesign-certs` action as a verified shortcut for this sequence.
 
 **Warning signs:**
-- CI failure mentioning `libwebkit` not found
-- `ubuntu-latest` pinned without checking current version (it changed in 2024)
-- AppImage builds succeed on CI but fail at runtime with `WebKitNetworkProcess: No such file or directory`
+- Signing step runs for 10+ minutes with no output
+- Job times out at the codesign step
+- No error message — just silence, then timeout
+- `security find-identity` step would show the cert, but codesign still hangs
 
-**Phase to address:** Phase 1 (CI workflow scaffolding). Lock Ubuntu version or add webkit2_41 handling before any Linux build work.
+**Phase to address:** Phase 1 (macOS signing setup). This must be the very first thing verified before any other signing steps are attempted.
 
 ---
 
-### Pitfall 4: Parallel Jobs Race-Condition on Release Asset Upload
+### Pitfall 2: Wrong Signing Order — Sign App Bundle Before Creating DMG, Not After
 
 **What goes wrong:**
-When macOS, Windows, and Linux jobs all run in parallel and each tries to create the GitHub release and upload its assets independently, you get "Release already exists" errors on 2 of the 3 jobs. The result is a partial release with some assets missing, no clear error surfaced, and potential draft releases left behind.
+The DMG is created first, then the code signing step tries to sign the `.app` inside the already-mounted or packaged DMG. The app is signed but the signature is immediately invalidated when the DMG is re-assembled. Notarization then fails with "The signature is invalid" or "The bundle's signature indicates modified/obsolete code."
 
 **Why it happens:**
-GitHub's release creation API is not idempotent across concurrent requests for the same tag. When three runners hit `gh release create v2.2.0` simultaneously, two fail. `softprops/action-gh-release` has retry logic but can still produce duplicate draft releases when the repository has many existing releases.
+Developers copy the existing DMG creation step from the current workflow (which runs after build) and insert signing before it, but after build artifacts are already staged. Any modification to the app bundle after signing — including copying it into a DMG — breaks the signature.
+
+The correct sequence is: sign app bundle → create DMG from signed app → notarize the DMG → staple the notarization ticket to the DMG.
 
 **How to avoid:**
-Use a fan-in pattern:
-1. Each platform job runs its build and uploads artifacts using `actions/upload-artifact`
-2. A final `release` job depends on all platform jobs (`needs: [build-macos, build-windows, build-linux]`)
-3. The release job downloads all artifacts and creates the release once
+Structure the macOS build job steps in this exact order:
+1. `wails build -platform darwin/universal`
+2. `codesign` the `.app` bundle (with `--options runtime --entitlements`)
+3. `hdiutil create` the DMG from the signed `.app`
+4. `xcrun notarytool submit` the DMG (not the `.app`)
+5. `xcrun stapler staple` the DMG
 
-```yaml
-release:
-  needs: [build-macos, build-windows, build-linux]
-  runs-on: ubuntu-latest
-  steps:
-    - uses: actions/download-artifact@v4
-    - uses: softprops/action-gh-release@v2
-      with:
-        files: |
-          artifacts/**/*
-```
+Never staple or notarize the `.app` directly — only ZIP, PKG, and DMG containers are accepted by the notarization service.
 
 **Warning signs:**
-- Three separate jobs each using `softprops/action-gh-release` independently
-- Release has assets from only 1-2 platforms despite all jobs succeeding
-- "Release already exists" or "tag already has a release" in job logs
+- Notarization fails with "invalid signature" after signing was reported as successful
+- DMG creation step appears before codesign step in workflow YAML
+- Signing step targets the binary inside the bundle (`Contents/MacOS/StorCat`) rather than the `.app` bundle root
 
-**Phase to address:** Phase 1 (CI workflow scaffolding). The fan-in pattern must be the baseline design; it cannot be bolted on later.
+**Phase to address:** Phase 1 (macOS signing setup). Step ordering must be locked in before the first signing run.
 
 ---
 
-### Pitfall 5: Homebrew SHA256 Computed Before GitHub CDN Propagates the Release Asset
+### Pitfall 3: Missing Entitlements Break Wails Webview at Runtime
 
 **What goes wrong:**
-The Homebrew auto-update step runs immediately after `gh release create` and computes the SHA256 of the downloaded asset. If the GitHub CDN has not fully propagated the new release (which takes 30-120 seconds), `curl` silently returns the previous release's asset or a 404, producing a wrong SHA256. The Homebrew formula is committed with an incorrect checksum, breaking `brew install storcat` for all users.
+The app is signed with `--options runtime` (hardened runtime, required for notarization) but without entitlements. At runtime, the Wails WebView fails to load — either a blank window, crash on launch, or network requests blocked. The app passes notarization but is broken for users.
 
 **Why it happens:**
-GitHub's release asset delivery uses a CDN. Immediately after a release is published, some CDN edge nodes may not yet have the new file. The `curl` download succeeds (200 OK) but returns stale content. This is particularly common when both the release and the Homebrew update happen in the same workflow job without a delay.
+Apple's hardened runtime disables JIT compilation, dynamic code loading, and certain memory features by default. The Wails WebView (based on WKWebView) requires `com.apple.security.cs.allow-jit` and often `com.apple.security.cs.allow-unsigned-executable-memory` to function. Without these entitlements in the codesign invocation, the hardened runtime blocks the WebView at launch.
+
+StorCat already has entitlements from its Electron era. These must be ported to the new Go/Wails signing step.
 
 **How to avoid:**
-Add an explicit wait between release publication and checksum computation:
-```yaml
-- name: Wait for release CDN propagation
-  run: sleep 60
-
-- name: Update Homebrew formula
-  # Now compute sha256 from the release URL
+Create an `entitlements.plist` with the minimum required permissions for Wails:
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>
 ```
 
-Alternatively, compute the SHA256 locally from the built artifact before uploading to GitHub, then pass it to the Homebrew update step as a workflow variable — no CDN download required.
+Pass to codesign: `codesign --deep --force --options runtime --entitlements entitlements.plist --sign "Developer ID Application: ..." StorCat.app`
 
 **Warning signs:**
-- Homebrew update step runs in the same job immediately after `gh release create`
-- `brew install storcat` fails with SHA256 mismatch shortly after release
-- Checksum mismatch reports come from users but your CI shows green
+- App is notarized but shows blank window or crashes on first launch
+- Console.app shows `code signing` or `AMFI` denials at launch
+- Signing works but Wails runtime fails to initialize WebView
+- Testing is done with ad-hoc signing (`--sign -`) which bypasses the hardened runtime
 
-**Phase to address:** Phase 3 (Homebrew automation). Build SHA pre-computation into the release job; never re-download from GitHub to get the hash.
+**Phase to address:** Phase 1 (macOS signing setup). Test with hardened runtime signing locally before CI; don't discover this in production.
 
 ---
 
-### Pitfall 6: WinGet Manifest PRs Require a Classic PAT — Fine-Grained Tokens Break
+### Pitfall 4: Notarization Timeout — Using `--wait` Indefinitely
 
 **What goes wrong:**
-WinGet automation (Komac, winget-releaser) requires a Personal Access Token with `public_repo` scope on the `microsoft/winget-pkgs` repository. Fine-grained PATs (the newer, more secure option) cannot create pull requests to external repositories. The action silently fails or produces a cryptic "403 Forbidden" when a fine-grained PAT is used.
+`xcrun notarytool submit --wait` hangs for 30-90 minutes (or indefinitely) in CI. Apple's notarization service is occasionally slow. The GitHub Actions job timeout kills it and the release fails. The submission may have actually succeeded — there's just no way to know from the timed-out output.
 
 **Why it happens:**
-The `winget-pkgs` repository uses a GitHub App and PR workflow that requires classic PAT `public_repo` scope. Fine-grained PATs scoped to specific repos do not have cross-repo PR creation rights by design.
+`--wait` polls until Apple responds. Apple's service SLA is undefined and can spike during high-load periods. Large DMGs (StorCat universal DMG includes both arm64 and x86_64 binaries plus the Wails frontend) take longer to process. Combining large file size with `--wait` in a 6-hour CI job creates a silent reliability problem.
 
 **How to avoid:**
-Create a classic PAT with `public_repo` scope. Store as `WINGET_TOKEN` repository secret. Use `winget-releaser` or Komac action with this token:
+Use `--wait` with a reasonable timeout (`--timeout 30m`) to get a clean failure rather than a silent hang, then poll for the result:
+```bash
+xcrun notarytool submit StorCat.dmg \
+  --apple-id "$APPLE_ID" \
+  --team-id "$APPLE_TEAM_ID" \
+  --password "$APPLE_APP_PASSWORD" \
+  --wait \
+  --timeout 30m
+```
+
+Alternatively, use the App Store Connect API key approach (`.p8` key file) instead of Apple ID + app-specific password — the API key method is more reliable in CI and avoids issues with Apple ID 2FA.
+
+**Warning signs:**
+- Release workflow consistently takes 45+ minutes on the macOS job
+- Job sometimes succeeds and sometimes fails with timeout
+- No explicit `--timeout` parameter on notarytool submit
+
+**Phase to address:** Phase 1 (macOS signing setup). Test notarization timing in a dry run before wiring to the release workflow.
+
+---
+
+### Pitfall 5: Apple Developer ID Certificate Stored as P12 Requires Password — Both Must Be in Secrets
+
+**What goes wrong:**
+The P12 certificate is exported and base64-encoded into a GitHub Secret (`MACOS_CERTIFICATE`), but the import password is not separately stored, or is stored under the wrong name. The `security import` command fails silently or with "incorrect password" and the keychain contains no valid signing identity. Subsequent `codesign` runs use an ad-hoc signature and the issue goes unnoticed until notarization rejects the submission.
+
+**Why it happens:**
+When exporting a Developer ID Application certificate from Keychain Access, you must set an export password. This password is separate from the macOS login password. Teams forget to record it or assume any password works. In CI, the import step uses the password from the secret — if it doesn't match the export password, import silently succeeds (the P12 is decoded) but the private key is not unlocked.
+
+**How to avoid:**
+Store three distinct secrets:
+- `MACOS_CERTIFICATE` — base64-encoded P12 file (`base64 -i certificate.p12 | pbcopy`)
+- `MACOS_CERTIFICATE_PWD` — the export password set during P12 export
+- `MACOS_CI_KEYCHAIN_PWD` — a random password for the ephemeral CI keychain
+
+After import, validate the identity is present before proceeding:
+```bash
+security find-identity -v -p codesigning build.keychain | grep "Developer ID"
+```
+If this outputs zero identities, fail fast rather than producing an unsigned artifact.
+
+**Warning signs:**
+- `security import` exits 0 but `security find-identity` returns no Developer ID certificate
+- Notarization fails with "No signing certificate found"
+- `codesign -vvv` shows `Signature=adhoc` instead of a certificate identity
+
+**Phase to address:** Phase 1 (macOS signing setup). Certificate validation step must be a hard gate in the workflow.
+
+---
+
+### Pitfall 6: Windows RSA vs ECDSA Certificate Type Mismatch
+
+**What goes wrong:**
+An ECDSA code signing certificate is purchased (Sectigo and several resellers offer them) and used with SignTool or AzureSignTool. Signing appears to succeed, but SmartScreen rejects the binary because the Microsoft Trusted Root Program does not accept ECDSA for Authenticode code signing. Users see the "Windows protected your PC" SmartScreen warning despite the binary being signed.
+
+**Why it happens:**
+ECDSA is a valid cryptographic standard and many CAs offer ECDSA code signing certificates. However, Windows Authenticode and SmartScreen specifically require RSA PKCS#1 v1.5. This restriction is not prominently documented by certificate resellers.
+
+**How to avoid:**
+When purchasing or configuring any code signing certificate: explicitly verify RSA key type. For Azure Key Vault HSM: select `RSA-HSM` (not `EC-HSM`) during key creation. For OV/EV certs from DigiCert, Sectigo, etc.: request RSA 2048 or RSA 4096 explicitly.
+
+For Microsoft Trusted Signing (the modern approach): this is handled automatically — the service manages certificate lifecycle and key type.
+
+**Warning signs:**
+- Certificate details show `Algorithm: EC` or `EC-HSM` key type
+- SmartScreen warning appears despite "signed" binary
+- `signtool verify /pa /v executable.exe` shows certificate but SmartScreen still warns
+
+**Phase to address:** Phase 2 (Windows signing setup). Verify certificate type before any signing infrastructure is built.
+
+---
+
+### Pitfall 7: WinGet Manifest SHA256 Will Change After Code Signing — Hashes Computed Before Signing Are Wrong
+
+**What goes wrong:**
+The current `distribute.yml` computes the SHA256 of the Windows NSIS installer and commits WinGet manifests with that hash. Once Windows Authenticode signing is added to the build job, the installer binary changes (the signature is embedded). The SHA256 computed by the distribute workflow from the GitHub release asset will no longer match the unsigned binary's SHA256 from any prior step. If the compute-hash step runs before signing completes, the wrong hash is committed to the WinGet manifests.
+
+**Why it happens:**
+Signing modifies the PE binary. The Authenticode signature is embedded in the binary's Authenticode signature directory. This changes the binary's SHA256. Any hash computed before signing is invalid for WinGet distribution, which verifies the hash of the downloaded file.
+
+**How to avoid:**
+Sign the installer in the build job before uploading the artifact. The artifact uploaded to GitHub releases is the signed binary. The SHA256 computed by `distribute.yml` (which downloads from the release URL) will then be correct because it's computing the hash of the already-signed binary.
+
+Sequence:
+1. `wails build -nsis` → unsigned installer
+2. Sign installer with AzureSignTool or SignTool
+3. `actions/upload-artifact` of the signed installer
+4. Fan-in release job uploads the signed installer to GitHub releases
+5. `distribute.yml` downloads the signed installer, computes SHA256, commits manifests
+
+Never compute SHA256 of the installer before the signing step completes.
+
+**Warning signs:**
+- `winget install scottkw.StorCat` fails with "Installer hash does not match"
+- Hash computation step in distribute.yml runs on a different artifact than what was signed
+- Signing step added to workflow but its position relative to artifact upload was not reconsidered
+
+**Phase to address:** Phase 2 (Windows signing setup). Review artifact upload ordering when adding signing.
+
+---
+
+### Pitfall 8: Azure Trusted Signing vs OV/EV Certificate — SmartScreen Reputation Delay With OV Certs
+
+**What goes wrong:**
+A standard OV (Organization Validation) code signing certificate is purchased. The installer is properly signed. However, SmartScreen shows a warning ("Windows protected your PC") for 2-8 weeks after the first release because the certificate has no accumulated reputation. Users see a scary warning and many abandon the install. This is expected behavior for new OV certs — but teams are surprised by it.
+
+**Why it happens:**
+SmartScreen reputation is tied to the certificate identity, not the binary hash. A new OV certificate has zero reputation. Microsoft does not publish a timeline, but the community consensus is 2-8 weeks before the warning disappears, and only if enough users click "Run anyway."
+
+EV (Extended Validation) certificates bypass the initial SmartScreen warning, but as of 2023-2025, EV certificates require a hardware HSM token (a physical USB key), which is incompatible with CI/CD pipelines. There is no software-only EV certificate option.
+
+Microsoft Trusted Signing ($9.99/month) provides instant reputation because the service is already trusted by SmartScreen. This is the recommended approach for CI/CD pipelines in 2025.
+
+**How to avoid:**
+Use Microsoft Azure Trusted Signing instead of a traditional OV certificate. Benefits:
+- Instant SmartScreen reputation (tied to Microsoft's root program)
+- No hardware token requirement — fully compatible with GitHub Actions
+- $9.99/month vs $200-500/year for EV cert + hardware HSM
+- Certificates auto-rotate (3-day validity); no annual renewal
+
+Integration: `azure/trusted-signing-action` GitHub Action with OIDC authentication.
+
+**Warning signs:**
+- OV certificate purchased without awareness of reputation delay
+- Assuming "signed = no SmartScreen warning"
+- EV certificate purchased expecting CI/CD compatibility
+
+**Phase to address:** Phase 2 (Windows signing decision). Decide on signing approach before purchasing any certificate.
+
+---
+
+### Pitfall 9: Homebrew Cask `binary` Stanza Path Must Exactly Match the App Bundle Layout
+
+**What goes wrong:**
+The `binary` stanza in `storcat.rb` points to the wrong path inside the `.app` bundle, causing `brew install --cask storcat` to succeed but `storcat` command not found on PATH. Users install successfully but get no CLI functionality.
+
+**Why it happens:**
+The binary stanza requires an exact path relative to the cask staging directory. The path `"StorCat.app/Contents/MacOS/StorCat"` is case-sensitive on macOS. If the app binary name or directory case differs between the wails build output and the stanza, the symlink target does not exist and Homebrew silently skips it (in some versions) or fails with "symlink source not found."
+
+Also: Homebrew cask requires the binary to be in the installed application (the `.app` bundle in `/Applications`). The binary stanza creates a symlink from `$(brew --prefix)/bin/storcat` to the full path inside the installed app.
+
+**How to avoid:**
+Use the exact case of the binary as produced by `wails build`. Verify with:
+```bash
+ls -la build/bin/StorCat.app/Contents/MacOS/
+```
+
+The cask stanza:
+```ruby
+binary "#{appdir}/StorCat.app/Contents/MacOS/StorCat", target: "storcat"
+```
+
+Note: `appdir` is a Homebrew variable pointing to `/Applications` (or `~/Applications`). The `target:` parameter sets the symlink name in `$(brew --prefix)/bin/`.
+
+Test locally before deploying: `brew install --cask --verbose ./Casks/storcat.rb`
+
+**Warning signs:**
+- `brew install --cask storcat` succeeds but `which storcat` returns nothing
+- Homebrew verbose output shows no symlink creation step
+- Path in stanza uses lowercase `storcat` but binary is `StorCat` (case mismatch)
+
+**Phase to address:** Phase 3 (Homebrew CLI PATH setup). Must be tested in dry-run install before wiring to release.
+
+---
+
+### Pitfall 10: WinGet Installation PATH — NSIS Installer Must Configure PATH During Install
+
+**What goes wrong:**
+Users install StorCat via WinGet (`winget install scottkw.StorCat`). The NSIS installer runs, the GUI app is installed, but `storcat` on the command line returns "command not found." The PATH is not updated because the NSIS installer does not include an `EnvVarUpdate` or `${EnvVarUpdate}` step for the install directory.
+
+**Why it happens:**
+NSIS installers do not add to PATH by default. Wails generates a basic NSIS installer that installs the binary to `%ProgramFiles%\StorCat\` but does not modify `%PATH%`. WinGet does not add anything to PATH either — it runs the installer and trusts the installer to handle PATH configuration.
+
+**How to avoid:**
+Customize the Wails NSIS installer to add the install directory to the system PATH. Wails supports NSIS script customization via a custom `.nsi` file. The standard approach is to use the NSIS `EnvVarUpdate` macro or call `WriteRegExpandStr` to the `Environment` registry key:
+
+```nsis
+!include "EnvVarUpdate.nsh"
+${EnvVarUpdate} $0 "PATH" "A" "HKLM" "$INSTDIR"
+```
+
+Alternatively, use the NSIS `CreateShortCut` approach to add a batch wrapper in a directory already on PATH.
+
+For WinGet manifests, ensure `InstallerType: exe` with the correct `Scope` and that no special handling is needed beyond what the NSIS installer does.
+
+**Warning signs:**
+- `winget install scottkw.StorCat` succeeds but `storcat version` fails
+- NSIS script has no PATH modification section
+- `EnvVarUpdate.nsh` not included in NSIS build
+- Testing only verifies GUI launch, not CLI invocation from a new terminal
+
+**Phase to address:** Phase 3 (WinGet CLI PATH setup). Must be verified in a fresh Windows VM after WinGet install — not just a developer machine with a pre-existing PATH.
+
+---
+
+### Pitfall 11: Notarization of DMG Requires the App Inside to Already Be Code-Signed
+
+**What goes wrong:**
+The DMG is created from the unsigned `.app`, then the DMG is submitted for notarization. Apple's notarization service rejects it with "The signature of the binary is invalid" because the `.app` inside the DMG has no Developer ID signature.
+
+This is a sequencing variant of Pitfall 2, but specifically about the DMG notarization — teams sometimes sign the DMG itself without signing the `.app` inside it first.
+
+**Why it happens:**
+Apple's notarization service requires that every executable inside a notarized container be code-signed with a Developer ID. If you sign the DMG (or submit a DMG without signing it), the outer container may pass but the inner app will be flagged.
+
+**How to avoid:**
+Always verify the `.app` is signed before packaging into DMG:
+```bash
+codesign --verify --deep --strict StorCat.app
+```
+Only proceed to DMG creation if this exits 0. The DMG does not need its own codesign step — notarization of the DMG covers it. But the `.app` inside must be signed first.
+
+**Warning signs:**
+- Notarization log mentions "unsigned binary inside archive"
+- `codesign --verify` step is absent from workflow YAML
+- DMG creation step comes before codesign step in the workflow
+
+**Phase to address:** Phase 1 (macOS signing setup). Add explicit verification step after codesign.
+
+---
+
+### Pitfall 12: Azure Credential Expiration Silently Breaks Windows Signing After 24 Months
+
+**What goes wrong:**
+The Azure service principal client secret configured for AzureSignTool or Azure Trusted Signing expires. The signing step in CI starts returning 401/403 errors. This happens 24 months after setup — well after the initial implementation is forgotten. The release workflow fails silently (or with a cryptic Azure auth error) and unsigned binaries may slip through if the failure isn't caught.
+
+**Why it happens:**
+Azure service principal client secrets have a maximum validity of 24 months. There's no default alert or reminder. The GitHub Actions secret doesn't expire — only the Azure credential it contains.
+
+**How to avoid:**
+Use OIDC (OpenID Connect) federation instead of client secrets. OIDC eliminates the need for long-lived credentials:
 ```yaml
-- uses: vedantmgoyal9/winget-releaser@latest
+- uses: azure/login@v2
   with:
-    identifier: KenScott.StorCat
-    token: ${{ secrets.WINGET_TOKEN }}
+    client-id: ${{ secrets.AZURE_CLIENT_ID }}
+    tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+    subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 ```
 
-Also: the package must already exist in `winget-pkgs` with at least one version before automation can update it. The first submission must be manual.
+OIDC tokens are issued per-run and never expire. This is the recommended approach as of 2024-2025 for Azure + GitHub Actions.
+
+If client secrets are used (fallback), set a calendar reminder for 20 months from creation date and rotate before expiration.
 
 **Warning signs:**
-- Using `${{ secrets.GITHUB_TOKEN }}` for WinGet PRs (this never works)
-- Fine-grained PAT scoped only to `storcat` repo used for WinGet step
-- `403 Forbidden` or "could not create pull request" in WinGet automation logs
+- Azure auth step returning 401 errors
+- Signing worked previously but now fails with no code changes
+- `AZURE_CLIENT_SECRET` stored as a long string in GitHub Secrets (sign of client secret, not OIDC)
 
-**Phase to address:** Phase 4 (WinGet manifest automation). Set up the classic PAT as a prerequisite before implementing the automation step.
-
----
-
-### Pitfall 7: Homebrew Tap Update Requires PAT With `contents: write` on the Tap Repo — GITHUB_TOKEN Is Insufficient
-
-**What goes wrong:**
-The main repo's `GITHUB_TOKEN` cannot push commits or create PRs to `homebrew-storcat` (a different repository). Workflows that use `GITHUB_TOKEN` for the cross-repo push will fail with "403: Resource not accessible by integration". This is a silent failure in some action versions.
-
-**Why it happens:**
-`GITHUB_TOKEN` is scoped to the current repository by design. Cross-repository operations require an explicit PAT or a GitHub App token.
-
-**How to avoid:**
-Create a PAT with `contents: write` permission on the `homebrew-storcat` repo. Store as `HOMEBREW_TAP_TOKEN`. Use `peter-evans/create-pull-request` or direct `git push` with this token:
-```yaml
-- name: Push Homebrew formula update
-  env:
-    HOMEBREW_REPO_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
-  run: |
-    git clone https://x-access-token:${HOMEBREW_REPO_TOKEN}@github.com/YOUR_ORG/homebrew-storcat
-    # update formula
-    cd homebrew-storcat
-    git commit -am "storcat v${{ github.ref_name }}"
-    git push
-```
-
-Note: `repository_dispatch` events for cross-repo workflow triggers also require a PAT; they do not work with `GITHUB_TOKEN` from the triggering repo.
-
-**Warning signs:**
-- Using `${{ secrets.GITHUB_TOKEN }}` for cross-repo git push
-- Workflow succeeds but homebrew-storcat repo has no new commit
-- Error: "Permission to homebrew-storcat.git denied to github-actions[bot]"
-
-**Phase to address:** Phase 3 (Homebrew automation). PAT setup is a prerequisite; document which secrets are needed and where.
-
----
-
-### Pitfall 8: GitHub Actions Third-Party Action Tag Pinning — Supply Chain Attack Surface
-
-**What goes wrong:**
-Using version tags (e.g., `uses: softprops/action-gh-release@v2`) instead of commit SHA pins means a compromised action maintainer account can push malicious code under the existing tag. In March 2025, the `tj-actions/changed-files` action was compromised this way, affecting the Wails project's CI and 23,000+ other repos — secrets were dumped to workflow logs.
-
-**Why it happens:**
-Git tags are mutable. Any tag can be force-pushed to point to different code. CI users who pin to a tag believe they have a fixed version but actually get whatever the tag points to at runtime.
-
-**How to avoid:**
-Pin all third-party actions to their commit SHA with the version as a comment:
-```yaml
-- uses: softprops/action-gh-release@c95fe1489396fe8a9eb5b7bd2a584a3dc95ae8b3  # v2.2.1
-- uses: actions/upload-artifact@v4  # First-party GitHub actions can use tags
-```
-
-First-party GitHub actions (`actions/*`) are lower risk and can use tags. Third-party actions should be SHA-pinned. Use `dependabot` to keep SHA pins updated.
-
-**Warning signs:**
-- Workflow uses `@v1`, `@v2`, `@latest` tags for third-party actions
-- No `dependabot.yml` configured for GitHub Actions updates
-- No SHA pinning for community actions (wails-build-action, winget-releaser, etc.)
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Pin all SHAs from the start; retrofitting is error-prone.
-
----
-
-### Pitfall 9: Release Trigger — `on: push: tags` vs `on: release: published` Behavioral Differences
-
-**What goes wrong:**
-Using `on: push: tags: ['v*']` as the release trigger runs the workflow the moment a tag is pushed, before any release notes are written. Artifact uploads may race against the auto-created draft release. Using `on: release: published` requires that a GitHub release be manually created (or created by a prior job) before the pipeline runs — which means the tag must be pushed first, then a release created separately. Teams conflate these and get either premature builds or never-triggering workflows.
-
-**Why it happens:**
-The distinction between pushing a tag and publishing a release is non-obvious. `push: tags` fires immediately on `git push --tags`. `release: published` fires only when a GitHub Release object is explicitly published (not just created as draft).
-
-**How to avoid:**
-For automated release pipelines, use `push: tags` as the canonical trigger. The workflow creates the release itself:
-```yaml
-on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+'
-```
-The build job creates the GitHub release using `softprops/action-gh-release` or `gh release create`. This is the pattern where CI owns the release lifecycle end-to-end.
-
-**Warning signs:**
-- `on: release: published` trigger with no prior workflow that creates the release
-- Manual process required to "publish" the release after tagging
-- Release workflow never fires on `git push --tags`
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Choose one trigger strategy and document it as the canonical release process.
-
----
-
-### Pitfall 10: Wails Frontend Build Step Must Run Before `wails build` in CI
-
-**What goes wrong:**
-On a fresh CI runner, `wails build` fails with:
-```
-pattern all:frontend/dist: directory prefix frontend/dist does not exist
-```
-The `//go:embed all:frontend/dist` directive requires the compiled frontend to exist before the Go build runs. CI runners don't have a cached `frontend/dist`.
-
-**Why it happens:**
-`wails build` does run the frontend build internally, but only when using the standard Wails CLI. If the wails-build-action or a custom step calls `wails build` without Node.js/npm available on the PATH, or if Node.js version is wrong, the embedded frontend build silently fails and the dist directory is missing.
-
-**How to avoid:**
-Ensure the CI runner has the correct Node.js version before `wails build`:
-```yaml
-- uses: actions/setup-node@v4
-  with:
-    node-version: '20'
-    cache: 'npm'
-    cache-dependency-path: frontend/package-lock.json
-
-- name: Install frontend dependencies
-  run: cd frontend && npm ci
-
-- name: Build with Wails
-  run: wails build -clean -trimpath
-```
-
-**Warning signs:**
-- `wails build` step fails with `frontend/dist does not exist`
-- No `actions/setup-node` step before the build step
-- Workflow uses `npm install` instead of `npm ci` (slower, non-deterministic)
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Frontend dependency installation must be part of every platform job.
-
----
-
-## Moderate Pitfalls
-
----
-
-### Pitfall 11: Draft Release Leaves Artifacts Unreachable During Homebrew Formula Computation
-
-**What goes wrong:**
-If the release is initially created as a draft (`draft: true`) while artifacts are being uploaded in parallel, the Homebrew/WinGet update step may run before the release is published. Download URLs for draft releases return 404 for unauthenticated requests. The Homebrew formula update fails silently or with a network error.
-
-**How to avoid:**
-Either (a) use the fan-in pattern where the release is published in a single job after all artifacts are ready, or (b) create the release as published immediately and upload artifacts to it. Never trigger downstream automation off a draft release.
-
-**Warning signs:**
-- `draft: true` in release creation step
-- Homebrew/WinGet steps in the same workflow without `needs:` dependency on the release job
-- Formula SHA computation step returns 404 errors
-
-**Phase to address:** Phase 3 (Homebrew automation) and Phase 4 (WinGet automation). Ensure release is published before either runs.
-
----
-
-### Pitfall 12: WinGet Package Identifier Must Already Exist Before Automation Works
-
-**What goes wrong:**
-`winget-releaser` and Komac both require at least one existing version in `microsoft/winget-pkgs` to use as a template for the new version's manifests. Running the automation on the very first release (v2.2.0 as the first winget submission) will fail because there is no base manifest to update.
-
-**How to avoid:**
-The initial WinGet submission must be done manually by submitting a PR to `microsoft/winget-pkgs` with the three manifest files (version, installer, locale). Only after that PR is merged can automation update future versions. The identifier `Publisher.AppName` (e.g., `KenScott.StorCat`) must match exactly across manual and automated submissions.
-
-**Warning signs:**
-- WinGet automation configured before any manual submission
-- Identifier in automation config doesn't match the manually submitted identifier
-- "Package not found" error in Komac/winget-releaser logs
-
-**Phase to address:** Phase 4 (WinGet automation). Manual submission is a prerequisite gate.
-
----
-
-### Pitfall 13: Go Embed Version Injection vs ldflags — CI Build Behavior Differs
-
-**What goes wrong:**
-StorCat uses `//go:embed wails.json` for version injection. If `wails.json` is updated manually before the CI build but the tag does not match the version in `wails.json`, the binary reports the wrong version. This is less of a problem with ldflags (which can be set at build time) but `//go:embed` reads a file — if that file is wrong, the version is wrong.
-
-**How to avoid:**
-Add a CI step that validates `wails.json` version matches the pushed git tag before building:
-```yaml
-- name: Verify version matches tag
-  run: |
-    TAG_VERSION="${GITHUB_REF_NAME#v}"
-    WAILS_VERSION=$(jq -r '.info.productVersion' wails.json)
-    if [ "$TAG_VERSION" != "$WAILS_VERSION" ]; then
-      echo "Version mismatch: tag=$TAG_VERSION, wails.json=$WAILS_VERSION"
-      exit 1
-    fi
-```
-
-**Warning signs:**
-- No version validation step in release workflow
-- `storcat version` output doesn't match the GitHub release tag
-- `wails.json` updated by hand before tagging
-
-**Phase to address:** Phase 1 or 2. Add version validation as an early gate in the workflow.
-
----
-
-### Pitfall 14: macOS Runner Version Changes Break Universal Binary Builds
-
-**What goes wrong:**
-`macos-latest` silently changes to a new OS version (e.g., from macOS 14 arm64 to macOS 26 arm64) when GitHub updates runner images. If the universal binary build depends on specific Xcode version, SDK, or Go CGO flags, the build may break silently or produce a non-universal binary without warning.
-
-**How to avoid:**
-Pin to a specific macOS runner version (e.g., `macos-14`) instead of `macos-latest`. Review [actions/runner-images](https://github.com/actions/runner-images) changelog before upgrading. Use `lipo -info` in CI to verify the produced binary is truly universal:
-```yaml
-- name: Verify universal binary
-  run: lipo -info build/bin/storcat.app/Contents/MacOS/storcat
-  # Should output: Architectures in the fat file: ... are: x86_64 arm64
-```
-
-**Warning signs:**
-- `macos-latest` used without pinning
-- No `lipo -info` verification step
-- Users report "bad CPU type" on Intel Macs after a release
-
-**Phase to address:** Phase 1 (CI workflow scaffolding). Pin runner version and add lipo verification.
+**Phase to address:** Phase 2 (Windows signing setup). Choose OIDC from the start to avoid the expiration problem entirely.
 
 ---
 
@@ -404,12 +374,13 @@ Pin to a specific macOS runner version (e.g., `macos-14`) instead of `macos-late
 
 | Shortcut | Immediate Benefit | Long-term Cost | When Acceptable |
 |----------|-------------------|----------------|-----------------|
-| Single workflow job for all platforms | Simple YAML | macOS/Windows/Linux build constraints prevent this from working; all three need native runners | Never |
-| Using `@latest` or `@v1` tags for community actions | Automatic updates | Supply chain attack surface; March 2025 incident showed real risk | Never for community actions; OK for `actions/*` first-party |
-| Computing SHA256 from GitHub CDN download in Homebrew step | No local artifact storage needed | CDN propagation delay causes stale hash; breaks `brew install` for users | Never; always compute SHA locally before upload |
-| Hardcoded WinGet identifier | Simple config | If identifier changes, all automation breaks silently | Only if identifier is stable from day one and documented |
-| Manual release creation before tagging | Familiar workflow | Breaks `on: push: tags` trigger; requires two-step human process | Never in an automated pipeline |
-| Skipping version-tag validation | Faster release | Binary ships with wrong version; mismatch confuses users and Homebrew | Never |
+| Computing SHA256 before signing | Simpler workflow ordering | WinGet installs fail with hash mismatch for every release | Never |
+| Signing DMG without signing the `.app` inside | Fewer steps | Notarization rejects the submission; release blocked | Never |
+| Omitting `--options runtime` from codesign | Avoids entitlement complexity | Notarization requires hardened runtime; unsigned-equivalent app | Never |
+| Using OV certificate expecting no SmartScreen warning | Cheaper than Trusted Signing | 2-8 week SmartScreen window causes user trust issues | Only if reputation delay is acceptable and documented |
+| Skipping `security set-key-partition-list` | One less setup step | codesign hangs indefinitely in CI | Never |
+| Storing Azure client secret instead of using OIDC | Simpler initial setup | Credential expires after 24 months; silent CI breakage | Only as temporary stopgap with documented expiry date |
+| Using `binary` stanza without testing on a fresh install | Works in dev | CLI not on PATH after WinGet/Homebrew install; users can't use CLI | Never |
 
 ---
 
@@ -417,32 +388,35 @@ Pin to a specific macOS runner version (e.g., `macos-14`) instead of `macos-late
 
 | Integration | Common Mistake | Correct Approach |
 |-------------|----------------|------------------|
-| Wails + GitHub Actions | Single Linux runner for all platforms | Matrix with `macos-latest`, `windows-latest`, `ubuntu-22.04` (or ubuntu-latest + webkit2_41 tag) |
-| NSIS installer | Cross-compiling from macOS/Linux | Must run on `windows-latest`; no cross-platform NSIS support |
-| Homebrew tap update | Using `GITHUB_TOKEN` for cross-repo push | Classic PAT with `contents: write` on tap repo stored as separate secret |
-| WinGet automation | Fine-grained PAT or `GITHUB_TOKEN` | Classic PAT with `public_repo` scope; first manual submission required |
-| Release creation | Multiple jobs each calling `gh release create` | Fan-in pattern: one final job creates the release after all platform builds succeed |
-| Homebrew SHA256 | Re-downloading artifact from GitHub CDN | Compute SHA256 locally during build, pass as workflow output variable |
-| `macos-latest` runner | Assuming runner arch is stable | Pin to specific version (e.g., `macos-14`); verify universal binary with `lipo -info` |
-| `ubuntu-latest` runner | Assuming webkit2gtk-4.0 is present | Check current ubuntu-latest version; add webkit2_41 tag or pin to ubuntu-22.04 |
+| macOS codesign + GitHub Actions | Missing `set-key-partition-list` | Run full 5-command keychain setup sequence; or use `apple-actions/import-codesign-certs` |
+| notarytool + DMG | Submitting unsigned app inside DMG | Sign `.app` first, then create DMG, then notarize DMG |
+| notarytool + `--wait` | No timeout on `--wait` | Use `--wait --timeout 30m` to get clean failure instead of silent hang |
+| Windows Authenticode + AzureSignTool | ECDSA key type | Explicitly choose RSA-HSM in Azure Key Vault; never ECDSA for Authenticode |
+| Windows Authenticode + WinGet | Hash computed before signing | Artifact upload must be post-signing; distribute workflow downloads signed binary |
+| Azure credentials + GitHub Actions | Client secret with 2-year expiry | Use OIDC federation (`azure/login` with `client-id`/`tenant-id`) |
+| Homebrew `binary` stanza | Wrong path or case in stanza | Verify exact binary path with `ls` on build output; test with `brew install --cask --verbose` |
+| WinGet + NSIS installer | No PATH configuration in installer | Add `EnvVarUpdate` macro or registry PATH write to NSIS script |
+| macOS hardened runtime + Wails WebView | Missing entitlements | Include `allow-jit` and `allow-unsigned-executable-memory` in entitlements.plist |
 
 ---
 
 ## "Looks Done But Isn't" Checklist
 
-- [ ] **Multi-platform matrix:** Workflow uses three separate runners (macOS, Windows, Linux) — not one runner building all platforms.
-- [ ] **NSIS on Windows runner only:** `-nsis` flag only appears in the Windows job; not in macOS or Linux jobs.
-- [ ] **Universal binary verified:** `lipo -info` confirms `x86_64 arm64` in the macOS artifact.
-- [ ] **Fan-in release job:** Release creation happens in a single job that `needs:` all platform build jobs.
-- [ ] **SHA256 computed locally:** Homebrew formula SHA is computed before upload, not re-downloaded from CDN.
-- [ ] **Homebrew PAT configured:** `HOMEBREW_TAP_TOKEN` secret exists with `contents: write` on tap repo.
-- [ ] **WinGet PAT configured:** Classic PAT with `public_repo` scope stored as `WINGET_TOKEN`; first manual submission completed.
-- [ ] **Version tag validated:** Workflow checks that the git tag version matches `wails.json` version before building.
-- [ ] **Action SHAs pinned:** All third-party actions use commit SHA pins, not mutable tags.
-- [ ] **Linux webkit handled:** Linux build specifies `ubuntu-22.04` or adds `-tags webkit2_41` for Ubuntu 24.04+.
-- [ ] **Node.js setup step present:** Every platform job has `actions/setup-node` before `wails build`.
-- [ ] **`on: push: tags` trigger:** Release workflow fires on tag push, not `on: release: published` requiring manual publish.
-- [ ] **AppImage runtime test:** Linux AppImage launches on target distro; WebKitNetworkProcess found at runtime.
+- [ ] **Keychain ACL configured:** `set-key-partition-list` step present in macOS signing workflow; codesign does not hang.
+- [ ] **Signing order correct:** codesign step appears before `hdiutil create` step in workflow YAML.
+- [ ] **Entitlements plist included:** `--entitlements entitlements.plist` flag on every `codesign` invocation; Wails WebView loads after signing.
+- [ ] **Certificate identity verified:** `security find-identity -v -p codesigning` step after import shows Developer ID certificate.
+- [ ] **Notarization timeout set:** `xcrun notarytool submit` uses `--wait --timeout 30m` not unbounded `--wait`.
+- [ ] **Stapling step present:** `xcrun stapler staple StorCat.dmg` runs after notarization succeeds.
+- [ ] **Stapling verified:** `xcrun stapler validate` or `spctl -a -v` confirms staple is attached.
+- [ ] **Windows cert type RSA:** Certificate or Azure key type is RSA (not ECDSA).
+- [ ] **Signing before upload:** Windows NSIS installer is signed before `actions/upload-artifact` step.
+- [ ] **WinGet hash correct:** SHA256 in WinGet manifests matches the signed installer, not the unsigned build artifact.
+- [ ] **NSIS PATH config:** NSIS installer includes PATH modification for install directory.
+- [ ] **WinGet PATH verified:** Fresh Windows VM install via `winget install scottkw.StorCat` followed by `storcat version` in a new terminal succeeds.
+- [ ] **Homebrew binary stanza path:** Path in `storcat.rb` matches the exact case/name of the binary in `StorCat.app/Contents/MacOS/`.
+- [ ] **Homebrew CLI verified:** Fresh macOS install via `brew install --cask storcat` followed by `storcat version` in a new terminal succeeds.
+- [ ] **Azure OIDC (not client secret):** Azure signing uses OIDC federation, not a client secret with expiry.
 
 ---
 
@@ -450,14 +424,17 @@ Pin to a specific macOS runner version (e.g., `macos-14`) instead of `macos-late
 
 | Pitfall | Recovery Cost | Recovery Steps |
 |---------|---------------|----------------|
-| Wrong SHA256 in Homebrew formula | MEDIUM | Push corrected formula to tap repo; users who already ran `brew install` unaffected; new installs fix automatically |
-| NSIS installer missing from release | LOW | Re-run build workflow on `windows-latest` with `-nsis` flag; upload asset to existing release manually |
-| Release assets incomplete (race condition) | LOW | Delete draft releases; re-run workflow with fan-in pattern |
-| WinGet PR fails (token issue) | LOW | Create/rotate classic PAT; re-run automation job |
-| Universal binary is arm64-only | MEDIUM | Re-build on runner that can produce fat binaries; re-upload macOS asset; user impact: Intel Mac users get "bad CPU type" error |
-| Homebrew tap not updated after release | LOW | Run Homebrew update job manually via `workflow_dispatch`; push formula fix |
-| Linux AppImage missing WebKit at runtime | HIGH | Must rebuild with `linuxdeploy` bundling webkit libs; not a trivial fix; consider distributing `.deb` as primary Linux artifact instead |
-| Compromised third-party action (supply chain) | HIGH | Rotate all secrets immediately; audit workflow logs; re-pin all action SHAs |
+| Signing hangs (missing ACL) | LOW | Add `set-key-partition-list` step; re-run release workflow |
+| Wrong signing order (DMG before sign) | LOW | Reorder YAML steps; re-run; re-upload assets to existing release |
+| Notarization failed (unsigned app in DMG) | LOW | Fix signing order; re-run; Apple notarization resubmit is fast |
+| Entitlements missing (blank WebView) | LOW | Add entitlements.plist; re-sign; re-notarize; re-upload |
+| Wrong certificate identity in CI | MEDIUM | Re-export P12 with known password; update both secrets; re-run |
+| ECDSA cert purchased (wrong type) | HIGH | Must purchase new RSA certificate; cannot convert ECDSA to RSA |
+| WinGet hash mismatch (signed vs unsigned) | MEDIUM | Fix ordering; bump patch version; resubmit WinGet PR with correct hash |
+| SmartScreen warning (OV cert, no reputation) | HIGH | Switch to Microsoft Trusted Signing, or wait 2-8 weeks for reputation accumulation |
+| Homebrew CLI not on PATH (binary stanza wrong) | LOW | Fix path in template; push tap update; users re-run `brew upgrade --cask storcat` |
+| WinGet CLI not on PATH (NSIS missing EnvVarUpdate) | MEDIUM | Fix NSIS script; bump patch version; rebuild; resubmit WinGet PR |
+| Azure client secret expired | MEDIUM | Rotate secret in Azure; update GitHub Secret; or migrate to OIDC |
 
 ---
 
@@ -465,40 +442,41 @@ Pin to a specific macOS runner version (e.g., `macos-14`) instead of `macos-late
 
 | Pitfall | Prevention Phase | Verification |
 |---------|------------------|--------------|
-| NSIS requires Windows runner | Phase 1: CI scaffold | Windows job has `-nsis`; macOS/Linux jobs do not |
-| macOS cross-compile impossible | Phase 1: CI scaffold | Matrix has `macos-latest` runner for Darwin targets |
-| Linux webkit 4.0 missing on Ubuntu 24.04 | Phase 1: CI scaffold | Linux build succeeds; runner version pinned |
-| Parallel release upload race condition | Phase 1: CI scaffold | Fan-in job pattern with `needs:` verified |
-| Homebrew SHA256 CDN delay | Phase 3: Homebrew automation | SHA computed locally; no CDN download in formula update step |
-| WinGet classic PAT required | Phase 4: WinGet automation | Classic PAT configured; manual submission confirmed as prerequisite |
-| Homebrew cross-repo GITHUB_TOKEN limitation | Phase 3: Homebrew automation | `HOMEBREW_TAP_TOKEN` secret configured; push succeeds |
-| Third-party action supply chain | Phase 1: CI scaffold | All community actions use commit SHA pins |
-| `on: push tags` vs `on: release published` | Phase 1: CI scaffold | Single trigger strategy documented; workflow fires on `git push --tags` |
-| Frontend not built before wails build | Phase 1: CI scaffold | `setup-node` + `npm ci` precede `wails build` in every job |
-| Version tag / wails.json mismatch | Phase 2: Build pipeline | Validation step exits non-zero on mismatch before build begins |
-| macOS runner version drift | Phase 1 + ongoing | Runner version pinned; `lipo -info` step in CI output |
-| WinGet package not yet in registry | Phase 4 pre-work | Manual submission PR merged to `winget-pkgs` before automation is enabled |
+| Codesign hangs — missing keychain ACL | Phase 1: macOS signing | `codesign` step completes in <2 min; no timeout |
+| Wrong signing order (sign after DMG) | Phase 1: macOS signing | YAML step order: codesign → hdiutil → notarytool → stapler |
+| Missing entitlements | Phase 1: macOS signing | App launches and WebView renders after notarized install |
+| Notarization timeout — no `--timeout` | Phase 1: macOS signing | `--wait --timeout 30m` on notarytool submit |
+| P12 password mismatch | Phase 1: macOS signing | `security find-identity` gate step |
+| Windows ECDSA cert | Phase 2: Windows signing | Cert details show RSA before any signing work |
+| WinGet hash computed before signing | Phase 2: Windows signing | Artifact upload step is after signing step in build job |
+| OV cert SmartScreen reputation delay | Phase 2: Windows signing decision | Trusted Signing chosen as approach before phase begins |
+| Homebrew binary stanza wrong path | Phase 3: Homebrew CLI PATH | `brew install --cask` dry-run on fresh macOS before release |
+| WinGet NSIS missing PATH | Phase 3: WinGet CLI PATH | Fresh Windows VM test: `winget install` + `storcat version` |
+| Azure credential expiration | Phase 2: Windows signing | OIDC chosen; no expiry-prone client secret in use |
+| Unsigned app inside DMG | Phase 1: macOS signing | `codesign --verify --deep --strict` step before hdiutil |
 
 ---
 
 ## Sources
 
-- Wails cross-platform build guide: https://wails.io/docs/guides/crossplatform-build/
-- Wails NSIS installer guide: https://wails.io/docs/guides/windows-installer/
-- Wails Ubuntu 24.04 webkit issue #3581: https://github.com/wailsapp/wails/issues/3581
-- Wails NSIS cross-compile error #1714: https://github.com/wailsapp/wails/issues/1714
-- Wails security incident response March 2025: https://wails.io/blog/security-incident-response-march-2025/
-- tj-actions/changed-files supply chain attack (CVE-2025-30066): https://github.com/advisories/ghsa-mrrh-fwg8-r2c3
-- GitHub Actions SHA pinning guide (StepSecurity): https://www.stepsecurity.io/blog/pinning-github-actions-for-enhanced-security-a-complete-guide
-- softprops/action-gh-release race condition #602: https://github.com/softprops/action-gh-release/issues/602
-- Homebrew auto-update with GitHub Actions (BuiltFast): https://builtfast.dev/blog/automating-homebrew-tap-updates-with-github-actions/
-- Homebrew SHA256 mismatch discussion: https://github.com/orgs/Homebrew/discussions/1312
-- WinGet Releaser action (fine-grained PAT limitation): https://github.com/vedantmgoyal9/winget-releaser
-- Komac (WinGet manifest creator): https://github.com/russellbanks/Komac
-- GitHub Actions cross-repo workflow PAT requirements: https://medium.com/hostspaceng/triggering-workflows-in-another-repository-with-github-actions-4f581f8e0ceb
-- macOS 26 runner (arm64) now GA: https://github.blog/changelog/2026-02-26-macos-26-is-now-generally-available-for-github-hosted-runners/
-- AppImage WebKitNetworkProcess runtime issue #4313: https://github.com/wailsapp/wails/issues/4313
+- Wails code signing guide: https://wails.io/docs/guides/signing/
+- Apple: Installing certificate on macOS runners for Xcode development: https://docs.github.com/en/actions/deployment/deploying-xcode-applications/installing-an-apple-certificate-on-macos-runners-for-xcode-development
+- Federico Terzi: Automatic code signing and notarization for macOS with GitHub Actions: https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/
+- apple-actions/import-codesign-certs: https://github.com/Apple-Actions/import-codesign-certs
+- Apple: `security set-key-partition-list` explanation: https://developer.apple.com/forums/thread/666107
+- Melatonin: How to code sign Windows installers with EV cert on GitHub Actions: https://melatonin.dev/blog/how-to-code-sign-windows-installers-with-an-ev-cert-on-github-actions/
+- Melatonin: Code signing on Windows with Azure Trusted Signing: https://melatonin.dev/blog/code-signing-on-windows-with-azure-trusted-signing/
+- Scott Hanselman: Signing a Windows EXE with Azure Trusted Signing and GitHub Actions: https://www.hanselman.com/blog/automatically-signing-a-windows-exe-with-azure-trusted-signing-dotnet-sign-and-github-actions
+- Rick Strahl: Fighting through Setting up Microsoft Trusted Signing: https://weblog.west-wind.com/posts/2025/Jul/20/Fighting-through-Setting-up-Microsoft-Trusted-Signing
+- AzureSignTool (vcsjones): https://github.com/vcsjones/AzureSignTool
+- Azure: artifact-signing-action: https://github.com/Azure/artifact-signing-action
+- Homebrew Cask Cookbook — binary stanza: https://docs.brew.sh/Cask-Cookbook
+- Notarizing Apps Distributed as DMGs (Decipher Tools): https://deciphertools.com/blog/notarizing-dmg/
+- Random Errata: A rough guide to notarizing CLI apps for macOS (2024): https://www.randomerrata.com/articles/2024/notarize/
+- WinGet hash verification: https://learn.microsoft.com/en-us/windows/package-manager/winget/hash
+- DigiCert: MS SmartScreen and Application Reputation: https://www.digicert.com/blog/ms-smartscreen-application-reputation
+- GoReleaser: Homebrew Casks — binary stanza patterns: https://goreleaser.com/customization/homebrew_casks/
 
 ---
-*Pitfalls research for: CI/CD release pipeline, cross-platform packaging, and repo consolidation for Go/Wails desktop app*
+*Pitfalls research for: macOS/Windows code signing, notarization, and package manager CLI PATH setup for Go/Wails desktop app*
 *Researched: 2026-03-27*
