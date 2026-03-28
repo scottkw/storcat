@@ -65,7 +65,11 @@
   4. Windows PFX is base64-encoded and stored as `WINDOWS_CERTIFICATE` GitHub secret in the `release` environment
   5. GitHub `release` environment exists with protection rules and all 9 signing secrets populated
   6. Credential rotation runbook document exists describing what to do when each cert expires
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 16-01-PLAN.md — Create GitHub release environment and credential rotation runbook
+- [ ] 16-02-PLAN.md — Apple certificate verification, export, and secret storage
+- [ ] 16-03-PLAN.md — Windows signing vendor decision, enrollment, and secret storage
 
 ### Phase 17: macOS Signing & Notarization
 **Goal**: Every macOS DMG produced by a CI release tag is signed with Developer ID, notarized by Apple, and stapled — Gatekeeper accepts it without prompting on macOS 15+
@@ -129,7 +133,7 @@
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
-| 16. Secrets & Certificate Procurement | v2.3.0 | 0/TBD | Not started | - |
+| 16. Secrets & Certificate Procurement | v2.3.0 | 0/3 | Not started | - |
 | 17. macOS Signing & Notarization | v2.3.0 | 0/TBD | Not started | - |
 | 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
