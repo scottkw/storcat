@@ -61,7 +61,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - [x] macOS notarization + stapling automated in CI — v2.3.0 Phase 17
 - [x] Windows Authenticode code signing automated in CI — v2.3.0 Phase 18
 - [x] Signing credentials securely stored in GitHub Actions secrets (Apple 5/5, Windows deferred) — v2.3.0 Phase 16
-- [ ] Homebrew installation puts `storcat` on PATH for CLI use
+- [x] Homebrew installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 19
 - [ ] WinGet installation puts `storcat` on PATH for CLI use
 
 ### Out of Scope
@@ -95,6 +95,8 @@ Phase 16 complete (2026-03-28) — GitHub `release` environment created with `v*
 Phase 17 complete (2026-03-28) — macOS signing pipeline fully operational in CI. Entitlements plist for Wails hardened runtime, code signing with Developer ID, DMG notarization via notarytool, stapling, and Gatekeeper verification. Verified end-to-end via CI run. 10 Apple secrets configured (APPLE_ID added during this phase).
 
 Phase 18 complete (2026-03-28) — Windows Authenticode signing pipeline added to build-windows CI job. SSL.com eSigner cloud HSM signs both portable .exe and NSIS installer before upload. signtool verify /pa /v as CI gate. Pending: user must store 4 eSigner secrets in GitHub release environment for live signing.
+
+Phase 19 complete (2026-03-28) — Homebrew cask `binary` stanza added to both `storcat.rb.template` and `update-tap.sh`. `brew install --cask storcat` now symlinks StorCat binary into `$(brew --prefix)/bin/storcat`, making CLI available on PATH immediately. Pending: end-to-end smoke test after next release.
 
 ## Context
 
@@ -166,4 +168,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 18 completion*
+*Last updated: 2026-03-28 after Phase 19 completion*
