@@ -50,7 +50,7 @@
 - [x] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI (completed 2026-03-28)
 - [x] **Phase 18: Windows Authenticode Signing** - Sign Windows NSIS installer and portable .exe before artifact upload (completed 2026-03-28)
 - [x] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately (completed 2026-03-28)
-- [ ] **Phase 20: Windows CLI PATH via NSIS** - Ensure `winget install scottkw.StorCat` delivers a working `storcat` CLI immediately
+- [x] **Phase 20: Windows CLI PATH via NSIS** - Ensure `winget install scottkw.StorCat` delivers a working `storcat` CLI immediately (completed 2026-03-28)
 
 ## Phase Details
 
@@ -120,7 +120,7 @@ Plans:
   3. PATH registration is visible in System Environment Variables after installation
 **Plans**: 1 plan
 Plans:
-- [ ] 20-01-PLAN.md — Create custom NSIS installer with EnVar PATH registration and update WinGet template
+- [x] 20-01-PLAN.md — Create custom NSIS installer with EnVar PATH registration and update WinGet template
 
 ## Progress
 
@@ -145,4 +145,4 @@ Plans:
 | 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 20. Windows CLI PATH via NSIS | v2.3.0 | 0/1 | Not started | - |
+| 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete   | 2026-03-28 |

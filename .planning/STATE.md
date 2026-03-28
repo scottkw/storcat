@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3.0
 milestone_name: Code Signing & Package Manager CLI
 status: verifying
-stopped_at: Completed 19-01-PLAN.md
-last_updated: "2026-03-28T05:46:43.990Z"
+stopped_at: Completed 20-01-PLAN.md
+last_updated: "2026-03-28T06:08:46.953Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
-  completed_phases: 4
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 5
+  total_plans: 7
+  completed_plans: 7
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 19 — homebrew-cli-path
+**Current focus:** Phase 20 — windows-cli-path-via-nsis
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
-Status: Phase 19 complete — ready for verification
+Phase: 20 (windows-cli-path-via-nsis) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 ```
@@ -48,6 +48,8 @@ Recent decisions affecting current work:
 - [Phase 17-macos-signing-notarization]: Use env: block for secret mapping in run steps (not direct interpolation) to prevent secrets appearing in CI logs
 - [Phase 17-macos-signing-notarization]: No --deep flag on codesign — StorCat 3-file .app bundle needs no recursive signing
 - [Phase 17-macos-signing-notarization]: Tarball creation moved AFTER codesign so both tarball and DMG package a signed .app
+- [Phase 20-windows-cli-path-via-nsis]: EnVar plugin over EnvVarUpdate: no PATH truncation at 1024-byte NSIS limit; uses Win32 RegQueryValueEx directly
+- [Phase 20-windows-cli-path-via-nsis]: Bundle EnVar.dll in repo: 9KB MIT-licensed binary, reproducible CI builds, no network dependency
 
 ### Key Research Findings
 
@@ -72,6 +74,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T05:42:30.000Z
-Stopped at: Completed 19-01-PLAN.md
+Last session: 2026-03-28T06:08:46.951Z
+Stopped at: Completed 20-01-PLAN.md
 Resume file: None
