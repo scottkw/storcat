@@ -1,10 +1,11 @@
 ---
 phase: 20
 slug: windows-cli-path-via-nsis
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: audited
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-28
+audited: 2026-03-28
 ---
 
 # Phase 20 — Validation Strategy
@@ -38,10 +39,10 @@ created: 2026-03-28
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 20-01-01 | 01 | 1 | PKG-02 | structural | `grep -q 'EnVar::AddValue' build/windows/installer/project.nsi` | ❌ W0 | ⬜ pending |
-| 20-01-02 | 01 | 1 | PKG-02 | structural | `test -f build/windows/installer/Plugins/x86-unicode/EnVar.dll` | ❌ W0 | ⬜ pending |
-| 20-01-03 | 01 | 1 | PKG-02 | structural | `grep -q 'EnVar::DeleteValue' build/windows/installer/project.nsi` | ❌ W0 | ⬜ pending |
-| 20-01-04 | 01 | 1 | PKG-04 | manual | Human UAT: `winget install scottkw.StorCat` then `storcat version` | ❌ W0 | ⬜ pending |
+| 20-01-01 | 01 | 1 | PKG-02 | structural | `grep -q 'EnVar::AddValue' build/windows/installer/project.nsi` | ✅ | ✅ green |
+| 20-01-02 | 01 | 1 | PKG-02 | structural | `test -f build/windows/installer/Plugins/x86-unicode/EnVar.dll` | ✅ | ✅ green |
+| 20-01-03 | 01 | 1 | PKG-02 | structural | `grep -q 'EnVar::DeleteValue' build/windows/installer/project.nsi` | ✅ | ✅ green |
+| 20-01-04 | 01 | 1 | PKG-04 | manual | Human UAT: `winget install scottkw.StorCat` then `storcat version` | ✅ | ⬜ manual-only |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -49,8 +50,8 @@ created: 2026-03-28
 
 ## Wave 0 Requirements
 
-- [ ] No new Go test files needed — this phase modifies NSIS scripts and bundles a plugin DLL only
-- [ ] Structural verification via grep in CI (check `project.nsi` contains EnVar calls)
+- [x] No new Go test files needed — this phase modifies NSIS scripts and bundles a plugin DLL only
+- [x] Structural verification via grep in CI (check `project.nsi` contains EnVar calls)
 
 *Existing infrastructure covers Go test requirements. NSIS validation is structural + manual UAT.*
 
@@ -68,11 +69,23 @@ created: 2026-03-28
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 15s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 15s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved 2026-03-28
+
+---
+
+## Validation Audit 2026-03-28
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
+
+All 3 automated structural checks pass. 1 manual-only verification (Windows E2E UAT) correctly categorized — cannot be automated from macOS dev environment.
