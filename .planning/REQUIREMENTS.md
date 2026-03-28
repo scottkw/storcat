@@ -34,9 +34,9 @@ Requirements for Code Signing & Package Manager CLI milestone. Each maps to road
 
 ### Package Manager CLI
 
-- [ ] **PKG-01**: Homebrew cask `binary` stanza puts `storcat` on PATH after `brew install --cask storcat`
+- [x] **PKG-01**: Homebrew cask `binary` stanza puts `storcat` on PATH after `brew install --cask storcat`
 - [ ] **PKG-02**: NSIS installer adds install directory to system PATH via `EnvVarUpdate`
-- [ ] **PKG-03**: `storcat version` works from any new terminal after Homebrew install (macOS)
+- [x] **PKG-03**: `storcat version` works from any new terminal after Homebrew install (macOS)
 - [ ] **PKG-04**: `storcat version` works from any new terminal after WinGet install (Windows)
 
 ## Future Requirements
@@ -84,8 +84,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | WSIGN-02 | Phase 18 | Pending |
 | WSIGN-03 | Phase 18 | Pending |
 | WSIGN-04 | Phase 18 | Pending |
-| PKG-01 | Phase 19 | Pending |
-| PKG-03 | Phase 19 | Pending |
+| PKG-01 | Phase 19 | Complete |
+| PKG-03 | Phase 19 | Complete |
 | PKG-02 | Phase 20 | Pending |
 | PKG-04 | Phase 20 | Pending |
 

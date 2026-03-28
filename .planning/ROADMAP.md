@@ -107,7 +107,7 @@ Plans:
   3. The `storcat` symlink points to the correct binary path inside StorCat.app
 **Plans**: 1 plan
 Plans:
-- [ ] 19-01-PLAN.md — Add binary stanza to cask template and update-tap.sh for CLI PATH
+- [x] 19-01-PLAN.md — Add binary stanza to cask template and update-tap.sh for CLI PATH
 **UI hint**: no
 
 ### Phase 20: Windows CLI PATH via NSIS
@@ -142,5 +142,5 @@ Plans:
 | 16. Secrets & Certificate Procurement | v2.3.0 | 3/3 | Complete    | 2026-03-28 |
 | 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 19. Homebrew CLI PATH | v2.3.0 | 0/1 | Not started | - |
+| 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |
