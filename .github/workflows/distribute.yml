@@ -58,7 +58,20 @@ jobs:
   update-winget:
     runs-on: ubuntu-22.04
     steps:
+      - name: Check if package exists in winget-pkgs
+        id: check
+        run: |
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            "https://github.com/microsoft/winget-pkgs/tree/master/manifests/s/scottkw/StorCat")
+          if [ "$STATUS" != "200" ]; then
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "::warning::scottkw.StorCat not yet in winget-pkgs — skipping submission (first version must be submitted manually)"
+          else
+            echo "exists=true" >> $GITHUB_OUTPUT
+          fi
+
       - name: Submit to winget-pkgs
+        if: steps.check.outputs.exists == 'true'
         uses: vedantmgoyal9/winget-releaser@4ffc7888bffd451b357355dc214d43bb9f23917e  # v2
         with:
           identifier: scottkw.StorCat
