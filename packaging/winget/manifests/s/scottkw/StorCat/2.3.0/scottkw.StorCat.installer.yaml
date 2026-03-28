@@ -1,0 +1,13 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.installer.1.6.0.schema.json
+
+PackageIdentifier: scottkw.StorCat
+PackageVersion: 2.3.0
+InstallerType: nullsoft
+Commands:
+- storcat
+Installers:
+- Architecture: x64
+  InstallerUrl: https://github.com/scottkw/storcat/releases/download/v2.3.0/StorCat-v2.3.0-windows-amd64-installer.exe
+  InstallerSha256: 1fb54c1fe44365a8949c5b3644ea94c28cd94187c5f702e54f0b4aada4afa761
+ManifestType: installer
+ManifestVersion: 1.6.0
