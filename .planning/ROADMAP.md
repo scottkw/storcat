@@ -90,10 +90,12 @@ Plans:
 **Depends on**: Phase 16
 **Requirements**: WSIGN-01, WSIGN-02, WSIGN-03, WSIGN-04
 **Success Criteria** (what must be TRUE):
-  1. `release.yml` `build-windows` job decodes the PFX secret and signs both the NSIS installer and portable .exe with `signtool.exe` before `upload-artifact`
+  1. `release.yml` `build-windows` job signs both the NSIS installer and portable .exe via SSL.com eSigner before `upload-artifact`
   2. `signtool verify /v /pa` confirms a valid Authenticode signature on both Windows binaries as a CI gate step
   3. WinGet manifests in `distribute.yml` compute SHA256 from the signed binaries (signing occurs before artifact upload)
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 18-01-PLAN.md — Store eSigner secrets and add signing/verification steps to build-windows job
 
 ### Phase 19: Homebrew CLI PATH
 **Goal**: Users who run `brew install --cask storcat` get a `storcat` command immediately available in any new terminal session
@@ -137,6 +139,6 @@ Plans:
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
 | 16. Secrets & Certificate Procurement | v2.3.0 | 3/3 | Complete    | 2026-03-28 |
 | 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
+| 18. Windows Authenticode Signing | v2.3.0 | 0/1 | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |
