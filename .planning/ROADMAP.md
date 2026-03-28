@@ -115,10 +115,12 @@ Plans:
 **Depends on**: Phase 18
 **Requirements**: PKG-02, PKG-04
 **Success Criteria** (what must be TRUE):
-  1. `build/windows/installer.nsi` custom NSIS script adds the StorCat install directory to system PATH via `EnvVarUpdate` macro on install and removes it on uninstall
+  1. `build/windows/installer/project.nsi` custom NSIS script adds the StorCat install directory to system PATH via EnVar plugin on install and removes it on uninstall
   2. A user on a fresh Windows machine can run `winget install scottkw.StorCat` and then open a new terminal and run `storcat version` without any additional PATH configuration
   3. PATH registration is visible in System Environment Variables after installation
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 20-01-PLAN.md — Create custom NSIS installer with EnVar PATH registration and update WinGet template
 
 ## Progress
 
@@ -143,4 +145,4 @@ Plans:
 | 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |
+| 20. Windows CLI PATH via NSIS | v2.3.0 | 0/1 | Not started | - |
