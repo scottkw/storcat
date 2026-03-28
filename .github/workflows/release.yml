@@ -10,6 +10,7 @@ permissions:
 jobs:
   build-macos:
     runs-on: macos-14
+    environment: release
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
@@ -36,6 +37,28 @@ jobs:
       - name: Verify universal binary
         run: lipo -info build/bin/StorCat.app/Contents/MacOS/StorCat
 
+      - name: Import Apple certificate
+        uses: apple-actions/import-codesign-certs@b610f78488812c1e56b20e6df63ec42d833f2d14  # v6.0.0
+        with:
+          p12-file-base64: ${{ secrets.APPLE_CERTIFICATE }}
+          p12-password: ${{ secrets.APPLE_CERTIFICATE_PASSWORD }}
+
+      - name: Sign .app bundle
+        env:
+          APPLE_CERT_NAME: ${{ secrets.APPLE_CERTIFICATE_NAME }}
+        run: |
+          /usr/bin/codesign \
+            --sign "$APPLE_CERT_NAME" \
+            --options runtime \
+            --entitlements build/darwin/entitlements.plist \
+            --force \
+            --timestamp \
+            --verbose \
+            build/bin/StorCat.app
+
+      - name: Verify code signature
+        run: codesign --verify --verbose build/bin/StorCat.app
+
       - name: Create macOS tarball
         run: cd build/bin && tar czf StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.tar.gz StorCat.app
 
@@ -49,6 +72,40 @@ jobs:
             -format UDZO \
             "StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg"
 
+      - name: Notarize DMG
+        env:
+          APPLE_ID_EMAIL: ${{ secrets.APPLE_ID }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          APPLE_NOTARIZATION_PASSWORD: ${{ secrets.APPLE_NOTARIZATION_PASSWORD }}
+        run: |
+          xcrun notarytool store-credentials "notarytool-profile" \
+            --apple-id "$APPLE_ID_EMAIL" \
+            --team-id "$APPLE_TEAM_ID" \
+            --password "$APPLE_NOTARIZATION_PASSWORD"
+
+          xcrun notarytool submit \
+            "build/bin/StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg" \
+            --keychain-profile "notarytool-profile" \
+            --wait \
+            | tee /tmp/notary-output.log
+
+          grep -q "status: Accepted" /tmp/notary-output.log || {
+            echo "::error::Notarization failed"
+            SUBMISSION_ID=$(grep "  id: " /tmp/notary-output.log | head -1 | awk '{print $2}')
+            if [ -n "$SUBMISSION_ID" ]; then
+              xcrun notarytool log "$SUBMISSION_ID" --keychain-profile "notarytool-profile"
+            fi
+            exit 1
+          }
+
+      - name: Staple notarization ticket
+        run: |
+          xcrun stapler staple \
+            "build/bin/StorCat-${{ steps.version.outputs.VERSION }}-darwin-universal.dmg"
+
+      - name: Verify Gatekeeper acceptance
+        run: spctl --assess --type exec build/bin/StorCat.app || exit 1
+
       - name: Upload macOS artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
@@ -57,6 +114,10 @@ jobs:
             build/bin/StorCat-*-darwin-universal.tar.gz
             build/bin/StorCat-*-darwin-universal.dmg
           retention-days: 1
+
+      - name: Clean up keychain
+        if: always()
+        run: security delete-keychain signing_temp.keychain-db 2>/dev/null || true
 
   build-windows:
     runs-on: windows-2022
