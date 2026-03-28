@@ -3,11 +3,11 @@ gsd_state_version: 1.0
 milestone: v2.3.0
 milestone_name: Code Signing & Package Manager CLI
 status: verifying
-stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-28T06:12:16.384Z"
+stopped_at: Phase 21 context gathered
+last_updated: "2026-03-28T18:16:09.446Z"
 last_activity: 2026-03-28
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 5
   total_plans: 7
   completed_plans: 7
@@ -67,6 +67,10 @@ Recent decisions affecting current work:
 
 None.
 
+### Roadmap Evolution
+
+- Phase 21 added: Auto version and auto distribution
+
 ### Blockers/Concerns
 
 - Windows certificate type decision must be made during Phase 16 before Phase 18 begins
@@ -74,6 +78,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T06:08:46.951Z
-Stopped at: Completed 20-01-PLAN.md
-Resume file: None
+Last session: 2026-03-28T18:16:09.439Z
+Stopped at: Phase 21 context gathered
+Resume file: .planning/phases/21-auto-version-and-auto-distribution/21-CONTEXT.md
