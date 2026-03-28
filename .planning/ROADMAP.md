@@ -81,7 +81,9 @@ Plans:
   3. The DMG is submitted to Apple notarization via `xcrun notarytool` and returns a "Accepted" status
   4. Notarization ticket is stapled to the DMG via `xcrun stapler` so Gatekeeper works offline
   5. `spctl --assess --type exec StorCat.app` returns "accepted" as a CI gate step confirming Gatekeeper acceptance
-**Plans**: TBD
+**Plans**: 1 plan
+Plans:
+- [ ] 17-01-PLAN.md — Create entitlements plist and add signing/notarization/verification pipeline to release.yml
 
 ### Phase 18: Windows Authenticode Signing
 **Goal**: Every Windows NSIS installer and portable .exe produced by CI is signed with Authenticode before upload, suppressing or reducing SmartScreen blocking
@@ -134,7 +136,7 @@ Plans:
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
 | 16. Secrets & Certificate Procurement | v2.3.0 | 3/3 | Complete    | 2026-03-28 |
-| 17. macOS Signing & Notarization | v2.3.0 | 0/TBD | Not started | - |
+| 17. macOS Signing & Notarization | v2.3.0 | 0/1 | Not started | - |
 | 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |
