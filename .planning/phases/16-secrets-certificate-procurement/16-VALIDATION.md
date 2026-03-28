@@ -5,7 +5,7 @@ status: validated
 nyquist_compliant: false
 wave_0_complete: true
 created: 2026-03-27
-last_audited: 2026-03-28
+last_audited: 2026-03-28T2
 ---
 
 # Phase 16 — Validation Strategy
@@ -97,3 +97,26 @@ last_audited: 2026-03-28
 - [ ] `nyquist_compliant: true` set in frontmatter (blocked by 2 manual-only + 1 deferred)
 
 **Approval:** partial — 3/6 requirements have automated verification; 2 are manual-only (local keychain, vendor decision); 1 is deferred (Windows secrets)
+
+---
+
+## Validation Audit 2026-03-28 (re-audit)
+
+| Metric | Count |
+|--------|-------|
+| Requirements audited | 6 |
+| Gaps found | 0 new |
+| Previously resolved (automated) | 3 (CRED-02, CRED-05, CRED-06) |
+| Manual-only (unchanged) | 2 (CRED-01, CRED-03) |
+| Deferred (unchanged) | 1 (CRED-04) |
+
+**Live verification results:**
+- `gh api repos/scottkw/storcat/environments/release --jq '.name'` → `release` ✅
+- `test -f docs/runbooks/credential-rotation.md` → exists ✅
+- `gh secret list --env release` → 6 secrets present (5 original Apple + APPLE_ID added by Phase 17) ✅
+- No automatable gaps remain — all non-automated items have valid justification (local keychain, external vendor decision, user deferral)
+
+**Notes:**
+- Extra secret `APPLE_ID` present (added 2026-03-28 by Phase 17 for notarization workflow) — not part of Phase 16 scope but does not conflict
+- No state drift detected from prior audit
+- Phase remains partial due to inherent manual/deferred items — this is correct and expected for an ops/config phase
