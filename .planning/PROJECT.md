@@ -59,7 +59,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 - [x] macOS Developer ID code signing automated in CI — v2.3.0 Phase 17
 - [x] macOS notarization + stapling automated in CI — v2.3.0 Phase 17
-- [ ] Windows Authenticode code signing automated in CI
+- [x] Windows Authenticode code signing automated in CI — v2.3.0 Phase 18
 - [x] Signing credentials securely stored in GitHub Actions secrets (Apple 5/5, Windows deferred) — v2.3.0 Phase 16
 - [ ] Homebrew installation puts `storcat` on PATH for CLI use
 - [ ] WinGet installation puts `storcat` on PATH for CLI use
@@ -93,6 +93,8 @@ StorCat is a fully functional cross-platform desktop + CLI application with auto
 Phase 16 complete (2026-03-28) — GitHub `release` environment created with `v*.*.*` tag policy. All 5 Apple signing secrets stored. Windows signing deferred to future milestone (SSL.com eSigner OV recommended when ready). Credential rotation runbook at `docs/runbooks/credential-rotation.md`.
 
 Phase 17 complete (2026-03-28) — macOS signing pipeline fully operational in CI. Entitlements plist for Wails hardened runtime, code signing with Developer ID, DMG notarization via notarytool, stapling, and Gatekeeper verification. Verified end-to-end via CI run. 10 Apple secrets configured (APPLE_ID added during this phase).
+
+Phase 18 complete (2026-03-28) — Windows Authenticode signing pipeline added to build-windows CI job. SSL.com eSigner cloud HSM signs both portable .exe and NSIS installer before upload. signtool verify /pa /v as CI gate. Pending: user must store 4 eSigner secrets in GitHub release environment for live signing.
 
 ## Context
 
@@ -164,4 +166,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 17 completion*
+*Last updated: 2026-03-28 after Phase 18 completion*
