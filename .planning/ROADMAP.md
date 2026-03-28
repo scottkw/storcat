@@ -145,4 +145,4 @@ Plans:
 | 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete   | 2026-03-28 |
+| 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete    | 2026-03-28 |

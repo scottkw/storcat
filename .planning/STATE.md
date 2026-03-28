@@ -4,7 +4,7 @@ milestone: v2.3.0
 milestone_name: Code Signing & Package Manager CLI
 status: verifying
 stopped_at: Completed 20-01-PLAN.md
-last_updated: "2026-03-28T06:08:46.953Z"
+last_updated: "2026-03-28T06:12:16.384Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
@@ -24,8 +24,8 @@ See: .planning/PROJECT.md (updated 2026-03-27)
 
 ## Current Position
 
-Phase: 20 (windows-cli-path-via-nsis) — EXECUTING
-Plan: 1 of 1
+Phase: 20
+Plan: Not started
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
