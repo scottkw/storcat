@@ -1,0 +1,99 @@
+# Requirements: StorCat
+
+**Defined:** 2026-03-27
+**Core Value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity.
+
+## v2.3.0 Requirements
+
+Requirements for Code Signing & Package Manager CLI milestone. Each maps to roadmap phases.
+
+### Credentials & Secrets
+
+- [ ] **CRED-01**: User can locate or renew existing Apple Developer ID Application certificate
+- [ ] **CRED-02**: User can export Developer ID cert as .p12 and store base64-encoded in GitHub secret
+- [ ] **CRED-03**: User can locate or acquire Windows OV code signing certificate (RSA, not ECDSA)
+- [ ] **CRED-04**: User can store Windows cert as base64-encoded PFX in GitHub secret
+- [ ] **CRED-05**: All 9 signing secrets stored in GitHub Actions `release` environment with protection rules
+- [ ] **CRED-06**: Credential rotation runbook documents what to do when certs expire
+
+### macOS Signing
+
+- [ ] **SIGN-01**: release.yml `build-macos` job signs .app bundle with `codesign --sign --options runtime` and entitlements
+- [ ] **SIGN-02**: release.yml `build-macos` job submits DMG to Apple notarization service via `xcrun notarytool`
+- [ ] **SIGN-03**: release.yml `build-macos` job staples notarization ticket to DMG via `xcrun stapler`
+- [ ] **SIGN-04**: CI uses isolated temporary keychain, cleaned up after signing
+- [ ] **SIGN-05**: Entitlements plist ported from Electron era and verified for Wails runtime requirements
+- [ ] **SIGN-06**: `spctl --assess` verification step confirms signed .app is accepted by Gatekeeper
+
+### Windows Signing
+
+- [ ] **WSIGN-01**: release.yml `build-windows` job signs NSIS installer with `signtool.exe` (or Azure Trusted Signing)
+- [ ] **WSIGN-02**: release.yml `build-windows` job signs portable .exe with same certificate
+- [ ] **WSIGN-03**: Signing occurs before `upload-artifact` so WinGet SHA256 is computed from signed binary
+- [ ] **WSIGN-04**: `signtool verify` step confirms valid signature before upload
+
+### Package Manager CLI
+
+- [ ] **PKG-01**: Homebrew cask `binary` stanza puts `storcat` on PATH after `brew install --cask storcat`
+- [ ] **PKG-02**: NSIS installer adds install directory to system PATH via `EnvVarUpdate`
+- [ ] **PKG-03**: `storcat version` works from any new terminal after Homebrew install (macOS)
+- [ ] **PKG-04**: `storcat version` works from any new terminal after WinGet install (Windows)
+
+## Future Requirements
+
+### Post-Validation (v2.3.x)
+
+- **SIGN-07**: App Store Connect API key auth for notarytool (more robust than Apple ID + app-specific password)
+- **WSIGN-05**: Migrate to Azure Trusted Signing if business eligibility confirmed
+- **SIGN-08**: Notarization retry + timeout handling for Apple service slowdowns
+
+### Future Milestone (v3+)
+
+- **SIGN-09**: Code signing certificate expiry monitoring via scheduled GitHub Actions
+- **SIGN-10**: Automated certificate renewal runbook via CI
+
+## Out of Scope
+
+| Feature | Reason |
+|---------|--------|
+| Mac App Store distribution | Requires sandboxing incompatible with Wails filesystem access |
+| EV certificate for Windows | No advantage over OV since August 2024; requires hardware token incompatible with CI |
+| `gon` for macOS notarization | Deprecated — Apple decommissioned `altool` |
+| GoReleaser for signing | Cannot drive `wails build`; Pro feature for notarization |
+| Separate CLI binary | Breaks unified binary architecture from v2.1.0 |
+
+## Traceability
+
+Which phases cover which requirements. Updated during roadmap creation.
+
+| Requirement | Phase | Status |
+|-------------|-------|--------|
+| CRED-01 | — | Pending |
+| CRED-02 | — | Pending |
+| CRED-03 | — | Pending |
+| CRED-04 | — | Pending |
+| CRED-05 | — | Pending |
+| CRED-06 | — | Pending |
+| SIGN-01 | — | Pending |
+| SIGN-02 | — | Pending |
+| SIGN-03 | — | Pending |
+| SIGN-04 | — | Pending |
+| SIGN-05 | — | Pending |
+| SIGN-06 | — | Pending |
+| WSIGN-01 | — | Pending |
+| WSIGN-02 | — | Pending |
+| WSIGN-03 | — | Pending |
+| WSIGN-04 | — | Pending |
+| PKG-01 | — | Pending |
+| PKG-02 | — | Pending |
+| PKG-03 | — | Pending |
+| PKG-04 | — | Pending |
+
+**Coverage:**
+- v2.3.0 requirements: 20 total
+- Mapped to phases: 0
+- Unmapped: 20
+
+---
+*Requirements defined: 2026-03-27*
+*Last updated: 2026-03-27 after initial definition*
