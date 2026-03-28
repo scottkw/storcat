@@ -115,9 +115,6 @@ jobs:
             build/bin/StorCat-*-darwin-universal.dmg
           retention-days: 1
 
-      - name: Clean up keychain
-        if: always()
-        run: security delete-keychain signing_temp.keychain-db 2>/dev/null || true
 
   build-windows:
     runs-on: windows-2022
