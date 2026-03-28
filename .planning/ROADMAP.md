@@ -49,7 +49,7 @@
 - [x] **Phase 16: Secrets & Certificate Procurement** - Obtain and configure all signing credentials before any CI automation begins (completed 2026-03-28)
 - [x] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI (completed 2026-03-28)
 - [x] **Phase 18: Windows Authenticode Signing** - Sign Windows NSIS installer and portable .exe before artifact upload (completed 2026-03-28)
-- [ ] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately
+- [x] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately (completed 2026-03-28)
 - [ ] **Phase 20: Windows CLI PATH via NSIS** - Ensure `winget install scottkw.StorCat` delivers a working `storcat` CLI immediately
 
 ## Phase Details
