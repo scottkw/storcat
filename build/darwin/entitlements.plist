@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Required: WebKit uses JIT for JS execution -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <!-- Required: WebKit needs writable+executable memory -->
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- Required: StorCat reads arbitrary user-selected directories -->
+    <key>com.apple.security.files.user-selected.read-write</key>
+    <true/>
+    <!-- Required: network for Apple notarization validation (Gatekeeper) -->
+    <key>com.apple.security.network.client</key>
+    <true/>
+</dict>
+</plist>
