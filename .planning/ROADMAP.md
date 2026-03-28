@@ -135,7 +135,7 @@ Plans:
 **Plans**: 1 plan
 
 Plans:
-- [ ] 21-01-PLAN.md — Create release-please config/workflow and refactor release.yml to upload-and-publish
+- [x] 21-01-PLAN.md — Create release-please config/workflow and refactor release.yml to upload-and-publish
 
 ## Progress
 
@@ -161,4 +161,4 @@ Plans:
 | 18. Windows Authenticode Signing | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete    | 2026-03-28 |
-| 21. Auto version and auto distribution | v2.3.0 | 0/1 | Planning    | — |
+| 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete   | 2026-03-28 |

@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v2.3.0
 milestone_name: Code Signing & Package Manager CLI
 status: verifying
-stopped_at: Phase 21 context gathered
-last_updated: "2026-03-28T18:16:09.446Z"
+stopped_at: Completed 21-01-PLAN.md
+last_updated: "2026-03-28T18:33:57.585Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 6
-  completed_phases: 5
-  total_plans: 7
-  completed_plans: 7
+  completed_phases: 6
+  total_plans: 8
+  completed_plans: 8
 ---
 
 # Project State
@@ -20,12 +20,12 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 20 — windows-cli-path-via-nsis
+**Current focus:** Phase 21 — auto-version-and-auto-distribution
 
 ## Current Position
 
-Phase: 20
-Plan: Not started
+Phase: 21 (auto-version-and-auto-distribution) — EXECUTING
+Plan: 1 of 1
 Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
@@ -50,6 +50,8 @@ Recent decisions affecting current work:
 - [Phase 17-macos-signing-notarization]: Tarball creation moved AFTER codesign so both tarball and DMG package a signed .app
 - [Phase 20-windows-cli-path-via-nsis]: EnVar plugin over EnvVarUpdate: no PATH truncation at 1024-byte NSIS limit; uses Win32 RegQueryValueEx directly
 - [Phase 20-windows-cli-path-via-nsis]: Bundle EnVar.dll in repo: 9KB MIT-licensed binary, reproducible CI builds, no network dependency
+- [Phase 21-auto-version-and-auto-distribution]: Use release-please simple release-type with extra-files jsonpath to update wails.json productVersion automatically
+- [Phase 21-auto-version-and-auto-distribution]: softprops tag_name uploads to existing release-please release instead of creating new draft; draft: false publishes immediately to trigger distribute.yml
 
 ### Key Research Findings
 
@@ -78,6 +80,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T18:16:09.439Z
-Stopped at: Phase 21 context gathered
-Resume file: .planning/phases/21-auto-version-and-auto-distribution/21-CONTEXT.md
+Last session: 2026-03-28T18:33:57.575Z
+Stopped at: Completed 21-01-PLAN.md
+Resume file: None
