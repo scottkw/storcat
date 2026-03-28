@@ -8,6 +8,6 @@ Commands:
 Installers:
 - Architecture: x64
   InstallerUrl: https://github.com/scottkw/storcat/releases/download/v2.3.0/StorCat-v2.3.0-windows-amd64-installer.exe
-  InstallerSha256: 1fb54c1fe44365a8949c5b3644ea94c28cd94187c5f702e54f0b4aada4afa761
+  InstallerSha256: 9f44f9977a53a3f353fd42061fd997a67eef15c136d5e3a93c850c8ec3170c74
 ManifestType: installer
 ManifestVersion: 1.6.0
