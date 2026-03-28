@@ -3,6 +3,8 @@
 PackageIdentifier: scottkw.StorCat
 PackageVersion: 2.1.0
 InstallerType: nullsoft
+Commands:
+- storcat
 Installers:
 - Architecture: x64
   InstallerUrl: https://github.com/scottkw/storcat/releases/download/v2.1.0/StorCat-v2.1.0-windows-amd64-installer.exe
