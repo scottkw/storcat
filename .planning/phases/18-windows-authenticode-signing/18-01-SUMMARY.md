@@ -33,7 +33,7 @@ metrics:
 
 | Task | Name | Commit | Files |
 |------|------|--------|-------|
-| 2 | Add Authenticode signing and verification to build-windows job | 78da4d73 | .github/workflows/release.yml |
+| 2 | Add Authenticode signing and verification to build-windows job | 13bc04a2 | .github/workflows/release.yml |
 
 ## Tasks Deferred (Checkpoint)
 
@@ -66,4 +66,4 @@ None. The workflow code is complete. The signing steps will be skipped with empt
 
 - FOUND: `.github/workflows/release.yml` (modified)
 - FOUND: `18-01-SUMMARY.md` (created)
-- FOUND commit `78da4d73` — feat(18-01): add Windows Authenticode signing to build-windows job
+- FOUND commit `13bc04a2` — feat(18-01): add Windows Authenticode signing to build-windows job
