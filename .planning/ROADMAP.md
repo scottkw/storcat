@@ -47,7 +47,7 @@
 **Milestone Goal:** Automate macOS/Windows code signing with secure credential handling, and make Homebrew/WinGet installations provide working CLI out of the box.
 
 - [x] **Phase 16: Secrets & Certificate Procurement** - Obtain and configure all signing credentials before any CI automation begins (completed 2026-03-28)
-- [ ] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI
+- [x] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI (completed 2026-03-28)
 - [ ] **Phase 18: Windows Authenticode Signing** - Sign Windows NSIS installer and portable .exe before artifact upload
 - [ ] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately
 - [ ] **Phase 20: Windows CLI PATH via NSIS** - Ensure `winget install scottkw.StorCat` delivers a working `storcat` CLI immediately
@@ -83,7 +83,7 @@ Plans:
   5. `spctl --assess --type exec StorCat.app` returns "accepted" as a CI gate step confirming Gatekeeper acceptance
 **Plans**: 1 plan
 Plans:
-- [ ] 17-01-PLAN.md — Create entitlements plist and add signing/notarization/verification pipeline to release.yml
+- [x] 17-01-PLAN.md — Create entitlements plist and add signing/notarization/verification pipeline to release.yml
 
 ### Phase 18: Windows Authenticode Signing
 **Goal**: Every Windows NSIS installer and portable .exe produced by CI is signed with Authenticode before upload, suppressing or reducing SmartScreen blocking
@@ -136,7 +136,7 @@ Plans:
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
 | 16. Secrets & Certificate Procurement | v2.3.0 | 3/3 | Complete    | 2026-03-28 |
-| 17. macOS Signing & Notarization | v2.3.0 | 0/1 | Not started | - |
+| 17. macOS Signing & Notarization | v2.3.0 | 1/1 | Complete   | 2026-03-28 |
 | 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |

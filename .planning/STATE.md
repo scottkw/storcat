@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.3.0
 milestone_name: Code Signing & Package Manager CLI
-status: executing
-stopped_at: Completed 16-01-PLAN.md
-last_updated: "2026-03-28T03:51:53.097Z"
+status: verifying
+stopped_at: "Completed 17-01-PLAN.md (checkpoint:human-verify at Task 3)"
+last_updated: "2026-03-28T04:18:40.173Z"
 last_activity: 2026-03-28
 progress:
   total_phases: 5
-  completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # Project State
@@ -20,13 +20,13 @@ progress:
 See: .planning/PROJECT.md (updated 2026-03-27)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 16 — secrets-certificate-procurement
+**Current focus:** Phase 17 — macos-signing-notarization
 
 ## Current Position
 
-Phase: 17
-Plan: Not started
-Status: Ready to execute
+Phase: 17 (macos-signing-notarization) — EXECUTING
+Plan: 1 of 1
+Status: Phase complete — ready for verification
 Last activity: 2026-03-28
 
 ```
@@ -45,6 +45,9 @@ Recent decisions affecting current work:
 - Windows certificate type (Phase 16): Azure Trusted Signing vs. OV cert — must decide before Phase 18 begins. Azure: instant SmartScreen reputation, $9.99/month, US/Canada only. OV: ~$200-300/year, 2-8 week SmartScreen warning window, available everywhere.
 - [Phase 16-secrets-certificate-procurement]: No required reviewers on release environment — tag pattern v*.*.* restriction is sufficient for solo developer; reviewer requirement would block automated CI
 - [Phase 16-secrets-certificate-procurement]: Windows signing uses SSL.com eSigner (4 secrets: ES_USERNAME, ES_PASSWORD, CREDENTIAL_ID, ES_TOTP_SECRET) — post-June 2023 CA/Browser Forum requirement makes traditional OV cert PFX export impossible
+- [Phase 17-macos-signing-notarization]: Use env: block for secret mapping in run steps (not direct interpolation) to prevent secrets appearing in CI logs
+- [Phase 17-macos-signing-notarization]: No --deep flag on codesign — StorCat 3-file .app bundle needs no recursive signing
+- [Phase 17-macos-signing-notarization]: Tarball creation moved AFTER codesign so both tarball and DMG package a signed .app
 
 ### Key Research Findings
 
@@ -69,6 +72,6 @@ None.
 
 ## Session Continuity
 
-Last session: 2026-03-28T03:36:27.340Z
-Stopped at: Completed 16-01-PLAN.md
+Last session: 2026-03-28T04:18:40.170Z
+Stopped at: Completed 17-01-PLAN.md (checkpoint:human-verify at Task 3)
 Resume file: None

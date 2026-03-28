@@ -18,12 +18,12 @@ Requirements for Code Signing & Package Manager CLI milestone. Each maps to road
 
 ### macOS Signing
 
-- [ ] **SIGN-01**: release.yml `build-macos` job signs .app bundle with `codesign --sign --options runtime` and entitlements
-- [ ] **SIGN-02**: release.yml `build-macos` job submits DMG to Apple notarization service via `xcrun notarytool`
-- [ ] **SIGN-03**: release.yml `build-macos` job staples notarization ticket to DMG via `xcrun stapler`
-- [ ] **SIGN-04**: CI uses isolated temporary keychain, cleaned up after signing
-- [ ] **SIGN-05**: Entitlements plist ported from Electron era and verified for Wails runtime requirements
-- [ ] **SIGN-06**: `spctl --assess` verification step confirms signed .app is accepted by Gatekeeper
+- [x] **SIGN-01**: release.yml `build-macos` job signs .app bundle with `codesign --sign --options runtime` and entitlements
+- [x] **SIGN-02**: release.yml `build-macos` job submits DMG to Apple notarization service via `xcrun notarytool`
+- [x] **SIGN-03**: release.yml `build-macos` job staples notarization ticket to DMG via `xcrun stapler`
+- [x] **SIGN-04**: CI uses isolated temporary keychain, cleaned up after signing
+- [x] **SIGN-05**: Entitlements plist ported from Electron era and verified for Wails runtime requirements
+- [x] **SIGN-06**: `spctl --assess` verification step confirms signed .app is accepted by Gatekeeper
 
 ### Windows Signing
 
@@ -74,12 +74,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | CRED-04 | Phase 16 | Pending |
 | CRED-05 | Phase 16 | Complete |
 | CRED-06 | Phase 16 | Complete |
-| SIGN-01 | Phase 17 | Pending |
-| SIGN-02 | Phase 17 | Pending |
-| SIGN-03 | Phase 17 | Pending |
-| SIGN-04 | Phase 17 | Pending |
-| SIGN-05 | Phase 17 | Pending |
-| SIGN-06 | Phase 17 | Pending |
+| SIGN-01 | Phase 17 | Complete |
+| SIGN-02 | Phase 17 | Complete |
+| SIGN-03 | Phase 17 | Complete |
+| SIGN-04 | Phase 17 | Complete |
+| SIGN-05 | Phase 17 | Complete |
+| SIGN-06 | Phase 17 | Complete |
 | WSIGN-01 | Phase 18 | Pending |
 | WSIGN-02 | Phase 18 | Pending |
 | WSIGN-03 | Phase 18 | Pending |
