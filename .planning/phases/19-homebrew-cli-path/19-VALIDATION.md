@@ -1,9 +1,9 @@
 ---
 phase: 19
 slug: homebrew-cli-path
-status: draft
-nyquist_compliant: false
-wave_0_complete: false
+status: complete
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-03-28
 ---
 
@@ -38,9 +38,9 @@ created: 2026-03-28
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 19-01-01 | 01 | 1 | PKG-01 | content inspection | `grep 'binary.*appdir.*StorCat.*target.*storcat' packaging/homebrew/storcat.rb.template` | N/A (template edit) | ⬜ pending |
-| 19-01-02 | 01 | 1 | PKG-01 | content inspection | `grep 'binary.*appdir.*StorCat.*target.*storcat' packaging/homebrew/update-tap.sh` | N/A (script edit) | ⬜ pending |
-| 19-01-03 | 01 | 1 | PKG-03 | sed passthrough | `sed -e 's/{{VERSION}}/2.3.0/g' -e 's/{{SHA256}}/abc123/g' packaging/homebrew/storcat.rb.template \| grep binary` | N/A | ⬜ pending |
+| 19-01-01 | 01 | 1 | PKG-01 | content inspection | `grep 'binary.*appdir.*StorCat.*target.*storcat' packaging/homebrew/storcat.rb.template` | N/A (template edit) | ✅ green |
+| 19-01-02 | 01 | 1 | PKG-01 | content inspection | `grep 'binary.*appdir.*StorCat.*target.*storcat' packaging/homebrew/update-tap.sh` | N/A (script edit) | ✅ green |
+| 19-01-03 | 01 | 1 | PKG-03 | sed passthrough | `sed -e 's/{{VERSION}}/2.3.0/g' -e 's/{{SHA256}}/abc123/g' packaging/homebrew/storcat.rb.template \| grep binary` | N/A | ✅ green |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
@@ -62,11 +62,19 @@ Existing infrastructure covers all phase requirements. No new test files needed.
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 5s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 5s
+- [x] `nyquist_compliant: true` set in frontmatter
 
-**Approval:** pending
+**Approval:** approved
+
+## Validation Audit 2026-03-28
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 |
+| Resolved | 0 |
+| Escalated | 0 |
