@@ -62,7 +62,7 @@
   1. Developer ID Application certificate is located or renewed and confirmed valid via `security find-identity -v -p codesigning`
   2. Apple certificate is exported as .p12 and base64-encoded value stored as `APPLE_CERTIFICATE` GitHub secret in the `release` environment
   3. Windows OV code signing certificate is obtained with RSA (not ECDSA) confirmed before purchase
-  4. Windows PFX is base64-encoded and stored as `WINDOWS_CERTIFICATE` GitHub secret in the `release` environment
+  4. Windows Authenticode signing credentials are stored as 4 eSigner API secrets (`ES_USERNAME`, `ES_PASSWORD`, `CREDENTIAL_ID`, `ES_TOTP_SECRET`) in the `release` environment
   5. GitHub `release` environment exists with protection rules and all 9 signing secrets populated
   6. Credential rotation runbook document exists describing what to do when each cert expires
 **Plans**: 3 plans
