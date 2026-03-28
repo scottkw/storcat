@@ -54,15 +54,17 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - ✓ Homebrew cask auto-updated on release (SHA256-verified) — v2.2.0
 - ✓ WinGet manifest auto-submitted on release — v2.2.0
 - ✓ All GitHub Actions SHA-pinned — v2.2.0
+- ✓ macOS Developer ID code signing automated in CI — v2.3.0 Phase 17
+- ✓ macOS notarization + stapling automated in CI — v2.3.0 Phase 17
+- ✓ Windows Authenticode code signing automated in CI — v2.3.0 Phase 18
+- ✓ Signing credentials securely stored in GitHub Actions secrets — v2.3.0 Phase 16
+- ✓ Homebrew installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 19
+- ✓ WinGet installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 20
+- ✓ release-please automates version bumps, tags, and releases — v2.3.0 Phase 21
 
 ### Active
 
-- [x] macOS Developer ID code signing automated in CI — v2.3.0 Phase 17
-- [x] macOS notarization + stapling automated in CI — v2.3.0 Phase 17
-- [x] Windows Authenticode code signing automated in CI — v2.3.0 Phase 18
-- [x] Signing credentials securely stored in GitHub Actions secrets (Apple 5/5, Windows deferred) — v2.3.0 Phase 16
-- [x] Homebrew installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 19
-- [x] WinGet installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 20
+(No active requirements — v2.3.0 milestone complete)
 
 ### Out of Scope
 
@@ -99,6 +101,8 @@ Phase 18 complete (2026-03-28) — Windows Authenticode signing pipeline added t
 Phase 19 complete (2026-03-28) — Homebrew cask `binary` stanza added to both `storcat.rb.template` and `update-tap.sh`. `brew install --cask storcat` now symlinks StorCat binary into `$(brew --prefix)/bin/storcat`, making CLI available on PATH immediately. Pending: end-to-end smoke test after next release.
 
 Phase 20 complete (2026-03-28) — Custom NSIS installer script adds `$INSTDIR` to system PATH on install via EnVar plugin and removes it on uninstall. WM_SETTINGCHANGE broadcast notifies running shells. WinGet manifest template updated with `Commands: [storcat]` metadata. Pending: Windows UAT to confirm runtime behavior.
+
+Phase 21 complete (2026-03-28) — release-please automation configured. Conventional commits on main auto-maintain a release PR; merging creates tag + GitHub release; release.yml uploads artifacts and publishes; distribute.yml fires for Homebrew + WinGet. Single source of truth: `wails.json` productVersion via jsonpath.
 
 ## Context
 
@@ -145,6 +149,8 @@ Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electr
 | AppImage with system WebKit dependency | WebKit subprocess paths hardcoded, bundling not feasible for Wails | ✓ Good |
 | release:published trigger for distribute.yml | Distribution fires only after manual draft promotion | ✓ Good |
 | winget-releaser for WinGet submission | Maintained action, SHA-pinned to v2 | ✓ Good |
+| release-please for version automation | Conventional commits drive version bumps, no manual tagging | ✓ Good |
+| wails.json as version source of truth | jsonpath extra-file keeps Go embed and release-please in sync | ✓ Good |
 
 ## Constraints
 
@@ -170,4 +176,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 20 completion*
+*Last updated: 2026-03-28 after Phase 21 completion*
