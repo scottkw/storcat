@@ -28,9 +28,9 @@ decisions:
   - "spctl --assess targets .app not DMG — exec assessment operates on the bundle; DMG uses --type open"
   - "Tarball moved AFTER codesign — both tarball and DMG now package a signed .app bundle"
 metrics:
-  duration_seconds: 300
+  duration_seconds: 2700
   completed_date: "2026-03-28"
-  tasks_completed: 2
+  tasks_completed: 3
   tasks_total: 3
   files_modified: 2
 requirements_satisfied:
@@ -68,7 +68,7 @@ Wails-native entitlements plist with 4 required entitlements for WebKit/WKWebVie
 | Staple notarization ticket | Offline Gatekeeper support | `xcrun stapler staple` on DMG |
 | Verify Gatekeeper acceptance | CI gate | `spctl --assess --type exec` after stapling |
 | Upload macOS artifact | (existing, unchanged) | Both .tar.gz and .dmg now contain signed .app |
-| Clean up keychain | Security hygiene | `if: always()` — runs even on signing failure |
+| ~~Clean up keychain~~ | ~~Removed~~ | apple-actions post-cleanup handles this; duplicate caused job failure |
 
 **Critical ordering maintained:**
 ```
@@ -87,25 +87,29 @@ None.
 
 The plan specified mapping `secrets.APPLE_ID` to env var `APPLE_ID_EMAIL` (matching the research code example). The final implementation uses exactly this naming to disambiguate from the `APPLE_ID` secret name and make the variable's purpose clear in the run script. This is consistent with the plan's intent.
 
-## Checkpoint Reached (Task 3)
+## Checkpoint Completed (Task 3)
 
-Task 3 is a `checkpoint:human-verify` gate requiring the user to:
-1. Add `APPLE_ID` secret (10th secret) to the GitHub `release` environment
-2. Verify all 10 secrets are present via `gh secret list --env release`
-3. Optionally trigger a test tag push to validate the full pipeline end-to-end
+Task 3 human-verify checkpoint approved:
+1. `APPLE_ID` secret set in GitHub `release` environment (kenscott@gmail.com)
+2. Apple Developer agreement re-accepted (was expired, caused 403 on first two CI runs)
+3. Full pipeline verified end-to-end via CI run 23677752782 (tag v99.0.1-test) — all steps green
 
-## Known Stubs
+## Post-Checkpoint Fix
 
-None. Both files are complete and wired correctly. The signing pipeline cannot be tested locally (requires CI + Apple credentials), but the YAML is structurally complete and all secret references are correct.
+**Redundant keychain cleanup removed** (`3307491e`): The plan included an explicit "Clean up keychain" step with `if: always()`, but `apple-actions/import-codesign-certs@v6` has built-in post-job cleanup. Our step deleted the keychain first, then the action's post-step failed with exit code 50, marking the entire `build-macos` job as failed and blocking the `release` job. Removing the duplicate step fixed the issue.
 
-## Verification Results
+## CI Verification Results
 
 ```
+CI Run: 23677752782 (v99.0.1-test)
+build-macos: ✓ (3m16s) — all signing steps green
+build-windows: ✓ (2m10s)
+build-linux-amd64: ✓ (3m0s)
+build-linux-arm64: ✓ (2m37s)
+release: ✓ (10s) — GitHub Release created with all artifacts
+
 plutil -lint build/darwin/entitlements.plist → OK
 grep -c 'com.apple.security' build/darwin/entitlements.plist → 4
-All 19 acceptance criteria: PASS
-YAML validation (python yaml.safe_load): PASS
-Step order verification: 17 steps in correct sequence
 ```
 
 ## Self-Check: PASSED
@@ -114,3 +118,6 @@ Step order verification: 17 steps in correct sequence
 - `.github/workflows/release.yml` — FOUND (modified)
 - Task 1 commit `1dcae828` — FOUND
 - Task 2 commit `4f69dc80` — FOUND
+- Task 3 checkpoint — APPROVED
+- Keychain fix commit `3307491e` — FOUND
+- CI pipeline — ALL GREEN (run 23677752782)
