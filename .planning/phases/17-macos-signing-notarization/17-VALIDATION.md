@@ -38,11 +38,9 @@ created: 2026-03-27
 
 | Task ID | Plan | Wave | Requirement | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|-----------|-------------------|-------------|--------|
-| 17-01-01 | 01 | 1 | SIGN-01 | integration | `yq '.jobs.build-macos.steps[] | select(.uses == "apple-actions/import-codesign-certs*")' .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 17-01-02 | 01 | 1 | SIGN-02 | integration | `grep 'codesign.*--options runtime' .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 17-02-01 | 02 | 2 | SIGN-03 | integration | `grep 'notarytool submit' .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 17-02-02 | 02 | 2 | SIGN-04 | integration | `grep 'stapler staple' .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
-| 17-02-03 | 02 | 2 | SIGN-05 | integration | `grep 'spctl --assess' .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
+| 17-01-T1 | 01 | 1 | SIGN-05 | unit | `plutil -lint build/darwin/entitlements.plist && test "$(grep -c 'com.apple.security' build/darwin/entitlements.plist)" -eq 4` | ❌ W0 | ⬜ pending |
+| 17-01-T2 | 01 | 1 | SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-06 | integration | `grep -q "apple-actions/import-codesign-certs" .github/workflows/release.yml && grep -q "notarytool" .github/workflows/release.yml && grep -q "stapler staple" .github/workflows/release.yml && grep -q "spctl --assess" .github/workflows/release.yml` | ❌ W0 | ⬜ pending |
+| 17-01-T3 | 01 | 1 | ALL | checkpoint | User verifies APPLE_ID secret set, pipeline passes | N/A | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
 
