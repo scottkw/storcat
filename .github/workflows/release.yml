@@ -118,6 +118,7 @@ jobs:
 
   build-windows:
     runs-on: windows-2022
+    environment: release
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
@@ -141,6 +142,36 @@ jobs:
 
       - name: Build Windows with NSIS installer
         run: wails build -clean -platform windows/amd64 -windowsconsole -nsis
+
+      - name: Sign portable exe
+        uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: build\bin\StorCat.exe
+          malware_block: false
+          override: true
+
+      - name: Sign NSIS installer
+        uses: SSLcom/esigner-codesign@cf5f6c1d38ad10f47e3ed9aca873f429b1a8d85b  # v1.3.2
+        with:
+          command: sign
+          username: ${{ secrets.ES_USERNAME }}
+          password: ${{ secrets.ES_PASSWORD }}
+          credential_id: ${{ secrets.CREDENTIAL_ID }}
+          totp_secret: ${{ secrets.ES_TOTP_SECRET }}
+          file_path: build\bin\StorCat-amd64-installer.exe
+          malware_block: false
+          override: true
+
+      - name: Verify Authenticode signatures
+        shell: cmd
+        run: |
+          signtool verify /pa /v build\bin\StorCat.exe
+          signtool verify /pa /v build\bin\StorCat-amd64-installer.exe
 
       - name: Rename Windows binary
         shell: bash
