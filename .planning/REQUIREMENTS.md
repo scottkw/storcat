@@ -68,32 +68,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| CRED-01 | — | Pending |
-| CRED-02 | — | Pending |
-| CRED-03 | — | Pending |
-| CRED-04 | — | Pending |
-| CRED-05 | — | Pending |
-| CRED-06 | — | Pending |
-| SIGN-01 | — | Pending |
-| SIGN-02 | — | Pending |
-| SIGN-03 | — | Pending |
-| SIGN-04 | — | Pending |
-| SIGN-05 | — | Pending |
-| SIGN-06 | — | Pending |
-| WSIGN-01 | — | Pending |
-| WSIGN-02 | — | Pending |
-| WSIGN-03 | — | Pending |
-| WSIGN-04 | — | Pending |
-| PKG-01 | — | Pending |
-| PKG-02 | — | Pending |
-| PKG-03 | — | Pending |
-| PKG-04 | — | Pending |
+| CRED-01 | Phase 16 | Pending |
+| CRED-02 | Phase 16 | Pending |
+| CRED-03 | Phase 16 | Pending |
+| CRED-04 | Phase 16 | Pending |
+| CRED-05 | Phase 16 | Pending |
+| CRED-06 | Phase 16 | Pending |
+| SIGN-01 | Phase 17 | Pending |
+| SIGN-02 | Phase 17 | Pending |
+| SIGN-03 | Phase 17 | Pending |
+| SIGN-04 | Phase 17 | Pending |
+| SIGN-05 | Phase 17 | Pending |
+| SIGN-06 | Phase 17 | Pending |
+| WSIGN-01 | Phase 18 | Pending |
+| WSIGN-02 | Phase 18 | Pending |
+| WSIGN-03 | Phase 18 | Pending |
+| WSIGN-04 | Phase 18 | Pending |
+| PKG-01 | Phase 19 | Pending |
+| PKG-03 | Phase 19 | Pending |
+| PKG-02 | Phase 20 | Pending |
+| PKG-04 | Phase 20 | Pending |
 
 **Coverage:**
 - v2.3.0 requirements: 20 total
-- Mapped to phases: 0
-- Unmapped: 20
+- Mapped to phases: 20
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-03-27*
-*Last updated: 2026-03-27 after initial definition*
+*Last updated: 2026-03-27 after roadmap creation*

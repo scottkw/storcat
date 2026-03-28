@@ -5,6 +5,7 @@
 - ✅ **v2.0.0 Go/Wails Migration** — Phases 1-7 (shipped 2026-03-26) — [Archive](milestones/v2.0.0-ROADMAP.md)
 - ✅ **v2.1.0 CLI Commands** — Phases 8-11 (shipped 2026-03-26) — [Archive](milestones/v2.1.0-ROADMAP.md)
 - ✅ **v2.2.0 Repo Consolidation & CI/CD** — Phases 12-15 (shipped 2026-03-27) — [Archive](milestones/v2.2.0-ROADMAP.md)
+- 🚧 **v2.3.0 Code Signing & Package Manager CLI** — Phases 16-20 (in progress)
 
 ## Phases
 
@@ -41,6 +42,74 @@
 
 </details>
 
+### 🚧 v2.3.0 Code Signing & Package Manager CLI (In Progress)
+
+**Milestone Goal:** Automate macOS/Windows code signing with secure credential handling, and make Homebrew/WinGet installations provide working CLI out of the box.
+
+- [ ] **Phase 16: Secrets & Certificate Procurement** - Obtain and configure all signing credentials before any CI automation begins
+- [ ] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI
+- [ ] **Phase 18: Windows Authenticode Signing** - Sign Windows NSIS installer and portable .exe before artifact upload
+- [ ] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately
+- [ ] **Phase 20: Windows CLI PATH via NSIS** - Ensure `winget install scottkw.StorCat` delivers a working `storcat` CLI immediately
+
+## Phase Details
+
+### Phase 16: Secrets & Certificate Procurement
+**Goal**: All signing credentials are in hand and configured in GitHub Actions before any signing automation is built
+**Depends on**: Nothing (first phase of v2.3.0)
+**Requirements**: CRED-01, CRED-02, CRED-03, CRED-04, CRED-05, CRED-06
+**Success Criteria** (what must be TRUE):
+  1. Developer ID Application certificate is located or renewed and confirmed valid via `security find-identity -v -p codesigning`
+  2. Apple certificate is exported as .p12 and base64-encoded value stored as `APPLE_CERTIFICATE` GitHub secret in the `release` environment
+  3. Windows OV code signing certificate is obtained with RSA (not ECDSA) confirmed before purchase
+  4. Windows PFX is base64-encoded and stored as `WINDOWS_CERTIFICATE` GitHub secret in the `release` environment
+  5. GitHub `release` environment exists with protection rules and all 9 signing secrets populated
+  6. Credential rotation runbook document exists describing what to do when each cert expires
+**Plans**: TBD
+
+### Phase 17: macOS Signing & Notarization
+**Goal**: Every macOS DMG produced by a CI release tag is signed with Developer ID, notarized by Apple, and stapled — Gatekeeper accepts it without prompting on macOS 15+
+**Depends on**: Phase 16
+**Requirements**: SIGN-01, SIGN-02, SIGN-03, SIGN-04, SIGN-05, SIGN-06
+**Success Criteria** (what must be TRUE):
+  1. `release.yml` `build-macos` job imports certificate into an isolated temporary keychain and cleans it up after signing completes
+  2. The StorCat .app bundle is signed with `--options runtime` and the ported entitlements plist before DMG creation
+  3. The DMG is submitted to Apple notarization via `xcrun notarytool` and returns a "Accepted" status
+  4. Notarization ticket is stapled to the DMG via `xcrun stapler` so Gatekeeper works offline
+  5. `spctl --assess --type exec StorCat.app` returns "accepted" as a CI gate step confirming Gatekeeper acceptance
+**Plans**: TBD
+
+### Phase 18: Windows Authenticode Signing
+**Goal**: Every Windows NSIS installer and portable .exe produced by CI is signed with Authenticode before upload, suppressing or reducing SmartScreen blocking
+**Depends on**: Phase 16
+**Requirements**: WSIGN-01, WSIGN-02, WSIGN-03, WSIGN-04
+**Success Criteria** (what must be TRUE):
+  1. `release.yml` `build-windows` job decodes the PFX secret and signs both the NSIS installer and portable .exe with `signtool.exe` before `upload-artifact`
+  2. `signtool verify /v /pa` confirms a valid Authenticode signature on both Windows binaries as a CI gate step
+  3. WinGet manifests in `distribute.yml` compute SHA256 from the signed binaries (signing occurs before artifact upload)
+**Plans**: TBD
+
+### Phase 19: Homebrew CLI PATH
+**Goal**: Users who run `brew install --cask storcat` get a `storcat` command immediately available in any new terminal session
+**Depends on**: Phase 17
+**Requirements**: PKG-01, PKG-03
+**Success Criteria** (what must be TRUE):
+  1. `packaging/homebrew/storcat.rb.template` contains a `binary` stanza that symlinks the StorCat binary into `$(brew --prefix)/bin/storcat`
+  2. A user on a fresh macOS machine can run `brew install --cask storcat` and then `storcat version` in a new terminal without any additional PATH configuration
+  3. The `storcat` symlink points to the correct binary path inside StorCat.app
+**Plans**: TBD
+**UI hint**: no
+
+### Phase 20: Windows CLI PATH via NSIS
+**Goal**: Users who install StorCat via WinGet get a `storcat` command immediately available in any new Command Prompt or PowerShell session
+**Depends on**: Phase 18
+**Requirements**: PKG-02, PKG-04
+**Success Criteria** (what must be TRUE):
+  1. `build/windows/installer.nsi` custom NSIS script adds the StorCat install directory to system PATH via `EnvVarUpdate` macro on install and removes it on uninstall
+  2. A user on a fresh Windows machine can run `winget install scottkw.StorCat` and then open a new terminal and run `storcat version` without any additional PATH configuration
+  3. PATH registration is visible in System Environment Variables after installation
+**Plans**: TBD
+
 ## Progress
 
 | Phase | Milestone | Plans Complete | Status | Completed |
@@ -60,3 +129,8 @@
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
+| 16. Secrets & Certificate Procurement | v2.3.0 | 0/TBD | Not started | - |
+| 17. macOS Signing & Notarization | v2.3.0 | 0/TBD | Not started | - |
+| 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
+| 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
+| 20. Windows CLI PATH via NSIS | v2.3.0 | 0/TBD | Not started | - |
