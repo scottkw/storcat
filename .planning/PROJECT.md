@@ -57,19 +57,36 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-(None — next milestone defines new requirements)
+- [ ] macOS Developer ID code signing automated in CI
+- [ ] macOS notarization + stapling automated in CI
+- [ ] Windows Authenticode code signing automated in CI
+- [ ] Signing credentials securely stored in GitHub Actions secrets
+- [ ] Homebrew installation puts `storcat` on PATH for CLI use
+- [ ] WinGet installation puts `storcat` on PATH for CLI use
 
 ### Out of Scope
 
 - Wails v3 migration — still alpha as of March 2026, premature
 - Automated test suite — important, separate milestone (TEST-01 through TEST-03)
-- Code signing (macOS notarization + Windows Authenticode) — future milestone, needs credential pipeline
+- ~~Code signing~~ — now active in v2.3.0
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
 
+## Current Milestone: v2.3.0 Code Signing & Package Manager CLI
+
+**Goal:** Automate macOS/Windows code signing with secure credential handling, and make Homebrew/WinGet installations provide working CLI out of the box.
+
+**Target features:**
+- Apple Developer ID code signing + notarization + stapling in CI
+- Windows Authenticode signing in CI
+- Credential recovery/renewal guidance for both platforms
+- GitHub Actions secrets with environment protection rules
+- Homebrew cask installs `storcat` binary to PATH (CLI works immediately)
+- WinGet installation puts `storcat` on PATH (CLI works immediately)
+
 ## Current State
 
-**Shipped:** v2.2.0 Repo Consolidation & CI/CD (2026-03-27)
+**Shipped:** v2.2.1 bugfix (2026-03-27), v2.2.0 Repo Consolidation & CI/CD (2026-03-27)
 
 StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite). Full CI/CD pipeline: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64) with fan-in draft release. Platform packaging: macOS DMG, Windows NSIS installer, Linux AppImage + .deb. Distribution automation: `distribute.yml` auto-updates Homebrew cask and submits WinGet PR on release publish.
 
@@ -143,4 +160,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-27 after v2.2.0 milestone*
+*Last updated: 2026-03-27 after v2.3.0 milestone start*
