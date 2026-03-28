@@ -46,7 +46,7 @@
 
 **Milestone Goal:** Automate macOS/Windows code signing with secure credential handling, and make Homebrew/WinGet installations provide working CLI out of the box.
 
-- [ ] **Phase 16: Secrets & Certificate Procurement** - Obtain and configure all signing credentials before any CI automation begins
+- [x] **Phase 16: Secrets & Certificate Procurement** - Obtain and configure all signing credentials before any CI automation begins (completed 2026-03-28)
 - [ ] **Phase 17: macOS Signing & Notarization** - Sign, notarize, and staple every macOS DMG produced by CI
 - [ ] **Phase 18: Windows Authenticode Signing** - Sign Windows NSIS installer and portable .exe before artifact upload
 - [ ] **Phase 19: Homebrew CLI PATH** - Ensure `brew install --cask storcat` delivers a working `storcat` CLI immediately
@@ -68,8 +68,8 @@
 **Plans**: 3 plans
 Plans:
 - [x] 16-01-PLAN.md — Create GitHub release environment and credential rotation runbook
-- [ ] 16-02-PLAN.md — Apple certificate verification, export, and secret storage
-- [ ] 16-03-PLAN.md — Windows signing vendor decision, enrollment, and secret storage
+- [x] 16-02-PLAN.md — Apple certificate verification, export, and secret storage
+- [x] 16-03-PLAN.md — Windows signing vendor decision, enrollment, and secret storage
 
 ### Phase 17: macOS Signing & Notarization
 **Goal**: Every macOS DMG produced by a CI release tag is signed with Developer ID, notarized by Apple, and stapled — Gatekeeper accepts it without prompting on macOS 15+
@@ -133,7 +133,7 @@ Plans:
 | 13. CI Scaffold and Multi-Platform Build | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 14. Platform Packaging | v2.2.0 | 1/1 | Complete | 2026-03-27 |
 | 15. Distribution Channel Automation | v2.2.0 | 2/2 | Complete | 2026-03-27 |
-| 16. Secrets & Certificate Procurement | v2.3.0 | 1/3 | In Progress|  |
+| 16. Secrets & Certificate Procurement | v2.3.0 | 3/3 | Complete    | 2026-03-28 |
 | 17. macOS Signing & Notarization | v2.3.0 | 0/TBD | Not started | - |
 | 18. Windows Authenticode Signing | v2.3.0 | 0/TBD | Not started | - |
 | 19. Homebrew CLI PATH | v2.3.0 | 0/TBD | Not started | - |
