@@ -57,8 +57,8 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-- [ ] macOS Developer ID code signing automated in CI
-- [ ] macOS notarization + stapling automated in CI
+- [x] macOS Developer ID code signing automated in CI — v2.3.0 Phase 17
+- [x] macOS notarization + stapling automated in CI — v2.3.0 Phase 17
 - [ ] Windows Authenticode code signing automated in CI
 - [x] Signing credentials securely stored in GitHub Actions secrets (Apple 5/5, Windows deferred) — v2.3.0 Phase 16
 - [ ] Homebrew installation puts `storcat` on PATH for CLI use
@@ -91,6 +91,8 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite). Full CI/CD pipeline: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64) with fan-in draft release. Platform packaging: macOS DMG, Windows NSIS installer, Linux AppImage + .deb. Distribution automation: `distribute.yml` auto-updates Homebrew cask and submits WinGet PR on release publish.
 
 Phase 16 complete (2026-03-28) — GitHub `release` environment created with `v*.*.*` tag policy. All 5 Apple signing secrets stored. Windows signing deferred to future milestone (SSL.com eSigner OV recommended when ready). Credential rotation runbook at `docs/runbooks/credential-rotation.md`.
+
+Phase 17 complete (2026-03-28) — macOS signing pipeline fully operational in CI. Entitlements plist for Wails hardened runtime, code signing with Developer ID, DMG notarization via notarytool, stapling, and Gatekeeper verification. Verified end-to-end via CI run. 10 Apple secrets configured (APPLE_ID added during this phase).
 
 ## Context
 
@@ -162,4 +164,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 16 completion*
+*Last updated: 2026-03-28 after Phase 17 completion*
