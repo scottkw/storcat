@@ -62,7 +62,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 - [x] Windows Authenticode code signing automated in CI — v2.3.0 Phase 18
 - [x] Signing credentials securely stored in GitHub Actions secrets (Apple 5/5, Windows deferred) — v2.3.0 Phase 16
 - [x] Homebrew installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 19
-- [ ] WinGet installation puts `storcat` on PATH for CLI use
+- [x] WinGet installation puts `storcat` on PATH for CLI use — v2.3.0 Phase 20
 
 ### Out of Scope
 
@@ -97,6 +97,8 @@ Phase 17 complete (2026-03-28) — macOS signing pipeline fully operational in C
 Phase 18 complete (2026-03-28) — Windows Authenticode signing pipeline added to build-windows CI job. SSL.com eSigner cloud HSM signs both portable .exe and NSIS installer before upload. signtool verify /pa /v as CI gate. Pending: user must store 4 eSigner secrets in GitHub release environment for live signing.
 
 Phase 19 complete (2026-03-28) — Homebrew cask `binary` stanza added to both `storcat.rb.template` and `update-tap.sh`. `brew install --cask storcat` now symlinks StorCat binary into `$(brew --prefix)/bin/storcat`, making CLI available on PATH immediately. Pending: end-to-end smoke test after next release.
+
+Phase 20 complete (2026-03-28) — Custom NSIS installer script adds `$INSTDIR` to system PATH on install via EnVar plugin and removes it on uninstall. WM_SETTINGCHANGE broadcast notifies running shells. WinGet manifest template updated with `Commands: [storcat]` metadata. Pending: Windows UAT to confirm runtime behavior.
 
 ## Context
 
@@ -168,4 +170,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 19 completion*
+*Last updated: 2026-03-28 after Phase 20 completion*
