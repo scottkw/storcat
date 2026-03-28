@@ -131,24 +131,73 @@
 
 ---
 
+## Milestone: v2.3.0 — Code Signing & Package Manager CLI
+
+**Shipped:** 2026-03-28
+**Phases:** 6 | **Plans:** 8 | **Tasks:** 12
+
+### What Was Built
+- macOS Developer ID code signing + notarization + stapling automated in CI (Gatekeeper-verified end-to-end)
+- Windows Authenticode signing pipeline with SSL.com eSigner cloud HSM integration (code complete, awaiting credentials)
+- GitHub `release` environment with `v*.*.*` tag protection rules and 6 Apple signing secrets
+- Credential rotation runbook for all signing certificates
+- Homebrew cask `binary` stanza for immediate CLI availability after `brew install --cask storcat`
+- Custom NSIS installer with EnVar plugin PATH registration for Windows CLI
+- release-please automation: conventional commits → version bumps → tags → builds → publish → Homebrew/WinGet distribution
+
+### What Worked
+- Phase 16 as hard prerequisite (credentials before code) prevented wasted CI iteration on signing phases
+- Phases 17 and 18 independent of each other — could have been parallelized (were sequential but fast)
+- Research-first approach again proved essential for unfamiliar domains (code signing, notarization, NSIS scripting)
+- Phase 21 (release-please) added mid-milestone — flexible roadmap evolution worked well
+- Milestone audit caught AUTOREL orphaned requirements and Windows pipeline cascade issue before shipping
+- All signing code verified in isolation — clean separation of "code complete" from "credentials provisioned"
+
+### What Was Inefficient
+- SUMMARY.md one-liner fields still not populated for some phases (17-01, 18-01) — same recurring gap
+- Phase 21 requirements (AUTOREL-01 through AUTOREL-05) never added to REQUIREMENTS.md traceability table after phase was added to roadmap
+- release-please-action@v4 uses tag reference instead of SHA pin — inconsistent with security posture of all other actions
+- credential-rotation.md missing APPLE_ID (10th secret added during Phase 17, not backported to runbook)
+
+### Patterns Established
+- `env:` block for secret mapping in GitHub Actions run steps (prevents log leakage)
+- `apple-actions/import-codesign-certs@v6` for keychain ACL setup (prevents codesign hangs)
+- EnVar plugin over EnvVarUpdate for NSIS PATH (no 1024-byte truncation)
+- release-please with `simple` release-type + `extra-files` jsonpath for non-npm version sources
+- softprops/action-gh-release `tag_name` trick to upload to existing release-please release
+
+### Key Lessons
+1. Code signing credentials are ops work, not code work — separating "pipeline code complete" from "credentials provisioned" is the right abstraction
+2. When adding a phase mid-milestone, update REQUIREMENTS.md traceability immediately — orphaned requirements compound
+3. Windows signing pipeline cascade (one build failure blocks all distribution) needs mitigation — consider conditional release job
+4. Bundling small binaries in-repo (EnVar.dll, 9KB) is preferable to network-dependent CI downloads
+
+### Cost Observations
+- Model mix: Primarily Opus for planning/execution, Sonnet for subagents
+- Sessions: ~3 sessions in 1 day
+- Notable: 6 phases completed in a single day — CI/CD and signing work is mostly YAML and config
+
+---
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
 
-| Metric | v2.0.0 | v2.1.0 | v2.2.0 |
-|--------|--------|--------|--------|
-| Phases | 7 | 4 | 4 |
-| Plans | 11 | 7 | 7 |
-| Tasks | 15 | 9 | 11 |
-| Timeline | 3 days | 1 day | 1 day |
-| Requirements | 20/20 | 23/23 | 17/17 |
-| Tech Debt Items | 11 | 6 (5 resolved) | 7 (0 critical) |
-| Nyquist | Partial | Partial | COMPLIANT |
+| Metric | v2.0.0 | v2.1.0 | v2.2.0 | v2.3.0 |
+|--------|--------|--------|--------|--------|
+| Phases | 7 | 4 | 4 | 6 |
+| Plans | 11 | 7 | 7 | 8 |
+| Tasks | 15 | 9 | 11 | 12 |
+| Timeline | 3 days | 1 day | 1 day | 1 day |
+| Requirements | 20/20 | 23/23 | 17/17 | 17/20 (3 deferred) |
+| Tech Debt Items | 11 | 6 (5 resolved) | 7 (0 critical) | 4 (all credential-related) |
+| Nyquist | Partial | Partial | COMPLIANT | Partial (3 phases) |
 
 ### Recurring Themes
 - Bottom-up dependency ordering is effective for migration work
-- Nyquist validation improved: v2.2.0 achieved full compliance (was partial in v2.0.0 and v2.1.0)
-- SUMMARY.md one_liner/requirements_completed fields still inconsistently populated — template gap persists across all 3 milestones
+- Nyquist validation regressed in v2.3.0 (partial) after v2.2.0 achieved full compliance — credential-heavy milestones with human-action checkpoints are harder to validate
+- SUMMARY.md one_liner/requirements_completed fields still inconsistently populated — template gap persists across all 4 milestones
 - Audit-then-cleanup two-step is a reliable pattern for shipping quality
-- Research-first approach for unfamiliar domains (CI/CD, packaging) prevents costly rework
+- Research-first approach for unfamiliar domains (CI/CD, packaging, code signing) prevents costly rework
 - Same-day milestone execution is achievable with well-scoped phases and clear success criteria
+- Mid-milestone phase additions (Phase 21) work well but require immediate REQUIREMENTS.md updates to avoid orphaned requirements

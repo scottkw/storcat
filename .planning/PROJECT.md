@@ -64,60 +64,44 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-(No active requirements — v2.3.0 milestone complete)
+(No active requirements — planning next milestone)
 
 ### Out of Scope
 
 - Wails v3 migration — still alpha as of March 2026, premature
 - Automated test suite — important, separate milestone (TEST-01 through TEST-03)
-- ~~Code signing~~ — now active in v2.3.0
 - Performance benchmarking — Go is already faster, no formal benchmarks needed
 - Tailwind CSS migration — different design direction, not prioritized
 
-## Current Milestone: v2.3.0 Code Signing & Package Manager CLI
-
-**Goal:** Automate macOS/Windows code signing with secure credential handling, and make Homebrew/WinGet installations provide working CLI out of the box.
-
-**Target features:**
-- Apple Developer ID code signing + notarization + stapling in CI
-- Windows Authenticode signing in CI
-- Credential recovery/renewal guidance for both platforms
-- GitHub Actions secrets with environment protection rules
-- Homebrew cask installs `storcat` binary to PATH (CLI works immediately)
-- WinGet installation puts `storcat` on PATH (CLI works immediately)
-
 ## Current State
 
-**Shipped:** v2.2.1 bugfix (2026-03-27), v2.2.0 Repo Consolidation & CI/CD (2026-03-27)
+**Shipped:** v2.3.0 Code Signing & Package Manager CLI (2026-03-28)
 
-StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite). Full CI/CD pipeline: `release.yml` triggers on `v*.*.*` tag push, builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64) with fan-in draft release. Platform packaging: macOS DMG, Windows NSIS installer, Linux AppImage + .deb. Distribution automation: `distribute.yml` auto-updates Homebrew cask and submits WinGet PR on release publish.
+StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD, code signing, and release automation. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite).
 
-Phase 16 complete (2026-03-28) — GitHub `release` environment created with `v*.*.*` tag policy. All 5 Apple signing secrets stored. Windows signing deferred to future milestone (SSL.com eSigner OV recommended when ready). Credential rotation runbook at `docs/runbooks/credential-rotation.md`.
+**Release pipeline:** release-please maintains a release PR from conventional commits. Merging creates a git tag and GitHub release. `release.yml` builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64), uploads artifacts, and publishes. `distribute.yml` auto-updates Homebrew cask and submits WinGet PR.
 
-Phase 17 complete (2026-03-28) — macOS signing pipeline fully operational in CI. Entitlements plist for Wails hardened runtime, code signing with Developer ID, DMG notarization via notarytool, stapling, and Gatekeeper verification. Verified end-to-end via CI run. 10 Apple secrets configured (APPLE_ID added during this phase).
+**Code signing:** macOS Developer ID signing + notarization + stapling fully automated in CI (Gatekeeper-verified). Windows Authenticode signing pipeline built with SSL.com eSigner integration (code complete, awaiting credential provisioning — 4 eSigner secrets needed).
 
-Phase 18 complete (2026-03-28) — Windows Authenticode signing pipeline added to build-windows CI job. SSL.com eSigner cloud HSM signs both portable .exe and NSIS installer before upload. signtool verify /pa /v as CI gate. Pending: user must store 4 eSigner secrets in GitHub release environment for live signing.
+**Package manager CLI:** `brew install --cask storcat` symlinks binary to PATH. NSIS installer adds install directory to system PATH via EnVar plugin. Both enable `storcat` CLI immediately after install.
 
-Phase 19 complete (2026-03-28) — Homebrew cask `binary` stanza added to both `storcat.rb.template` and `update-tap.sh`. `brew install --cask storcat` now symlinks StorCat binary into `$(brew --prefix)/bin/storcat`, making CLI available on PATH immediately. Pending: end-to-end smoke test after next release.
-
-Phase 20 complete (2026-03-28) — Custom NSIS installer script adds `$INSTDIR` to system PATH on install via EnVar plugin and removes it on uninstall. WM_SETTINGCHANGE broadcast notifies running shells. WinGet manifest template updated with `Commands: [storcat]` metadata. Pending: Windows UAT to confirm runtime behavior.
-
-Phase 21 complete (2026-03-28) — release-please automation configured. Conventional commits on main auto-maintain a release PR; merging creates tag + GitHub release; release.yml uploads artifacts and publishes; distribute.yml fires for Homebrew + WinGet. Single source of truth: `wails.json` productVersion via jsonpath.
+**Known tech debt:** Windows signing credentials not yet provisioned (SSL.com eSigner OV RSA ~$20/mo). Release pipeline E2E blocked until Windows secrets stored — macOS-only pipeline works.
 
 ## Context
 
-Shipped v2.2.0 on 2026-03-27 — repo consolidation, CI/CD pipeline, platform packaging, and distribution automation.
+Shipped v2.3.0 on 2026-03-28 — code signing, package manager CLI PATH, release-please automation.
+Previously shipped v2.2.0 on 2026-03-27 — repo consolidation, CI/CD pipeline, platform packaging, and distribution automation.
 Previously shipped v2.1.0 on 2026-03-26 — full CLI subcommand support.
 Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electron/Node.js to Go/Wails.
 
-**Codebase:** ~2,500 LOC Go + ~2,700 LOC TypeScript + ~800 LOC YAML (CI/CD workflows)
+**Codebase:** ~2,500 LOC Go + ~2,700 LOC TypeScript + ~1,200 LOC YAML (CI/CD workflows + NSIS)
 **Tech stack:** Go 1.23, Wails v2, React 18, TypeScript 5, Ant Design 5
 **Dependencies:** tablewriter v1.1.4, fatih/color v1.18.0, pkg/browser
 **Platforms:** macOS (universal), Windows (x64/arm64), Linux (x64/arm64)
 **Build:** `wails build` with ldflags version injection
-**CI/CD:** GitHub Actions — `build.yml` (CI), `release.yml` (release), `distribute.yml` (distribution)
+**CI/CD:** GitHub Actions — `build.yml` (CI), `release.yml` (release), `distribute.yml` (distribution), `release-please.yml` (version automation)
 
-**Known tech debt:** 7 informational items from v2.2.0 audit (0 critical). See `.planning/milestones/v2.2.0-MILESTONE-AUDIT.md`. First WinGet submission to microsoft/winget-pkgs is a manual prerequisite.
+**Known tech debt:** Windows signing credentials not provisioned (4 eSigner secrets). First WinGet submission to microsoft/winget-pkgs is a manual prerequisite. `release-please-action@v4` uses tag reference (not SHA pin).
 
 ## Key Decisions
 
@@ -151,6 +135,9 @@ Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electr
 | winget-releaser for WinGet submission | Maintained action, SHA-pinned to v2 | ✓ Good |
 | release-please for version automation | Conventional commits drive version bumps, no manual tagging | ✓ Good |
 | wails.json as version source of truth | jsonpath extra-file keeps Go embed and release-please in sync | ✓ Good |
+| SSL.com eSigner for Windows signing | Post-2023 CA/Browser Forum rules prevent PFX export; cloud HSM is the path | ✓ Good |
+| EnVar plugin for NSIS PATH | No PATH truncation at 1024-byte NSIS limit; uses Win32 RegQueryValueEx directly | ✓ Good |
+| softprops tag_name for release-please | Uploads to existing release instead of creating new draft; publishes immediately | ✓ Good |
 
 ## Constraints
 
@@ -176,4 +163,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after Phase 21 completion*
+*Last updated: 2026-03-28 after v2.3.0 milestone*

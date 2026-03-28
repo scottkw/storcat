@@ -1,5 +1,27 @@
 # Milestones
 
+## v2.3.0 Code Signing & Package Manager CLI (Shipped: 2026-03-28)
+
+**Phases completed:** 6 phases, 8 plans, 12 tasks
+
+**Key accomplishments:**
+
+- macOS Developer ID code signing, notarization, and stapling automated in CI — Gatekeeper-verified end-to-end
+- Windows Authenticode signing pipeline built with SSL.com eSigner integration (code complete, awaiting credential provisioning)
+- Homebrew cask `binary` stanza puts `storcat` on PATH immediately after `brew install --cask storcat`
+- Custom NSIS installer with EnVar PATH registration enables `storcat` CLI from any new terminal after WinGet install
+- release-please automation: conventional commits → version bumps → tags → builds → publish → Homebrew/WinGet distribution
+- GitHub `release` environment with tag protection rules, 6 Apple signing secrets, and credential rotation runbook
+
+### Known Gaps
+
+- **CRED-04**: Windows OV code signing certificate purchase deferred (SSL.com eSigner OV RSA ~$20/mo identified as vendor)
+- **CRED-05**: 6/10 secrets in release environment (4 Windows eSigner secrets absent)
+- **WSIGN-01–04**: Windows signing code complete but untested in CI (blocked by missing secrets)
+- **Release pipeline cascade**: Windows build failure blocks full E2E release; macOS-only pipeline works
+
+---
+
 ## v2.2.0 Repo Consolidation & CI/CD (Shipped: 2026-03-27)
 
 **Phases completed:** 4 phases, 7 plans, 11 tasks
