@@ -94,7 +94,8 @@ cask "storcat" do
   end
   
   app "StorCat.app"
-  
+  binary "#{appdir}/StorCat.app/Contents/MacOS/StorCat", target: "storcat"
+
   zap trash: [
     "~/Library/Application Support/StorCat",
     "~/Library/Preferences/com.kenscott.storcat.plist",
