@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import storcatIcon from '../../storcat-icon.svg';
 import { Environment } from '../../../wailsjs/runtime/runtime';
 
@@ -10,7 +10,10 @@ export interface ToolbarProps {
 }
 
 function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails }: ToolbarProps) {
-  useEffect(() => {
+  // useLayoutEffect (not useEffect) so this fires before the browser paints,
+  // closing React's own commit-to-paint gap. Environment() itself is still
+  // async, so this narrows but does not eliminate the one-frame window.
+  useLayoutEffect(() => {
     let cancelled = false;
     // Environment() dereferences window.runtime synchronously, so outside a Wails
     // webview it THROWS rather than rejecting — which would take down the whole tree.
