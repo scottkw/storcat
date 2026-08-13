@@ -84,7 +84,7 @@
   4. User can switch between all 11 themes and see the entire workspace repaint immediately, with legible text on every accent-filled button and badge across both light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue), using the handoff's extended token set (THEME-01, THEME-02, THEME-03)
   5. User can toggle row density between Compact and Comfortable and see it change tree row height, rail/details/palette row padding, and tree font size; sees IBM Plex Sans and Mono render with no network access; and finds their theme, density, and rail position preserved across an app restart (THEME-04, THEME-05, THEME-06)
 
-**Plans**: 3/7 plans executed (4 waves)
+**Plans**: 4/7 plans executed (4 waves)
 Plans:
 **Wave 1**
 
@@ -95,7 +95,7 @@ Plans:
 - [ ] 22-02-PLAN.md — Typography: vendored latin-subset IBM Plex Sans/Mono with IBM's OFL text (wave 2)
 - [x] 22-03-PLAN.md — Toolbar: controls, drag-region opt-outs, macOS traffic-light inset (wave 2)
 - [x] 22-04-PLAN.md — Catalog rail and 26px status bar skeletons (wave 2)
-- [ ] 22-05-PLAN.md — Tree pane and details panel skeletons (wave 2)
+- [x] 22-05-PLAN.md — Tree pane and details panel skeletons (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -226,7 +226,7 @@ Plans:
 | 19. Homebrew CLI PATH | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
-| 22. Shell + Token Layer | v3.0.0 | 3/7 | In Progress|  |
+| 22. Shell + Token Layer | v3.0.0 | 4/7 | In Progress|  |
 | 23. Rail + Virtualized Tree | v3.0.0 | 0/TBD | Not started | - |
 | 24. Cmd-K Command Palette | v3.0.0 | 0/TBD | Not started | - |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
