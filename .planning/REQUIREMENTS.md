@@ -25,7 +25,7 @@
 - [x] **THEME-02**: User sees legible text on accent-filled buttons and badges in every one of the 11 themes, including light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue)
 - [x] **THEME-03**: User sees the theme colors defined by the handoff's `THEMES` array, with the extended token set (`--bg --p --p2 --ch --l --l2 --tx --dm --fn --ac --acs --onac --sel --hov`)
 - [x] **THEME-04**: User can switch row density between Compact and Comfortable, changing tree row height, rail row padding, details row padding, palette row padding, and tree font size
-- [ ] **THEME-05**: User sees IBM Plex Sans for UI text and IBM Plex Mono for every path, filename, size, count and timestamp, with no network access required
+- [x] **THEME-05**: User sees IBM Plex Sans for UI text and IBM Plex Mono for every path, filename, size, count and timestamp, with no network access required
 - [x] **THEME-06**: User's theme, density, and rail position survive an app restart
 
 ### Rail — the catalog list
@@ -160,7 +160,7 @@ Deferred — acknowledged but not in this roadmap.
 | THEME-02 | Phase 22 | Complete |
 | THEME-03 | Phase 22 | Complete |
 | THEME-04 | Phase 22 | Complete |
-| THEME-05 | Phase 22 | Pending |
+| THEME-05 | Phase 22 | Complete |
 | THEME-06 | Phase 22 | Complete |
 | RAIL-01 | Phase 23 | Pending |
 | RAIL-02 | Phase 23 | Pending |

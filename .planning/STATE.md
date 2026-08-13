@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 22
 current_phase_name: Shell + Token Layer
 status: executing
-stopped_at: Completed 22-05-PLAN.md
-last_updated: "2026-08-13T20:55:18.915Z"
+stopped_at: Completed 22-02-PLAN.md
+last_updated: "2026-08-13T21:00:47.646Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 4
+  completed_plans: 5
   percent: 0
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 22 (Shell + Token Layer) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 22 execution started
 
-Progress: [██████░░░░] 57%
+Progress: [███████░░░] 71%
 
 ## Performance Metrics
 
@@ -63,6 +63,7 @@ Progress: [██████░░░░] 57%
 | Phase 22 P03 | 5min | 2 tasks | 1 files |
 | Phase 22 P04 | 4min | 2 tasks | 2 files |
 | Phase 22 P05 | 5min | 2 tasks | 2 files |
+| Phase 22 P02 | 15min | 2 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: Implemented full OKLab conversion (Ottosson matrices) for theme token color mixing, not sRGB averaging, for pixel-exact fidelity with the design handoff
 - [Phase ?]: Toolbar: kept className="no-drag ws-search"/"no-drag ws-chip" per the plan's action text rather than restructuring to satisfy the plan's own literal className="no-drag" exact-match grep -- moving .no-drag to a wrapper would break .ws-search:hover/.ws-chip:hover
 - [Phase ?]: 22-05: DetailsPanel takes no props parameter (not even unused/underscore-prefixed) -- the exported DetailsPanelProps interface exists purely for plan 22-07 to extend additively
+- [Phase ?]: Task 1's blocking package-legitimacy checkpoint resolved via orchestrator's standing checkpoint_authority approval, not re-raised interactively
+- [Phase ?]: IBM Plex @font-face src paths use no leading ./ to exactly match the existing Nunito rule's form
 
 ### Key Research Findings
 
@@ -104,6 +107,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-13T20:55:18.908Z
-Stopped at: Completed 22-05-PLAN.md
+Last session: 2026-08-13T21:00:47.640Z
+Stopped at: Completed 22-02-PLAN.md
 Resume file: None
