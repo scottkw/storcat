@@ -32,11 +32,22 @@ export interface ThemeColors {
   iconFilter: string;
 }
 
+export interface ThemeTokens {
+  bg: string;
+  p: string;
+  p2: string;
+  ch: string;
+  l: string;
+  tx: string;
+  ac: string;
+}
+
 export interface Theme {
   id: string;
   name: string;
   type: 'light' | 'dark';
   colors: ThemeColors;
+  tokens: ThemeTokens;
   antdAlgorithm: 'default' | 'dark';
   antdPrimaryColor?: string;
 }
@@ -49,6 +60,15 @@ export const themes: Theme[] = [
     type: 'light',
     antdAlgorithm: 'default',
     antdPrimaryColor: '#5D6569FF',
+    tokens: {
+      bg: '#f4f5f6',
+      p: '#ffffff',
+      p2: '#fafbfc',
+      ch: '#f1f3f5',
+      l: '#dee2e6',
+      tx: '#212529',
+      ac: '#0d8f9c',
+    },
     colors: {
       appBg: '#f8f9fa',
       appText: '#212529',
@@ -76,6 +96,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#5D6569FF',
+    tokens: {
+      bg: '#0b0e13',
+      p: '#0f1319',
+      p2: '#12161d',
+      ch: '#151a22',
+      l: '#232a35',
+      tx: '#e6ebf2',
+      ac: '#4fd6e0',
+    },
     colors: {
       appBg: '#0f172a',
       appText: '#f1f5f9',
@@ -103,6 +132,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#bd93f9',
+    tokens: {
+      bg: '#282a36',
+      p: '#2f313d',
+      p2: '#31333f',
+      ch: '#44475a',
+      l: '#44475a',
+      tx: '#f8f8f2',
+      ac: '#bd93f9',
+    },
     colors: {
       appBg: '#282a36',
       appText: '#f8f8f2',
@@ -130,6 +168,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#268bd2',
+    tokens: {
+      bg: '#002b36',
+      p: '#073642',
+      p2: '#04303c',
+      ch: '#0a3d49',
+      l: '#12495a',
+      tx: '#93a1a1',
+      ac: '#2aa198',
+    },
     colors: {
       appBg: '#002b36',
       appText: '#839496',
@@ -157,6 +204,15 @@ export const themes: Theme[] = [
     type: 'light',
     antdAlgorithm: 'default',
     antdPrimaryColor: '#268bd2',
+    tokens: {
+      bg: '#fdf6e3',
+      p: '#fffcf2',
+      p2: '#f7f0dd',
+      ch: '#eee8d5',
+      l: '#ded6bd',
+      tx: '#586e75',
+      ac: '#268bd2',
+    },
     colors: {
       appBg: '#fdf6e3',
       appText: '#657b83',
@@ -184,6 +240,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#5e81ac',
+    tokens: {
+      bg: '#2e3440',
+      p: '#3b4252',
+      p2: '#353c4a',
+      ch: '#434c5e',
+      l: '#434c5e',
+      tx: '#d8dee9',
+      ac: '#88c0d0',
+    },
     colors: {
       appBg: '#2e3440',
       appText: '#d8dee9',
@@ -211,6 +276,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#61afef',
+    tokens: {
+      bg: '#21252b',
+      p: '#282c34',
+      p2: '#242830',
+      ch: '#2c313c',
+      l: '#3e4451',
+      tx: '#abb2bf',
+      ac: '#61afef',
+    },
     colors: {
       appBg: '#282c34',
       appText: '#abb2bf',
@@ -238,6 +312,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#fd971f',
+    tokens: {
+      bg: '#272822',
+      p: '#31322a',
+      p2: '#2c2d26',
+      ch: '#3e3d32',
+      l: '#49483e',
+      tx: '#f8f8f2',
+      ac: '#a6e22e',
+    },
     colors: {
       appBg: '#272822',
       appText: '#f8f8f2',
@@ -265,6 +348,15 @@ export const themes: Theme[] = [
     type: 'light',
     antdAlgorithm: 'default',
     antdPrimaryColor: '#0969da',
+    tokens: {
+      bg: '#ffffff',
+      p: '#f6f8fa',
+      p2: '#fbfcfd',
+      ch: '#eff2f5',
+      l: '#d0d7de',
+      tx: '#24292f',
+      ac: '#0969da',
+    },
     colors: {
       appBg: '#ffffff',
       appText: '#24292f',
@@ -292,6 +384,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#238636',
+    tokens: {
+      bg: '#0d1117',
+      p: '#161b22',
+      p2: '#12171e',
+      ch: '#21262d',
+      l: '#30363d',
+      tx: '#c9d1d9',
+      ac: '#58a6ff',
+    },
     colors: {
       appBg: '#0d1117',
       appText: '#c9d1d9',
@@ -319,6 +420,15 @@ export const themes: Theme[] = [
     type: 'dark',
     antdAlgorithm: 'dark',
     antdPrimaryColor: '#fe8019',
+    tokens: {
+      bg: '#282828',
+      p: '#32302f',
+      p2: '#2d2b29',
+      ch: '#3c3836',
+      l: '#504945',
+      tx: '#ebdbb2',
+      ac: '#fe8019',
+    },
     colors: {
       appBg: '#282828',
       appText: '#ebdbb2',

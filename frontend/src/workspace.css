@@ -1,0 +1,177 @@
+/*
+ * Workspace token layer, layout grid, z-index scale, density vars.
+ *
+ * The seven base tokens below plus --onac are declared as :root fallbacks
+ * only (storcat-light's values) so there is a sane default if this file
+ * ever loads before applyTokens() runs. applyTokens() (themeTokens.ts) is
+ * the sole runtime writer of all 14 tokens -- it always runs synchronously
+ * before first paint (see main.tsx), so in practice these fallbacks are
+ * never the values actually painted.
+ */
+:root {
+  --bg: #f4f5f6;
+  --p: #ffffff;
+  --p2: #fafbfc;
+  --ch: #f1f3f5;
+  --l: #dee2e6;
+  --tx: #212529;
+  --ac: #0d8f9c;
+  --onac: #ffffff;
+
+  /* Comfortable density defaults -- applyTokens() overrides per density. */
+  --rh: 34px;
+  --rp: 10px 10px;
+  --mp: 10px;
+  --hp: 11px 14px;
+  --fs: 13px;
+
+  /* Overlay stacking scale (SHELL-09) -- no component may hardcode a raw z-index. */
+  --z-details-drawer: 100;
+  --z-overlay: 200;
+  --z-dialog: 300;
+
+  --toolbar-inset-left: 0px;
+}
+
+/* Utilities */
+
+.no-drag {
+  --wails-draggable: no-drag;
+}
+
+.pane-scroll {
+  flex: 1;
+  overflow-y: auto;
+  min-height: 0;
+  scrollbar-gutter: stable;
+}
+
+.mono {
+  font-family: 'IBM Plex Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+/* Interaction and density-contract classes -- declared here so plans 22-03,
+ * 22-04, 22-05 (which apply these classes) never need to touch this file. */
+
+.ws-search:hover,
+.ws-search:focus-visible {
+  border-color: var(--ac);
+}
+
+.ws-chip:hover {
+  color: var(--ac);
+  border-color: var(--ac);
+}
+
+.ws-new-pill:hover {
+  background: var(--ac);
+  color: var(--onac);
+}
+
+.ws-rail-row {
+  padding: var(--rp);
+}
+
+.ws-tree-row {
+  height: var(--rh);
+  font-size: var(--fs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ws-meta-row {
+  padding: var(--mp) 0;
+}
+
+.ws-meta-value {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Shell layout */
+
+.ws-root {
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg);
+  color: var(--tx);
+  text-align: left;
+  font-family: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.ws-toolbar {
+  height: 46px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 14px 0 calc(14px + var(--toolbar-inset-left));
+  background: var(--p2);
+  border-bottom: 1px solid var(--l);
+}
+
+.ws-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  min-height: 0;
+}
+
+@media (min-width: 1040px) {
+  .ws-grid {
+    grid-template-columns: 236px 1fr;
+  }
+}
+
+@media (min-width: 1280px) {
+  .ws-grid {
+    grid-template-columns: 268px 1fr 288px;
+  }
+}
+
+.ws-rail {
+  order: 1;
+  background: var(--p);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-right: 1px solid var(--l);
+}
+
+.ws-tree {
+  order: 2;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: var(--bg);
+}
+
+.ws-details {
+  order: 3;
+  background: var(--p);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--l);
+}
+
+.ws-status {
+  height: 26px;
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 14px;
+  background: var(--p2);
+  border-top: 1px solid var(--l);
+  font-size: 11px;
+  color: var(--fn);
+}
+
+/* IBM Plex Sans/Mono @font-face declarations are vendored in plan 22-02
+ * (wave 2), alongside the woff2 asset files themselves. Until then the
+ * font-family references above fall through to the next stack entry. */
