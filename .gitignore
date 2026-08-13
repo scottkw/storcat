@@ -28,3 +28,6 @@ storcat-project.*
 
 # Wails dev-mode plist
 build/darwin/Info.dev.plist
+
+# GSD runtime state
+.gsd/
