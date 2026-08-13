@@ -142,3 +142,11 @@ None - no external service configuration required.
 ---
 *Phase: 22-shell-token-layer*
 *Completed: 2026-08-13*
+
+## Self-Check: PASSED
+
+- FOUND: `frontend/src/components/workspace/Toolbar.tsx`
+- FOUND: `.planning/phases/22-shell-token-layer/22-03-SUMMARY.md`
+- FOUND: `5a11d9c2` (Task 1 commit)
+- FOUND: `952b456e` (Task 2 commit)
+- FOUND: `5f59d730` (SUMMARY commit)
