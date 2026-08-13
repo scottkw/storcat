@@ -186,10 +186,8 @@
   border-left: 1px solid var(--l);
 }
 
-.ws-details--pane {
-  /* Inline grid child -- no positioning overrides needed. */
-}
-
+/* .ws-details--pane needs no rule here -- it's an inline grid child with no
+   positioning overrides. Only the drawer variant below overrides layout. */
 .ws-details--drawer {
   position: absolute;
   right: 0;
