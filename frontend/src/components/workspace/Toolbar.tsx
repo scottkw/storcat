@@ -1,17 +1,15 @@
 import React, { useEffect } from 'react';
 import storcatIcon from '../../storcat-icon.svg';
-import { readPersistedPrefs } from '../../themeTokens';
 import { Environment } from '../../../wailsjs/runtime/runtime';
 
 export interface ToolbarProps {
+  themeName: string;
   showDetailsChip: boolean;
   detailsOpen: boolean;
   onToggleDetails: () => void;
 }
 
-function Toolbar({ showDetailsChip, detailsOpen, onToggleDetails }: ToolbarProps) {
-  const themeName = readPersistedPrefs().theme.name;
-
+function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails }: ToolbarProps) {
   useEffect(() => {
     let cancelled = false;
     // Environment() dereferences window.runtime synchronously, so outside a Wails

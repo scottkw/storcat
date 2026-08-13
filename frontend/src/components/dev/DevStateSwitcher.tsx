@@ -1,7 +1,11 @@
-import { useEffect, useState } from 'react';
-import { themes } from '../../themes';
-import { applyTokens, readPersistedPrefs, THEME_KEY, DENSITY_KEY, RAIL_SIDE_KEY, Density, RailSide } from '../../themeTokens';
+import { useEffect } from 'react';
+import { themes, Theme } from '../../themes';
+import { DENSITY_KEY, RAIL_SIDE_KEY, Density, RailSide } from '../../themeTokens';
 import { useAppContext } from '../../contexts/AppContext';
+
+export interface DevStateSwitcherProps {
+  currentTheme: Theme;
+}
 
 // This component exists only because Phase 22 ships no theme picker, no
 // density toggle, and no rail-side control -- it is the only way to
@@ -11,21 +15,22 @@ import { useAppContext } from '../../contexts/AppContext';
 // Density and rail side are reducer state (AppContext); this component
 // dispatches into it rather than owning a parallel copy, so WorkspaceShell's
 // density-reapply effect and the rail-side CSS attribute stay the source of
-// truth. Theme isn't reducer state yet (Phase 26), so it stays local here.
-function DevStateSwitcher() {
+// truth. Theme isn't reducer state yet (Phase 26), so it's lifted from
+// App.tsx as a prop and cycled via the same 'themeChange' CustomEvent the
+// future Settings surface will use, rather than owning a second copy.
+function DevStateSwitcher({ currentTheme }: DevStateSwitcherProps) {
   const { state, dispatch } = useAppContext();
-  const [theme, setTheme] = useState(() => readPersistedPrefs().theme);
 
   useEffect(() => {
     const handleKeydown = (event: KeyboardEvent) => {
       if (!event.ctrlKey || !event.altKey) return;
 
       if (event.key === 't' || event.key === 'T') {
-        const currentIndex = themes.findIndex(t => t.id === theme.id);
+        const currentIndex = themes.findIndex(t => t.id === currentTheme.id);
         const nextTheme = themes[(currentIndex + 1) % themes.length];
-        applyTokens(nextTheme, state.density);
-        localStorage.setItem(THEME_KEY, nextTheme.id);
-        setTheme(nextTheme);
+        // App.tsx's listener applies tokens, updates state, and persists to
+        // localStorage -- one path, no parallel write here.
+        window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme: nextTheme } }));
       } else if (event.key === 'd' || event.key === 'D') {
         const nextDensity: Density = state.density === 'Compact' ? 'Comfortable' : 'Compact';
         dispatch({ type: 'SET_DENSITY', payload: nextDensity });
@@ -41,7 +46,7 @@ function DevStateSwitcher() {
     return () => {
       window.removeEventListener('keydown', handleKeydown);
     };
-  }, [theme, state.density, state.railSide, dispatch]);
+  }, [currentTheme, state.density, state.railSide, dispatch]);
 
   return (
     <div
@@ -61,7 +66,7 @@ function DevStateSwitcher() {
         padding: '4px 8px',
       }}
     >
-      {theme.name} · {state.density} · {state.railSide}
+      {currentTheme.name} · {state.density} · {state.railSide}
     </div>
   );
 }

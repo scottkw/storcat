@@ -8,7 +8,11 @@ import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useAppContext } from '../../contexts/AppContext';
 import { applyTokens, readPersistedPrefs } from '../../themeTokens';
 
-function WorkspaceShell() {
+export interface WorkspaceShellProps {
+  themeName: string;
+}
+
+function WorkspaceShell({ themeName }: WorkspaceShellProps) {
   const { state, dispatch } = useAppContext();
 
   // Single place React learns the width tier -- must match workspace.css's
@@ -45,6 +49,7 @@ function WorkspaceShell() {
   return (
     <div className="ws-root" data-rail-side={state.railSide}>
       <Toolbar
+        themeName={themeName}
         showDetailsChip={!isWide}
         detailsOpen={state.detailOverlay}
         onToggleDetails={() =>
