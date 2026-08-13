@@ -11,9 +11,9 @@
 
 - [x] **SHELL-01**: User sees a single workspace view — no tabs — with a 46px toolbar, catalog rail, tree pane, details panel, and 26px status bar
 - [x] **SHELL-02**: User sees the three panes laid out as `268px 1fr 288px` at window widths ≥1280px
-- [ ] **SHELL-03**: User sees the details panel become a right drawer, toggled by a "Details" chip in the toolbar, at widths 1040–1279px (rail narrows to 236px)
-- [ ] **SHELL-04**: User sees the tree keep priority below 1040px (rail 200px, details stays a drawer)
-- [ ] **SHELL-05**: User can move the catalog rail to the right side, and the 1px divider moves with it
+- [x] **SHELL-03**: User sees the details panel become a right drawer, toggled by a "Details" chip in the toolbar, at widths 1040–1279px (rail narrows to 236px)
+- [x] **SHELL-04**: User sees the tree keep priority below 1040px (rail 200px, details stays a drawer)
+- [x] **SHELL-05**: User can move the catalog rail to the right side, and the 1px divider moves with it
 - [ ] **SHELL-06**: User sees the status bar report catalog count, indexed file count, and total bytes
 - [x] **SHELL-07**: User can drag the window by the toolbar without drag regions swallowing clicks on the search field, theme chip, or gear
 - [x] **SHELL-08**: On macOS, user sees the real traffic lights sitting inside the 46px toolbar (TitleBarHiddenInset); on Windows and Linux the native title bar sits above it
@@ -149,9 +149,9 @@ Deferred — acknowledged but not in this roadmap.
 |-------------|-------|--------|
 | SHELL-01 | Phase 22 | Complete |
 | SHELL-02 | Phase 22 | Complete |
-| SHELL-03 | Phase 22 | Pending |
-| SHELL-04 | Phase 22 | Pending |
-| SHELL-05 | Phase 22 | Pending |
+| SHELL-03 | Phase 22 | Complete |
+| SHELL-04 | Phase 22 | Complete |
+| SHELL-05 | Phase 22 | Complete |
 | SHELL-06 | Phase 23 | Pending |
 | SHELL-07 | Phase 22 | Complete |
 | SHELL-08 | Phase 22 | Complete |
