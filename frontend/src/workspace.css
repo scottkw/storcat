@@ -131,6 +131,25 @@
   .ws-grid {
     grid-template-columns: 268px 1fr 288px;
   }
+
+  /* Below this block the rail is forced back to the left with its
+   * right-edge divider regardless of data-rail-side -- matches the
+   * prototype's own conditional and must not be "fixed". */
+  .ws-root[data-rail-side="Right"] .ws-grid {
+    grid-template-columns: 288px 1fr 268px;
+  }
+
+  .ws-root[data-rail-side="Right"] .ws-rail {
+    order: 3;
+    border-right: none;
+    border-left: 1px solid var(--l);
+  }
+
+  .ws-root[data-rail-side="Right"] .ws-details {
+    order: 1;
+    border-left: none;
+    border-right: 1px solid var(--l);
+  }
 }
 
 .ws-rail {
