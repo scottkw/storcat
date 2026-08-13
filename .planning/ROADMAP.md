@@ -72,98 +72,131 @@
 ## Phase Details
 
 ### Phase 22: Shell + Token Layer
+
 **Goal**: Users interact with a single-view workspace (toolbar, rail, tree, details, status bar) instead of the old three-tab interface, fully responsive and themed across all 11 themes
 **Depends on**: Nothing (first phase of v3.0.0)
 **Requirements**: SHELL-01, SHELL-02, SHELL-03, SHELL-04, SHELL-05, SHELL-07, SHELL-08, SHELL-09, THEME-01, THEME-02, THEME-03, THEME-04, THEME-05, THEME-06
 **Success Criteria** (what must be TRUE):
+
   1. User sees a single workspace view — no tabs — with a 46px toolbar, catalog rail, tree pane, details panel, and status bar, laid out as `268px 1fr 288px` at window widths ≥1280px (SHELL-01, SHELL-02)
   2. User sees the layout respond correctly at 1040–1279px (rail narrows to 236px, details becomes a toggleable drawer behind a "Details" chip) and below 1040px (rail 200px, details stays a drawer, tree keeps priority), with every overlay stacking correctly at each tier (SHELL-03, SHELL-04, SHELL-09)
   3. User can move the catalog rail to the right side with the 1px divider following it, drag the window from the toolbar without losing clicks on the search field, theme chip, or gear, and — on macOS — see the real traffic lights sitting inside the 46px toolbar, with the native title bar above it on Windows and Linux (SHELL-05, SHELL-07, SHELL-08)
   4. User can switch between all 11 themes and see the entire workspace repaint immediately, with legible text on every accent-filled button and badge across both light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue), using the handoff's extended token set (THEME-01, THEME-02, THEME-03)
   5. User can toggle row density between Compact and Comfortable and see it change tree row height, rail/details/palette row padding, and tree font size; sees IBM Plex Sans and Mono render with no network access; and finds their theme, density, and rail position preserved across an app restart (THEME-04, THEME-05, THEME-06)
+
 **Plans**: 7 plans (4 waves)
 Plans:
+**Wave 1**
+
 - [ ] 22-01-PLAN.md — Tracer: theme token pipeline paints the workspace frame end to end, tab UI removed, macOS title-bar option wired (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 22-02-PLAN.md — Typography: vendored latin-subset IBM Plex Sans/Mono with IBM's OFL text (wave 2)
 - [ ] 22-03-PLAN.md — Toolbar: controls, drag-region opt-outs, macOS traffic-light inset (wave 2)
 - [ ] 22-04-PLAN.md — Catalog rail and 26px status bar skeletons (wave 2)
 - [ ] 22-05-PLAN.md — Tree pane and details panel skeletons (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 22-06-PLAN.md — Workspace state, responsive tiers, rail-side swap (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 22-07-PLAN.md — Details drawer, overlay stacking scale, phase verification matrix (wave 4)
+
 **UI hint**: yes
 
 ### Phase 23: Rail + Virtualized Tree
+
 **Goal**: Users browse any catalog — including 40,000+-node ones — from a fast, filterable rail into a virtualized tree with a details panel that follows their selection
 **Depends on**: Phase 22
 **Requirements**: SHELL-06, RAIL-01, RAIL-02, RAIL-03, RAIL-04, RAIL-05, RAIL-06, TREE-01, TREE-02, TREE-03, TREE-04, TREE-05, TREE-06, TREE-07, TREE-08, STATE-01, STATE-02, COMPAT-01
 **Success Criteria** (what must be TRUE):
+
   1. User sees every catalog in the configured catalog directory listed in the rail (title, JSON size, filename, file count), can filter it by typing (case-insensitive match on title and filename) without the tree re-rendering on each keystroke, and selecting a row loads its tree while clearing the previous selection (RAIL-01, RAIL-02, RAIL-03)
   2. User sees a red status dot on any catalog that failed to parse, sees the current catalog directory as a chip they can change, and can open the create slide-over from the "＋ New" pill (RAIL-04, RAIL-05, RAIL-06)
   3. User can browse a catalog of 40,000+ nodes with smooth scrolling and no freeze — verified against a synthetic 40,000+-node fixture catalog built for this phase — expand and collapse directories (directory click toggles and selects, file click selects only), and expand every directory or collapse to root from the breadcrumb bar (TREE-01, TREE-02, TREE-03)
   4. User sees the catalog header (title, `.json`/`.html` chips, file count/JSON size/bytes-catalogued/modified-date line), a breadcrumb path with accent-colored ancestor segments, and a details panel that follows the current selection with working "Open HTML catalog" and "Reveal JSON in file manager" actions (TREE-04, TREE-05, TREE-07, TREE-08)
   5. User's scroll position and expansion state reset cleanly on catalog switch (TREE-06); the status bar shows live catalog count, indexed file count, and total bytes (SHELL-06); catalogs created by StorCat v1.x and v2.x open without conversion (COMPAT-01); and empty-library / unreadable-catalog states appear with file/byte-offset/reason/raw-parse-error detail (STATE-01, STATE-02)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 24: Cmd-K Command Palette
+
 **Goal**: Users find any file across every catalog instantly from a ⌘K palette without leaving the workspace
 **Depends on**: Phase 23
 **Requirements**: PLT-01, PLT-02, PLT-03, PLT-04, PLT-05, PLT-06, PLT-07
 **Success Criteria** (what must be TRUE):
+
   1. User can open the search palette with ⌘K or by clicking the toolbar search field, with the input autofocused (PLT-01)
   2. User can search names and paths across every catalog in the directory, seeing at most 50 results with a "Showing the first 50 of N hits" notice when more matched, or "No file in any catalog matches that." when nothing matched (PLT-02, PLT-03, PLT-06)
   3. User can navigate results by keyboard, click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette, and can dismiss the palette with Escape (PLT-04, PLT-05)
   4. Focus is trapped inside the palette while it's open and page scroll is locked behind it, via a shared modal-behavior hook (focus trap, Escape, scroll lock) that Phases 25-27's overlays reuse rather than reimplement (PLT-07)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 25: Create Slide-over + Progress/Cancellation/Partial-Catalog
+
 **Goal**: Users create a new catalog from a detected volume or folder, watch it scan live, and can cancel it or recover from a volume that disappears mid-scan — all without risking data loss or breaking the CLI
 **Depends on**: Phase 23, Phase 24
 **Requirements**: CRT-01, CRT-02, CRT-03, CRT-04, CRT-05, CRT-06, CRT-07, CRT-08, CRT-09, CRT-10, CRT-11, CRT-12, CRT-13, COMPAT-02, COMPAT-03, COMPAT-04
 **Success Criteria** (what must be TRUE):
+
   1. User can open a 560px right slide-over that animates in over 340ms and out over 260ms without unmounting early, regardless of which of the five close paths (Escape, ×, Cancel, scrim, "Open in workspace") triggers the close (CRT-01)
   2. User sees detected mounted volumes as selectable cards (name, mount path, size, `mounted`/`read errors` status), can choose any folder instead, set a catalog title and filename root with a live "WILL WRITE" preview, toggle write-HTML/copy-secondary/include-hidden, and start the scan with the Create button or ⌘↵ (CRT-02, CRT-03, CRT-04, CRT-05, CRT-06)
   3. User sees live scan progress — percentage, files seen, bytes, estimated time remaining, current walking path, and a newest-first log — can hand a running scan to the status bar with "Run in background", and can cancel a scan such that the underlying walk actually stops (CRT-07, CRT-08, CRT-09)
   4. User sees a distinct error state when the volume goes away mid-scan (showing where it stopped and the read errors encountered), can write a partial catalog, retry the scan, or cancel from that state, and closing the window mid-scan cancels the walk and writes nothing (CRT-10, CRT-11, CRT-13)
   5. User sees a done state listing every file written with its size and can open the new catalog in the workspace or catalog another volume; catalogs this flow writes are byte-for-byte the same JSON shape v2.3.0 wrote; and all six CLI subcommands keep behaving exactly as before, with `internal/catalog` still usable from the CLI without a Wails runtime context (CRT-12, COMPAT-02, COMPAT-03, COMPAT-04)
+
 **Plans**: TBD
 **UI hint**: yes
 **Research flag**: This phase touches the only existing, tested Go code path this milestone modifies (`traverseDirectory`'s error-return contract, the `ProgressCallback` signature, and real `context.Context` cancellation) — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, particularly to resolve the forced-close partial-write policy and the on-disk "unreadable subtree" marker shape.
 
 ### Phase 26: Settings
+
 **Goal**: Users configure theme, density, rail position, and catalog defaults from one settings surface that saves as they go
 **Depends on**: Phase 22
 **Requirements**: SET-01, SET-02, SET-03, SET-04, SET-05, COMPAT-05
 **Success Criteria** (what must be TRUE):
+
   1. User can open Settings with ⌘,, the gear, or the theme chip (SET-01)
   2. User can pick a theme from 11 cards (each showing a 4-swatch strip and a light/dark tag), and set row density and catalog rail position from segmented controls (SET-02, SET-03)
   3. User can set the catalog directory, a default filename root, and the four catalog toggles (write HTML, copy to secondary location, watch directory, remember window size and position) (SET-04)
   4. User's settings save as they're changed with no explicit save step, and window size/position persistence continues to work exactly as it did pre-milestone, controlled by this same toggle (SET-05, COMPAT-05)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 27: Catalog Actions + Watch
+
 **Goal**: Users manage existing catalogs — rename, duplicate, delete to Trash — and see the rail stay current when catalogs change outside the app
 **Depends on**: Phase 23, Phase 26
 **Requirements**: ACT-01, ACT-02, ACT-03, ACT-04, ACT-05, ACT-09, WATCH-01, WATCH-02, WATCH-03
 **Success Criteria** (what must be TRUE):
+
   1. User can open a catalog actions menu from the `⋯` button in the details panel, rename a catalog's title (rewriting the `.html` `<title>` safely, including for titles with special characters, and leaving filenames unchanged), and duplicate a catalog with a suffixed filename root (ACT-01, ACT-02, ACT-03)
   2. User can delete a catalog to the OS Trash after a confirmation that names both file paths (with an option to also delete the matching `.html`), and a failed trash operation surfaces as an error and never silently falls back to permanent deletion (ACT-04, ACT-05)
   3. No catalog write — create, rename, duplicate, or delete — can corrupt an existing catalog file if the app crashes mid-write (ACT-09)
   4. User sees "● watching `<catalog directory>`" in the status bar when watching is enabled, sees the rail update when catalogs are added, removed, or modified outside the app, and can turn watching off in Settings with the underlying watcher released (WATCH-01, WATCH-02, WATCH-03)
+
 **Plans**: TBD
 **UI hint**: yes
 
 ### Phase 28: Re-scan & Diff
+
 **Goal**: Users re-scan a catalog's source volume and safely reconcile what changed, without risking the existing catalog
 **Depends on**: Phase 23, Phase 25, Phase 27
 **Requirements**: ACT-06, ACT-07, ACT-08, STATE-03, COMPAT-06
 **Success Criteria** (what must be TRUE):
+
   1. User can re-scan a catalog's source volume and see a diff of added, removed, changed, and unchanged entries with counts, always being asked to select the source volume rather than the app guessing which media it came from (ACT-06, ACT-08)
   2. User can resolve a diff by overwriting the catalog, keeping both, or discarding, with the overwrite path reusing the same crash-safe atomic write guarantee established in Phase 25 (ACT-07)
   3. User viewing an unreadable catalog can re-scan it, open its `.html` instead, or remove it from the library (STATE-03)
   4. The app builds, signs, notarizes, and releases on every existing CI platform target with the full milestone's changes included — confirming the frontend rewrite and the milestone's one new Go dependency (Bios-Marcel/wastebasket/v2) don't break any platform build (COMPAT-06)
+
 **Plans**: TBD
 **UI hint**: yes
 **Research flag**: This is the handoff's own "biggest backend piece" — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, to resolve the volume-relocation policy and finalize the on-disk "unreadable subtree" marker format from Phase 25.

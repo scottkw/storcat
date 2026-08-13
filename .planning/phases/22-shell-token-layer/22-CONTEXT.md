@@ -19,7 +19,7 @@ Replace the three-tab Ant Design interface with the 1a Workspace shell: a 46px t
 ## Implementation Decisions
 
 ### Shell Composition & Migration Scope
-- The three-tab UI is deleted in this phase — `App.tsx` renders only the new workspace; `Header.tsx`, `MainContent.tsx`, `WelcomeContent.tsx`, and `components/tabs/*` are removed rather than kept behind a flag or left unrendered.
+- The three-tab UI is deleted in this phase — `App.tsx` renders only the new workspace; `Header.tsx`, `MainContent.tsx`, `WelcomeContent.tsx`, and `components/tabs/*` are removed rather than kept behind a flag or left unrendered. `ModernTable.tsx` goes with them: its only importers are `BrowseCatalogsTab.tsx` and `SearchCatalogsTab.tsx`, so it is fully orphaned by the same commit (Chesterton's Fence — the fence is "used by the tabs", and the tabs are being torn down here). `CatalogModal.tsx` is explicitly NOT deleted and must keep working.
 - Ant Design is removed from every surface built in this phase, but the `antd` / `@ant-design/icons` dependencies stay installed until their last consumer (`CatalogModal.tsx`) is replaced in Phase 26. No big-bang rewrite in the first phase.
 - Rail, tree, and details panes render as static skeletons in Phase 22 — correct dimensions, tokens, borders, and empty-state messaging, with no data wiring. Data wiring belongs to Phase 23.
 - Styling is plain CSS with CSS custom properties in a dedicated `workspace.css`, matching the handoff's token model and the existing `index.css` pattern. No CSS-in-JS, no CSS Modules, no Tailwind (explicitly out of scope for the project).
