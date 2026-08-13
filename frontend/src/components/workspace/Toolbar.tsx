@@ -3,7 +3,13 @@ import storcatIcon from '../../storcat-icon.svg';
 import { readPersistedPrefs } from '../../themeTokens';
 import { Environment } from '../../../wailsjs/runtime/runtime';
 
-function Toolbar() {
+export interface ToolbarProps {
+  showDetailsChip: boolean;
+  detailsOpen: boolean;
+  onToggleDetails: () => void;
+}
+
+function Toolbar({ showDetailsChip, detailsOpen, onToggleDetails }: ToolbarProps) {
   const themeName = readPersistedPrefs().theme.name;
 
   useEffect(() => {
@@ -100,6 +106,27 @@ function Toolbar() {
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
+        {showDetailsChip && (
+          <button
+            type="button"
+            className="no-drag"
+            aria-expanded={detailsOpen}
+            onClick={onToggleDetails}
+            style={{
+              fontSize: 11.5,
+              border: '1px solid var(--l)',
+              borderRadius: 6,
+              padding: '3px 8px',
+              background: 'transparent',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              color: detailsOpen ? 'var(--ac)' : 'var(--dm)',
+            }}
+          >
+            Details
+          </button>
+        )}
+
         <button
           type="button"
           className="no-drag ws-chip"

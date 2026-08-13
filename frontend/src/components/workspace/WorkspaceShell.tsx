@@ -44,7 +44,13 @@ function WorkspaceShell() {
 
   return (
     <div className="ws-root" data-rail-side={state.railSide}>
-      <Toolbar />
+      <Toolbar
+        showDetailsChip={!isWide}
+        detailsOpen={state.detailOverlay}
+        onToggleDetails={() =>
+          dispatch({ type: 'SET_DETAIL_OVERLAY', payload: !state.detailOverlay })
+        }
+      />
       <div className="ws-grid">
         <CatalogRail />
         <TreePane />
