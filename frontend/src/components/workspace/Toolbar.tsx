@@ -1,9 +1,27 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import storcatIcon from '../../storcat-icon.svg';
 import { readPersistedPrefs } from '../../themeTokens';
+import { Environment } from '../../../wailsjs/runtime/runtime';
 
 function Toolbar() {
   const themeName = readPersistedPrefs().theme.name;
+
+  useEffect(() => {
+    let cancelled = false;
+    Environment()
+      .then((env) => {
+        if (cancelled) return;
+        if (env.platform === 'darwin') {
+          document.documentElement.style.setProperty('--toolbar-inset-left', '78px');
+        }
+      })
+      .catch(() => {
+        // Platform query failed -- leave the toolbar inset at its 0px default.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div
