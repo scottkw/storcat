@@ -81,7 +81,15 @@
   3. User can move the catalog rail to the right side with the 1px divider following it, drag the window from the toolbar without losing clicks on the search field, theme chip, or gear, and — on macOS — see the real traffic lights sitting inside the 46px toolbar, with the native title bar above it on Windows and Linux (SHELL-05, SHELL-07, SHELL-08)
   4. User can switch between all 11 themes and see the entire workspace repaint immediately, with legible text on every accent-filled button and badge across both light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue), using the handoff's extended token set (THEME-01, THEME-02, THEME-03)
   5. User can toggle row density between Compact and Comfortable and see it change tree row height, rail/details/palette row padding, and tree font size; sees IBM Plex Sans and Mono render with no network access; and finds their theme, density, and rail position preserved across an app restart (THEME-04, THEME-05, THEME-06)
-**Plans**: TBD
+**Plans**: 7 plans (4 waves)
+Plans:
+- [ ] 22-01-PLAN.md — Tracer: theme token pipeline paints the workspace frame end to end, tab UI removed, macOS title-bar option wired (wave 1)
+- [ ] 22-02-PLAN.md — Typography: vendored latin-subset IBM Plex Sans/Mono with IBM's OFL text (wave 2)
+- [ ] 22-03-PLAN.md — Toolbar: controls, drag-region opt-outs, macOS traffic-light inset (wave 2)
+- [ ] 22-04-PLAN.md — Catalog rail and 26px status bar skeletons (wave 2)
+- [ ] 22-05-PLAN.md — Tree pane and details panel skeletons (wave 2)
+- [ ] 22-06-PLAN.md — Workspace state, responsive tiers, rail-side swap (wave 3)
+- [ ] 22-07-PLAN.md — Details drawer, overlay stacking scale, phase verification matrix (wave 4)
 **UI hint**: yes
 
 ### Phase 23: Rail + Virtualized Tree
