@@ -61,6 +61,8 @@ type AppAction =
   | { type: 'SET_DETAIL_OVERLAY'; payload: boolean };
 ```
 
+**Disposition:** fixed (commit `8f1d51e1`). Repo-wide grep confirmed zero consumers of `catalogModalOpen`/`catalogModalTitle`/`catalogModalHtmlPath`/`OPEN_CATALOG_MODAL`/`CLOSE_CATALOG_MODAL` outside their own definitions. Deleted per the suggested fix; `CatalogModal` reducer migration stays deferred to Phase 26 per `22-CONTEXT.md`.
+
 ### WR-02: Toolbar's theme-name chip is not reactive — goes stale after a theme change, breaking THEME-01's own verification method
 
 **File:** `frontend/src/components/workspace/Toolbar.tsx:13`, `frontend/src/components/dev/DevStateSwitcher.tsx:23-28`, `frontend/src/App.tsx:18-24`
@@ -84,6 +86,8 @@ const handleThemeChange = (event: CustomEvent) => {
 ```
 and thread `themeName` as a prop into `Toolbar` rather than calling `readPersistedPrefs()` inside its render body. `DevStateSwitcher` should update the same lifted state (or dispatch to it) rather than writing `localStorage` independently.
 
+**Disposition:** fixed (commit `e9471c0e`). `App.tsx`'s `currentTheme` is now threaded as a prop through `WorkspaceShell` to `Toolbar`; `handleThemeChange` persists `THEME_KEY` to `localStorage`; `DevStateSwitcher` no longer owns a competing local theme copy or writes storage/tokens directly -- it dispatches the same `themeChange` `CustomEvent` `App.tsx` already listens for. Verified live in-browser: cycling via `Ctrl+Alt+T` moved the chip from "StorCat Light" to "StorCat Dark", with `--bg` (`#0b0e13`) and `localStorage['storcat-theme-id']` (`storcat-dark`) all agreeing after the switch.
+
 ## Info
 
 ### IN-01: `readPersistedPrefs()` (has read+write side effects) is called redundantly from four separate places at startup
@@ -92,17 +96,23 @@ and thread `themeName` as a prop into `Toolbar` rather than calling `readPersist
 **Issue:** `readPersistedPrefs()` reads three `localStorage` keys and conditionally rewrites them on every call. It is invoked once at `AppContext.tsx` module scope, once inside `initThemeTokens()` in `main.tsx`, once in `App.tsx`'s `useState` lazy initializer, and once per-render inside `Toolbar`. All calls are idempotent after the first (no functional bug), but this is duplicated I/O and four independent read sites for what should be one source of truth — a symptom of theme not yet living in the reducer (tracked for Phase 26).
 **Fix:** No urgent action needed; when theme moves into `AppState` in Phase 26, collapse these call sites to the single `initThemeTokens()` call plus reducer state reads.
 
+**Disposition:** not-needed, per the finding's own recommendation -- no urgent action; correctly tracked as a Phase 26 cleanup when theme joins `AppState`.
+
 ### IN-02: macOS toolbar inset is applied one tick after first paint, risking a one-frame layout shift
 
 **File:** `frontend/src/components/workspace/Toolbar.tsx:15-35`
 **Issue:** `--toolbar-inset-left` (which reserves 78px for the macOS traffic lights) is set via `document.documentElement.style.setProperty(...)` inside a `Promise.resolve().then(() => Environment())` chain, i.e., after mount. On a real macOS build this resolves within a microtask/short delay, but it is not guaranteed to complete before the browser paints the first frame, so there is a narrow window where toolbar content can render flush-left before snapping over by 78px. This is a much smaller version of the "launch flash" problem the phase otherwise took care to eliminate for theme tokens (`main.tsx`'s comment about avoiding a post-mount effect).
 **Fix:** Low priority given the magnitude (a few pixels, one frame, cosmetic only). If it needs tightening, the Wails runtime's platform can potentially be read synchronously via `window.runtime` metadata rather than the async `Environment()` call, or the inset could be applied via a `useLayoutEffect` to at least run before the browser paints (though `Environment()` itself is still a Promise, so this only removes React's own commit-to-paint gap, not the async fetch delay).
 
+**Disposition:** fixed (commit `24108009`). Swapped `useEffect` for `useLayoutEffect`; the `Promise.resolve().then(() => Environment())` guard is unchanged (still throws-to-rejection safe outside a Wails webview). This narrows, not eliminates, the window -- `Environment()`'s async fetch delay is unaffected, as the finding itself noted.
+
 ### IN-03: Empty CSS rule left as a placeholder
 
 **File:** `frontend/src/workspace.css:189-191`
 **Issue:** `.ws-details--pane { /* Inline grid child -- no positioning overrides needed. */ }` is a rule block containing only a comment — it compiles fine and is harmless, but it's dead CSS (a selector with nothing to select for).
 **Fix:** Either remove the empty rule (the comment can move to sit above `.ws-details--drawer` instead, which is the block doing the actual overriding), or leave as-is if the team wants an explicit "no-op documented intentionally" marker — genuinely optional, not blocking.
+
+**Disposition:** fixed (commit `dd869b25`). Removed the empty `.ws-details--pane` rule; its comment now sits above `.ws-details--drawer`.
 
 ---
 
