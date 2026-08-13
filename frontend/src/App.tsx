@@ -5,6 +5,7 @@ import { Theme } from './themes';
 import { readPersistedPrefs, applyTokens } from './themeTokens';
 import CatalogModal from './components/CatalogModal';
 import WorkspaceShell from './components/workspace/WorkspaceShell';
+import DevStateSwitcher from './components/dev/DevStateSwitcher';
 import './services/wailsAPI'; // Initialize Wails API wrapper
 
 function App() {
@@ -60,6 +61,7 @@ function App() {
           catalogPath={catalogModalPath}
           onClose={handleCloseCatalogModal}
         />
+        {import.meta.env.DEV && <DevStateSwitcher />}
       </AppProvider>
     </ConfigProvider>
   );
