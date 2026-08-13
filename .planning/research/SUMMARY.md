@@ -1,184 +1,180 @@
 # Project Research Summary
 
-**Project:** StorCat v2.3.0 — Code Signing, Notarization, and Package Manager CLI PATH
-**Domain:** Desktop app distribution hardening — macOS Developer ID signing + notarization, Windows Authenticode signing, Homebrew and WinGet CLI PATH setup
-**Researched:** 2026-03-27
-**Confidence:** HIGH
+**Project:** StorCat v3.0.0 — Workspace Redesign
+**Domain:** Go/Wails desktop app — full custom-UI frontend replacement (Ant Design to hand-built single-view workspace) plus new Go backend capabilities (progress events, volume enumeration, OS trash, filesystem watching)
+**Researched:** 2026-08-13
+**Confidence:** MEDIUM-HIGH
 
 ## Executive Summary
 
-StorCat v2.3.0 is an additive milestone on an already-shipping Go/Wails desktop app. The existing CI/CD pipeline produces unsigned macOS DMGs and unsigned Windows NSIS installers. On current macOS Sequoia (15+), unsigned apps are effectively uninstallable without a multi-step System Settings workaround that most users abandon. On Windows, unsigned installers trigger a SmartScreen "Windows protected your PC" block that stops the majority of cautious users. Solving both requires obtaining platform-specific code signing certificates, adding four sequential signing steps to the macOS CI job, one signing step to the Windows CI job, and modifying two distribution files (the Homebrew cask template and the NSIS installer script) to expose the `storcat` binary on PATH after package manager installation.
+StorCat v3.0.0 replaces the entire three-tab Ant Design React frontend with a single-view "pro tool" workspace (rail + tree + details, Cmd-K palette, slide-over create flow) driven by a high-fidelity, pixel-exact design handoff, and adds the backend capabilities that design implies: live scan progress, volume detection, error-tolerant partial-catalog scanning, re-scan and diff, directory watching, and OS-trash delete. Comparable tools across every dimension of this redesign are well-documented (VS Code's Explorer/palette pattern, rclone/rsync-style progress UX, FreeFileSync/rsync-style diffing, Finder/Disk-Utility-style trash and volume conventions), so the "how do experts build this" question has strong, convergent answers.
 
-The recommended implementation approach is native tooling over third-party actions. On macOS: `xcrun codesign` + `xcrun notarytool` + `xcrun stapler` (all pre-installed on `macos-14` runners), with certificate import handled via `apple-actions/import-codesign-certs@v6`. On Windows: native PowerShell + `signtool.exe` (pre-installed on `windows-2022` runners) with an OV certificate stored as a base64-encoded PFX GitHub secret. The Homebrew CLI PATH fix is one line (`binary` stanza in `storcat.rb.template`). The Windows CLI PATH fix requires a custom NSIS script with `EnvVarUpdate` or `WriteRegExpandStr` to add the install directory to system PATH. No new directories, no source code changes, and no structural changes to `release.yml` are needed — only additions within existing jobs.
+The recommended approach across all four research tracks converges on extending the project's existing dependency-light discipline rather than reaching for new frameworks. Virtualization should be hand-rolled (~100 lines) because the design fixes row height to two constants, making windowing pure arithmetic. Theme tokens should be computed in TypeScript rather than via CSS color-mix(), because Wails does not control the WebKitGTK version on Linux and older distros would silently render broken colors. The one deliberate exception is OS trash: github.com/Bios-Marcel/wastebasket/v2 is worth adding because correct per-platform trash semantics are genuinely fiddly to hand-roll, and this library is verified zero-cgo everywhere, which matters since the project's cross-compiled/universal-binary CI matrix depends on staying cgo-free. Architecturally, most new capability slots into an existing seam: internal/catalog already has an unused ProgressCallback parameter with a stub no-op implementation and an explicit "future: use Wails events" comment - this milestone's progress/cancellation work fills that gap rather than inventing new plumbing. The CLI's 6 subcommands need zero changes throughout, because every new capability is additive.
 
-The primary risks are ordering-based and silent: codesign hangs indefinitely in CI without the `security set-key-partition-list` ACL step; notarization of a DMG fails if the `.app` inside was not signed first; and WinGet manifests will silently contain wrong SHA256 hashes if computed before signing. All of these are well-documented patterns with known fixes. The sequencing constraint (codesign → hdiutil → notarytool → stapler) is strict and must be treated as a hard ordering rule in the workflow. The one true decision point is Windows certificate type: Microsoft Azure Trusted Signing ($9.99/month) provides instant SmartScreen reputation; a traditional OV certificate is cheaper annually but subjects users to a 2–8 week SmartScreen warning window. This decision should be made before any Windows signing work begins.
+The key risk is concentrated in one place: the progress-events + cancellation + partial-catalog rework touches the one piece of existing, tested code this milestone modifies (traverseDirectory's error-return contract and the ProgressCallback signature), making it the single highest-regression-risk work in the whole milestone. Live progress and the error-tolerant walk are two faces of the same Go code path and must be built together, not sequentially. Secondary risks cluster around the frontend rewrite: losing antd's implicit accessibility scaffolding silently, stacking-order regressions across five new overlay types, and a long tail of "looks done but isn't" traps specific to 40k-node virtualized trees. Mitigation for nearly all of these is establishing shared primitives early (a tokens/z-index module, a shared modal-behavior hook, a flatten-once contract) before the phases that reuse them.
 
 ## Key Findings
 
 ### Recommended Stack
 
-The milestone requires no new frameworks. All tooling is either pre-installed on GitHub Actions runners or available via single-action imports. The `apple-actions/import-codesign-certs@v6` action handles the complex multi-command macOS keychain setup that most signing failures trace back to. Windows signing uses `signtool.exe` found dynamically (not hardcoded path) to survive runner image updates. The Homebrew `binary` stanza is the correct, supported mechanism for putting a Wails `.app` binary on PATH — it symlinks from `$(brew --prefix)/bin/storcat` into `StorCat.app/Contents/MacOS/StorCat`. The NSIS `EnvVarUpdate.nsh` macro is safer than direct registry writes for Windows PATH management because it handles deduplication and size limits. The deprecated `gon` tool (referenced in old Wails docs) must not be used — Apple sunset `altool` in November 2023.
+The existing stack (Go 1.23, Wails v2.10.2, React 18, TypeScript, Vite) is unchanged and validated; this milestone adds almost nothing new. golang.org/x/sys is already resolved indirectly via Wails and just needs promotion to direct for volume/mount enumeration. fsnotify v1.10.1 is the standard for directory watching. Removing antd/@ant-design/icons is likely a net removal with no offsetting addition - all four remaining UI primitives are fully pixel-specced and narrow enough that a headless library would add more surface than it saves. IBM Plex fonts follow the exact self-hosted-woff2 pattern already used for Nunito.
 
 **Core technologies:**
-- `apple-actions/import-codesign-certs@v6` (SHA: `b610f78`): CI keychain setup — official Apple-maintained action; handles ACL configuration that prevents codesign hangs
-- `xcrun codesign` (built-in, `macos-14`): App bundle signing — native Apple tooling, no external dependency; `--options runtime` flag required for notarization
-- `xcrun notarytool` (built-in, Xcode 13+): Notarization submission — replaces deprecated `altool`; `--wait --timeout 30m` prevents silent job hangs
-- `xcrun stapler` (built-in): Notarization ticket embedding — enables offline Gatekeeper verification; most commonly skipped step in tutorials
-- `signtool.exe` (built-in, `windows-2022`): Windows Authenticode signing — pre-installed on all Windows runners; no third-party action needed
-- `EnvVarUpdate.nsh` (NSIS): Windows PATH registration — must be downloaded to `build/windows/installer/` and included in the NSIS script
-
-**Critical version note:** `apple-actions/import-codesign-certs@v6` targets Node 24 and works on current `macos-14` runners. `dlemstra/code-sign-action` was archived October 2025 — do not use.
+- Hand-rolled fixed-row virtualization (no npm library) - windows the 40k+-node tree; fixed 27px/34px rows make this ~100 lines of index arithmetic
+- github.com/Bios-Marcel/wastebasket/v2 v2.0.3 - cross-platform OS trash, verified zero-cgo, MPL-2.0
+- golang.org/x/sys (promote indirect to direct, v0.30.0) - volume enumeration/capacity, zero new dependency cost
+- github.com/fsnotify/fsnotify v1.10.1 - watches catalog storage directory for the "watching" status indicator
 
 ### Expected Features
 
-**Must have (table stakes — v2.3.0):**
-- macOS DMG: signed (`--options runtime`) + notarized + stapled — required for Gatekeeper acceptance on macOS Sequoia
-- Windows NSIS installer: signed with RSA certificate — required to suppress or reduce SmartScreen blocking
-- Homebrew cask: `binary` stanza adding `storcat` to PATH — users expect CLI to work immediately after `brew install --cask storcat`
-- WinGet/NSIS: install directory added to system PATH — users expect `storcat` to work in any new terminal after `winget install scottkw.StorCat`
-- GitHub Actions signing environment: secrets scoped to `release` environment, not all workflows — security baseline
-- 9 new GitHub secrets: 7 macOS (cert p12, cert password, keychain password, Apple ID, app-specific password, team ID, cert identity string) + 2 Windows (PFX base64, PFX password)
+The design handoff is authoritative and final; feature research validated how each of its 10 designed behaviors works in comparable tools. All 10 map onto established patterns: VS Code/Linear/Raycast for the palette, rclone/rsync/Time-Machine for progress, macOS Disk Utility/Finder for volumes, rsync-partial-mode/TeraCopy for tolerant failure, FreeFileSync/rsync for diffing (path+size/mtime, not content hash).
 
-**Should have (competitive — v2.3.x after validation):**
-- App Store Connect API key auth for notarytool (more robust than Apple ID + app-specific password; not subject to 2FA friction)
-- Azure Trusted Signing if US/Canadian business eligibility confirmed (instant SmartScreen reputation vs. 2–8 week wait for OV cert)
-- Notarization retry + timeout handling (hardened against Apple notarization service slowdowns)
+**Must have (table stakes, P1):**
+- Single-view workspace (rail + tree + details, no tabs)
+- Cmd-K palette with 50-result cap + "showing N of M"
+- Live scan progress (%, files, bytes, path, ETA, background hand-off)
+- Volume detection & selection
+- Create slide-over (form to progress to done/error)
 
-**Defer (v3+):**
-- Code signing certificate expiry monitoring via GitHub Actions scheduled check
-- Automated certificate renewal runbook via CI (mechanical steps; human approval still required by Apple)
-- Mac App Store distribution (requires sandboxing incompatible with Wails filesystem access patterns)
+**Should have (differentiators, P2/P3):**
+- Partial catalog on scan failure - solves failing-SD-card pain better than general sync tools
+- Re-scan & diff (added/removed/changed/unchanged) - handoff's own "biggest backend piece"
+- Directory watching - cheap, also solves "deleted outside the app" staleness
+- Rename/Duplicate/Delete-to-Trash, Settings, Empty/unreadable-catalog states
+
+**Explicitly out of scope:**
+- Full-text file-content search/indexing
+- Continuous two-way sync
+- Content-hash diffing for re-scan
+- Multi-scan queue
+- "Type to confirm" delete gate
 
 ### Architecture Approach
 
-The v2.3.0 architecture is purely additive CI/CD changes. Three files change: `release.yml` gains 4 steps in `build-macos` and 1 step in `build-windows`; `packaging/homebrew/storcat.rb.template` gains one `binary` stanza line; `build/windows/installer.nsi` is created as a new custom NSIS script overriding Wails' generated default. No Go source, TypeScript source, or distribution workflow logic changes. The four macOS signing steps are strictly sequential (cannot be parallelized) and must run in this exact order: import certificate → codesign → hdiutil → notarytool submit → stapler staple. The Windows signing step must complete before `upload-artifact` runs so that the SHA256 computed by `distribute.yml` (from the GitHub release asset) matches the signed binary.
+The frontend's single monolithic useReducer+Context needs to split by change-frequency, not feature area: hot per-keystroke state (rail filter, palette query) stays local, never entering shared context; ThemeContext handles rare/global settings; WorkspaceContext handles catalog/selection/expand state. Tree flattening must be a new Go method (LoadCatalogFlat), not a change to LoadCatalog, because cli/show.go depends on LoadCatalog's current nested-tree shape. Progress events reuse the existing-but-stubbed ProgressCallback seam; app.go is the only place runtime.EventsEmit is called, keeping internal/catalog and internal/search Wails-free and CLI-safe. Three new Go packages are needed (internal/volumes, internal/trash, internal/watch), each isolated as OS-integration concerns orthogonal to "what a catalog is."
 
 **Major components:**
-1. `build-macos` job in `release.yml` — gains 4 steps: cert import, codesign (with entitlements), notarytool, stapler; ordering is a hard constraint
-2. `build-windows` job in `release.yml` — gains 1 PowerShell step: PFX decode, signtool sign both binaries, PFX delete; must precede artifact upload
-3. `packaging/homebrew/storcat.rb.template` — gains 1 line: `binary "#{appdir}/StorCat.app/Contents/MacOS/StorCat", target: "storcat"`
-4. `build/windows/installer.nsi` — new file: custom NSIS script with `EnvVarUpdate` PATH registration; Wails respects this path over its generated default
+1. internal/catalog (extended) - walk/create/flatten/rename/duplicate/diff; ProgressCallback signature and traverseDirectory's error contract change here
+2. internal/volumes / internal/trash / internal/watch (new) - OS-integration packages, Wails-free and CLI-agnostic
+3. app.go - sole adapter layer for runtime.EventsEmit and new bound methods
+4. Frontend workspace shell - toolbar/rail/tree/details/status-bar consuming split ThemeContext/WorkspaceContext, hand-rolled fixed-row virtualizer as the tree pane's core primitive
 
 ### Critical Pitfalls
 
-1. **Codesign hangs silently in CI** — Missing `security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$CI_KEYCHAIN_PWD" build.keychain` after certificate import. The step runs indefinitely with no output until the job times out. Use `apple-actions/import-codesign-certs` which handles this correctly, or run all 5 keychain setup commands explicitly. Verify by checking that the codesign step completes in under 2 minutes.
-
-2. **Wrong signing order invalidates signature** — Signing the `.app` after `hdiutil create` or signing the DMG instead of the `.app` inside it causes notarization to reject with "invalid signature." Correct order is immovable: codesign `.app` → `hdiutil create` DMG → `notarytool submit` DMG → `stapler staple` DMG. Add `codesign --verify --deep --strict StorCat.app` as a gate step after signing.
-
-3. **Missing entitlements crash the Wails WebView** — Signing with `--options runtime` (required for notarization) without an entitlements plist causes the hardened runtime to block JIT and dynamic memory needed by WKWebView. The app passes notarization but shows a blank window or crashes on user machines. The existing `build/entitlements.mac.plist` from the Electron era must be ported and passed via `--entitlements` flag. Minimum: `com.apple.security.cs.allow-jit` and `com.apple.security.cs.allow-unsigned-executable-memory`.
-
-4. **WinGet SHA256 computed before signing** — If the distribute workflow downloads a pre-signing artifact or the hash step runs before signing completes, every WinGet install will fail with "Installer hash does not match." Sign in the build job before `upload-artifact`. The distribute workflow then downloads the already-signed binary from the GitHub release, and its SHA256 is correct.
-
-5. **Windows ECDSA certificate rejected by SmartScreen** — ECDSA code signing certificates are cryptographically valid but Windows Authenticode requires RSA PKCS#1 v1.5. The binary will appear signed but SmartScreen still blocks it. When purchasing or configuring any Windows signing certificate, explicitly select RSA-2048 or RSA-4096 (or `RSA-HSM` in Azure Key Vault — never `EC-HSM`). Verify before any signing infrastructure work begins.
+1. **No real cancellation plumbing** - CreateCatalog has no context.Context today; without threading one, "Cancel" only hides the UI while the walk keeps running. Thread context.Context through traverseDirectory/CreateCatalog, checked at directory boundaries, wired into beforeClose too.
+2. **Removing antd silently drops focus trap, Escape handling, and scroll-lock** across all four new overlay types - invisible on mouse-only testing. Build one shared useModalBehavior hook when the first custom overlay ships and reuse everywhere.
+3. **Stacking-order regression** - the details panel outranking the slide-over/palette/dialogs is explicitly flagged by the design handoff as "an easy bug to reintroduce," only visible at the 1040-1279px responsive tier. Centralize z-index into one named-constants module early; re-verify at every phase adding an overlay.
+4. **Non-atomic catalog writes risk corrupting existing data on crash** - re-scan & diff introduces the first "overwrite an existing file" path. Build a temp-file-same-dir + os.Rename helper once, reuse for create and overwrite.
+5. **Silent fallback from OS-trash failure to os.Remove** converts a recoverable delete into a permanent one. Trash failures must surface through the existing error envelope, never fall through to permanent delete.
 
 ## Implications for Roadmap
 
-The architecture identifies a clear sequential dependency chain with one independent parallel track. macOS signing must precede Homebrew CLI PATH (signed binary is required for macOS 15+ symlink creation). Windows signing must precede WinGet PATH (signed binary should be in place before new NSIS script). Windows signing and macOS signing are independent of each other and can proceed in parallel. All phases depend on secrets and certificates being configured first.
+The design handoff's own suggested build order (shell to rail+tree to palette to create slide-over to settings to catalog actions) is validated as sound, with one refinement: LoadCatalogFlat should land as its own small backend phase immediately before the virtualized rail+tree phase.
 
-### Phase 1: Secrets and Certificate Procurement
+### Phase 1: Shell + Token Layer
+**Rationale:** Everything else mounts inside or over this shell; establishes every shared primitive (z-index tokens, CSS reset, TS-computed theme tokens, no-drag convention) that later phases depend on.
+**Delivers:** Toolbar, 3-pane grid, status bar shell, theme switching across all 11 themes with luminance-derived contrast, CSS reset.
+**Addresses:** Table-stakes workspace layout; density/rail-position settings groundwork.
+**Avoids:** Stacking-order, drag-region click-swallowing, contrast, color-mix() compat, missing CSS reset, scrollbar-width drift.
 
-**Rationale:** No signing work can begin without certificates and GitHub secrets. This is a manual human-performed phase with no code changes. It must complete before any other phase starts. Certificate procurement (especially Windows OV cert from a CA) can take 1–3 business days for verification. The Windows certificate type decision (Azure Trusted Signing vs. OV cert) must be made here before any infrastructure is built.
-**Delivers:** All 9 GitHub secrets configured; `release` environment created with reviewer protection; signing certificates in hand and validated locally (`security find-identity` confirms Developer ID on macOS; `signtool verify` confirms RSA cert on Windows); Windows certificate type decision locked in
-**Addresses:** "Signing credentials in GitHub Actions secrets" and "secrets scoped to release environment" table stakes features
-**Avoids:** P12 password mismatch pitfall (verify export password matches secret at import time); ECDSA cert pitfall (Windows cert type confirmed RSA before any infrastructure work)
+### Phase 2: LoadCatalogFlat (backend)
+**Rationale:** Small, isolated, additive Go change that must precede the virtualized tree; keeps this milestone's lowest-risk backend work cleanly separated from its highest-risk backend work (Phase 5).
+**Delivers:** App.LoadCatalogFlat, FlatNode/FlatCatalog types, DFS flattener reusing search.Service.LoadCatalog internally.
+**Uses:** Existing internal/search parsing, new file in internal/catalog.
+**Implements:** Flatten-in-Go boundary, keeps cli/show.go untouched.
 
-### Phase 2: macOS Signing and Notarization
+### Phase 3: Rail + Virtualized Tree
+**Rationale:** Independently shippable once Phase 2 lands; the single highest-complexity frontend item (40k+-node scale).
+**Delivers:** Rail (BrowseCatalogs-driven), hand-rolled fixed-row virtualizer keyed on stable node id, expand/collapse, selection state.
+**Avoids:** Key instability, "expand all" freeze, scroll-state leak across catalog switch, dynamic-measuring virtualizer, sidecar cache leaking into catalog JSON.
 
-**Rationale:** macOS has the most complex signing chain (4 sequential steps) and the most pitfalls. Getting it working first, independently from Windows, reduces debugging surface area. The entitlements plist port from Electron is a prerequisite only for this phase.
-**Delivers:** Signed, notarized, and stapled macOS DMG produced by CI on every release tag; macOS users install without Gatekeeper blocking; `spctl -vvv --assess --type exec StorCat.app` returns "accepted"
-**Uses:** `apple-actions/import-codesign-certs@v6`, `xcrun codesign`, `xcrun notarytool --wait --timeout 30m`, `xcrun stapler`; `build/entitlements.mac.plist` ported from Electron era
-**Avoids:** All macOS-specific pitfalls — keychain ACL (Pitfall 1), signing order (Pitfall 2), missing entitlements (Pitfall 3), notarization timeout (Pitfall 4), P12 password mismatch (Pitfall 5)
-**Research flag:** Well-documented patterns from official Apple docs and multiple high-quality implementation blogs. No additional research needed. The Wails signing guide returned 403 during research — verify current Wails entitlements requirements against Wails GitHub repo before signing.
+### Phase 4: Cmd-K Command Palette
+**Rationale:** Depends on Phase 3's flat-array/ancestor-expansion primitives; reuses existing uncapped search for MVP.
+**Delivers:** Palette overlay, keyboard-nav state machine, "reveal in tree" (expand ancestors + select + scroll into view).
+**Uses:** Existing internal/search; establishes the shared useModalBehavior hook for reuse in Phases 5-7.
+**Avoids:** Missing focus trap on first overlay, expand-then-scroll race across async state boundary.
 
-### Phase 3: Windows Signing
+### Phase 5: Create Slide-over + Progress/Cancellation/Partial-Catalog (backend + frontend, paired)
+**Rationale:** The milestone's single highest-regression-risk work - the only phase modifying existing, tested code. Live progress and the error-tolerant walk share one Go code path and must ship together.
+**Delivers:** Volume detection/selection (internal/volumes), threaded context.Context cancellation, throttled EventsEmit progress stream, error-tolerant walk distinguishing "volume vanished" from "one bad file," atomic temp+rename write helper, create-form to progress to done/error slide-over UI.
+**Avoids:** Slide-over exit-animation lifecycle bugs, EventsOn StrictMode leak, unthrottled event flood, no real cancellation, goroutine leak on quit, naive walk conflating failure types, non-atomic write, partial-catalog marker schema drift, CLI signature breaks.
+**Research flag:** Most needs deeper research during planning - largest genuine engineering risk, touches working tested code.
 
-**Rationale:** Independent of Phase 2 and can be developed in parallel, but sequenced after because the Windows cert type decision (made in Phase 1) must be confirmed. Simpler than macOS signing (one PowerShell step). Critical: signing must happen in the build job before `upload-artifact` to ensure WinGet manifests receive the correct SHA256.
-**Delivers:** Signed Windows NSIS installer and portable `.exe` produced by CI; reduced or eliminated SmartScreen blocking; `signtool verify /v /pa StorCat-*-installer.exe` returns "Successfully verified"; WinGet SHA256 hashes correct
-**Uses:** Native PowerShell + `signtool.exe` dynamically located on `windows-2022` runner; OV certificate PFX or Azure Trusted Signing action; timestamp server (Sectigo or DigiCert)
-**Avoids:** ECDSA cert pitfall (Pitfall 6 — confirmed RSA in Phase 1), WinGet SHA256 mismatch (Pitfall 7 — sign before upload-artifact), Azure credential expiration (Pitfall 12 — use OIDC if Azure route chosen)
-**Research flag:** Well-documented. If Azure Trusted Signing chosen: `azure/trusted-signing-action` with OIDC integration is the pattern. Confirm US/Canada eligibility in Phase 1 before choosing this path.
+### Phase 6: Settings
+**Rationale:** Mostly additive internal/config fields mirroring the existing SetTheme pattern exactly - low risk, can run in parallel with Phases 3-5.
+**Delivers:** Density/rail-position/theme-card settings modal, catalog-directory and default-behavior toggles.
+**Avoids:** Hand-rolled controls losing keyboard/ARIA - use real button/input under styling.
 
-### Phase 4: Homebrew CLI PATH
+### Phase 7: Catalog Actions + Watch
+**Rationale:** Correctly sequenced last among lower-risk items; groups the milestone's one new third-party dependency (wastebasket/v2) with directory watching.
+**Delivers:** Rename (HTML-safe title rewrite), Duplicate (shared filename-suffix helper), Delete-to-Trash (internal/trash, no silent os.Remove fallback), internal/watch (non-recursive, debounced, Errors-channel-aware).
+**Avoids:** Trash silent fallback, watcher leak/recursive-watch temptation, event-storm self-triggering, silent watch-reliability degradation, HTML title-rewrite corruption.
 
-**Rationale:** Depends on Phase 2 — macOS 15+ Gatekeeper blocks symlink creation from unsigned binaries in Homebrew casks. Must follow Phase 2 not just in planning but in actual release timing. One-line code change but requires a real published release to validate end-to-end.
-**Delivers:** `brew install --cask storcat` results in `storcat` being immediately available in PATH; `storcat version` works from any new terminal after install
-**Uses:** Homebrew `binary` stanza in `storcat.rb.template`; `#{appdir}` variable expanding to `/Applications`; `target: "storcat"` lowercase rename
-**Avoids:** Binary stanza wrong path pitfall (Pitfall 9 — verify exact binary path via `ls build/bin/StorCat.app/Contents/MacOS/` before committing stanza); Phase ordering violation (binary stanza must not go live until signed DMG is in production)
-**Research flag:** Homebrew Cask Cookbook is the authoritative source. Pattern fully documented. No research needed. Verification requires a fresh macOS install — do not test on a developer machine with existing PATH entries.
-
-### Phase 5: Windows CLI PATH via NSIS
-
-**Rationale:** Depends on Phase 3 — signed installer should be in place before PATH registration is added. Also requires a real Windows test environment (fresh VM or CI runner) to validate that PATH is set correctly in a new terminal session. Highest-friction verification in this milestone.
-**Delivers:** `winget install scottkw.StorCat` results in `storcat` being available in any new terminal session; `storcat version` works from Command Prompt and PowerShell
-**Uses:** Custom `build/windows/installer.nsi` with `EnvVarUpdate.nsh` macro; `EnvVarUpdate.nsh` downloaded to `build/windows/installer/`; HKLM PATH registration with `WM_SETTINGCHANGE` broadcast
-**Avoids:** NSIS missing PATH configuration (Pitfall 10); stale PATH verification on developer machine (must test on fresh Windows VM)
-**Research flag:** NSIS path manipulation is well-documented. `EnvVarUpdate.nsh` must be manually downloaded from nsis.sourceforge.io and committed to `build/windows/installer/`. Verify Wails v2.10.2 respects `build/windows/installer.nsi` as the NSIS script override path before building the custom script.
+### Phase 8: Re-scan & Diff
+**Rationale:** The handoff's own explicitly named "biggest backend piece" - correctly sequenced last, needs the error-tolerant walk from Phase 5 plus the flat-array infrastructure from Phase 2/3.
+**Delivers:** Path-keyed diff (size/mtime comparison), four-way classification, overwrite-vs-keep-both write paths reusing Phase 5's atomic-write helper.
+**Depends on:** Phases 2, 3, 5.
+**Research flag:** Needs its own research pass - the open questions about re-locating the source volume and forced-close partial-write semantics must be resolved before implementation.
 
 ### Phase Ordering Rationale
 
-- Phase 1 is a hard prerequisite for all other phases — no code can run without certificates and secrets
-- Phases 2 and 3 are independent of each other and can be developed in parallel if two people are working; Phase 2 is more complex with more failure modes so it gets priority attention in single-developer execution
-- Phase 4 must follow Phase 2 because macOS 15+ Gatekeeper blocks cask binary symlinks from unsigned apps — this is not just a best-practice ordering, it is a technical requirement
-- Phase 5 should follow Phase 3 so the PATH-enabled installer is also signed, but the NSIS script change is technically independent
-- The WinGet SHA256 constraint makes the signing position within the `build-windows` job a strict rule: sign before `upload-artifact`, always
+- Backend prerequisites are pulled forward of the frontend steps that need them, since building frontend against a shape that will change is strictly more work than sequencing the backend first.
+- The highest-regression-risk work (Phase 5) is isolated as its own phase rather than interleaved with lower-risk additive work.
+- Re-scan & diff is last because it's a hard dependency on Phase 5's error-tolerant walk - building it earlier would mean rewriting the walk twice.
+- Shared primitives (z-index tokens in Phase 1, modal-behavior hook in Phase 4) are established at their first point of need and reused thereafter, since "reimplemented per-surface" is the actual failure mode, not "never implemented."
 
 ### Research Flags
 
-Phases with standard, well-documented patterns — research-phase not needed:
-- **Phase 2 (macOS signing):** Apple official docs, GitHub official docs, and multiple high-quality implementation posts all agree on the exact sequence
-- **Phase 3 (Windows signing):** OV cert + signtool pattern is thoroughly documented; Azure Trusted Signing path equally so
-- **Phase 4 (Homebrew PATH):** Single official source (Homebrew Cask Cookbook) is definitive
-- **Phase 5 (WinGet NSIS PATH):** NSIS `EnvVarUpdate` is well-documented; only mechanical gap is downloading `EnvVarUpdate.nsh`
+Needs deeper research during planning:
+- **Phase 5** - highest engineering risk, touches existing tested code, needs the forced-close partial-write policy resolved.
+- **Phase 8** - largest new backend surface, needs the volume-relocation policy resolved and the on-disk "unreadable subtree" marker format finalized.
 
-One decision (not research gap) to resolve before implementation:
-- **Windows signing approach (Phase 1):** Azure Trusted Signing (instant SmartScreen reputation, $9.99/month, US/Canada businesses only as of April 2025) vs. traditional OV cert (2–8 week SmartScreen warning window, ~$200–300/year, available everywhere). This is a business and budget decision, not a technical research gap.
+Standard patterns (skip research-phase):
+- **Phase 1** - established CSS/theming patterns with concrete recipes for every risk item.
+- **Phase 2** - small, isolated, fully specified.
+- **Phase 3** - virtualization approach and pitfalls fully enumerated with concrete prevention patterns.
+- **Phase 4** - reuses existing search backend; UX conventions well-established.
+- **Phase 6** - mirrors an existing, working internal/config pattern exactly.
+- **Phase 7** - library choice and fsnotify patterns already researched and concrete.
 
 ## Confidence Assessment
 
 | Area | Confidence | Notes |
 |------|------------|-------|
-| Stack | HIGH | Official Apple docs, official GitHub Actions docs, official Homebrew Cask Cookbook; deprecated tools clearly identified (`gon`, `dlemstra/code-sign-action`) |
-| Features | HIGH | Apple Gatekeeper Sequoia changes well-documented; SmartScreen reputation behavior confirmed by DigiCert and Microsoft; Homebrew binary stanza from official cookbook |
-| Architecture | HIGH | Derived directly from analysis of existing `release.yml`, `distribute.yml`, and `storcat.rb.template`; patterns from GitHub official docs and multiple implementation references |
-| Pitfalls | HIGH | 12 specific pitfalls with exact error messages, root causes, and prevention steps; sourced from official docs and multiple implementation post-mortems |
+| Stack | HIGH | Go stdlib/x/sys/Wails runtime source and npm registry verified directly at specific tags/versions; MEDIUM only on third-party Go library maintenance signals |
+| Features | MEDIUM | No official StorCat-specific precedent exists (greenfield), but cross-verified against multiple well-documented comparable tools with every claim traced to a specific handoff section |
+| Architecture | HIGH for structural findings (read directly from the repo); MEDIUM on two externally-verified claims (WebView2/WebKitGTK color-mix() support) |
+| Pitfalls | MEDIUM-HIGH | Codebase-grounded claims are HIGH; Wails/browser/OS-specific claims are cross-checked but web-sourced, so MEDIUM |
 
-**Overall confidence:** HIGH
+**Overall confidence:** HIGH - all four research tracks independently converge on the same architectural boundaries and phase-sequencing logic, a strong cross-validation signal for a greenfield redesign.
 
 ### Gaps to Address
 
-- **Wails entitlements plist validation:** The existing `build/entitlements.mac.plist` from the Electron era needs to be verified against Wails-specific runtime requirements before signing. The Wails signing guide returned a 403 during research. Before Phase 2 begins, confirm current Wails entitlements requirements against the Wails GitHub repo. The minimum set (`allow-jit`, `allow-unsigned-executable-memory`, `network.client`) is established from community sources and is very likely correct.
-
-- **NSIS script Wails override path:** Wails v2 respects `build/windows/installer.nsi` as a custom script override when `-nsis` is used. Verify this against Wails v2.10.2 specifically before Phase 5, since Wails versions occasionally change internal template paths.
-
-- **Azure Trusted Signing eligibility:** Geographic restriction to US and Canadian businesses as of April 2025. Confirm eligibility before planning Phase 3 around Azure; if ineligible, use OV cert route from the start.
-
-- **Notarization timing baseline:** Apple notarization typically takes 10–120 seconds but can spike. The `--timeout 30m` flag is a reasonable ceiling. Monitor the first several production notarizations to confirm typical timing before relying on the release pipeline for time-sensitive releases.
+- **Re-scan & diff volume relocation:** should the app auto-relocate the originating volume for a re-scan, or always require re-selecting a source volume? Architecture research leans toward not over-engineering a "same card?" check, treating any mismatch as a normal diff. Resolve during Phase 8 requirements definition.
+- **Partial catalog on forced window-close mid-scan:** architecture research recommends cancel, do not silently auto-write, since "Write partial catalog" is designed as an explicit, informed user action. Flagged as a product decision for requirements, must be explicitly decided before Phase 5 implementation.
+- **Go trash library go/no-go:** Bios-Marcel/wastebasket/v2 is verified zero-cgo but carries a MEDIUM maintenance-confidence signal (single maintainer, 45 stars). Worth a final go/no-go check before Phase 7.
+- **On-disk "unreadable subtree" marker format:** the partial-catalog feature needs a way to mark a failed subtree in the catalog JSON while keeping the format frozen and v1-compatible. The constraint is specified (must be omitempty, tested byte-for-byte against pre-milestone JSON shape) but the actual field name/shape needs design during Phase 5 planning.
 
 ## Sources
 
 ### Primary (HIGH confidence)
-- [Apple-Actions/import-codesign-certs releases](https://github.com/Apple-Actions/import-codesign-certs/releases) — v6.0.0, SHA `b610f78`, Dec 2024
-- [GitHub Docs: Installing Apple certificate on macOS runners](https://docs.github.com/actions/use-cases-and-examples/deploying/installing-an-apple-certificate-on-macos-runners-for-xcode-development) — keychain setup sequence
-- [Apple Developer: Developer ID overview](https://developer.apple.com/developer-id/) — signing requirements
-- [Homebrew Cask Cookbook](https://docs.brew.sh/Cask-Cookbook) — `binary` stanza syntax, `#{appdir}`, `target:`
-- [Federico Terzi: macOS signing + notarization via GitHub Actions](https://federicoterzi.com/blog/automatic-code-signing-and-notarization-for-macos-apps-using-github-actions/) — complete workflow with 7 secrets
-- [Melatonin: macOS code signing + notarization in CI](https://melatonin.dev/blog/how-to-code-sign-and-notarize-macos-audio-plugins-in-ci/) — implementation patterns
-- [Melatonin: Windows Azure Trusted Signing](https://melatonin.dev/blog/code-signing-on-windows-with-azure-trusted-signing/) — Azure approach
-- [Microsoft Azure Artifact Signing](https://azure.microsoft.com/en-us/products/artifact-signing) — product page, geographic restrictions
-- [NSIS Path Manipulation](https://nsis.sourceforge.io/Path_Manipulation) — `EnvVarUpdate` macro
-- [WinGet PATH discussion](https://github.com/microsoft/winget-cli/discussions/5091) — confirmed WinGet does not manage PATH; delegates to installer
-- [dlemstra/code-sign-action archived](https://github.com/dlemstra/code-sign-action) — confirmed archived Oct 2025; do not use
+- Direct code reading: app.go, internal/catalog/service.go, internal/search/service.go, internal/config/config.go, pkg/models/catalog.go, frontend/src/contexts/AppContext.tsx, frontend/src/services/wailsAPI.ts, frontend/src/themes.ts, cli/create.go, cli/show.go, cli/search.go, go.mod, design_handoff_storcat_ui/README.md, .planning/PROJECT.md
+- pkg.go.dev + raw GitHub source at Wails tag v2.10.2 for runtime.EventsEmit/EventsOn signatures
+- npm view (live registry) for virtualization library versions/peer ranges; bundlephobia.com for verified bundle sizes
+- GitHub Releases API for fsnotify (v1.10.1), gopsutil (v4.26.7), wastebasket (v2.0.3)
+- Raw GitHub source inspection of Bios-Marcel/wastebasket confirming no-cgo and MPL-2.0
 
 ### Secondary (MEDIUM confidence)
-- [Federico Terzi: Windows Authenticode via GitHub Actions](https://federicoterzi.com/blog/automatic-codesigning-on-windows-using-github-actions/) — OV PFX + signtool pattern
-- [NSIS EnvVarUpdate](https://nsis.sourceforge.io/Environmental_Variables:_append,_prepend,_and_remove_entries) — PATH append/remove entries
-- [Windows signtool GitHub Actions (Advanced Installer)](https://www.advancedinstaller.com/code-signing-with-github-actions.html) — PFX decode + signtool pattern
-- [Notarizing Apps Distributed as DMGs (Decipher Tools)](https://deciphertools.com/blog/notarizing-dmg/) — DMG-specific notarization sequence
-- [Scott Hanselman: Azure Trusted Signing + GitHub Actions](https://www.hanselman.com/blog/automatically-signing-a-windows-exe-with-azure-trusted-signing-dotnet-sign-and-github-actions) — AzureSignTool integration
+- UX Patterns for Developers (command palette), VS Code UI docs, Adobe Bridge workspace docs - workspace/palette pattern validation
+- FreeFileSync, rsync sync guidance - diff/comparison-key conventions
+- rclone progress output docs, Backblaze/Time Machine failure-handling docs - progress UX and partial-failure posture comparables
+- CSS color-mix() Chrome docs, WebKit color-mix commit - browser-compat basis for TS-computed-tokens recommendation
+- Wails GitHub issues #2448/#2453, #3796, #3971/#1861/#5547 - integration gotchas
+- fsnotify GitHub issue #18, watchexec inotify-limits doc - watch-scope and Linux inotify-limit context
 
 ### Tertiary (LOW confidence)
-- [Wails signing guide](https://wails.io/docs/guides/signing/) — returned 403 during research; mentions deprecated `gon`; verify against current Wails docs before implementation
+- PkgPulse virtualization library comparison - aggregator summary, not decision-critical since hand-rolling is the primary recommendation regardless
 
 ---
-*Research completed: 2026-03-27*
+*Research completed: 2026-08-13*
 *Ready for roadmap: yes*
