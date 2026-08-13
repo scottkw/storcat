@@ -63,6 +63,14 @@
   border-color: var(--ac);
 }
 
+/* Base fill/text set here (not inline) so the :hover rule below can win --
+ * an inline style on the element would always outrank this selector
+ * regardless of :hover, silently disabling the inversion. */
+.ws-new-pill {
+  background: var(--acs);
+  color: var(--ac);
+}
+
 .ws-new-pill:hover {
   background: var(--ac);
   color: var(--onac);

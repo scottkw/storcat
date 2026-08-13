@@ -33,8 +33,6 @@ function CatalogRail() {
               gap: 5,
               fontSize: 12,
               fontWeight: 600,
-              color: 'var(--ac)',
-              background: 'var(--acs)',
               border: 'none',
               borderRadius: 6,
               padding: '3px 8px',
