@@ -178,6 +178,30 @@
   border-left: 1px solid var(--l);
 }
 
+.ws-details--pane {
+  /* Inline grid child -- no positioning overrides needed. */
+}
+
+.ws-details--drawer {
+  position: absolute;
+  right: 0;
+  top: 46px;
+  bottom: 26px;
+  width: 288px;
+  box-shadow: -24px 0 50px rgba(0, 0, 0, 0.45);
+  z-index: var(--z-details-drawer);
+}
+
+.ws-backdrop {
+  position: absolute;
+  top: 46px;
+  right: 0;
+  bottom: 26px;
+  left: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: var(--z-details-drawer);
+}
+
 .ws-status {
   height: 26px;
   flex: none;

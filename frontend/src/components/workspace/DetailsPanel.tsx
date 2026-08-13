@@ -1,8 +1,13 @@
-export interface DetailsPanelProps {}
+export interface DetailsPanelProps {
+  variant?: 'pane' | 'drawer';
+}
 
-function DetailsPanel() {
+function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
   return (
-    <div className="ws-details" style={{ padding: 14, gap: 16 }}>
+    <div
+      className={`ws-details ws-details--${variant}`}
+      style={{ padding: 14, gap: 16 }}
+    >
       <span
         style={{
           fontSize: 12,
