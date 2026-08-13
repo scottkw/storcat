@@ -145,17 +145,89 @@ Deferred — acknowledged but not in this roadmap.
 
 ## Traceability
 
-Populated during roadmap creation.
-
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| _(pending roadmap)_ | | |
+| SHELL-01 | Phase 22 | Pending |
+| SHELL-02 | Phase 22 | Pending |
+| SHELL-03 | Phase 22 | Pending |
+| SHELL-04 | Phase 22 | Pending |
+| SHELL-05 | Phase 22 | Pending |
+| SHELL-06 | Phase 23 | Pending |
+| SHELL-07 | Phase 22 | Pending |
+| SHELL-08 | Phase 22 | Pending |
+| SHELL-09 | Phase 22 | Pending |
+| THEME-01 | Phase 22 | Pending |
+| THEME-02 | Phase 22 | Pending |
+| THEME-03 | Phase 22 | Pending |
+| THEME-04 | Phase 22 | Pending |
+| THEME-05 | Phase 22 | Pending |
+| THEME-06 | Phase 22 | Pending |
+| RAIL-01 | Phase 23 | Pending |
+| RAIL-02 | Phase 23 | Pending |
+| RAIL-03 | Phase 23 | Pending |
+| RAIL-04 | Phase 23 | Pending |
+| RAIL-05 | Phase 23 | Pending |
+| RAIL-06 | Phase 23 | Pending |
+| TREE-01 | Phase 23 | Pending |
+| TREE-02 | Phase 23 | Pending |
+| TREE-03 | Phase 23 | Pending |
+| TREE-04 | Phase 23 | Pending |
+| TREE-05 | Phase 23 | Pending |
+| TREE-06 | Phase 23 | Pending |
+| TREE-07 | Phase 23 | Pending |
+| TREE-08 | Phase 23 | Pending |
+| PLT-01 | Phase 24 | Pending |
+| PLT-02 | Phase 24 | Pending |
+| PLT-03 | Phase 24 | Pending |
+| PLT-04 | Phase 24 | Pending |
+| PLT-05 | Phase 24 | Pending |
+| PLT-06 | Phase 24 | Pending |
+| PLT-07 | Phase 24 | Pending |
+| CRT-01 | Phase 25 | Pending |
+| CRT-02 | Phase 25 | Pending |
+| CRT-03 | Phase 25 | Pending |
+| CRT-04 | Phase 25 | Pending |
+| CRT-05 | Phase 25 | Pending |
+| CRT-06 | Phase 25 | Pending |
+| CRT-07 | Phase 25 | Pending |
+| CRT-08 | Phase 25 | Pending |
+| CRT-09 | Phase 25 | Pending |
+| CRT-10 | Phase 25 | Pending |
+| CRT-11 | Phase 25 | Pending |
+| CRT-12 | Phase 25 | Pending |
+| CRT-13 | Phase 25 | Pending |
+| SET-01 | Phase 26 | Pending |
+| SET-02 | Phase 26 | Pending |
+| SET-03 | Phase 26 | Pending |
+| SET-04 | Phase 26 | Pending |
+| SET-05 | Phase 26 | Pending |
+| ACT-01 | Phase 27 | Pending |
+| ACT-02 | Phase 27 | Pending |
+| ACT-03 | Phase 27 | Pending |
+| ACT-04 | Phase 27 | Pending |
+| ACT-05 | Phase 27 | Pending |
+| ACT-06 | Phase 28 | Pending |
+| ACT-07 | Phase 28 | Pending |
+| ACT-08 | Phase 28 | Pending |
+| ACT-09 | Phase 27 | Pending |
+| WATCH-01 | Phase 27 | Pending |
+| WATCH-02 | Phase 27 | Pending |
+| WATCH-03 | Phase 27 | Pending |
+| STATE-01 | Phase 23 | Pending |
+| STATE-02 | Phase 23 | Pending |
+| STATE-03 | Phase 28 | Pending |
+| COMPAT-01 | Phase 23 | Pending |
+| COMPAT-02 | Phase 25 | Pending |
+| COMPAT-03 | Phase 25 | Pending |
+| COMPAT-04 | Phase 25 | Pending |
+| COMPAT-05 | Phase 26 | Pending |
+| COMPAT-06 | Phase 28 | Pending |
 
 **Coverage:**
 - v1 requirements: 75 total
-- Mapped to phases: 0
-- Unmapped: 75 ⚠️
+- Mapped to phases: 75
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-08-13*
-*Last updated: 2026-08-13 after initial definition*
+*Last updated: 2026-08-13 after roadmap creation — 7 phases (22-28), 100% coverage*
