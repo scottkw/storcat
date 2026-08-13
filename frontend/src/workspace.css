@@ -53,6 +53,16 @@
 /* Interaction and density-contract classes -- declared here so plans 22-03,
  * 22-04, 22-05 (which apply these classes) never need to touch this file. */
 
+/* Themed focus ring. Without this the browser default (a fixed blue) is the
+ * only keyboard-focus affordance, which matches none of the 11 themes and is
+ * invisible against a blue accent. Applied at the shell root so every focusable
+ * descendant inherits it, including surfaces later phases add. */
+.ws-root :focus-visible {
+  outline: 2px solid var(--ac);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 .ws-search:hover,
 .ws-search:focus-visible {
   border-color: var(--ac);

@@ -121,7 +121,10 @@ function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails }: T
               background: 'transparent',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              color: detailsOpen ? 'var(--ac)' : 'var(--dm)',
+              // Open state reads as primary text, not accent: the UI-SPEC reserves accent
+              // for a short declared list, and the tree-pane CTA is the screen's single
+              // focal point. A --dm → --tx step is enough contrast to signal "open".
+              color: detailsOpen ? 'var(--tx)' : 'var(--dm)',
             }}
           >
             Details

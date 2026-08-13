@@ -18,7 +18,7 @@ function TreePane() {
             style={{
               width: 46,
               height: 46,
-              borderRadius: 10,
+              borderRadius: 9,
               border: '1px dashed var(--l)',
               display: 'block',
             }}
