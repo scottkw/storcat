@@ -17,7 +17,7 @@
 - [ ] **SHELL-06**: User sees the status bar report catalog count, indexed file count, and total bytes
 - [x] **SHELL-07**: User can drag the window by the toolbar without drag regions swallowing clicks on the search field, theme chip, or gear
 - [x] **SHELL-08**: On macOS, user sees the real traffic lights sitting inside the 46px toolbar (TitleBarHiddenInset); on Windows and Linux the native title bar sits above it
-- [ ] **SHELL-09**: Overlays stack correctly at every window width — details panel below the create slide-over and search palette, which sit below dialogs and Settings
+- [x] **SHELL-09**: Overlays stack correctly at every window width — details panel below the create slide-over and search palette, which sit below dialogs and Settings
 
 ### Theme — token layer and appearance
 
@@ -155,7 +155,7 @@ Deferred — acknowledged but not in this roadmap.
 | SHELL-06 | Phase 23 | Pending |
 | SHELL-07 | Phase 22 | Complete |
 | SHELL-08 | Phase 22 | Complete |
-| SHELL-09 | Phase 22 | Pending |
+| SHELL-09 | Phase 22 | Complete |
 | THEME-01 | Phase 22 | Complete |
 | THEME-02 | Phase 22 | Complete |
 | THEME-03 | Phase 22 | Complete |

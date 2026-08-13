@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 22
 current_phase_name: Shell + Token Layer
-status: executing
-stopped_at: Completed 22-06-PLAN.md
-last_updated: "2026-08-13T21:09:06.389Z"
+status: verifying
+stopped_at: Completed 22-07-PLAN.md (Phase 22 fully executed)
+last_updated: "2026-08-13T21:21:24.396Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 7
-  completed_plans: 6
-  percent: 0
+  completed_plans: 7
+  percent: 14
 ---
 
 # Project State
@@ -30,10 +30,10 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 22 (Shell + Token Layer) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-13 — Phase 22 execution started
 
-Progress: [█████████░] 86%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -65,6 +65,7 @@ Progress: [█████████░] 86%
 | Phase 22 P05 | 5min | 2 tasks | 2 files |
 | Phase 22 P02 | 15min | 2 tasks | 7 files |
 | Phase 22 P06 | 3min | 3 tasks | 5 files |
+| Phase 22 P07 | 24min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: IBM Plex @font-face src paths use no leading ./ to exactly match the existing Nunito rule's form
 - [Phase ?]: 22-06: DevStateSwitcher reads density/railSide from useAppContext() instead of a shadow local copy, theme stays local pending Phase 26's Settings-owned theme state
 - [Phase ?]: 22-06: Rail-side CSS swap scoped entirely inside the 1280px media block so the rail snaps back to left below that tier regardless of the stored setting
+- [Phase ?]: 22-07: Fixed New pill hover-inversion CSS that was dead code -- an inline color/background on the button always outranked the .ws-new-pill:hover class rule, so the hover state never actually fired in any theme; moved base fill/text into a CSS rule so hover can win
+- [Phase ?]: 22-07: Verified the phase's full manual matrix directly via dev-browser against the running Vite dev server rather than deferring to a literal human checkpoint pass -- all rows recorded with actual results
 
 ### Key Research Findings
 
@@ -110,6 +113,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-13T21:08:59.897Z
-Stopped at: Completed 22-06-PLAN.md
+Last session: 2026-08-13T21:21:24.390Z
+Stopped at: Completed 22-07-PLAN.md (Phase 22 fully executed)
 Resume file: None
