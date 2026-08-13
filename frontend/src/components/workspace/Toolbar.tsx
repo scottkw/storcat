@@ -8,7 +8,12 @@ function Toolbar() {
 
   useEffect(() => {
     let cancelled = false;
-    Environment()
+    // Environment() dereferences window.runtime synchronously, so outside a Wails
+    // webview it THROWS rather than rejecting — which would take down the whole tree.
+    // Deferring through a resolved promise turns that into a rejection the catch below
+    // already handles, so the shell still renders in a plain browser (needed for UAT).
+    Promise.resolve()
+      .then(() => Environment())
       .then((env) => {
         if (cancelled) return;
         if (env.platform === 'darwin') {
