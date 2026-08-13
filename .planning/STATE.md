@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 22
 current_phase_name: Shell + Token Layer
 status: executing
-stopped_at: Completed 22-01-PLAN.md
-last_updated: "2026-08-13T20:41:56.485Z"
+stopped_at: Completed 22-03-PLAN.md
+last_updated: "2026-08-13T20:48:22.017Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 0
   total_plans: 7
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 22 (Shell + Token Layer) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 22 execution started
 
-Progress: [█░░░░░░░░░] 14%
+Progress: [███░░░░░░░] 29%
 
 ## Performance Metrics
 
@@ -60,6 +60,7 @@ Progress: [█░░░░░░░░░] 14%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 22 P01 | 11min | 2 tasks | 20 files |
+| Phase 22 P03 | 5min | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -68,6 +69,7 @@ Progress: [█░░░░░░░░░] 14%
 Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisions (Ant Design removal, macOS TitleBarHiddenInset, GUI-only new capabilities, sidecar count cache, vendored IBM Plex fonts, THEMES array authoritative) are recorded in PROJECT.md's "Milestone decisions" section.
 
 - [Phase ?]: Implemented full OKLab conversion (Ottosson matrices) for theme token color mixing, not sRGB averaging, for pixel-exact fidelity with the design handoff
+- [Phase ?]: Toolbar: kept className="no-drag ws-search"/"no-drag ws-chip" per the plan's action text rather than restructuring to satisfy the plan's own literal className="no-drag" exact-match grep -- moving .no-drag to a wrapper would break .ws-search:hover/.ws-chip:hover
 
 ### Key Research Findings
 
@@ -99,6 +101,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-13T20:41:56.475Z
-Stopped at: Completed 22-01-PLAN.md
+Last session: 2026-08-13T20:48:22.010Z
+Stopped at: Completed 22-03-PLAN.md
 Resume file: None
