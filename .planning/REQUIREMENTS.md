@@ -9,24 +9,24 @@
 
 ### Shell — the workspace frame
 
-- [ ] **SHELL-01**: User sees a single workspace view — no tabs — with a 46px toolbar, catalog rail, tree pane, details panel, and 26px status bar
-- [ ] **SHELL-02**: User sees the three panes laid out as `268px 1fr 288px` at window widths ≥1280px
+- [x] **SHELL-01**: User sees a single workspace view — no tabs — with a 46px toolbar, catalog rail, tree pane, details panel, and 26px status bar
+- [x] **SHELL-02**: User sees the three panes laid out as `268px 1fr 288px` at window widths ≥1280px
 - [ ] **SHELL-03**: User sees the details panel become a right drawer, toggled by a "Details" chip in the toolbar, at widths 1040–1279px (rail narrows to 236px)
 - [ ] **SHELL-04**: User sees the tree keep priority below 1040px (rail 200px, details stays a drawer)
 - [ ] **SHELL-05**: User can move the catalog rail to the right side, and the 1px divider moves with it
 - [ ] **SHELL-06**: User sees the status bar report catalog count, indexed file count, and total bytes
 - [ ] **SHELL-07**: User can drag the window by the toolbar without drag regions swallowing clicks on the search field, theme chip, or gear
-- [ ] **SHELL-08**: On macOS, user sees the real traffic lights sitting inside the 46px toolbar (TitleBarHiddenInset); on Windows and Linux the native title bar sits above it
+- [x] **SHELL-08**: On macOS, user sees the real traffic lights sitting inside the 46px toolbar (TitleBarHiddenInset); on Windows and Linux the native title bar sits above it
 - [ ] **SHELL-09**: Overlays stack correctly at every window width — details panel below the create slide-over and search palette, which sit below dialogs and Settings
 
 ### Theme — token layer and appearance
 
-- [ ] **THEME-01**: User can switch between all 11 themes and the entire workspace repaints immediately
-- [ ] **THEME-02**: User sees legible text on accent-filled buttons and badges in every one of the 11 themes, including light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue)
-- [ ] **THEME-03**: User sees the theme colors defined by the handoff's `THEMES` array, with the extended token set (`--bg --p --p2 --ch --l --l2 --tx --dm --fn --ac --acs --onac --sel --hov`)
-- [ ] **THEME-04**: User can switch row density between Compact and Comfortable, changing tree row height, rail row padding, details row padding, palette row padding, and tree font size
+- [x] **THEME-01**: User can switch between all 11 themes and the entire workspace repaints immediately
+- [x] **THEME-02**: User sees legible text on accent-filled buttons and badges in every one of the 11 themes, including light accents (Gruvbox orange, Monokai green) and dark accents (GitHub blue)
+- [x] **THEME-03**: User sees the theme colors defined by the handoff's `THEMES` array, with the extended token set (`--bg --p --p2 --ch --l --l2 --tx --dm --fn --ac --acs --onac --sel --hov`)
+- [x] **THEME-04**: User can switch row density between Compact and Comfortable, changing tree row height, rail row padding, details row padding, palette row padding, and tree font size
 - [ ] **THEME-05**: User sees IBM Plex Sans for UI text and IBM Plex Mono for every path, filename, size, count and timestamp, with no network access required
-- [ ] **THEME-06**: User's theme, density, and rail position survive an app restart
+- [x] **THEME-06**: User's theme, density, and rail position survive an app restart
 
 ### Rail — the catalog list
 
@@ -147,21 +147,21 @@ Deferred — acknowledged but not in this roadmap.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SHELL-01 | Phase 22 | Pending |
-| SHELL-02 | Phase 22 | Pending |
+| SHELL-01 | Phase 22 | Complete |
+| SHELL-02 | Phase 22 | Complete |
 | SHELL-03 | Phase 22 | Pending |
 | SHELL-04 | Phase 22 | Pending |
 | SHELL-05 | Phase 22 | Pending |
 | SHELL-06 | Phase 23 | Pending |
 | SHELL-07 | Phase 22 | Pending |
-| SHELL-08 | Phase 22 | Pending |
+| SHELL-08 | Phase 22 | Complete |
 | SHELL-09 | Phase 22 | Pending |
-| THEME-01 | Phase 22 | Pending |
-| THEME-02 | Phase 22 | Pending |
-| THEME-03 | Phase 22 | Pending |
-| THEME-04 | Phase 22 | Pending |
+| THEME-01 | Phase 22 | Complete |
+| THEME-02 | Phase 22 | Complete |
+| THEME-03 | Phase 22 | Complete |
+| THEME-04 | Phase 22 | Complete |
 | THEME-05 | Phase 22 | Pending |
-| THEME-06 | Phase 22 | Pending |
+| THEME-06 | Phase 22 | Complete |
 | RAIL-01 | Phase 23 | Pending |
 | RAIL-02 | Phase 23 | Pending |
 | RAIL-03 | Phase 23 | Pending |
@@ -224,6 +224,7 @@ Deferred — acknowledged but not in this roadmap.
 | COMPAT-06 | Phase 28 | Pending |
 
 **Coverage:**
+
 - v1 requirements: 75 total
 - Mapped to phases: 75
 - Unmapped: 0 ✓
