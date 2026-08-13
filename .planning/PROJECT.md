@@ -8,6 +8,28 @@ StorCat is a cross-platform desktop application for creating, browsing, and sear
 
 Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search than the original Electron version, with full feature parity.
 
+## Current Milestone: v3.0.0 Workspace Redesign
+
+**Goal:** Replace the three-tab Ant Design frontend with the 1a Workspace design from `design_handoff_storcat_ui/`, matching it exactly, and build every backend capability the design implies.
+
+**Target features:**
+- Workspace shell — 46px toolbar / 268px catalog rail / tree / 288px details / 26px status bar, swappable rail side, three responsive tiers
+- Virtualized catalog tree handling 40k+ nodes
+- ⌘K search palette across all catalogs, capped at 50 with "first 50 of N"
+- Create slide-over with live scan progress, partial-catalog error path, and done state
+- Settings modal — 11 theme cards, row density, rail position, catalog defaults
+- Catalog actions — rename, duplicate, delete-to-Trash, re-scan & diff
+- Empty-library and unreadable-catalog states with surfaced parse errors
+- Backend: scan progress events, volume enumeration, error-tolerant walk, fsnotify watch, sidecar count cache, reveal-in-file-manager
+
+**Milestone decisions:**
+- Ant Design removed entirely — every surface is custom-spec'd; custom Modal/Select/Input/Tooltip replace it
+- macOS `TitleBarHiddenInset` so real traffic lights sit in the 46px toolbar; Windows/Linux keep the native title bar
+- New capabilities are GUI-only — the 6 existing CLI subcommands keep working unchanged
+- Per-catalog file count and total bytes come from a sidecar cache keyed by path+mtime; catalog JSON on disk is unchanged
+- IBM Plex Sans + Mono vendored as self-hosted woff2 and embedded in the binary (no CDN)
+- The demo's `THEMES` array is authoritative for theme colors — existing theme accents change
+
 ## Requirements
 
 ### Validated
@@ -64,7 +86,7 @@ Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller
 
 ### Active
 
-(No active requirements — planning next milestone)
+Defined in `.planning/REQUIREMENTS.md` for milestone v3.0.0 Workspace Redesign.
 
 ### Out of Scope
 
@@ -163,4 +185,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-03-28 after v2.3.0 milestone*
+*Last updated: 2026-08-13 at start of v3.0.0 milestone*

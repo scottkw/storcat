@@ -1,0 +1,1166 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0a0c10; font-family: "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #4fd6e0; text-decoration: none; }
+  a:hover { color: #7ee6ed; }
+  * { box-sizing: border-box; }
+  input { font-family: inherit; outline: none; border: none; background: transparent; color: inherit; }
+  @keyframes scpulse { 0%,100% { opacity: 1 } 50% { opacity: .35 } }
+  @keyframes scslide { from { transform: translateX(100%) } to { transform: translateX(0) } }
+  @keyframes scslideout { from { transform: translateX(0) } to { transform: translateX(100%) } }
+  @keyframes scfade { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes scfadeout { from { opacity: 1 } to { opacity: 0 } }
+</style>
+</helmet>
+
+<div style="{{ vars }}">
+<div style="min-height: 100vh; padding: 44px 44px 64px; display: flex; flex-direction: column; align-items: center; gap: 22px; background: #0a0c10">
+
+  <div style="width: 1280px; display: flex; align-items: flex-end; justify-content: space-between; gap: 24px">
+    <div style="display: flex; flex-direction: column; gap: 7px">
+      <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #6f7a8a">Direction 1a · demo mode</div>
+      <div style="font-size: 26px; font-weight: 600; letter-spacing: -0.02em; color: #e6ebf2">The workspace, live.</div>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-end; max-width: 620px">
+      <span style="font-size: 11.5px; color: #97a1b0; border: 1px solid #232a35; border-radius: 6px; padding: 4px 9px">Pick a catalog in the rail</span>
+      <span style="font-size: 11.5px; color: #97a1b0; border: 1px solid #232a35; border-radius: 6px; padding: 4px 9px">Expand folders, select a file</span>
+      <span style="font-size: 11.5px; color: #97a1b0; border: 1px solid #232a35; border-radius: 6px; padding: 4px 9px">⌘K searches every catalog</span>
+      <span style="font-size: 11.5px; color: var(--onac, #06232a); background: #4fd6e0; border-radius: 6px; padding: 4px 9px; font-weight: 600">New → catalog a volume</span>
+      <span style="font-size: 11.5px; color: #97a1b0; border: 1px solid #232a35; border-radius: 6px; padding: 4px 9px">⌘, or the gear → Settings, 11 real themes</span>
+      <span style="font-size: 11.5px; color: #97a1b0; border: 1px solid #232a35; border-radius: 6px; padding: 4px 9px">⋯ on the details panel → rename / delete / re-scan</span>
+    </div>
+  </div>
+
+  <div style="width: 1280px; display: flex; align-items: center; gap: 18px; padding: 10px 12px; border: 1px solid #1c222c; border-radius: 9px; background: #0e1116">
+    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: #6f7a8a">demo controls</span>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="font-size: 11.5px; color: #6f7a8a">Library</span>
+      <div style="display: flex; gap: 3px; padding: 3px; border-radius: 7px; background: #12161d; border: 1px solid #232a35">
+        <sc-for list="{{ libOpts }}" as="o" hint-placeholder-count="2">
+          <span onClick="{{ o.onClick }}" style="font-size: 11.5px; font-weight: 500; padding: 3px 10px; border-radius: 5px; cursor: pointer; background: {{ o.bg }}; color: {{ o.fg }}">{{ o.label }}</span>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 8px">
+      <span style="font-size: 11.5px; color: #6f7a8a">Window width</span>
+      <div style="display: flex; gap: 3px; padding: 3px; border-radius: 7px; background: #12161d; border: 1px solid #232a35">
+        <sc-for list="{{ widthOpts }}" as="o" hint-placeholder-count="3">
+          <span onClick="{{ o.onClick }}" style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; padding: 3px 10px; border-radius: 5px; cursor: pointer; background: {{ o.bg }}; color: {{ o.fg }}">{{ o.label }}</span>
+        </sc-for>
+      </div>
+    </div>
+    <span style="margin-left: auto; font-size: 11.5px; color: #6f7a8a">SD Catalog #11 is deliberately corrupt · SD47 fails mid-scan</span>
+  </div>
+
+  <div style="position: relative; width: {{ frameW }}; height: 820px; border-radius: 12px; overflow: hidden; border: 1px solid var(--l, #232a35); background: var(--bg, #0b0e13); color: var(--tx, #e6ebf2); box-shadow: 0 30px 80px rgba(0,0,0,.55); display: flex; flex-direction: column">
+
+    <div style="height: 46px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 14px; background: var(--p2, #12161d); border-bottom: 1px solid var(--l, #232a35)">
+      <div style="display: flex; gap: 7px">
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block"></span>
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #febc2e; display: block"></span>
+        <span style="width: 11px; height: 11px; border-radius: 50%; background: #28c840; display: block"></span>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding-left: 6px">
+        <span style="width: 16px; height: 16px; border-radius: 4px; background: var(--ac, #4fd6e0); display: block"></span>
+        <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em">StorCat</span>
+      </div>
+      <div style="flex: 1; display: flex; justify-content: center">
+        <div onClick="{{ openPalette }}" style="width: 460px; height: 30px; border-radius: 8px; background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); display: flex; align-items: center; gap: 9px; padding: 0 10px; cursor: pointer" style-hover="border-color: var(--ac, #4fd6e0)">
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+          <span style="font-size: 12.5px; color: var(--dm, #8a94a3)">Search every catalog…</span>
+          <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675); border: 1px solid var(--l, #232a35); border-radius: 4px; padding: 1px 5px">⌘K</span>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 10px">
+        <sc-if value="{{ narrow }}" hint-placeholder-val="{{ false }}">
+          <span onClick="{{ detailToggle }}" style="font-size: 11.5px; color: {{ detailToggleFg }}; border: 1px solid var(--l, #232a35); border-radius: 6px; padding: 3px 8px; cursor: pointer; white-space: nowrap">Details</span>
+        </sc-if>
+        <span onClick="{{ openSettings }}" style="font-size: 11.5px; color: var(--dm, #8a94a3); border: 1px solid var(--l, #232a35); border-radius: 6px; padding: 3px 8px; cursor: pointer" style-hover="color: var(--ac, #4fd6e0); border-color: var(--ac, #4fd6e0)">{{ themeLabel }}</span>
+        <span onClick="{{ openSettings }}" style="display: flex; cursor: pointer" style-hover="opacity: .7">
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.4"><circle cx="8" cy="8" r="2.4"/><circle cx="8" cy="8" r="6"/></svg>
+        </span>
+      </div>
+    </div>
+
+    <div style="flex: 1; display: grid; grid-template-columns: {{ cols }}; min-height: 0">
+
+      <div style="order: {{ railOrder }}; border-right: {{ railBorderR }}; border-left: {{ railBorderL }}; background: var(--p, #0f1319); display: flex; flex-direction: column; min-height: 0">
+        <div style="padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--l, #232a35)">
+          <div style="display: flex; align-items: center; justify-content: space-between">
+            <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dm, #8a94a3)">Catalogs <span style="color: var(--fn, #5c6675)">{{ catalogCount }}</span></span>
+            <span onClick="{{ openCreate }}" style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 600; color: var(--ac, #4fd6e0); background: var(--acs, rgba(79,214,224,.12)); border-radius: 6px; padding: 3px 8px; cursor: pointer" style-hover="background: var(--ac, #4fd6e0); color: var(--onac, #06232a)">
+              <svg width="10" height="10" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.8"><line x1="6" y1="1.5" x2="6" y2="10.5"/><line x1="1.5" y1="6" x2="10.5" y2="6"/></svg>New
+            </span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border: 1px solid var(--l, #232a35); border-radius: 6px; padding: 5px 8px">
+            <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--fn, #5c6675)" stroke-width="1.4"><rect x="1" y="3" width="12" height="9" rx="1.5"/><line x1="1" y1="5.5" x2="13" y2="5.5"/></svg>
+            <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">~/dev/sd-catalogs</span>
+          </div>
+          <div style="height: 26px; border-radius: 6px; background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); display: flex; align-items: center; gap: 7px; padding: 0 8px">
+            <input value="{{ railFilter }}" onChange="{{ onRailFilter }}" placeholder="Filter catalogs…" style="width: 100%; font-size: 12px; color: var(--tx, #e6ebf2)">
+          </div>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 6px; display: flex; flex-direction: column; gap: 1px">
+          <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+            <div style="padding: 16px 10px; display: flex; flex-direction: column; gap: 10px">
+              <span style="font-size: 12.5px; font-weight: 500">No catalogs here yet</span>
+              <span style="font-size: 11.5px; line-height: 1.5; color: var(--dm, #8a94a3)">This folder has no .json catalogs. Point StorCat somewhere else, or catalog a volume to create the first one.</span>
+              <span onClick="{{ startCreateFromEmpty }}" style="font-size: 12px; font-weight: 600; color: var(--ac, #4fd6e0); cursor: pointer">Catalog a volume →</span>
+            </div>
+          </sc-if>
+          <sc-for list="{{ rail }}" as="c" hint-placeholder-count="12">
+            <div onClick="{{ c.onClick }}" style="display: flex; flex-direction: column; gap: 2px; padding: var(--rp, 6px 8px); border-radius: 6px; cursor: pointer; background: {{ c.bg }}; border-left: 2px solid {{ c.bar }}" style-hover="background: var(--hov, #141922)">
+              <div style="display: flex; align-items: baseline; gap: 8px">
+                <span style="width: 6px; height: 6px; border-radius: 50%; background: {{ c.warnC }}; display: block; flex: none"></span>
+                <span style="font-size: 12.5px; font-weight: 500; color: {{ c.fg }}; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ c.title }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675); flex: none">{{ c.size }}</span>
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675); white-space: nowrap">{{ c.file }} · {{ c.files }} files</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="order: 2; display: flex; flex-direction: column; min-height: 0; background: var(--bg, #0b0e13)">
+        <sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 16px; padding: 40px">
+            <span style="width: 46px; height: 46px; border-radius: 10px; border: 1px dashed var(--l, #232a35); display: block"></span>
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 7px; max-width: 420px">
+              <span style="font-size: 16px; font-weight: 600">Nothing catalogued yet</span>
+              <span style="font-size: 12.5px; line-height: 1.6; color: var(--dm, #8a94a3); text-align: center; text-wrap: pretty">Insert a card or plug in a drive and StorCat will offer it. Every catalog is a plain .json plus a browsable .html — nothing is stored in a database you can lose.</span>
+            </div>
+            <div style="display: flex; gap: 10px">
+              <span onClick="{{ startCreateFromEmpty }}" style="height: 32px; padding: 0 15px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Catalog a volume</span>
+              <span onClick="{{ openSettings }}" style="height: 32px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; cursor: pointer">Choose catalog folder…</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ isBroken }}" hint-placeholder-val="{{ false }}">
+          <div style="flex: 1; display: flex; flex-direction: column; gap: 18px; padding: 24px 22px">
+            <div style="display: flex; align-items: center; gap: 11px">
+              <span style="width: 22px; height: 22px; border-radius: 6px; background: rgba(229,83,75,.16); color: #e5534b; font-size: 13px; display: flex; align-items: center; justify-content: center; flex: none">!</span>
+              <span style="font-size: 15px; font-weight: 600">This catalog can’t be read</span>
+            </div>
+            <span style="font-size: 12.5px; line-height: 1.6; color: var(--dm, #8a94a3); max-width: 520px; text-wrap: pretty">The JSON is truncated — probably written while the card was pulled. The matching .html still opens, and the volume can be re-scanned to rebuild the catalog in place.</span>
+            <div style="display: flex; flex-direction: column; gap: 1px; max-width: 520px">
+              <sc-for list="{{ brokenMeta }}" as="m" hint-placeholder-count="4">
+                <div style="display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-bottom: 1px solid var(--l2, #1a2029)">
+                  <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">{{ m.k }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">{{ m.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="padding: 12px; border-radius: 9px; background: var(--ch, #151a22); font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: #e5534b; word-break: break-all">parse error: unexpected token } at byte 41,208 — expected "," or "]"</div>
+            <div style="display: flex; gap: 10px">
+              <span onClick="{{ openCreate }}" style="height: 32px; padding: 0 15px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Re-scan volume</span>
+              <span style="height: 32px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; cursor: pointer">Open the .html instead</span>
+              <span style="height: 32px; padding: 0 15px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; color: #e5534b; display: flex; align-items: center; cursor: pointer">Remove from library</span>
+            </div>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ hasTree }}" hint-placeholder-val="{{ true }}">
+        <div style="flex: 1; display: flex; flex-direction: column; min-height: 0">
+        <div style="padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 9px; border-bottom: 1px solid var(--l, #232a35)">
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">{{ cur.title }}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border-radius: 5px; padding: 2px 7px">{{ cur.file }}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border-radius: 5px; padding: 2px 7px">{{ cur.html }}</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">
+            <span>{{ cur.files }} files</span><span style="color: var(--l, #232a35)">|</span><span>{{ cur.size }}</span><span style="color: var(--l, #232a35)">|</span><span>{{ cur.bytes }} catalogued</span><span style="color: var(--l, #232a35)">|</span><span>modified {{ cur.modified }}</span>
+          </div>
+        </div>
+        <div style="height: 34px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-bottom: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+          <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); white-space: nowrap">{{ crumb }}</span>
+          <span onClick="{{ expandAll }}" style="margin-left: auto; font-size: 11.5px; color: var(--ac, #4fd6e0); cursor: pointer">Expand all</span>
+          <span onClick="{{ collapseAll }}" style="font-size: 11.5px; color: var(--dm, #8a94a3); cursor: pointer" style-hover="color: var(--ac, #4fd6e0)">Collapse</span>
+        </div>
+        <div style="flex: 1; overflow-y: auto; padding: 6px 0">
+          <sc-for list="{{ rows }}" as="n" hint-placeholder-count="20">
+            <div onClick="{{ n.onClick }}" style="display: flex; align-items: center; gap: 8px; height: var(--rh, 27px); cursor: pointer; padding-right: 18px; padding-left: {{ n.pad }}; background: {{ n.bg }}" style-hover="background: var(--hov, #141922)">
+              <span style="width: 10px; flex: none; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--fn, #5c6675)">{{ n.caret }}</span>
+              <span style="width: 9px; height: 9px; border-radius: {{ n.iconR }}; background: {{ n.iconC }}; display: block; flex: none"></span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: var(--fs, 12px); color: {{ n.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ n.name }}</span>
+              <span style="margin-left: auto; flex: none; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ n.size }}</span>
+            </div>
+          </sc-for>
+        </div>
+        </div>
+        </sc-if>
+      </div>
+
+      <div style="order: {{ detailOrder }}; border-left: {{ railBorderR }}; border-right: {{ railBorderL }}; background: var(--p, #0f1319); display: {{ detailDisp }}; position: {{ detailPos }}; right: 0; top: 46px; bottom: 26px; width: {{ detailW }}; box-shadow: {{ detailShadow }}; z-index: 3; flex-direction: column; gap: 16px; padding: 14px">
+        <div style="display: flex; align-items: center; gap: 8px; position: relative">
+          <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dm, #8a94a3)">{{ detail.heading }}</span>
+          <span onClick="{{ toggleMenu }}" style="margin-left: auto; width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--l, #232a35); color: var(--dm, #8a94a3); font-size: 13px; display: flex; align-items: center; justify-content: center; cursor: pointer" style-hover="color: var(--ac, #4fd6e0); border-color: var(--ac, #4fd6e0)">⋯</span>
+          <sc-if value="{{ menuOpen }}" hint-placeholder-val="{{ false }}">
+            <div style="position: absolute; top: 26px; right: 0; width: 216px; padding: 5px; border-radius: 9px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); box-shadow: 0 18px 40px rgba(0,0,0,.5); display: flex; flex-direction: column; gap: 1px; z-index: 5">
+              <sc-for list="{{ menuItems }}" as="m" hint-placeholder-count="4">
+                <span onClick="{{ m.onClick }}" style="font-size: 12.5px; color: {{ m.fg }}; padding: 7px 9px; border-radius: 6px; cursor: pointer" style-hover="background: var(--hov, #141922)">{{ m.label }}</span>
+              </sc-for>
+            </div>
+          </sc-if>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px">
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.4; word-break: break-all">{{ detail.name }}</div>
+          <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); line-height: 1.5; word-break: break-all">{{ detail.path }}</div>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 1px">
+          <sc-for list="{{ detail.meta }}" as="m" hint-placeholder-count="5">
+            <div style="display: flex; justify-content: space-between; gap: 12px; padding: var(--mp, 6px) 0; border-bottom: 1px solid var(--l2, #1a2029)">
+              <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">{{ m.k }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-align: right">{{ m.v }}</span>
+            </div>
+          </sc-for>
+        </div>
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+          <div style="height: 30px; border-radius: 7px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer">Open HTML catalog</div>
+          <div style="height: 30px; border-radius: 7px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; justify-content: center; cursor: pointer" style-hover="border-color: var(--ac, #4fd6e0)">Reveal JSON in Finder</div>
+          <div onClick="{{ openCreate }}" style="height: 30px; border-radius: 7px; border: 1px solid var(--l, #232a35); color: var(--dm, #8a94a3); font-size: 12.5px; display: flex; align-items: center; justify-content: center; cursor: pointer" style-hover="color: var(--ac, #4fd6e0); border-color: var(--ac, #4fd6e0)">Re-scan volume…</div>
+        </div>
+      </div>
+    </div>
+
+    <div style="height: 26px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--p2, #12161d); border-top: 1px solid var(--l, #232a35); font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">
+      <span>{{ catalogCount }} catalogs</span><span>{{ totalFiles }} files indexed</span><span>{{ totalBytes }}</span>
+      <span style="margin-left: auto; color: var(--ac, #4fd6e0)">{{ status }}</span>
+    </div>
+
+    <sc-if value="{{ paletteOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; justify-content: center; padding-top: 96px; z-index: 6">
+        <div onClick="{{ stop }}" style="width: 720px; max-height: 520px; border-radius: 12px; background: var(--p, #0f1319); border: 1px solid var(--l, #232a35); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: flex; flex-direction: column; overflow: hidden">
+          <div style="height: 50px; flex: none; display: flex; align-items: center; gap: 11px; padding: 0 14px; border-bottom: 1px solid var(--l, #232a35)">
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--ac, #4fd6e0)" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+            <input ref="{{ paletteRef }}" value="{{ query }}" onChange="{{ onQuery }}" placeholder="Search 312,004 files across 47 catalogs…" style="flex: 1; font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--tx, #e6ebf2)">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ hitLabel }}</span>
+          </div>
+          <div style="flex: 1; overflow-y: auto; padding: 6px 0">
+            <sc-for list="{{ hits }}" as="h" hint-placeholder-count="6">
+              <div onClick="{{ h.onClick }}" style="display: flex; align-items: center; gap: 12px; padding: var(--hp, 7px 14px); cursor: pointer; background: {{ h.bg }}" style-hover="background: var(--hov, #141922)">
+                <span style="width: 8px; height: 8px; border-radius: {{ h.iconR }}; background: {{ h.iconC }}; display: block; flex: none"></span>
+                <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0; flex: 1">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.name }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ h.path }}</span>
+                </div>
+                <span style="font-size: 11px; color: var(--ac, #4fd6e0); background: var(--acs, rgba(79,214,224,.12)); border-radius: 5px; padding: 2px 7px; flex: none">{{ h.cat }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); flex: none; white-space: nowrap; width: 74px; text-align: right">{{ h.size }}</span>
+              </div>
+            </sc-for>
+            <sc-if value="{{ capped }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 10px 14px; border-top: 1px solid var(--l2, #1a2029); font-size: 11.5px; color: var(--dm, #8a94a3); line-height: 1.5">{{ capLine }}</div>
+            </sc-if>
+            <sc-if value="{{ noHits }}" hint-placeholder-val="{{ false }}">
+              <div style="padding: 30px 14px; text-align: center; font-size: 12.5px; color: var(--dm, #8a94a3)">No file in any catalog matches that.</div>
+            </sc-if>
+          </div>
+          <div style="height: 32px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 14px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d); font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">
+            <span>↵ reveal in catalog</span><span>esc close</span><span style="margin-left: auto">searches names and paths</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ createOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; justify-content: flex-end; z-index: 6; animation: {{ scrimAnim }}">
+        <div onClick="{{ stop }}" style="width: 560px; height: 100%; background: var(--p, #0f1319); border-left: 1px solid var(--l, #232a35); box-shadow: -30px 0 70px rgba(0,0,0,.5); display: flex; flex-direction: column; will-change: transform; animation: {{ createAnim }}">
+          <div style="height: 52px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--l, #232a35)">
+            <span style="font-size: 15px; font-weight: 600">{{ createTitle }}</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ createStep }}</span>
+            <span onClick="{{ closeAll }}" style="margin-left: auto; font-size: 16px; color: var(--dm, #8a94a3); cursor: pointer">×</span>
+          </div>
+
+          <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+            <div style="flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 20px">
+              <div style="display: flex; flex-direction: column; gap: 9px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Source volume</span>
+                <sc-for list="{{ volumes }}" as="v" hint-placeholder-count="3">
+                  <div onClick="{{ v.onClick }}" style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 9px; cursor: pointer; background: {{ v.bg }}; border: 1px solid {{ v.bd }}">
+                    <span style="width: 26px; height: 20px; border-radius: 3px; background: {{ v.chip }}; display: block; flex: none"></span>
+                    <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                      <span style="font-size: 13px; font-weight: 500">{{ v.name }}</span>
+                      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3)">{{ v.path }}</span>
+                    </div>
+                    <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); flex: none">{{ v.size }}</span>
+                    <span style="font-size: 11px; color: {{ v.tagFg }}; background: {{ v.tagBg }}; border-radius: 5px; padding: 3px 7px; flex: none">{{ v.tag }}</span>
+                  </div>
+                </sc-for>
+                <span style="font-size: 12px; color: var(--dm, #8a94a3)">…or <span style="color: var(--ac, #4fd6e0); cursor: pointer">choose any folder</span></span>
+              </div>
+
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Catalog title</span>
+                  <div style="height: 34px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 10px">
+                    <input value="{{ form.title }}" onChange="{{ onTitle }}" placeholder="SD Card #48" style="width: 100%; font-size: 12.5px; color: var(--tx, #e6ebf2)">
+                  </div>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 6px">
+                  <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Filename root</span>
+                  <div style="height: 34px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 10px; gap: 2px">
+                    <input value="{{ form.root }}" onChange="{{ onRoot }}" placeholder="sd48" style="width: 62px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--tx, #e6ebf2)">
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--fn, #5c6675); white-space: nowrap">.json / .html</span>
+                  </div>
+                </div>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 12px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Options</span>
+                <sc-for list="{{ opts }}" as="o" hint-placeholder-count="3">
+                  <div onClick="{{ o.onClick }}" style="display: flex; align-items: center; gap: 10px; cursor: pointer">
+                    <span style="width: 30px; height: 17px; border-radius: 9px; background: {{ o.track }}; display: flex; align-items: center; padding: 2px; justify-content: {{ o.just }}; flex: none">
+                      <span style="width: 13px; height: 13px; border-radius: 50%; background: {{ o.knob }}; display: block"></span>
+                    </span>
+                    <span style="font-size: 12.5px">{{ o.label }}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ o.note }}</span>
+                  </div>
+                </sc-for>
+              </div>
+
+              <div style="display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: 9px; background: var(--ch, #151a22); border: 1px solid var(--l2, #1a2029)">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Will write</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--tx, #e6ebf2); word-break: break-all; line-height: 1.6">{{ willWrite }}</span>
+              </div>
+            </div>
+            <div style="height: 62px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+              <div onClick="{{ startScan }}" style="height: 34px; padding: 0 16px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Create catalog</div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">⌘↵</span>
+              <span onClick="{{ closeAll }}" style="margin-left: auto; font-size: 12.5px; color: var(--dm, #8a94a3); cursor: pointer">Cancel</span>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isScanning }}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; padding: 22px 18px; display: flex; flex-direction: column; gap: 22px">
+              <div style="display: flex; flex-direction: column; gap: 10px">
+                <div style="display: flex; align-items: baseline; justify-content: space-between">
+                  <span style="font-size: 14px; font-weight: 500">{{ form.title }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 14px; color: var(--ac, #4fd6e0)">{{ pct }}%</span>
+                </div>
+                <div style="height: 6px; border-radius: 3px; background: var(--ch, #151a22); overflow: hidden">
+                  <div style="width: {{ pct }}%; height: 100%; background: var(--ac, #4fd6e0)"></div>
+                </div>
+                <div style="display: flex; gap: 16px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">
+                  <span>{{ seen }} files</span><span>{{ seenBytes }}</span><span>{{ eta }}</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 8px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Walking</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ac, #4fd6e0); word-break: break-all; animation: scpulse 1.4s ease-in-out infinite">{{ walking }}</span>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 3px; padding: 12px; border-radius: 9px; background: var(--ch, #151a22); max-height: 300px; overflow: hidden">
+                <sc-for list="{{ log }}" as="l" hint-placeholder-count="8">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: {{ l.fg }}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis">{{ l.text }}</span>
+                </sc-for>
+              </div>
+              <div style="margin-top: auto; display: flex; align-items: center; gap: 12px">
+                <div onClick="{{ closeAll }}" style="height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; color: var(--dm, #8a94a3); display: flex; align-items: center; cursor: pointer">Run in background</div>
+                <span style="font-size: 12px; color: var(--fn, #5c6675)">Progress also shows in the status bar.</span>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isError }}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; padding: 22px 18px; display: flex; flex-direction: column; gap: 20px">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <span style="width: 30px; height: 30px; border-radius: 50%; background: rgba(229,83,75,.16); color: #e5534b; display: flex; align-items: center; justify-content: center; font-size: 15px; flex: none">!</span>
+                <div style="display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 14px; font-weight: 600">Stopped at {{ pct }}% — the volume went away</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">/Volumes/SD47 · {{ seen }} files walked</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 4px; padding: 12px; border-radius: 9px; background: var(--ch, #151a22)">
+                <sc-for list="{{ errLines }}" as="l" hint-placeholder-count="4">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: {{ l.fg }}; word-break: break-all">{{ l.text }}</span>
+                </sc-for>
+              </div>
+              <span style="font-size: 12.5px; line-height: 1.6; color: var(--dm, #8a94a3); text-wrap: pretty">Nothing was written yet. A partial catalog is still useful for a failing card — it records what could be read, and marks the gap.</span>
+              <div style="margin-top: auto; display: flex; gap: 10px">
+                <div onClick="{{ writePartial }}" style="height: 34px; padding: 0 15px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Write partial catalog</div>
+                <div onClick="{{ retryScan }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; cursor: pointer" style-hover="border-color: var(--ac, #4fd6e0)">Retry scan</div>
+                <div onClick="{{ closeAll }}" style="height: 34px; padding: 0 14px; border-radius: 8px; font-size: 12.5px; color: var(--dm, #8a94a3); display: flex; align-items: center; cursor: pointer">Cancel</div>
+              </div>
+            </div>
+          </sc-if>
+
+          <sc-if value="{{ isDone }}" hint-placeholder-val="{{ false }}">
+            <div style="flex: 1; padding: 22px 18px; display: flex; flex-direction: column; gap: 20px">
+              <div style="display: flex; align-items: center; gap: 12px">
+                <span style="width: 30px; height: 30px; border-radius: 50%; background: var(--acs, rgba(79,214,224,.12)); color: var(--ac, #4fd6e0); display: flex; align-items: center; justify-content: center; font-size: 15px">✓</span>
+                <div style="display: flex; flex-direction: column; gap: 2px">
+                  <span style="font-size: 14px; font-weight: 600">{{ form.title }} catalogued</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">{{ doneLine }}</span>
+                </div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 1px">
+                <sc-for list="{{ written }}" as="w" hint-placeholder-count="3">
+                  <div style="display: flex; align-items: center; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--l2, #1a2029)">
+                    <span style="width: 8px; height: 8px; border-radius: 2px; background: var(--ac, #4fd6e0); display: block; flex: none"></span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; word-break: break-all">{{ w.path }}</span>
+                    <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); flex: none">{{ w.size }}</span>
+                  </div>
+                </sc-for>
+              </div>
+              <div style="display: flex; gap: 10px">
+                <div onClick="{{ finish }}" style="height: 34px; padding: 0 16px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 13px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Open in workspace</div>
+                <div onClick="{{ again }}" style="height: 34px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; cursor: pointer" style-hover="border-color: var(--ac, #4fd6e0)">Catalog another volume</div>
+              </div>
+            </div>
+          </sc-if>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isRename }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeDialog }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; align-items: center; justify-content: center; z-index: 6">
+        <div onClick="{{ stop }}" style="width: 460px; border-radius: 12px; background: var(--p, #0f1319); border: 1px solid var(--l, #232a35); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: flex; flex-direction: column; overflow: hidden">
+          <div style="padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 12px">
+            <span style="font-size: 14px; font-weight: 600">Rename catalog</span>
+            <span style="font-size: 12px; color: var(--dm, #8a94a3); line-height: 1.5">The title lives in the .html file — the filenames on disk don’t change.</span>
+            <div style="height: 34px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--ac, #4fd6e0); display: flex; align-items: center; padding: 0 10px">
+              <input value="{{ renameVal }}" onChange="{{ onRename }}" style="width: 100%; font-size: 13px; color: var(--tx, #e6ebf2)">
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+            <div onClick="{{ saveRename }}" style="height: 32px; padding: 0 15px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Save</div>
+            <span onClick="{{ closeDialog }}" style="margin-left: auto; font-size: 12.5px; color: var(--dm, #8a94a3); cursor: pointer">Cancel</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDelete }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeDialog }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; align-items: center; justify-content: center; z-index: 6">
+        <div onClick="{{ stop }}" style="width: 480px; border-radius: 12px; background: var(--p, #0f1319); border: 1px solid var(--l, #232a35); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: flex; flex-direction: column; overflow: hidden">
+          <div style="padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 13px">
+            <span style="font-size: 14px; font-weight: 600">Delete “{{ cur.title }}”?</span>
+            <span style="font-size: 12px; color: var(--dm, #8a94a3); line-height: 1.55; text-wrap: pretty">This deletes the catalog files, not the card. Files go to the Trash, so it’s recoverable until you empty it.</span>
+            <div style="display: flex; flex-direction: column; gap: 5px; padding: 11px; border-radius: 8px; background: var(--ch, #151a22)">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">~/dev/sd-catalogs/{{ cur.file }}</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">~/dev/sd-catalogs/{{ cur.html }}</span>
+            </div>
+            <div onClick="{{ toggleDelHtml }}" style="display: flex; align-items: center; gap: 10px; cursor: pointer">
+              <span style="width: 30px; height: 17px; border-radius: 9px; background: {{ delTrack }}; display: flex; align-items: center; padding: 2px; justify-content: {{ delJust }}; flex: none">
+                <span style="width: 13px; height: 13px; border-radius: 50%; background: {{ delKnob }}; display: block"></span>
+              </span>
+              <span style="font-size: 12.5px">Also delete the matching .html</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+            <div onClick="{{ confirmDelete }}" style="height: 32px; padding: 0 15px; border-radius: 8px; background: #e5534b; color: #ffffff; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Move to Trash</div>
+            <span onClick="{{ closeDialog }}" style="margin-left: auto; font-size: 12.5px; color: var(--dm, #8a94a3); cursor: pointer">Cancel</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isRescan }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeDialog }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; align-items: center; justify-content: center; z-index: 6">
+        <div onClick="{{ stop }}" style="width: 620px; border-radius: 12px; background: var(--p, #0f1319); border: 1px solid var(--l, #232a35); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: flex; flex-direction: column; overflow: hidden">
+          <div style="padding: 16px 18px 14px; display: flex; flex-direction: column; gap: 14px">
+            <div style="display: flex; flex-direction: column; gap: 4px">
+              <span style="font-size: 14px; font-weight: 600">Re-scan changed 334 entries</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">{{ cur.file }} · scanned /Volumes/SD12 just now</span>
+            </div>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px">
+              <sc-for list="{{ diff }}" as="d" hint-placeholder-count="4">
+                <div style="display: flex; flex-direction: column; gap: 3px; padding: 9px 11px; border-radius: 8px; background: var(--ch, #151a22)">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px; color: {{ d.fg }}">{{ d.v }}</span>
+                  <span style="font-size: 11px; color: var(--dm, #8a94a3)">{{ d.k }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1px; max-height: 200px; overflow-y: auto">
+              <sc-for list="{{ diffRows }}" as="r" hint-placeholder-count="4">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--l2, #1a2029)">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{ r.fg }}; width: 10px; flex: none">{{ r.mark }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.path }}</span>
+                  <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); flex: none; white-space: nowrap">{{ r.size }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; padding: 12px 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+            <div onClick="{{ applyDiff }}" style="height: 32px; padding: 0 15px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Overwrite catalog</div>
+            <div onClick="{{ closeDialog }}" style="height: 32px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--l, #232a35); font-size: 12.5px; display: flex; align-items: center; cursor: pointer">Keep both (write sd12-2026.json)</div>
+            <span onClick="{{ closeDialog }}" style="margin-left: auto; font-size: 12.5px; color: var(--dm, #8a94a3); cursor: pointer">Discard</span>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ settingsOpen }}" hint-placeholder-val="{{ false }}">
+      <div onClick="{{ closeAll }}" style="position: absolute; inset: 0; background: rgba(4,6,9,.62); display: flex; align-items: center; justify-content: center; z-index: 7">
+        <div onClick="{{ stop }}" style="width: 660px; max-height: 700px; border-radius: 12px; background: var(--p, #0f1319); border: 1px solid var(--l, #232a35); box-shadow: 0 30px 70px rgba(0,0,0,.6); display: flex; flex-direction: column; overflow: hidden">
+          <div style="height: 50px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--l, #232a35)">
+            <span style="font-size: 15px; font-weight: 600">Settings</span>
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">⌘,</span>
+            <span onClick="{{ closeAll }}" style="margin-left: auto; font-size: 16px; color: var(--dm, #8a94a3); cursor: pointer">×</span>
+          </div>
+
+          <div style="flex: 1; overflow-y: auto; padding: 18px; display: flex; flex-direction: column; gap: 22px">
+            <div style="display: flex; flex-direction: column; gap: 11px">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Theme</span>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px">
+                <sc-for list="{{ themeCards }}" as="t" hint-placeholder-count="11">
+                  <div onClick="{{ t.onClick }}" style="display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; cursor: pointer; background: {{ t.bg }}; border: 1px solid {{ t.bd }}">
+                    <span style="display: flex; gap: 2px; flex: none">
+                      <span style="width: 9px; height: 18px; border-radius: 2px 0 0 2px; background: {{ t.sw1 }}; display: block"></span>
+                      <span style="width: 9px; height: 18px; background: {{ t.sw2 }}; display: block"></span>
+                      <span style="width: 9px; height: 18px; background: {{ t.sw3 }}; display: block"></span>
+                      <span style="width: 9px; height: 18px; border-radius: 0 2px 2px 0; background: {{ t.sw4 }}; display: block"></span>
+                    </span>
+                    <span style="font-size: 12.5px; font-weight: 500; color: {{ t.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ t.name }}</span>
+                    <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--fn, #5c6675); flex: none">{{ t.type }}</span>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Layout</span>
+              <div style="display: flex; align-items: center; gap: 14px">
+                <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                  <span style="font-size: 12.5px; font-weight: 500">Row density</span>
+                  <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">How tight the tree and lists pack</span>
+                </div>
+                <div style="display: flex; gap: 3px; padding: 3px; border-radius: 8px; background: var(--ch, #151a22); border: 1px solid var(--l, #232a35); flex: none">
+                  <sc-for list="{{ densityOpts }}" as="d" hint-placeholder-count="2">
+                    <span onClick="{{ d.onClick }}" style="font-size: 12px; font-weight: 500; padding: 4px 12px; border-radius: 6px; cursor: pointer; background: {{ d.bg }}; color: {{ d.fg }}">{{ d.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px">
+                <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                  <span style="font-size: 12.5px; font-weight: 500">Catalog rail position</span>
+                  <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">Details panel takes the other side</span>
+                </div>
+                <div style="display: flex; gap: 3px; padding: 3px; border-radius: 8px; background: var(--ch, #151a22); border: 1px solid var(--l, #232a35); flex: none">
+                  <sc-for list="{{ sideOpts }}" as="d" hint-placeholder-count="2">
+                    <span onClick="{{ d.onClick }}" style="font-size: 12px; font-weight: 500; padding: 4px 14px; border-radius: 6px; cursor: pointer; background: {{ d.bg }}; color: {{ d.fg }}">{{ d.label }}</span>
+                  </sc-for>
+                </div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Catalogs</span>
+              <div style="display: flex; align-items: center; gap: 12px">
+                <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                  <span style="font-size: 12.5px; font-weight: 500">Catalog directory</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 8px; flex: none">
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border: 1px solid var(--l, #232a35); border-radius: 7px; padding: 5px 9px; white-space: nowrap">~/dev/sd-catalogs</span>
+                  <span style="font-size: 12px; color: var(--ac, #4fd6e0); cursor: pointer">Change…</span>
+                </div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 12px">
+                <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                  <span style="font-size: 12.5px; font-weight: 500">Default filename root</span>
+                  <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">Pre-filled for every new catalog</span>
+                </div>
+                <div style="height: 30px; width: 150px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 10px; flex: none">
+                  <input value="{{ defRoot }}" onChange="{{ onDefRoot }}" placeholder="catalog" style="width: 100%; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--tx, #e6ebf2)">
+                </div>
+              </div>
+              <sc-for list="{{ genToggles }}" as="g" hint-placeholder-count="4">
+                <div onClick="{{ g.onClick }}" style="display: flex; align-items: center; gap: 12px; cursor: pointer">
+                  <div style="display: flex; flex-direction: column; gap: 2px; flex: 1">
+                    <span style="font-size: 12.5px; font-weight: 500">{{ g.label }}</span>
+                    <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">{{ g.note }}</span>
+                  </div>
+                  <span style="width: 32px; height: 18px; border-radius: 9px; background: {{ g.track }}; display: flex; align-items: center; padding: 2px; justify-content: {{ g.just }}; flex: none">
+                    <span style="width: 14px; height: 14px; border-radius: 50%; background: {{ g.knob }}; display: block"></span>
+                  </span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="height: 56px; flex: none; display: flex; align-items: center; gap: 12px; padding: 0 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">StorCat 3.0.0 · settings save as you change them</span>
+            <div onClick="{{ closeAll }}" style="margin-left: auto; height: 32px; padding: 0 16px; border-radius: 8px; background: var(--ac, #4fd6e0); color: var(--onac, #06232a); font-size: 12.5px; font-weight: 600; display: flex; align-items: center; cursor: pointer">Done</div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;themeId&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;storcat-dark&quot;,&quot;storcat-light&quot;,&quot;github-dark&quot;,&quot;github-light&quot;,&quot;nord&quot;,&quot;dracula&quot;,&quot;one-dark&quot;,&quot;monokai&quot;,&quot;gruvbox-dark&quot;,&quot;solarized-dark&quot;,&quot;solarized-light&quot;],&quot;default&quot;:&quot;storcat-dark&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;},&quot;density&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Compact&quot;,&quot;Comfortable&quot;],&quot;default&quot;:&quot;Compact&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Appearance&quot;}}">
+const THEMES = [
+  { id: 'storcat-dark', name: 'StorCat Dark', type: 'dark', c: { bg: '#0b0e13', p: '#0f1319', p2: '#12161d', ch: '#151a22', l: '#232a35', tx: '#e6ebf2', ac: '#4fd6e0' } },
+  { id: 'storcat-light', name: 'StorCat Light', type: 'light', c: { bg: '#f4f5f6', p: '#ffffff', p2: '#fafbfc', ch: '#f1f3f5', l: '#dee2e6', tx: '#212529', ac: '#0d8f9c' } },
+  { id: 'github-dark', name: 'GitHub Dark', type: 'dark', c: { bg: '#0d1117', p: '#161b22', p2: '#12171e', ch: '#21262d', l: '#30363d', tx: '#c9d1d9', ac: '#58a6ff' } },
+  { id: 'github-light', name: 'GitHub Light', type: 'light', c: { bg: '#ffffff', p: '#f6f8fa', p2: '#fbfcfd', ch: '#eff2f5', l: '#d0d7de', tx: '#24292f', ac: '#0969da' } },
+  { id: 'nord', name: 'Nord', type: 'dark', c: { bg: '#2e3440', p: '#3b4252', p2: '#353c4a', ch: '#434c5e', l: '#434c5e', tx: '#d8dee9', ac: '#88c0d0' } },
+  { id: 'dracula', name: 'Dracula', type: 'dark', c: { bg: '#282a36', p: '#2f313d', p2: '#31333f', ch: '#44475a', l: '#44475a', tx: '#f8f8f2', ac: '#bd93f9' } },
+  { id: 'one-dark', name: 'One Dark', type: 'dark', c: { bg: '#21252b', p: '#282c34', p2: '#242830', ch: '#2c313c', l: '#3e4451', tx: '#abb2bf', ac: '#61afef' } },
+  { id: 'monokai', name: 'Monokai', type: 'dark', c: { bg: '#272822', p: '#31322a', p2: '#2c2d26', ch: '#3e3d32', l: '#49483e', tx: '#f8f8f2', ac: '#a6e22e' } },
+  { id: 'gruvbox-dark', name: 'Gruvbox Dark', type: 'dark', c: { bg: '#282828', p: '#32302f', p2: '#2d2b29', ch: '#3c3836', l: '#504945', tx: '#ebdbb2', ac: '#fe8019' } },
+  { id: 'solarized-dark', name: 'Solarized Dark', type: 'dark', c: { bg: '#002b36', p: '#073642', p2: '#04303c', ch: '#0a3d49', l: '#12495a', tx: '#93a1a1', ac: '#2aa198' } },
+  { id: 'solarized-light', name: 'Solarized Light', type: 'light', c: { bg: '#fdf6e3', p: '#fffcf2', p2: '#f7f0dd', ch: '#eee8d5', l: '#ded6bd', tx: '#586e75', ac: '#268bd2' } }
+];
+const themeById = (id) => THEMES.find(t => t.id === id) || THEMES[0];
+const lum = (hex) => {
+  const h = hex.replace('#', '');
+  const v = [0, 2, 4].map(i => parseInt(h.slice(i, i + 2), 16) / 255)
+    .map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4));
+  return 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+};
+const mix = (a, pct, b) => 'color-mix(in oklab, ' + a + ' ' + pct + '%, ' + b + ')';
+const varsFor = (t, rowH) => {
+  const c = t.c;
+  return {
+    '--bg': c.bg, '--p': c.p, '--p2': c.p2, '--ch': c.ch, '--l': c.l,
+    '--l2': mix(c.l, 55, c.p), '--tx': c.tx,
+    '--dm': mix(c.tx, 66, c.bg), '--fn': mix(c.tx, 44, c.bg),
+    '--sel': mix(c.ac, 14, 'transparent'), '--hov': mix(c.tx, 8, c.bg),
+    '--ac': c.ac, '--acs': mix(c.ac, 16, 'transparent'),
+    '--onac': lum(c.ac) > 0.45 ? '#0b0e13' : '#ffffff',
+    '--rh': rowH
+  };
+};
+
+const fmt = (n) => n.toLocaleString('en-US');
+const gb = (n) => n >= 1024 ? (n / 1024).toFixed(1) + ' TB' : n.toFixed(1) + ' GB';
+
+const MEDIA = [
+  { dcim: ['108_0930', '109_1002'], raw: 'DSC', album: 'Bonobo (2017) — Migration',
+    tracks: ['04 Bonobo — Kerala.flac', '09 Bonobo — No Reason.flac'],
+    show: 'Chefs Table S01', eps: ['Chefs Table S01E02 Dan Barber.mkv', 'Chefs Table S01E03 Francis Mallmann.mkv', 'Chefs Table S01E03.srt'],
+    live: '2024-03-02 Printworks.flac' },
+  { dcim: ['104_0712', '105_0805'], raw: 'IMG', album: 'Beastie Boys (2011) — Hot Sauce Committee Part Two',
+    tracks: ['13 Beastie Boys — Multilateral Nuclear Disarmament.mp3', '14 Beastie Boys — Funky Donkey.mp3'],
+    show: 'Cosmos S01', eps: ['Cosmos S01E04 A Sky Full of Ghosts.mkv', 'Cosmos S01E05 Hiding in the Light.mkv', 'Cosmos S01E05.srt'],
+    live: '2023-11-18 Warehouse tape.wav' },
+  { dcim: ['108_0930', '109_1002'], raw: 'DSC', album: 'Radiohead (2007) — In Rainbows',
+    tracks: ['02 Radiohead — Bodysnatchers.flac', '05 Radiohead — All I Need.flac'],
+    show: 'Good Eats S12', eps: ['Good Eats S12E06 The Big Chili.mkv', 'Good Eats S12E07 Et Tu Mame.mkv', 'Good Eats S12E07 Et Tu Mame.srt'],
+    live: '2024-06-14 Boiler Room.flac' },
+  { dcim: ['112_1121', '113_1204'], raw: 'PXL', album: 'Khruangbin (2018) — Con Todo El Mundo',
+    tracks: ['01 Khruangbin — Cómo Te Quiero.flac', '06 Khruangbin — Maria También.flac'],
+    show: 'Planet Earth II', eps: ['Planet Earth II E01 Islands.mkv', 'Planet Earth II E02 Mountains.mkv', 'Planet Earth II E02.srt'],
+    live: '2025-01-09 Basement set.flac' },
+  { dcim: ['118_0214', '119_0301'], raw: 'DJI', album: 'Aphex Twin (2001) — Drukqs',
+    tracks: ['03 Aphex Twin — Jynweythek.mp3', '11 Aphex Twin — Avril 14th.mp3'],
+    show: 'Wildest Islands S02', eps: ['Wildest Islands S02E01 Borneo.mkv', 'Wildest Islands S02E02 Madagascar.mkv', 'Wildest Islands S02E02.srt'],
+    live: '2025-05-30 Rooftop rig.wav' }
+];
+
+function tree(root, kind, v) {
+  const V = MEDIA[(v || 0) % MEDIA.length];
+  const t = [[0, root, 'dir', '—']];
+  const push = (d, n, k, s) => t.push([d, n, k, s]);
+  if (kind === 'media') {
+    push(1, 'DCIM', 'dir', '18.1 GB');
+    push(2, V.dcim[0], 'dir', '11.4 GB');
+    push(3, V.raw + '_4412.ARW', 'file', '48.2 MB');
+    push(3, V.raw + '_4413.ARW', 'file', '47.9 MB');
+    push(3, V.raw + '_4414.ARW', 'file', '49.1 MB');
+    push(3, '__more__', 'more', '1,196');
+    push(2, V.dcim[1], 'dir', '6.7 GB');
+    push(3, V.raw + '_5001.ARW', 'file', '46.8 MB');
+    push(1, 'media', 'dir', '10.9 GB');
+    push(2, V.album, 'dir', '412.9 MB');
+    push(3, V.tracks[0], 'file', '6.7 MB');
+    push(3, V.tracks[1], 'file', '5.9 MB');
+    push(2, V.show, 'dir', '3.4 GB');
+    push(3, V.eps[0], 'file', '168.2 MB');
+    push(3, V.eps[1], 'file', '172.8 MB');
+    push(3, V.eps[2], 'file', '48.1 KB');
+    push(2, 'Live sets', 'dir', '6.9 GB');
+    push(3, V.live, 'file', '882.0 MB');
+    push(1, 'MISC', 'dir', '284.0 MB');
+    push(2, 'notes.txt', 'file', '4.2 KB');
+    push(2, 'card-label.png', 'file', '1.1 MB');
+    push(1, 'PRIVATE', 'dir', '112.0 MB');
+    push(2, 'AVCHD', 'dir', '112.0 MB');
+  } else if (kind === 'arcade') {
+    push(1, 'emulators', 'dir', '3.1 GB');
+    push(2, 'mame', 'dir', '2.8 GB');
+    push(3, 'mame0264b_64bit.exe', 'file', '212.4 MB');
+    push(3, 'mame-roms-verified.txt', 'file', '882.0 KB');
+    push(3, 'mame.ini', 'file', '12.0 KB');
+    push(2, 'retroarch', 'dir', '318.0 MB');
+    push(1, 'roms', 'dir', '12.4 GB');
+    push(2, 'neogeo.zip', 'file', '8.4 MB');
+    push(2, 'sf2ce.zip', 'file', '2.1 MB');
+    push(1, 'manuals', 'dir', '440.0 MB');
+    push(2, 'mame-cheat-sheet.pdf', 'file', '1.8 MB');
+  } else {
+    const n = 100 + (v || 0) * 3;
+    push(1, 'DCIM', 'dir', '9.2 GB');
+    push(2, n + '_0101', 'dir', '4.6 GB');
+    push(3, 'IMG_' + n + '01.JPG', 'file', '8.1 MB');
+    push(3, 'IMG_' + n + '02.JPG', 'file', '8.4 MB');
+    push(2, (n + 1) + '_0214', 'dir', '4.6 GB');
+    push(3, 'MVI_' + (n + 1) + '14.MOV', 'file', '1.2 GB');
+    push(1, 'backup', 'dir', '2.0 GB');
+    push(2, 'manifest.json', 'file', '812.0 KB');
+    push(2, 'checksums.sha256', 'file', '204.0 KB');
+    push(1, 'notes.txt', 'file', '2.8 KB');
+  }
+  return t;
+}
+
+const SEED = [
+  ['sd08', 'SD Card #08', '846.9 KB', 9214, 118.2, 'media'],
+  ['sd09', 'SD Card #09', '44.4 KB', 612, 12.4, 'plain'],
+  ['sd10', 'SD Card #10', '105.8 KB', 1884, 29.1, 'media'],
+  ['sd11', 'SD Catalog #11', '234.5 KB', 3410, 61.8, 'plain'],
+  ['sd12', 'SD Card #12', '143.6 KB', 2481, 29.4, 'media'],
+  ['sd13', 'SD Card #13', '49.6 KB', 702, 9.8, 'plain'],
+  ['sd14', 'SD Card #14', '61.2 KB', 921, 14.2, 'plain'],
+  ['sd15', 'SD Card #15', '249.6 KB', 3902, 58.4, 'media'],
+  ['sd17', 'Field recordings 2024', '512.0 KB', 7880, 96.1, 'plain'],
+  ['sd18', 'SD Card #18', '3.7 MB', 41209, 412.0, 'media'],
+  ['sd19', 'Backup — Lightroom', '890.0 KB', 12004, 208.4, 'plain'],
+  ['sd31', 'Arcade backups', '318.4 KB', 4820, 84.0, 'arcade']
+];
+
+const WALK = [
+  '/DCIM/108_0930/DSC_4412.ARW', '/DCIM/108_0930/DSC_4471.ARW', '/DCIM/109_1002/DSC_5001.ARW',
+  '/media/Live sets/2024-06-14 Boiler Room.flac', '/media/Good Eats S12', '/MISC/card-label.png',
+  '/PRIVATE/AVCHD/BDMV/STREAM/00012.MTS', '/DCIM/110_1104/DSC_6120.ARW'
+];
+
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    let mv = 0, pv = 0;
+    const catalogs = SEED.map(([id, title, size, files, gbv, kind]) => ({
+      id, title, size, files, gb: gbv, file: id + '.json', html: id + '.html',
+      modified: '2024-09-17', nodes: tree(id.toUpperCase(), kind, kind === 'media' ? mv++ : pv++)
+    }));
+    this.state = {
+      themeId: null, density: null, side: 'Left', settingsOpen: false,
+      demoEmpty: false, width: 1280, detailOverlay: false, createClosing: false,
+      menuOpen: false, dialog: null, renameVal: '', delHtml: true,
+      expandMore: {}, brokenId: 'sd11',
+      gen: [true, false, true, true], defRoot: 'catalog',
+      catalogs, curId: 'sd12', railFilter: '',
+      expanded: {}, selected: null,
+      paletteOpen: false, query: 'mame',
+      createOpen: false, step: 'form',
+      form: { title: 'SD Card #48 — Live sets', root: 'sd48', vol: 0 },
+      opts: [true, true, false],
+      pct: 0, seen: 0, log: [], walkIdx: 0
+    };
+    const seedCat = catalogs.find(c => c.id === 'sd12');
+    const seedIdx = seedCat ? seedCat.nodes.findIndex(n => /Et Tu Mame\.mkv$/.test(n[1])) : -1;
+    if (seedIdx > -1) {
+      this.state.selected = 'sd12:' + seedIdx;
+      this.state.expanded['sd12:0'] = true;
+      this.chains(seedCat)[seedIdx].forEach(a => { this.state.expanded[a] = true; });
+    }
+    this.paletteRef = React.createRef();
+  }
+
+  componentDidMount() {
+    this.onKey = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') { e.preventDefault(); this.setState({ paletteOpen: true, createOpen: false }); }
+      if (e.key === 'Escape') { this.closeCreate(); this.setState({ paletteOpen: false, settingsOpen: false }); }
+      if ((e.metaKey || e.ctrlKey) && e.key === ',') { e.preventDefault(); this.setState({ settingsOpen: true }); }
+      if ((e.metaKey || e.ctrlKey) && e.key === 'Enter' && this.state.createOpen && this.state.step === 'form') this.startScan();
+    };
+    window.addEventListener('keydown', this.onKey);
+  }
+  componentWillUnmount() { window.removeEventListener('keydown', this.onKey); clearInterval(this.timer); clearTimeout(this.closeTimer); }
+  componentDidUpdate(_, prev) {
+    if (this.state.paletteOpen && !prev.paletteOpen && this.paletteRef.current) this.paletteRef.current.focus();
+  }
+
+  closeCreate = () => {
+    if (!this.state.createOpen || this.state.createClosing) return;
+    this.setState({ createClosing: true });
+    clearTimeout(this.closeTimer);
+    this.closeTimer = setTimeout(() => this.setState({ createOpen: false, createClosing: false }), 260);
+  };
+
+  cur() { return this.state.catalogs.find(c => c.id === this.state.curId) || this.state.catalogs[0]; }
+
+  // ancestor ids per flat index
+  chains(cat) {
+    const stack = [], out = [];
+    cat.nodes.forEach(([d], i) => {
+      stack.length = d;
+      out.push(stack.slice());
+      stack[d] = cat.id + ':' + i;
+    });
+    return out;
+  }
+
+  visible(cat) {
+    const chains = this.chains(cat), ex = this.state.expanded, out = [];
+    cat.nodes.forEach((n, i) => {
+      if (chains[i].every(a => ex[a])) out.push(i);
+    });
+    return out;
+  }
+
+  pathOf(cat, i) {
+    const chains = this.chains(cat);
+    const names = chains[i].map(a => cat.nodes[Number(a.split(':')[1])][1]);
+    return '/' + names.join('/');
+  }
+
+  startScan = () => {
+    clearInterval(this.timer);
+    const willFail = this.state.form.vol === 1;
+    this.setState({ step: 'scanning', pct: 0, seen: 0, log: [], walkIdx: 0 });
+    this.timer = setInterval(() => {
+      this.setState(s => {
+        const pct = Math.min(100, s.pct + Math.random() * 7 + 2);
+        if (willFail && pct > 54) {
+          clearInterval(this.timer);
+          return { step: 'error', pct: Math.round(pct), seen: Math.round(18204 * pct / 100) };
+        }
+        const seen = Math.round(18204 * pct / 100);
+        const walkIdx = (s.walkIdx + 1) % WALK.length;
+        const line = { text: '+ ' + WALK[walkIdx], fg: 'var(--dm, #8a94a3)' };
+        const log = [line, ...s.log].slice(0, 9);
+        if (pct >= 100) {
+          clearInterval(this.timer);
+          const nid = s.form.root || 'sd48';
+          const exists = s.catalogs.some(c => c.id === nid);
+          const nc = {
+            id: nid, title: s.form.title || 'Untitled catalog', size: '284.2 KB', files: 18204,
+            gb: 119.2, file: nid + '.json', html: nid + '.html', modified: '2026-08-12',
+            nodes: tree((nid || 'sd48').toUpperCase(), 'media')
+          };
+          return { pct: 100, seen: 18204, log, step: 'done', catalogs: exists ? s.catalogs : [nc, ...s.catalogs] };
+        }
+        return { pct, seen, log, walkIdx };
+      });
+    }, 220);
+  };
+
+  renderVals() {
+    const s = this.state;
+    const theme = themeById(s.themeId ?? this.props.themeId ?? 'storcat-dark');
+    const density = s.density ?? this.props.density ?? 'Compact';
+    const accent = theme.c.ac;
+    const cmp = density === 'Compact';
+    const vars = varsFor(theme, cmp ? '27px' : '34px');
+    vars['--rp'] = cmp ? '6px 8px' : '10px 10px';
+    vars['--mp'] = cmp ? '6px' : '10px';
+    vars['--hp'] = cmp ? '7px 14px' : '11px 14px';
+    vars['--fs'] = cmp ? '12px' : '13px';
+    const cat = this.cur();
+
+    const rail = (s.demoEmpty ? [] : s.catalogs)
+      .filter(c => !s.railFilter || (c.title + c.file).toLowerCase().includes(s.railFilter.toLowerCase()))
+      .map(c => ({
+        title: c.title, file: c.file, size: c.size, files: fmt(c.files),
+        warnC: c.id === s.brokenId ? '#e5534b' : 'transparent',
+        bg: c.id === s.curId ? 'var(--sel)' : 'transparent',
+        bar: c.id === s.curId ? accent : 'transparent',
+        fg: c.id === s.curId ? accent : 'var(--tx)',
+        onClick: () => this.setState({ curId: c.id, selected: null, expanded: { ...s.expanded, [c.id + ':0']: true } })
+      }));
+
+    const rows = [];
+    this.visible(cat).forEach(i => {
+      const [d, name, kind] = cat.nodes[i];
+      const size = cat.nodes[i][3];
+      const id = cat.id + ':' + i;
+      const next = cat.nodes[i + 1];
+      const hasKids = kind === 'dir' && next && next[0] > d;
+      const open = !!s.expanded[id];
+      if (kind === 'more') {
+        const shown = !!s.expandMore[id];
+        if (shown) {
+          for (let k = 0; k < 12; k++) {
+            rows.push({
+              name: (cat.nodes[i - 1][1].split('_')[0]) + '_' + (4415 + k) + '.ARW', size: (46 + (k % 5)) + '.4 MB',
+              pad: (18 + d * 16) + 'px', caret: '', iconR: '50%', iconC: 'var(--fn)',
+              fg: 'var(--tx)', bg: 'transparent', onClick: () => this.setState({ selected: null })
+            });
+          }
+        }
+        rows.push({
+          name: shown ? '↑ collapse — showing 15 of 1,211 files' : '⋯ ' + size + ' more files — show 12',
+          size: shown ? '' : '55.8 GB', pad: (18 + d * 16) + 'px', caret: '', iconR: '2px',
+          iconC: 'transparent', fg: 'var(--ac)', bg: 'transparent',
+          onClick: () => this.setState(st => ({ expandMore: { ...st.expandMore, [id]: !st.expandMore[id] } }))
+        });
+        return;
+      }
+      rows.push({
+        name, size, pad: (18 + d * 16) + 'px',
+        caret: hasKids ? (open ? '▾' : '▸') : '',
+        iconR: kind === 'dir' ? '2px' : '50%',
+        iconC: kind === 'dir' ? accent : 'var(--fn)',
+        fg: s.selected === id ? accent : 'var(--tx)',
+        bg: s.selected === id ? 'var(--sel)' : 'transparent',
+        onClick: () => this.setState(st => ({
+          selected: id,
+          expanded: hasKids ? { ...st.expanded, [id]: !st.expanded[id] } : st.expanded
+        }))
+      });
+    });
+
+    let detail;
+    if (s.selected && s.selected.startsWith(cat.id + ':')) {
+      const i = Number(s.selected.split(':')[1]);
+      const [d, name, kind, size] = cat.nodes[i];
+      detail = {
+        heading: kind === 'dir' ? 'Selected folder' : 'Selected file', name,
+        path: this.pathOf(cat, i) || '/',
+        meta: [
+          { k: 'Type', v: kind }, { k: 'Size', v: size },
+          { k: 'Catalog', v: cat.id }, { k: 'Depth', v: String(d) }, { k: 'Indexed', v: cat.modified }
+        ]
+      };
+    } else {
+      detail = {
+        heading: 'Catalog', name: cat.title, path: '~/dev/sd-catalogs/' + cat.file,
+        meta: [
+          { k: 'Files', v: fmt(cat.files) }, { k: 'Catalogued', v: gb(cat.gb) },
+          { k: 'JSON', v: cat.size }, { k: 'HTML', v: 'present' }, { k: 'Modified', v: cat.modified }
+        ]
+      };
+    }
+
+    const q = s.query.trim().toLowerCase();
+    let hits = [], hitTotal = 0;
+    if (q && !s.demoEmpty) {
+      s.catalogs.forEach(c => {
+        const chains = this.chains(c);
+        c.nodes.forEach((n, i) => {
+          if (n[2] === 'more' || !n[1].toLowerCase().includes(q)) return;
+          hitTotal++;
+          if (hits.length >= 50) return;
+          hits.push({
+            name: n[1], path: c.id + this.pathOf(c, i), cat: c.id, size: n[3],
+            iconR: n[2] === 'dir' ? '2px' : '50%',
+            iconC: n[2] === 'dir' ? accent : 'var(--fn)',
+            bg: 'transparent',
+            onClick: () => {
+              const ex = { ...s.expanded };
+              chains[i].forEach(a => { ex[a] = true; });
+              this.setState({ curId: c.id, expanded: ex, selected: c.id + ':' + i, paletteOpen: false });
+            }
+          });
+        });
+      });
+    }
+
+    const VOLS = [
+      ['SD48 — Sony 128GB', '/Volumes/SD48', '119.2 GB', 'mounted'],
+      ['SD47 — Field recorder', '/Volumes/SD47', '61.0 GB', 'read errors'],
+      ['LaCie Rugged', '/Volumes/LaCie', '3.6 TB', 'mounted']
+    ];
+    const volumes = VOLS.map(([name, path, size, tag], i) => ({
+      name, path, size, tag,
+      tagFg2: tag === 'read errors' ? '#f0b429' : 'var(--dm)',
+      bg: s.form.vol === i ? 'var(--sel)' : 'var(--p2)',
+      bd: s.form.vol === i ? accent : 'var(--l)',
+      chip: s.form.vol === i ? accent : 'var(--fn)',
+      tagFg: tag === 'read errors' ? '#f0b429' : 'var(--dm)',
+      tagBg: tag === 'read errors' ? 'rgba(240,180,41,.14)' : 'var(--ch)',
+      onClick: () => this.setState({ form: { ...s.form, vol: i, root: 'sd4' + (8 - i), title: name.split(' — ')[0] + ' — new' } })
+    }));
+
+    const OPTS = [
+      ['Also write HTML catalog', (s.form.root || 'sd48') + '.html'],
+      ['Copy both files to secondary location', '~/Dropbox/catalogs'],
+      ['Include hidden files', '']
+    ];
+    const opts = OPTS.map(([label, note], i) => ({
+      label, note,
+      track: s.opts[i] ? accent : 'var(--ch)',
+      knob: s.opts[i] ? '#06232a' : 'var(--fn)',
+      just: s.opts[i] ? 'flex-end' : 'flex-start',
+      onClick: () => { const o = s.opts.slice(); o[i] = !o[i]; this.setState({ opts: o }); }
+    }));
+
+    const root = s.form.root || 'sd48';
+    const totalFiles = s.catalogs.reduce((a, c) => a + c.files, 0);
+    const totalGb = s.catalogs.reduce((a, c) => a + c.gb, 0);
+
+    return {
+      vars, rail, rows, detail, cur: { ...cat, files: fmt(cat.files), bytes: gb(cat.gb) },
+      themeLabel: theme.name,
+      frameW: s.width + 'px',
+      narrow: s.width < 1280,
+      cols: s.width >= 1280 ? (s.side === 'Left' ? '268px 1fr 288px' : '288px 1fr 268px') : (s.width >= 1040 ? '236px 1fr' : '200px 1fr'),
+      railOrder: s.side === 'Left' || s.width < 1280 ? 1 : 3,
+      detailOrder: s.side === 'Left' ? 3 : 1,
+      railBorderR: s.side === 'Left' || s.width < 1280 ? '1px solid var(--l)' : 'none',
+      railBorderL: s.side === 'Left' || s.width < 1280 ? 'none' : '1px solid var(--l)',
+      detailDisp: s.width >= 1280 || s.detailOverlay ? 'flex' : 'none',
+      detailPos: s.width >= 1280 ? 'static' : 'absolute',
+      detailW: s.width >= 1280 ? 'auto' : '288px',
+      detailShadow: s.width >= 1280 ? 'none' : '-24px 0 50px rgba(0,0,0,.45)',
+      detailToggle: () => this.setState({ detailOverlay: !s.detailOverlay }),
+      detailToggleFg: s.detailOverlay ? accent : 'var(--dm)',
+      widthOpts: [1280, 1040, 860].map(w => ({
+        label: w + 'px',
+        bg: w === s.width ? '#4fd6e0' : 'transparent',
+        fg: w === s.width ? '#06232a' : '#97a1b0',
+        onClick: () => this.setState({ width: w, detailOverlay: false })
+      })),
+      libOpts: [['Populated', false], ['Empty library', true]].map(([label, v]) => ({
+        label,
+        bg: v === s.demoEmpty ? '#4fd6e0' : 'transparent',
+        fg: v === s.demoEmpty ? '#06232a' : '#97a1b0',
+        onClick: () => this.setState({ demoEmpty: v, detailOverlay: false, dialog: null, menuOpen: false })
+      })),
+      isEmpty: s.demoEmpty,
+      isBroken: !s.demoEmpty && cat.id === s.brokenId,
+      hasTree: !s.demoEmpty && cat.id !== s.brokenId,
+      menuOpen: s.menuOpen,
+      toggleMenu: (e) => { e.stopPropagation(); this.setState({ menuOpen: !s.menuOpen }); },
+      menuItems: [
+        ['Rename catalog…', 'rename', 'var(--tx)'],
+        ['Re-scan volume & diff…', 'rescan', 'var(--tx)'],
+        ['Duplicate catalog', null, 'var(--tx)'],
+        ['Delete catalog…', 'delete', '#e5534b']
+      ].map(([label, dlg, fg]) => ({
+        label, fg,
+        onClick: () => this.setState({ menuOpen: false, dialog: dlg, renameVal: cat.title })
+      })),
+      dialog: s.dialog,
+      isRename: s.dialog === 'rename', isDelete: s.dialog === 'delete', isRescan: s.dialog === 'rescan',
+      renameVal: s.renameVal,
+      onRename: (e) => this.setState({ renameVal: e.target.value }),
+      saveRename: () => this.setState({
+        dialog: null,
+        catalogs: s.catalogs.map(c => c.id === cat.id ? { ...c, title: s.renameVal || c.title } : c)
+      }),
+      closeDialog: () => this.setState({ dialog: null, menuOpen: false }),
+      delHtml: s.delHtml,
+      delTrack: s.delHtml ? accent : 'var(--ch)',
+      delKnob: s.delHtml ? 'var(--onac)' : 'var(--fn)',
+      delJust: s.delHtml ? 'flex-end' : 'flex-start',
+      toggleDelHtml: () => this.setState({ delHtml: !s.delHtml }),
+      confirmDelete: () => {
+        const rest = s.catalogs.filter(c => c.id !== cat.id);
+        this.setState({ dialog: null, catalogs: rest, curId: rest.length ? rest[0].id : cat.id, selected: null, demoEmpty: rest.length === 0 });
+      },
+      diff: [
+        { k: 'added', v: '312 files', fg: accent },
+        { k: 'removed', v: '18 files', fg: '#e5534b' },
+        { k: 'changed size', v: '4 files', fg: '#f0b429' },
+        { k: 'unchanged', v: '2,147 files', fg: 'var(--dm)' }
+      ],
+      diffRows: [
+        ['+', '/DCIM/110_1104/DSC_6120.ARW', '48.2 MB', accent],
+        ['+', '/DCIM/110_1104/DSC_6121.ARW', '47.7 MB', accent],
+        ['−', '/MISC/notes.txt', '4.2 KB', '#e5534b'],
+        ['~', '/media/Live sets/2024-06-14 Boiler Room.flac', '882.0 MB → 901.4 MB', '#f0b429']
+      ].map(([mark, path, size, fg]) => ({ mark, path, size, fg })),
+      applyDiff: () => this.setState({ dialog: null }),
+      brokenMeta: [
+        { k: 'File', v: cat.file }, { k: 'Failed at', v: 'byte 41,208' },
+        { k: 'Reason', v: 'unexpected token }' }, { k: 'Parser', v: 'json v2 + v1 array' }
+      ],
+      startCreateFromEmpty: () => this.setState({ createOpen: true, step: 'form' }),
+      retryScan: this.startScan,
+      writePartial: () => this.setState({ step: 'done' }),
+      settingsOpen: s.settingsOpen,
+      openSettings: () => this.setState({ settingsOpen: true, paletteOpen: false, createOpen: false }),
+      themeCards: THEMES.map(t => ({
+        name: t.name, type: t.type,
+        sw1: t.c.bg, sw2: t.c.p2, sw3: t.c.ac, sw4: t.c.tx,
+        bg: t.id === theme.id ? 'var(--sel)' : 'var(--p2)',
+        bd: t.id === theme.id ? accent : 'var(--l)',
+        fg: t.id === theme.id ? accent : 'var(--tx)',
+        onClick: () => this.setState({ themeId: t.id })
+      })),
+      densityOpts: ['Compact', 'Comfortable'].map(d => ({
+        label: d,
+        bg: d === density ? 'var(--ac)' : 'transparent',
+        fg: d === density ? 'var(--onac)' : 'var(--dm)',
+        onClick: () => this.setState({ density: d })
+      })),
+      sideOpts: ['Left', 'Right'].map(d => ({
+        label: d,
+        bg: d === s.side ? 'var(--ac)' : 'transparent',
+        fg: d === s.side ? 'var(--onac)' : 'var(--dm)',
+        onClick: () => this.setState({ side: d })
+      })),
+      genToggles: [
+        ['Write HTML alongside JSON', 'every catalog gets a matching .html'],
+        ['Copy catalogs to a secondary location', '~/Dropbox/catalogs'],
+        ['Watch catalog directory for changes', 'refresh the rail automatically'],
+        ['Remember window size & position', 'restore on launch']
+      ].map(([label, note], i) => ({
+        label, note,
+        track: s.gen[i] ? accent : 'var(--ch)',
+        knob: s.gen[i] ? 'var(--onac)' : 'var(--fn)',
+        just: s.gen[i] ? 'flex-end' : 'flex-start',
+        onClick: () => { const g = s.gen.slice(); g[i] = !g[i]; this.setState({ gen: g }); }
+      })),
+      defRoot: s.defRoot,
+      onDefRoot: (e) => this.setState({ defRoot: e.target.value.replace(/\s/g, '') }),
+      catalogCount: s.catalogs.length, totalFiles: fmt(totalFiles), totalBytes: gb(totalGb),
+      status: s.step === 'scanning' && !s.createOpen ? '● scanning ' + root + ' · ' + Math.round(s.pct) + '%' : '● watching ~/dev/sd-catalogs',
+      crumb: '/ ' + cat.id.toUpperCase() + (s.selected && s.selected.startsWith(cat.id + ':') ? ' ' + this.pathOf(cat, Number(s.selected.split(':')[1])).replace(/^\/[^/]*/, '').split('/').filter(Boolean).map(x => '/ ' + x).join(' ') : ''),
+      railFilter: s.railFilter,
+      onRailFilter: (e) => this.setState({ railFilter: e.target.value }),
+      expandAll: () => { const ex = {}; cat.nodes.forEach((n, i) => { if (n[2] === 'dir') ex[cat.id + ':' + i] = true; }); this.setState({ expanded: { ...s.expanded, ...ex } }); },
+      collapseAll: () => this.setState({ expanded: { [cat.id + ':0']: true } }),
+      openPalette: () => this.setState({ paletteOpen: true }),
+      closeAll: () => { this.closeCreate(); this.setState({ paletteOpen: false, settingsOpen: false }); },
+      stop: (e) => e.stopPropagation(),
+      paletteOpen: s.paletteOpen, query: s.query, paletteRef: this.paletteRef,
+      onQuery: (e) => this.setState({ query: e.target.value }),
+      hits, noHits: !!q && hits.length === 0,
+      hitLabel: q ? (hitTotal > 50 ? '50 of ' + fmt(hitTotal) : hitTotal + ' hits') : 'type to search',
+      capped: hitTotal > 50,
+      capLine: 'Showing the first 50 of ' + fmt(hitTotal) + ' hits — refine the term, or ↵ to open the full result table.',
+      createOpen: s.createOpen,
+      createAnim: s.createClosing
+        ? 'scslideout 260ms cubic-bezier(.4,0,.7,.2) both'
+        : 'scslide 340ms cubic-bezier(.16,.84,.24,1) both',
+      scrimAnim: s.createClosing ? 'scfadeout 260ms ease-in both' : 'scfade 200ms ease-out both',
+      openCreate: () => { clearTimeout(this.closeTimer); this.setState({ createOpen: true, createClosing: false, paletteOpen: false, step: 'form' }); },
+      closeCreate: this.closeCreate,
+      isForm: s.step === 'form', isScanning: s.step === 'scanning', isDone: s.step === 'done',
+      isError: s.step === 'error',
+      createTitle: s.step === 'form' ? 'New catalog' : s.step === 'scanning' ? 'Cataloguing volume' : s.step === 'error' ? 'Scan interrupted' : 'Catalog written',
+      createStep: s.step === 'form' ? 'step 1 of 2' : s.step === 'scanning' ? 'step 2 of 2' : s.step === 'error' ? 'failed' : 'done',
+      errLines: [
+        { text: 'read error: /Volumes/SD47/DCIM/109_1002/DSC_5188.ARW — input/output error', fg: '#e5534b' },
+        { text: 'read error: /Volumes/SD47/DCIM/109_1002/DSC_5189.ARW — input/output error', fg: '#e5534b' },
+        { text: 'volume /Volumes/SD47 disappeared — card removed or failing', fg: '#e5534b' },
+        { text: '9,842 of 18,204 files walked before the error', fg: 'var(--dm)' }
+      ],
+      form: s.form, volumes, opts,
+      onTitle: (e) => this.setState({ form: { ...s.form, title: e.target.value } }),
+      onRoot: (e) => this.setState({ form: { ...s.form, root: e.target.value.replace(/\s/g, '') } }),
+      willWrite: '~/dev/sd-catalogs/' + root + '.json' + (s.opts[0] ? '   ~/dev/sd-catalogs/' + root + '.html' : '') + (s.opts[1] ? '   ~/Dropbox/catalogs/' + root + '.{json,html}' : ''),
+      startScan: this.startScan,
+      pct: Math.round(s.pct), seen: fmt(s.seen), seenBytes: (119.2 * s.pct / 100).toFixed(1) + ' GB',
+      eta: s.pct >= 100 ? 'finishing…' : 'about ' + Math.max(1, Math.round((100 - s.pct) / 12)) + 's left',
+      walking: '/Volumes/SD48' + WALK[s.walkIdx], log: s.log,
+      doneLine: fmt(18204) + ' files · 119.2 GB · 41 s',
+      written: [
+        { path: '~/dev/sd-catalogs/' + root + '.json', size: '284.2 KB' },
+        ...(s.opts[0] ? [{ path: '~/dev/sd-catalogs/' + root + '.html', size: '1.1 MB' }] : []),
+        ...(s.opts[1] ? [{ path: '~/Dropbox/catalogs/' + root + '.json', size: '284.2 KB' }] : [])
+      ],
+      finish: () => { this.closeCreate(); this.setState({ curId: root, selected: null, expanded: { ...s.expanded, [root + ':0']: true } }); },
+      again: () => this.setState({ step: 'form', pct: 0, seen: 0, log: [] })
+    };
+  }
+}
+</script>
+</body>
+</html>

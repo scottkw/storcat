@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  body { margin: 0; background: #0a0c10; font-family: "IBM Plex Sans", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: #4fd6e0; text-decoration: none; }
+  a:hover { color: #7ee6ed; text-decoration: underline; }
+  * { box-sizing: border-box; }
+</style>
+</helmet>
+
+<section style="padding: 56px 56px 96px; display: flex; flex-direction: column; gap: 40px; background: #0a0c10; color: #e6ebf2">
+  <div style="display: flex; flex-direction: column; gap: 10px; max-width: 900px">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.12em; text-transform: uppercase; color: #6f7a8a">StorCat 3.0 · UI/UX directions</div>
+    <div style="font-size: 34px; font-weight: 600; letter-spacing: -0.02em; text-wrap: pretty">Three shells for the same three jobs: catalog, search, browse.</div>
+    <div style="font-size: 15px; line-height: 1.55; color: #97a1b0; text-wrap: pretty">Same data model as today (title, filename, size, modified, tree contents) — no backend changes implied. Compact pro-tool density, dark by default, light theme in Tweaks. Reference an option by its id in chat: <a href="#1a">1a</a>, <a href="#1b">1b</a>, <a href="#1c">1c</a>.</div>
+  </div>
+
+  <div style="{{ vars }}">
+  <div style="display: flex; flex-wrap: wrap; gap: 56px; align-items: flex-start">
+
+    <div id="1a" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 5px; background: #4fd6e0; color: #06232a">1a</span>
+        <span style="font-size: 19px; font-weight: 600">Workspace — one view, no tabs</span>
+      </div>
+      <div style="font-size: 14px; color: #97a1b0; max-width: 1280px; line-height: 1.5">Catalog list, tree browser and metadata live together. Creating a catalog is a button, not a screen; search is the always-present command bar. Fewest clicks between "which card was that on" and the answer.</div>
+
+      <div style="width: 1280px; height: 800px; border-radius: 12px; overflow: hidden; border: 1px solid var(--l, #232a35); background: var(--bg, #0b0e13); color: var(--tx, #e6ebf2); box-shadow: 0 24px 60px rgba(0,0,0,.5); display: flex; flex-direction: column">
+        <div style="height: 46px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 14px; background: var(--p2, #12161d); border-bottom: 1px solid var(--l, #232a35)">
+          <div style="display: flex; gap: 7px">
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #febc2e; display: block"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #28c840; display: block"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; padding-left: 6px">
+            <span style="width: 16px; height: 16px; border-radius: 4px; background: var(--ac, #4fd6e0); display: block"></span>
+            <span style="font-size: 13px; font-weight: 600; letter-spacing: -0.01em">StorCat</span>
+          </div>
+          <div style="flex: 1; display: flex; justify-content: center">
+            <div style="width: 460px; height: 30px; border-radius: 8px; background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); display: flex; align-items: center; gap: 9px; padding: 0 10px">
+              <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+              <span style="font-size: 12.5px; color: var(--dm, #8a94a3)">Search every catalog…</span>
+              <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675); border: 1px solid var(--l, #232a35); border-radius: 4px; padding: 1px 5px">⌘K</span>
+            </div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px">
+            <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">v3.0.0</span>
+            <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.4"><circle cx="8" cy="8" r="2.4"/><circle cx="8" cy="8" r="6"/></svg>
+          </div>
+        </div>
+
+        <div style="flex: 1; display: grid; grid-template-columns: 268px 1fr 288px; min-height: 0">
+          <div style="border-right: 1px solid var(--l, #232a35); background: var(--p, #0f1319); display: flex; flex-direction: column; min-height: 0">
+            <div style="padding: 12px 12px 10px; display: flex; flex-direction: column; gap: 10px; border-bottom: 1px solid var(--l, #232a35)">
+              <div style="display: flex; align-items: center; justify-content: space-between">
+                <span style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dm, #8a94a3)">Catalogs <span style="color: var(--fn, #5c6675)">47</span></span>
+                <span style="display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; color: var(--ac, #4fd6e0); background: var(--acs, rgba(79,214,224,.1)); border-radius: 6px; padding: 3px 8px">
+                  <svg width="10" height="10" viewBox="0 0 12 12" stroke="currentColor" stroke-width="1.7"><line x1="6" y1="1.5" x2="6" y2="10.5"/><line x1="1.5" y1="6" x2="10.5" y2="6"/></svg>New
+                </span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border: 1px solid var(--l, #232a35); border-radius: 6px; padding: 5px 8px">
+                <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--fn, #5c6675)" stroke-width="1.4"><rect x="1" y="3" width="12" height="9" rx="1.5"/><line x1="1" y1="5.5" x2="13" y2="5.5"/></svg>
+                <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">~/dev/sd-catalogs</span>
+              </div>
+              <div style="height: 26px; border-radius: 6px; background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 8px; font-size: 12px; color: var(--fn, #5c6675)">Filter catalogs…</div>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 6px 6px; display: flex; flex-direction: column; gap: 1px">
+              <sc-for list="{{ catalogs }}" as="c" hint-placeholder-count="12">
+                <div style="display: flex; flex-direction: column; gap: 2px; padding: 6px 8px; border-radius: 6px; background: {{ c.bg }}; border-left: 2px solid {{ c.bar }}">
+                  <div style="display: flex; align-items: baseline; gap: 8px">
+                    <span style="font-size: 12.5px; font-weight: 500; color: {{ c.fg }}; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ c.title }}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">{{ c.size }}</span>
+                  </div>
+                  <div style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">{{ c.file }} · {{ c.files }} files</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; min-height: 0; background: var(--bg, #0b0e13)">
+            <div style="padding: 14px 18px 12px; display: flex; flex-direction: column; gap: 9px; border-bottom: 1px solid var(--l, #232a35)">
+              <div style="display: flex; align-items: center; gap: 10px">
+                <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">SD Card #12</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border-radius: 5px; padding: 2px 7px">sd12.json</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border-radius: 5px; padding: 2px 7px">sd12.html</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 14px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">
+                <span>2,481 files</span><span style="color: var(--l, #232a35)">|</span><span>143.6 KB</span><span style="color: var(--l, #232a35)">|</span><span>29.4 GB catalogued</span><span style="color: var(--l, #232a35)">|</span><span>modified 2024-09-17</span>
+              </div>
+            </div>
+            <div style="height: 34px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 18px; border-bottom: 1px solid var(--l, #232a35); background: var(--p2, #12161d)">
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">/</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ac, #4fd6e0)">Volumes</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--fn, #5c6675)">/</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--ac, #4fd6e0)">SD12</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--fn, #5c6675)">/</span>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--tx, #e6ebf2)">media</span>
+              <span style="margin-left: auto; font-size: 11.5px; color: var(--dm, #8a94a3)">Expand all · Files only · Sort by size</span>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 6px 0">
+              <sc-for list="{{ tree }}" as="n" hint-placeholder-count="20">
+                <div style="display: flex; align-items: center; gap: 8px; height: var(--rh, 26px); padding-right: 18px; padding-left: {{ n.pad }}; background: {{ n.bg }}">
+                  <span style="width: 10px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--fn, #5c6675)">{{ n.caret }}</span>
+                  <span style="width: 9px; height: 9px; border-radius: {{ n.iconR }}; background: {{ n.iconC }}; display: block; flex: none"></span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: {{ n.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ n.name }}</span>
+                  <span style="margin-left: auto; flex: none; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ n.size }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+
+          <div style="border-left: 1px solid var(--l, #232a35); background: var(--p, #0f1319); display: flex; flex-direction: column; gap: 16px; padding: 14px 14px">
+            <div style="font-size: 12px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--dm, #8a94a3)">Selected</div>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; line-height: 1.4; word-break: break-all">Good Eats S12E07 Et Tu Mame.mkv</div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); line-height: 1.5; word-break: break-all">/Volumes/SD12/media/Good Eats S12</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 1px">
+              <sc-for list="{{ meta }}" as="m" hint-placeholder-count="5">
+                <div style="display: flex; justify-content: space-between; gap: 12px; padding: 6px 0; border-bottom: 1px solid var(--l2, #1a2029)">
+                  <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">{{ m.k }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">{{ m.v }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto">
+              <div style="height: 30px; border-radius: 7px; background: var(--ac, #4fd6e0); color: #06232a; font-size: 12.5px; font-weight: 600; display: flex; align-items: center; justify-content: center">Open HTML catalog</div>
+              <div style="height: 30px; border-radius: 7px; border: 1px solid var(--l, #232a35); color: var(--tx, #e6ebf2); font-size: 12.5px; display: flex; align-items: center; justify-content: center">Reveal JSON in Finder</div>
+              <div style="height: 30px; border-radius: 7px; border: 1px solid var(--l, #232a35); color: var(--dm, #8a94a3); font-size: 12.5px; display: flex; align-items: center; justify-content: center">Re-scan volume…</div>
+            </div>
+          </div>
+        </div>
+
+        <div style="height: 26px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--p2, #12161d); border-top: 1px solid var(--l, #232a35); font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">
+          <span>47 catalogs</span><span>312,004 files indexed</span><span>4.1 TB</span>
+          <span style="margin-left: auto; color: var(--ac, #4fd6e0)">● watching ~/dev/sd-catalogs</span>
+        </div>
+      </div>
+    </div>
+
+    <div id="1b" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 5px; background: #4fd6e0; color: #06232a">1b</span>
+        <span style="font-size: 19px; font-weight: 600">Console — left sidebar nav</span>
+      </div>
+      <div style="font-size: 14px; color: #97a1b0; max-width: 1280px; line-height: 1.5">Top tabs become a persistent icon+label rail, so the sidebar stops being a per-tab form dumping ground. Search gets the full canvas and groups hits by catalog; Create becomes a real job screen with detected volumes and live progress.</div>
+
+      <div style="width: 1280px; height: 640px; border-radius: 12px; overflow: hidden; border: 1px solid var(--l, #232a35); background: var(--bg, #0b0e13); color: var(--tx, #e6ebf2); box-shadow: 0 24px 60px rgba(0,0,0,.5); display: flex">
+        <div style="width: 196px; flex: none; background: var(--p, #0f1319); border-right: 1px solid var(--l, #232a35); display: flex; flex-direction: column; padding: 12px 10px; gap: 18px">
+          <div style="display: flex; align-items: center; gap: 9px; padding: 2px 6px">
+            <span style="width: 18px; height: 18px; border-radius: 5px; background: var(--ac, #4fd6e0); display: block"></span>
+            <span style="font-size: 14px; font-weight: 600">StorCat</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{ nav }}" as="n" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 8px; border-radius: 7px; background: {{ n.bg }}">
+                <span style="width: 8px; height: 8px; border-radius: 2px; background: {{ n.dot }}; display: block"></span>
+                <span style="font-size: 13px; font-weight: 500; color: {{ n.fg }}">{{ n.label }}</span>
+                <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">{{ n.hint }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 8px; padding: 0 8px">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--fn, #5c6675)">Library</span>
+            <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); line-height: 1.6">~/dev/sd-catalogs<br>47 catalogs · 4.1 TB</div>
+          </div>
+          <div style="margin-top: auto; display: flex; align-items: center; gap: 9px; height: 28px; padding: 0 8px; font-size: 12.5px; color: var(--dm, #8a94a3)">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4"><circle cx="8" cy="8" r="2.4"/><circle cx="8" cy="8" r="6"/></svg>Settings
+          </div>
+        </div>
+
+        <div style="flex: 1; display: flex; flex-direction: column; min-width: 0">
+          <div style="padding: 16px 20px 12px; display: flex; flex-direction: column; gap: 12px; border-bottom: 1px solid var(--l, #232a35)">
+            <div style="display: flex; align-items: center; gap: 10px">
+              <div style="flex: 1; height: 36px; border-radius: 9px; background: var(--p2, #12161d); border: 1px solid var(--ac, #4fd6e0); display: flex; align-items: center; gap: 10px; padding: 0 12px">
+                <svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="var(--ac, #4fd6e0)" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 13px">mame</span>
+                <span style="width: 1px; height: 14px; background: var(--ac, #4fd6e0); display: block"></span>
+              </div>
+              <div style="height: 36px; padding: 0 14px; border-radius: 9px; background: var(--ac, #4fd6e0); color: #06232a; font-size: 13px; font-weight: 600; display: flex; align-items: center">Search</div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px">
+              <sc-for list="{{ chips }}" as="c" hint-placeholder-count="5">
+                <span style="font-size: 11.5px; padding: 4px 9px; border-radius: 6px; background: {{ c.bg }}; color: {{ c.fg }}; border: 1px solid {{ c.bd }}">{{ c.label }}</span>
+              </sc-for>
+              <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">28 hits · 9 catalogs · 41 ms</span>
+            </div>
+          </div>
+          <div style="flex: 1; overflow: hidden; display: flex; flex-direction: column">
+            <div style="display: grid; grid-template-columns: 1fr 1fr 74px 92px; gap: 12px; padding: 8px 20px; border-bottom: 1px solid var(--l, #232a35); background: var(--p2, #12161d); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">
+              <span>Name</span><span>Path</span><span>Type</span><span style="text-align: right">Size</span>
+            </div>
+            <sc-for list="{{ results }}" as="r" hint-placeholder-count="10">
+              <div style="display: {{ r.disp }}; grid-template-columns: 1fr 1fr 74px 92px; gap: 12px; align-items: center; padding: 0 20px; height: {{ r.h }}; background: {{ r.bg }}; border-bottom: 1px solid var(--l2, #1a2029)">
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: {{ r.w }}; color: {{ r.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.name }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.path }}</span>
+                <span style="font-size: 11.5px; color: var(--dm, #8a94a3)">{{ r.type }}</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-align: right">{{ r.size }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="width: 1280px; height: 640px; border-radius: 12px; overflow: hidden; border: 1px solid var(--l, #232a35); background: var(--bg, #0b0e13); color: var(--tx, #e6ebf2); box-shadow: 0 24px 60px rgba(0,0,0,.5); display: flex">
+        <div style="width: 196px; flex: none; background: var(--p, #0f1319); border-right: 1px solid var(--l, #232a35); display: flex; flex-direction: column; padding: 12px 10px; gap: 18px">
+          <div style="display: flex; align-items: center; gap: 9px; padding: 2px 6px">
+            <span style="width: 18px; height: 18px; border-radius: 5px; background: var(--ac, #4fd6e0); display: block"></span>
+            <span style="font-size: 14px; font-weight: 600">StorCat</span>
+          </div>
+          <div style="display: flex; flex-direction: column; gap: 2px">
+            <sc-for list="{{ nav2 }}" as="n" hint-placeholder-count="4">
+              <div style="display: flex; align-items: center; gap: 9px; height: 30px; padding: 0 8px; border-radius: 7px; background: {{ n.bg }}">
+                <span style="width: 8px; height: 8px; border-radius: 2px; background: {{ n.dot }}; display: block"></span>
+                <span style="font-size: 13px; font-weight: 500; color: {{ n.fg }}">{{ n.label }}</span>
+                <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">{{ n.hint }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="margin-top: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675); padding: 0 8px; line-height: 1.6">last job<br>sd47 · 2m ago</div>
+        </div>
+
+        <div style="flex: 1; display: grid; grid-template-columns: 1fr 380px; min-width: 0">
+          <div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 18px; border-right: 1px solid var(--l, #232a35)">
+            <div style="display: flex; flex-direction: column; gap: 5px">
+              <span style="font-size: 17px; font-weight: 600; letter-spacing: -0.01em">New catalog</span>
+              <span style="font-size: 12.5px; color: var(--dm, #8a94a3)">Writes matching .json and .html next to each other, GNU tree compatible.</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 9px">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Source volume</span>
+              <sc-for list="{{ volumes }}" as="v" hint-placeholder-count="3">
+                <div style="display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 9px; background: {{ v.bg }}; border: 1px solid {{ v.bd }}">
+                  <span style="width: 26px; height: 20px; border-radius: 3px; background: {{ v.chip }}; display: block; flex: none"></span>
+                  <div style="display: flex; flex-direction: column; gap: 2px; min-width: 0">
+                    <span style="font-size: 13px; font-weight: 500">{{ v.name }}</span>
+                    <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3)">{{ v.path }}</span>
+                  </div>
+                  <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">{{ v.size }}</span>
+                  <span style="font-size: 11px; color: {{ v.tagFg }}; background: {{ v.tagBg }}; border-radius: 5px; padding: 3px 7px">{{ v.tag }}</span>
+                </div>
+              </sc-for>
+              <span style="font-size: 12px; color: var(--dm, #8a94a3)">…or <span style="color: var(--ac, #4fd6e0)">choose any folder</span></span>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px">
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Catalog title</span>
+                <div style="height: 32px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 10px; font-size: 12.5px">SD Card #48 — Live sets</div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px">
+                <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Filename root</span>
+                <div style="height: 32px; border-radius: 7px; background: var(--p2, #12161d); border: 1px solid var(--l, #232a35); display: flex; align-items: center; padding: 0 10px; font-family: 'IBM Plex Mono', monospace; font-size: 12.5px; color: var(--dm, #8a94a3)">sd48<span style="color: var(--fn, #5c6675)">.json / .html</span></div>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 10px">
+              <sc-for list="{{ opts }}" as="o" hint-placeholder-count="2">
+                <div style="display: flex; align-items: center; gap: 10px">
+                  <span style="width: 30px; height: 17px; border-radius: 9px; background: {{ o.track }}; display: flex; align-items: center; padding: 2px; justify-content: {{ o.just }}">
+                    <span style="width: 13px; height: 13px; border-radius: 50%; background: {{ o.knob }}; display: block"></span>
+                  </span>
+                  <span style="font-size: 12.5px">{{ o.label }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ o.note }}</span>
+                </div>
+              </sc-for>
+            </div>
+
+            <div style="margin-top: auto; display: flex; align-items: center; gap: 12px">
+              <div style="height: 34px; padding: 0 16px; border-radius: 8px; background: var(--ac, #4fd6e0); color: #06232a; font-size: 13px; font-weight: 600; display: flex; align-items: center">Create catalog</div>
+              <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">⌘↵</span>
+            </div>
+          </div>
+
+          <div style="background: var(--p, #0f1319); padding: 20px 20px; display: flex; flex-direction: column; gap: 16px">
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Scan in progress</span>
+            <div style="display: flex; flex-direction: column; gap: 8px">
+              <div style="display: flex; justify-content: space-between; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px"><span>sd47 · Field recordings</span><span style="color: var(--ac, #4fd6e0)">68%</span></div>
+              <div style="height: 5px; border-radius: 3px; background: var(--ch, #151a22); overflow: hidden"><div style="width: 68%; height: 100%; background: var(--ac, #4fd6e0)"></div></div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3); line-height: 1.6">18,204 files · 2.3 GB<br>/Volumes/SD47/DCIM/108_0930</div>
+            </div>
+            <div style="height: 1px; background: var(--l, #232a35)"></div>
+            <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Recent jobs</span>
+            <div style="display: flex; flex-direction: column; gap: 1px">
+              <sc-for list="{{ jobs }}" as="j" hint-placeholder-count="5">
+                <div style="display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--l2, #1a2029)">
+                  <span style="width: 6px; height: 6px; border-radius: 50%; background: {{ j.dot }}; display: block"></span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px">{{ j.name }}</span>
+                  <span style="margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">{{ j.meta }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="1c" style="display: flex; flex-direction: column; gap: 14px">
+      <div style="display: flex; align-items: baseline; gap: 12px">
+        <span style="font-family: 'IBM Plex Mono', monospace; font-size: 12px; font-weight: 500; padding: 3px 8px; border-radius: 5px; background: #4fd6e0; color: #06232a">1c</span>
+        <span style="font-size: 19px; font-weight: 600">Refit — same three tabs, modernized</span>
+      </div>
+      <div style="font-size: 14px; color: #97a1b0; max-width: 1280px; line-height: 1.5">Lowest-risk path: the tab model survives, but the tab strip becomes a segmented control in a real toolbar, the wide left sidebar collapses into inline toolbar controls, and the browse table gains a docked tree preview instead of a modal.</div>
+
+      <div style="width: 1280px; height: 800px; border-radius: 12px; overflow: hidden; border: 1px solid var(--l, #232a35); background: var(--bg, #0b0e13); color: var(--tx, #e6ebf2); box-shadow: 0 24px 60px rgba(0,0,0,.5); display: flex; flex-direction: column">
+        <div style="height: 46px; flex: none; display: flex; align-items: center; gap: 16px; padding: 0 14px; background: var(--p2, #12161d); border-bottom: 1px solid var(--l, #232a35)">
+          <div style="display: flex; gap: 7px">
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #ff5f57; display: block"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #febc2e; display: block"></span>
+            <span style="width: 11px; height: 11px; border-radius: 50%; background: #28c840; display: block"></span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 3px; padding: 3px; border-radius: 8px; background: var(--ch, #151a22); border: 1px solid var(--l, #232a35)">
+            <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+              <span style="font-size: 12.5px; font-weight: 500; padding: 5px 14px; border-radius: 6px; background: {{ t.bg }}; color: {{ t.fg }}; border: 1px solid {{ t.bd }}">{{ t.label }}</span>
+            </sc-for>
+          </div>
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1">
+            <div style="display: flex; align-items: center; gap: 7px; font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); border-radius: 7px; padding: 5px 9px; white-space: nowrap; flex: none">
+              <svg width="11" height="11" viewBox="0 0 14 14" fill="none" stroke="var(--fn, #5c6675)" stroke-width="1.4"><rect x="1" y="3" width="12" height="9" rx="1.5"/><line x1="1" y1="5.5" x2="13" y2="5.5"/></svg>
+              ~/dev/sd-catalogs
+            </div>
+            <span style="font-size: 12px; color: var(--ac, #4fd6e0)">Change…</span>
+            <span style="font-size: 12px; color: var(--dm, #8a94a3)">Reload</span>
+          </div>
+          <div style="width: 220px; height: 28px; border-radius: 7px; background: var(--bg, #0b0e13); border: 1px solid var(--l, #232a35); display: flex; align-items: center; gap: 8px; padding: 0 9px">
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.6"><circle cx="7" cy="7" r="4.5"/><line x1="10.5" y1="10.5" x2="14" y2="14"/></svg>
+            <span style="font-size: 12px; color: var(--fn, #5c6675)">Filter 47 catalogs</span>
+          </div>
+          <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="var(--dm, #8a94a3)" stroke-width="1.4"><circle cx="8" cy="8" r="2.4"/><circle cx="8" cy="8" r="6"/></svg>
+        </div>
+
+        <div style="flex: 1; display: grid; grid-template-columns: 1fr 400px; min-height: 0">
+          <div style="display: flex; flex-direction: column; min-width: 0">
+            <div style="display: grid; grid-template-columns: 1fr 116px 92px 78px 130px; gap: 14px; padding: 9px 18px; background: var(--p2, #12161d); border-bottom: 1px solid var(--l, #232a35); font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">
+              <span>Title</span><span>File</span><span style="text-align: right">Size</span><span style="text-align: center">HTML</span><span style="text-align: right">Modified</span>
+            </div>
+            <div style="flex: 1; overflow: hidden">
+              <sc-for list="{{ rows }}" as="r" hint-placeholder-count="11">
+                <div style="display: grid; grid-template-columns: 1fr 116px 92px 78px 130px; gap: 14px; align-items: center; padding: 0 18px; height: {{ r.h }}; background: {{ r.bg }}; border-bottom: 1px solid var(--l2, #1a2029)">
+                  <span style="font-size: 12.5px; font-weight: 500; color: {{ r.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ r.title }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3)">{{ r.file }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-align: right">{{ r.size }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; text-align: center; color: {{ r.htmlFg }}">{{ r.html }}</span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: var(--dm, #8a94a3); text-align: right">{{ r.date }}</span>
+                </div>
+              </sc-for>
+            </div>
+            <div style="height: 28px; flex: none; display: flex; align-items: center; gap: 14px; padding: 0 18px; border-top: 1px solid var(--l, #232a35); background: var(--p2, #12161d); font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--fn, #5c6675)">
+              <span>47 of 47</span><span>selected: sd12</span><span style="margin-left: auto">sorted by modified ↓</span>
+            </div>
+          </div>
+
+          <div style="border-left: 1px solid var(--l, #232a35); background: var(--p, #0f1319); display: flex; flex-direction: column; min-height: 0">
+            <div style="padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; border-bottom: 1px solid var(--l, #232a35)">
+              <div style="display: flex; align-items: center; gap: 9px">
+                <span style="font-size: 15px; font-weight: 600">SD Card #12</span>
+                <span style="font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--dm, #8a94a3); background: var(--ch, #151a22); border-radius: 5px; padding: 2px 6px">sd12</span>
+              </div>
+              <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--dm, #8a94a3)">2,481 files · 29.4 GB · depth 6</div>
+              <div style="display: flex; gap: 8px; padding-top: 4px">
+                <span style="flex: 1; height: 28px; border-radius: 7px; background: var(--ac, #4fd6e0); color: #06232a; font-size: 12px; font-weight: 600; display: flex; align-items: center; justify-content: center">Open HTML</span>
+                <span style="flex: 1; height: 28px; border-radius: 7px; border: 1px solid var(--l, #232a35); font-size: 12px; display: flex; align-items: center; justify-content: center">Reveal</span>
+                <span style="width: 28px; height: 28px; border-radius: 7px; border: 1px solid var(--l, #232a35); display: flex; align-items: center; justify-content: center; color: var(--dm, #8a94a3); font-size: 13px">⋯</span>
+              </div>
+            </div>
+            <div style="padding: 9px 16px; border-bottom: 1px solid var(--l, #232a35); display: flex; align-items: center; justify-content: space-between">
+              <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; color: var(--dm, #8a94a3)">Contents</span>
+              <span style="font-size: 11.5px; color: var(--ac, #4fd6e0)">Expand all</span>
+            </div>
+            <div style="flex: 1; overflow: hidden; padding: 6px 0">
+              <sc-for list="{{ tree }}" as="n" hint-placeholder-count="15">
+                <div style="display: flex; align-items: center; gap: 7px; height: var(--rh, 26px); padding-right: 14px; padding-left: {{ n.pad }}; background: {{ n.bg }}">
+                  <span style="width: 9px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--fn, #5c6675)">{{ n.caret }}</span>
+                  <span style="width: 8px; height: 8px; border-radius: {{ n.iconR }}; background: {{ n.iconC }}; display: block; flex: none"></span>
+                  <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11.5px; color: {{ n.fg }}; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">{{ n.name }}</span>
+                  <span style="margin-left: auto; flex: none; white-space: nowrap; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--fn, #5c6675)">{{ n.size }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;theme&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;Dark&quot;,&quot;Light&quot;],&quot;default&quot;:&quot;Dark&quot;,&quot;tsType&quot;:&quot;'Dark' | 'Light'&quot;},&quot;accent&quot;:{&quot;editor&quot;:&quot;color&quot;,&quot;options&quot;:[&quot;#4fd6e0&quot;,&quot;#7c9cff&quot;,&quot;#f0b429&quot;,&quot;#9ae66e&quot;],&quot;default&quot;:&quot;#4fd6e0&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;compact&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;}}">
+const DARK = {
+  '--bg': '#0b0e13', '--p': '#0f1319', '--p2': '#12161d', '--ch': '#151a22',
+  '--l': '#232a35', '--l2': '#1a2029', '--tx': '#e6ebf2', '--dm': '#8a94a3',
+  '--fn': '#5c6675', '--sel': 'rgba(79,214,224,.08)', '--hov': '#141922'
+};
+const LIGHT = {
+  '--bg': '#f5f6f4', '--p': '#ffffff', '--p2': '#fafbf9', '--ch': '#f0f1ee',
+  '--l': '#e0e2de', '--l2': '#ebede9', '--tx': '#16191c', '--dm': '#5f6873',
+  '--fn': '#949cA6', '--sel': 'rgba(13,143,156,.09)', '--hov': '#f3f4f1'
+};
+
+class Component extends DCLogic {
+  renderVals() {
+    const dark = (this.props.theme ?? 'Dark') === 'Dark';
+    const accent = this.props.accent ?? (dark ? '#4fd6e0' : '#0d8f9c');
+    const compact = this.props.compact ?? true;
+    const t = dark ? DARK : LIGHT;
+    const vars = { ...t, '--ac': accent, '--acs': accent + '1f', '--rh': compact ? '26px' : '32px' };
+    const rowH = compact ? '30px' : '38px';
+
+    const titles = [
+      ['SD Card #08', 'sd08.json', '846.9 KB', '9,214'],
+      ['SD Card #09', 'sd09.json', '44.4 KB', '612'],
+      ['SD Card #10', 'sd10.json', '105.8 KB', '1,884'],
+      ['SD Catalog #11', 'sd11.json', '234.5 KB', '3,410'],
+      ['SD Card #12', 'sd12.json', '143.6 KB', '2,481'],
+      ['SD Card #13', 'sd13.json', '49.6 KB', '702'],
+      ['SD Card #14', 'sd14.json', '61.2 KB', '921'],
+      ['SD Card #15', 'sd15.json', '249.6 KB', '3,902'],
+      ['SD Card #16', 'sd16.json', '89.1 KB', '1,204'],
+      ['Field recordings 2024', 'sd17.json', '512.0 KB', '7,880'],
+      ['SD Card #18', 'sd18.json', '3.7 MB', '41,209'],
+      ['Backup — Lightroom', 'sd19.json', '890.0 KB', '12,004']
+    ];
+    const catalogs = titles.map(([title, file, size, files], i) => ({
+      title, file, size, files,
+      bg: i === 4 ? 'var(--sel)' : 'transparent',
+      bar: i === 4 ? accent : 'transparent',
+      fg: i === 4 ? 'var(--tx)' : 'var(--tx)'
+    }));
+
+    const rawTree = [
+      [0, 'SD12', 'dir', '29.4 GB', 1],
+      [1, 'DCIM', 'dir', '18.1 GB', 1],
+      [2, '108_0930', 'dir', '11.4 GB', 0],
+      [2, '109_1002', 'dir', '6.7 GB', 0],
+      [1, 'media', 'dir', '10.9 GB', 1],
+      [2, 'Beastie Boys (2011) — Hot Sauce Committee Part Two', 'dir', '412.9 MB', 0],
+      [2, 'Good Eats S12', 'dir', '3.4 GB', 1],
+      [3, 'Good Eats S12E06 The Big Chili.mkv', 'file', '168.2 MB', 0],
+      [3, 'Good Eats S12E07 Et Tu Mame.mkv', 'file', '172.8 MB', 0],
+      [3, 'Good Eats S12E08 Herbal Preservation.mkv', 'file', '165.1 MB', 0],
+      [2, 'Live sets', 'dir', '6.9 GB', 0],
+      [1, 'MISC', 'dir', '284.0 MB', 1],
+      [2, 'notes.txt', 'file', '4.2 KB', 0],
+      [2, 'card-label.png', 'file', '1.1 MB', 0],
+      [1, 'PRIVATE', 'dir', '112.0 MB', 0]
+    ];
+    const tree = rawTree.map(([d, name, kind, size, open], i) => ({
+      name, size,
+      pad: (18 + d * 16) + 'px',
+      caret: kind === 'dir' ? (open ? '▾' : '▸') : '',
+      iconR: kind === 'dir' ? '2px' : '50%',
+      iconC: kind === 'dir' ? accent : 'var(--fn)',
+      fg: i === 8 ? accent : 'var(--tx)',
+      bg: i === 8 ? 'var(--sel)' : 'transparent'
+    }));
+
+    const meta = [
+      { k: 'Type', v: 'file' }, { k: 'Size', v: '172.8 MB' },
+      { k: 'Catalog', v: 'sd12' }, { k: 'Depth', v: '3' }, { k: 'Indexed', v: '2024-09-17' }
+    ];
+
+    const mkNav = (active) => [
+      ['Catalogs', '47'], ['Search', '⌘K'], ['Create', '⌘N'], ['Jobs', '1']
+    ].map(([label, hint]) => ({
+      label, hint,
+      bg: label === active ? 'var(--sel)' : 'transparent',
+      dot: label === active ? accent : 'var(--fn)',
+      fg: label === active ? accent : 'var(--tx)'
+    }));
+
+    const chips = [
+      ['All catalogs', 1], ['Files only', 0], ['Video', 0], ['> 100 MB', 0], ['Name contains', 1]
+    ].map(([label, on]) => ({
+      label,
+      bg: on ? 'var(--acs)' : 'transparent',
+      fg: on ? accent : 'var(--dm)',
+      bd: on ? accent : 'var(--l)'
+    }));
+
+    const rawResults = [
+      ['g', 'sd10 — Beastie Boys (2011) Hot Sauce Committee Part Two', '', '', ''],
+      ['r', '13 Beastie Boys — Multilateral Nuclear Disarmament.mp3', 'media/Beastie Boys (2011)…', 'audio', '6.7 MB'],
+      ['r', '14 Beastie Boys — Funky Donkey.mp3', 'media/Beastie Boys (2011)…', 'audio', '5.9 MB'],
+      ['g', 'sd18 — Good Eats S12', '', '', ''],
+      ['r', 'Good Eats S12E07 Et Tu Mame.mkv', 'media/Good Eats S12', 'video', '172.8 MB'],
+      ['r', 'Good Eats S12E07 Et Tu Mame.srt', 'media/Good Eats S12', 'text', '48.1 KB'],
+      ['g', 'sd31 — Arcade backups', '', '', ''],
+      ['r', 'mame0264b_64bit.exe', 'emulators/mame', 'file', '212.4 MB'],
+      ['r', 'mame-roms-verified.txt', 'emulators/mame', 'text', '882.0 KB'],
+      ['r', 'mame.ini', 'emulators/mame', 'file', '12.0 KB']
+    ];
+    const results = rawResults.map(([kind, name, path, type, size]) => kind === 'g'
+      ? { disp: 'flex', h: '26px', bg: 'var(--p2)', name, path: '', type: '', size: '', fg: 'var(--dm)', w: '600' }
+      : { disp: 'grid', h: rowH, bg: 'transparent', name, path, type, size, fg: 'var(--tx)', w: '400' });
+
+    const volumes = [
+      ['SD48 — Sony 128GB', '/Volumes/SD48', '119.2 GB', 'mounted', 1],
+      ['SD47 — Field recorder', '/Volumes/SD47', '61.0 GB', 'scanning', 0],
+      ['LaCie Rugged', '/Volumes/LaCie', '3.6 TB', 'mounted', 0]
+    ].map(([name, path, size, tag, sel]) => ({
+      name, path, size, tag,
+      bg: sel ? 'var(--sel)' : 'var(--p2)',
+      bd: sel ? accent : 'var(--l)',
+      chip: sel ? accent : 'var(--fn)',
+      tagFg: tag === 'scanning' ? '#f0b429' : 'var(--dm)',
+      tagBg: tag === 'scanning' ? 'rgba(240,180,41,.12)' : 'var(--ch)'
+    }));
+
+    const opts = [
+      ['Also write HTML catalog', 'sd48.html', 1],
+      ['Copy both files to secondary location', '~/Dropbox/catalogs', 1],
+      ['Include hidden files', '', 0]
+    ].map(([label, note, on]) => ({
+      label, note,
+      track: on ? accent : 'var(--ch)',
+      knob: on ? '#06232a' : 'var(--fn)',
+      just: on ? 'flex-end' : 'flex-start'
+    }));
+
+    const jobs = [
+      ['sd46 · Drone footage', '3 min · 41.2 GB', 'ok'],
+      ['sd45 · Wedding raw', '11 min · 118 GB', 'ok'],
+      ['sd44 · Samples', 'failed · unreadable', 'err'],
+      ['sd43 · Backup', '2 min · 8.1 GB', 'ok'],
+      ['sd42 · Photos 2023', '6 min · 62 GB', 'ok']
+    ].map(([name, meta, s]) => ({ name, meta, dot: s === 'err' ? '#e5534b' : accent }));
+
+    const tabs = ['Browse', 'Search', 'Create'].map((label) => ({
+      label,
+      bg: label === 'Browse' ? 'var(--p)' : 'transparent',
+      fg: label === 'Browse' ? 'var(--tx)' : 'var(--dm)',
+      bd: label === 'Browse' ? 'var(--l)' : 'transparent'
+    }));
+
+    const rows = titles.slice(0, 11).map(([title, file, size, files], i) => ({
+      title, file, size, files,
+      date: '2024-09-17 17:34',
+      h: rowH,
+      bg: i === 4 ? 'var(--sel)' : 'transparent',
+      fg: i === 4 ? accent : 'var(--tx)',
+      html: i % 4 === 3 ? '—' : '✓',
+      htmlFg: i % 4 === 3 ? 'var(--fn)' : accent
+    }));
+
+    return { vars, catalogs, tree, meta, nav: mkNav('Search'), nav2: mkNav('Create'), chips, results, volumes, opts, jobs, tabs, rows };
+  }
+}
+</script>
+</body>
+</html>
