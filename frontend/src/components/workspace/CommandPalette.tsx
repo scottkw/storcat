@@ -182,12 +182,15 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   const catalogCount = state.catalogs.length;
   const placeholder = `Search ${formatCount(filesIndexed)} files across ${catalogCount} catalogs…`;
 
+  // WR-04: derived from results.length (== min(SearchIndexedCap, total) per
+  // the Go contract), not a re-stated `50` literal -- so this can never
+  // drift from PaletteResultList's truncation line or Go's actual cap.
   const readout = isHint
     ? 'Type to search…'
     : isSearching
       ? 'Searching…'
-      : total > 50
-        ? `50 of ${total}`
+      : total > results.length
+        ? `${results.length} of ${total}`
         : `${total} hits`;
 
   const activeOptionId = isResults && activeIndex >= 0 ? `ws-palette-option-${activeIndex}` : undefined;

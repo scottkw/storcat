@@ -61,7 +61,10 @@ function PaletteResultList({
         />
       ))}
       {total > results.length && (
-        <div className="ws-palette-truncation">{`Showing the first 50 of ${total} hits`}</div>
+        // WR-04: results.length is the single source of truth for the
+        // displayed count (Go's SearchIndexedCap, not a re-stated `50`
+        // literal) -- if the backend cap ever changes, this stays correct.
+        <div className="ws-palette-truncation">{`Showing the first ${results.length} of ${total} hits`}</div>
       )}
     </div>
   );
