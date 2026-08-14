@@ -455,6 +455,63 @@
   background: var(--hov);
 }
 
+.ws-palette-row[data-active] {
+  background: var(--hov);
+}
+
+.ws-palette-shape {
+  width: 8px;
+  height: 8px;
+  flex: none;
+}
+
+.ws-palette-shape[data-kind='directory'] {
+  border-radius: 2px;
+  background: var(--ac);
+}
+
+.ws-palette-shape[data-kind='file'] {
+  border-radius: 50%;
+  background: var(--fn);
+}
+
+.ws-palette-name {
+  font-size: 12.5px;
+  color: var(--tx);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-palette-path {
+  font-size: 11px;
+  color: var(--dm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Static, non-interactive label -- deliberately no :hover rule, unlike
+ * .ws-chip, so it never visually promises a click target that doesn't
+ * exist (24-UI-SPEC's Color section). */
+.ws-palette-chip {
+  font-size: 11px;
+  color: var(--ac);
+  background: var(--acs);
+  border-radius: 5px;
+  padding: 2px 7px;
+  flex: none;
+}
+
+.ws-palette-size {
+  font-size: 11px;
+  color: var(--dm);
+  flex: none;
+  white-space: nowrap;
+  width: 74px;
+  text-align: right;
+}
+
 .ws-status {
   height: 26px;
   flex: none;
