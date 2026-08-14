@@ -53,9 +53,9 @@
 - [x] **PLT-01**: User can open a search palette with ⌘K or by clicking the toolbar search field, with the input autofocused
 - [x] **PLT-02**: User can search names and paths across every catalog in the directory
 - [x] **PLT-03**: User sees at most 50 results, with a "Showing the first 50 of N hits" notice when more matched
-- [ ] **PLT-04**: User can navigate results by keyboard and dismiss the palette with Escape
+- [x] **PLT-04**: User can navigate results by keyboard and dismiss the palette with Escape
 - [ ] **PLT-05**: User can click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette
-- [ ] **PLT-06**: User sees "No file in any catalog matches that." when nothing matched
+- [x] **PLT-06**: User sees "No file in any catalog matches that." when nothing matched
 - [x] **PLT-07**: Focus is trapped inside the palette while open, and page scroll is locked behind it
 
 ### Create — the catalog creation flow
@@ -179,9 +179,9 @@ Deferred — acknowledged but not in this roadmap.
 | PLT-01 | Phase 24 | Complete |
 | PLT-02 | Phase 24 | Complete |
 | PLT-03 | Phase 24 | Complete |
-| PLT-04 | Phase 24 | Pending |
+| PLT-04 | Phase 24 | Complete |
 | PLT-05 | Phase 24 | Pending |
-| PLT-06 | Phase 24 | Pending |
+| PLT-06 | Phase 24 | Complete |
 | PLT-07 | Phase 24 | Complete |
 | CRT-01 | Phase 25 | Pending |
 | CRT-02 | Phase 25 | Pending |
