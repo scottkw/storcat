@@ -23,6 +23,10 @@ export interface AppState {
   tree: TreeState;
   expanded: Record<string, boolean>;
   selected: string | null;
+  // The path of a node the ⌘K palette asked the tree to reveal, held across
+  // the asynchronous gap between the catalog switch and the flat tree
+  // arriving. TreePane consumes and clears it once the tree is ready.
+  pendingReveal: string | null;
 }
 
 type AppAction =
@@ -39,7 +43,8 @@ type AppAction =
   | { type: 'TREE_FAILED'; payload: { catalogId: string; message: string } }
   | { type: 'TOGGLE_EXPAND'; payload: string }
   | { type: 'SET_EXPANDED'; payload: Record<string, boolean> }
-  | { type: 'SET_SELECTED'; payload: string | null };
+  | { type: 'SET_SELECTED'; payload: string | null }
+  | { type: 'SET_PENDING_REVEAL'; payload: string | null };
 
 // Seeded once at module scope so a relaunch restores the user's persisted
 // density/rail-side choices rather than hardcoded defaults. readPersistedPrefs
@@ -56,6 +61,7 @@ const initialState: AppState = {
   tree: { status: 'idle' },
   expanded: {},
   selected: null,
+  pendingReveal: null,
 };
 
 function appReducer(state: AppState, action: AppAction): AppState {
@@ -71,6 +77,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       // idle, and empties expansion/selection in the same case -- without
       // this a directory change can leave the tree showing a catalog that is
       // no longer in the (not-yet-reloaded) list (RAIL-05).
+      // pendingReveal is cleared here too -- a directory change invalidates
+      // any reveal that was waiting on a catalog load, the same discard
+      // discipline SELECT_CATALOG applies below.
       return {
         ...state,
         catalogDir: action.payload,
@@ -78,19 +87,25 @@ function appReducer(state: AppState, action: AppAction): AppState {
         tree: { status: 'idle' },
         expanded: {},
         selected: null,
+        pendingReveal: null,
       };
     case 'SET_CATALOGS':
       return { ...state, catalogs: action.payload };
     case 'SELECT_CATALOG':
       // Atomic: sets currentCatalogId, starts the tree load, and clears
       // expanded/selected together -- no intermediate state where one is
-      // cleared and the other is not (TREE-06).
+      // cleared and the other is not (TREE-06). pendingReveal is cleared in
+      // the same update -- this is the stale-discard mechanism for the ⌘K
+      // reveal path: a rail-driven catalog switch cancels any reveal still
+      // waiting on a load, mirroring the discipline TREE_LOADED already
+      // applies to a load superseded by a newer selection.
       return {
         ...state,
         currentCatalogId: action.payload,
         tree: { status: 'loading' },
         expanded: {},
         selected: null,
+        pendingReveal: null,
       };
     case 'TREE_LOADED':
       // A load that resolves after the user has already selected a
@@ -126,6 +141,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, expanded: action.payload };
     case 'SET_SELECTED':
       return { ...state, selected: action.payload };
+    case 'SET_PENDING_REVEAL':
+      return { ...state, pendingReveal: action.payload };
     default:
       return state;
   }
