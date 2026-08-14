@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: Workspace Redesign
-current_phase: 23
+current_phase: 24
 current_phase_name: Rail + Virtualized Tree
 status: verifying
-stopped_at: Completed 23-06-PLAN.md (Phase 23 complete, all 6 plans)
-last_updated: "2026-08-14T02:17:33.079Z"
-last_activity: 2026-08-13
-last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
+stopped_at: Phase 24 UI-SPEC approved
+last_updated: "2026-08-14T13:10:50.620Z"
+last_activity: 2026-08-14
+last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
   completed_phases: 2
@@ -123,10 +123,12 @@ Research complete — see `.planning/research/SUMMARY.md`, `ARCHITECTURE.md`, `P
 ### Pending Todos
 
 **Carried security obligations for Phase 26** (from `23-SECURITY.md` — must not be re-accepted a third time):
+
 - **T-22-05 — `CatalogModal` unsanitized `srcDoc`.** Accepted in Phases 22 and 23 *only* because no dispatcher of `openCatalogModal` exists. The plumbing beneath it is now live (`window.electronAPI` shim routes to real Go), so only the missing dispatcher stands between attacker-influenceable catalog HTML and an unsanitized `srcDoc`. Phase 26 must sanitize `htmlContent` or delete `CatalogModal.tsx` — not re-affirm the acceptance.
 - **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` containment.** Both are Wails-exposed and callable from any renderer JS but lack the containment/symlink/regular-file gate that `RevealInFileManager` got in review finding WR-02. Mechanical fix: thread `catalogDir` through both and reuse `internal/osutil`'s existing `containsPath` helper.
 
 **Open platform-gated items** (tracked in `.planning/WINDOWS.md`, sweep before v3.0.0 ships):
+
 - SHELL-07 — native Windows drag-vs-click arbitration (Phase 22, user-accepted as platform-gated).
 - TREE-08 — Windows `explorer /select,` argv shape at runtime (Phase 23). Unit-tested only; macOS reveal was verified against Finder's real selection.
 
@@ -146,9 +148,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14
-Stopped at: Phase 23 fully closed (all post-execution gates done). Next action is Phase 24 discuss.
-Resume file: None
+Last session: 2026-08-14T13:10:50.603Z
+Stopped at: Phase 24 UI-SPEC approved
+Resume file: .planning/phases/24-cmd-k-command-palette/24-UI-SPEC.md
 Resume command: `/gsd-autonomous --from 24`
 
 **Worktree isolation: intentionally OFF.** `workflow.use_worktrees` is `false`, which is the correct and working configuration — Phases 22 and 23 were both built this way. Executors run sequentially on the main working tree. Do not "fix" this by setting it to `true`: Claude Code's harness forks agent worktrees from `origin/HEAD`, not local HEAD, and local `main` runs ~100 commits ahead of `origin/main` during a milestone, so every executor would land in a checkout predating all of v3.0.0 and halt on a base mismatch. The only reason to turn it on is speed (parallel executors within a wave), and it requires pushing `main` first.
