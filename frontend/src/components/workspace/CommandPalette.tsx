@@ -3,6 +3,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { formatBytes, formatCount } from '../../lib/format';
 import { models } from '../../../wailsjs/go/models';
+import { useModalBehavior } from '../../hooks/useModalBehavior';
 
 export interface CommandPaletteProps {
   isOpen: boolean;
@@ -13,8 +14,8 @@ const PALETTE_DEBOUNCE_MS = 200;
 const PALETTE_MIN_QUERY = 2;
 
 // Always mounted by WorkspaceShell and returns null when closed -- it must
-// not be conditionally mounted, because 24-03's shared useModalBehavior hook
-// has to observe the isOpen: true -> false transition to release scroll
+// not be conditionally mounted, because the shared useModalBehavior hook
+// below observes the isOpen: true -> false transition to release scroll
 // lock and restore focus, and Phase 25's animated exit depends on the same
 // contract.
 function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
@@ -34,6 +35,13 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   // the value in its closure; a response is applied only if the captured
   // value still matches the ref's current value when it lands.
   const requestIdRef = useRef(0);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  // Focus trap, Escape-to-close, scroll lock, and focus restore all arrive
+  // through the shared hook -- the palette implements none of the four
+  // itself. The panel (not the scrim) is the trap boundary, since the
+  // scrim is the click-to-close surface and focus must never land there.
+  const { containerRef } = useModalBehavior({ isOpen, onClose, initialFocusRef: inputRef });
 
   // No persisted "last query" across open/close cycles (deferred idea, not
   // this phase) -- every open starts from a clean slate.
@@ -44,18 +52,6 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     setTotal(0);
     setSettled(false);
   }, [isOpen]);
-
-  // Escape closes the palette. Inline here for this slice only -- 24-03's
-  // shared useModalBehavior hook replaces this with the trap/scroll-lock/
-  // focus-restore-aware version.
-  useEffect(() => {
-    if (!isOpen) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -116,6 +112,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     <div className="ws-palette-scrim" onClick={onClose}>
       <div
         className="ws-palette-panel"
+        ref={containerRef}
         role="dialog"
         aria-modal="true"
         aria-label="Search every catalog"
@@ -137,7 +134,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           </svg>
           <input
             className="ws-palette-input"
-            autoFocus
+            ref={inputRef}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
             placeholder={placeholder}

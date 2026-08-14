@@ -30,7 +30,7 @@ export interface ModalBehaviorOptions {
 }
 
 export interface ModalBehavior {
-  containerRef: React.RefObject<HTMLDivElement | null>;
+  containerRef: React.RefObject<HTMLDivElement>;
 }
 
 export function useModalBehavior({
