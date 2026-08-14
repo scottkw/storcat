@@ -73,7 +73,7 @@ var allowedRevealExtensions = map[string]bool{
 	".html": true,
 }
 
-// containsPath reports whether resolved -- an already absolute,
+// ContainsPath reports whether resolved -- an already absolute,
 // symlink-resolved path -- lives inside catalogDir. catalogDir is resolved
 // to its own absolute, symlink-resolved form here so both sides of the
 // comparison are in the same normalized form before filepath.Rel runs.
@@ -87,8 +87,10 @@ var allowedRevealExtensions = map[string]bool{
 //
 // Extracted as its own pure function -- like revealArgvFor above -- so
 // containment is exercised directly by table-driven tests without ever
-// reaching exec.Command.
-func containsPath(catalogDir, resolved string) (bool, error) {
+// reaching exec.Command. Exported: it is now also the write-path containment
+// gate App.StartScan uses for its output directory and secondary-copy
+// destination (Phase 25), not only the reveal read gate.
+func ContainsPath(catalogDir, resolved string) (bool, error) {
 	absCatalogDir, err := filepath.Abs(catalogDir)
 	if err != nil {
 		return false, err
@@ -168,7 +170,7 @@ func RevealInFileManager(path string, catalogDir string) error {
 	if catalogDir == "" {
 		return fmt.Errorf("reveal %s: no catalog directory configured", path)
 	}
-	ok, err := containsPath(catalogDir, resolved)
+	ok, err := ContainsPath(catalogDir, resolved)
 	if err != nil {
 		return fmt.Errorf("reveal %s: resolve catalog directory: %w", path, err)
 	}

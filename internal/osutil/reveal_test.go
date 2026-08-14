@@ -161,7 +161,7 @@ func TestRevealInFileManager_RejectsMissingCatalogDir(t *testing.T) {
 }
 
 // TestRevealInFileManager_RejectsPathOutsideCatalogDir proves containment is
-// actually wired into RevealInFileManager itself, not just containsPath in
+// actually wired into RevealInFileManager itself, not just ContainsPath in
 // isolation -- a valid .json regular file, but outside catalogDir, must be
 // rejected before exec.Command is ever reached (so this test cannot pop a
 // real Finder/Explorer/file-manager window).
@@ -227,14 +227,14 @@ func TestContainsPath(t *testing.T) {
 		t.Fatalf("mkdir catalogDir: %v", err)
 	}
 
-	// resolvedCatalogDir mirrors what containsPath computes internally for
+	// resolvedCatalogDir mirrors what ContainsPath computes internally for
 	// catalogDir (filepath.Abs + filepath.EvalSymlinks). On macOS t.TempDir()
 	// lives under a symlinked /var -> /private/var, so building "resolved"
 	// test inputs from the raw (unresolved) catalogDir would compare a
 	// resolved base against an unresolved child and fail for the wrong
 	// reason. Every subtest below builds its "resolved" input from this same
 	// canonical form, exactly as RevealInFileManager does by running
-	// EvalSymlinks on the real file before calling containsPath.
+	// EvalSymlinks on the real file before calling ContainsPath.
 	resolvedCatalogDir, err := filepath.EvalSymlinks(catalogDir)
 	if err != nil {
 		t.Fatalf("EvalSymlinks(catalogDir): %v", err)
@@ -242,9 +242,9 @@ func TestContainsPath(t *testing.T) {
 
 	t.Run("legitimate path inside catalogDir", func(t *testing.T) {
 		resolved := filepath.Join(resolvedCatalogDir, "catalog.json")
-		ok, err := containsPath(catalogDir, resolved)
+		ok, err := ContainsPath(catalogDir, resolved)
 		if err != nil {
-			t.Fatalf("containsPath returned an error: %v", err)
+			t.Fatalf("ContainsPath returned an error: %v", err)
 		}
 		if !ok {
 			t.Error("expected a path inside catalogDir to be contained, got false")
@@ -259,9 +259,9 @@ func TestContainsPath(t *testing.T) {
 			t.Fatalf("mkdir evilDir: %v", err)
 		}
 		resolved := filepath.Join(evilDir, "catalog.json")
-		ok, err := containsPath(catalogDir, resolved)
+		ok, err := ContainsPath(catalogDir, resolved)
 		if err != nil {
-			t.Fatalf("containsPath returned an error: %v", err)
+			t.Fatalf("ContainsPath returned an error: %v", err)
 		}
 		if ok {
 			t.Error("expected a name-prefix-sharing sibling directory to NOT be contained, got true")
@@ -270,13 +270,13 @@ func TestContainsPath(t *testing.T) {
 
 	t.Run("dot-dot escape", func(t *testing.T) {
 		// filepath.Abs/Clean already collapse a literal "../" segment before
-		// containsPath ever runs (RevealInFileManager calls filepath.Abs on
+		// ContainsPath ever runs (RevealInFileManager calls filepath.Abs on
 		// the input first), so the escape is exercised the way it actually
 		// arrives: an absolute, already-cleaned path outside catalogDir.
 		escaped := filepath.Clean(filepath.Join(resolvedCatalogDir, "..", "outside", "catalog.json"))
-		ok, err := containsPath(catalogDir, escaped)
+		ok, err := ContainsPath(catalogDir, escaped)
 		if err != nil {
-			t.Fatalf("containsPath returned an error: %v", err)
+			t.Fatalf("ContainsPath returned an error: %v", err)
 		}
 		if ok {
 			t.Error("expected a \"../\" escape to NOT be contained, got true")
@@ -298,15 +298,15 @@ func TestContainsPath(t *testing.T) {
 		}
 
 		// Mirrors what RevealInFileManager itself does before calling
-		// containsPath: resolve the symlink first, then check containment
+		// ContainsPath: resolve the symlink first, then check containment
 		// against the resolved (not the linked) location.
 		resolved, err := filepath.EvalSymlinks(link)
 		if err != nil {
 			t.Fatalf("EvalSymlinks: %v", err)
 		}
-		ok, err := containsPath(catalogDir, resolved)
+		ok, err := ContainsPath(catalogDir, resolved)
 		if err != nil {
-			t.Fatalf("containsPath returned an error: %v", err)
+			t.Fatalf("ContainsPath returned an error: %v", err)
 		}
 		if ok {
 			t.Error("expected a symlink resolving outside catalogDir to NOT be contained, got true")

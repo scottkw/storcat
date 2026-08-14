@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"storcat-wails/internal/catalog"
 )
 
 // TestGetCatalogHtmlPath_ReturnsHtmlPathWhenFileExists verifies that
@@ -145,4 +148,109 @@ func TestGetVersion_ReturnsVersionFromWailsJson(t *testing.T) {
 	if got == "dev" {
 		t.Errorf("GetVersion() returned fallback %q; wails.json productVersion may be missing or unparseable", got)
 	}
+}
+
+// TestStartScan_WritesIntoOutputDir verifies that, with a source temp dir
+// and a distinct output temp dir, StartScan returns a result whose
+// JsonPath and HtmlPath both live under the output dir and both exist on
+// disk.
+func TestStartScan_WritesIntoOutputDir(t *testing.T) {
+	app := &App{catalogService: catalog.NewService()}
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(sourceDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	// StartScan resolves outputDir's symlinks (e.g. macOS's /var ->
+	// /private/var) before writing, so the expected directory here must be
+	// resolved the same way -- otherwise this comparison fails for the
+	// wrong reason on any machine where t.TempDir() lives under a symlink.
+	resolvedOutputDir, err := filepath.EvalSymlinks(outputDir)
+	if err != nil {
+		t.Fatalf("EvalSymlinks(outputDir): %v", err)
+	}
+
+	result, err := app.StartScan("Test", sourceDir, outputDir, "out", ScanOptions{WriteHTML: true})
+	if err != nil {
+		t.Fatalf("StartScan failed: %v", err)
+	}
+	if filepath.Dir(result.JsonPath) != resolvedOutputDir {
+		t.Errorf("JsonPath dir = %q, want %q", filepath.Dir(result.JsonPath), resolvedOutputDir)
+	}
+	if filepath.Dir(result.HtmlPath) != resolvedOutputDir {
+		t.Errorf("HtmlPath dir = %q, want %q", filepath.Dir(result.HtmlPath), resolvedOutputDir)
+	}
+	if _, err := os.Stat(result.JsonPath); err != nil {
+		t.Errorf("expected JSON file to exist: %v", err)
+	}
+	if _, err := os.Stat(result.HtmlPath); err != nil {
+		t.Errorf("expected HTML file to exist: %v", err)
+	}
+}
+
+// TestStartScan_RejectsEscapingOutputRoot verifies that an outputRoot
+// containing a parent-directory segment is rejected with a non-nil error
+// and no file is created anywhere.
+func TestStartScan_RejectsEscapingOutputRoot(t *testing.T) {
+	app := &App{catalogService: catalog.NewService()}
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(sourceDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	_, err := app.StartScan("Test", sourceDir, outputDir, "../escape", ScanOptions{WriteHTML: true})
+	if err == nil {
+		t.Fatal("expected an error for an outputRoot escaping outputDir, got nil")
+	}
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		t.Fatalf("read outputDir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected outputDir to remain empty, got %+v", entries)
+	}
+}
+
+// TestStartScan_RejectsSecondConcurrentScan verifies that, while a scan
+// handle is held, a second StartScan call returns a non-nil error and does
+// not clear the first scan's cancel handle.
+func TestStartScan_RejectsSecondConcurrentScan(t *testing.T) {
+	app := &App{catalogService: catalog.NewService()}
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+
+	_, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	app.scanMu.Lock()
+	app.activeScanCancel = cancel
+	app.scanMu.Unlock()
+
+	_, err := app.StartScan("Test", sourceDir, outputDir, "out", ScanOptions{WriteHTML: true})
+	if err == nil {
+		t.Fatal("expected an error when a scan is already running, got nil")
+	}
+
+	app.scanMu.Lock()
+	stillSet := app.activeScanCancel != nil
+	app.scanMu.Unlock()
+	if !stillSet {
+		t.Error("expected the first scan's cancel handle to remain set after a rejected second call")
+	}
+}
+
+// TestThrottledProgress_NilRuntimeContextIsSafe verifies that the progress
+// closure returned by throttledProgress does not panic when the App's
+// runtime context is nil, so the binding is testable headlessly.
+func TestThrottledProgress_NilRuntimeContextIsSafe(t *testing.T) {
+	app := &App{}
+	progress := app.throttledProgress(1024)
+
+	defer func() {
+		if r := recover(); r != nil {
+			t.Fatalf("throttledProgress panicked with nil ctx: %v", r)
+		}
+	}()
+	progress(catalog.ProgressUpdate{Path: "./a.txt", FilesSeen: 1, BytesSeen: 5})
 }

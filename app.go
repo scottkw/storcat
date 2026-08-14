@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sync"
+	"time"
 
 	"storcat-wails/internal/catalog"
 	"storcat-wails/internal/config"
@@ -21,6 +23,33 @@ type App struct {
 	catalogService *catalog.Service
 	searchService  *search.Service
 	configManager  *config.Manager
+
+	// scanMu guards activeScanCancel and scanDone -- the product is
+	// one-scan-at-a-time by design, so a single mutex-guarded field is the
+	// simplest correct implementation (no scan-id-keyed map needed).
+	scanMu           sync.Mutex
+	activeScanCancel context.CancelFunc
+	scanDone         chan struct{}
+}
+
+// ScanOptions is the StartScan binding's option parameter: the create-flow
+// toggles (write HTML, include hidden files) plus the secondary-copy
+// destination the frontend configures per scan.
+type ScanOptions struct {
+	WriteHTML       bool   `json:"writeHTML"`
+	IncludeHidden   bool   `json:"includeHidden"`
+	CopyToDirectory string `json:"copyToDirectory"`
+}
+
+// ScanProgress is the scan-progress event payload shape. TotalBytes is
+// echoed back from the caller (StartScan's own denominator) so the frontend
+// never has to correlate two sources to compute a percentage.
+type ScanProgress struct {
+	Path       string `json:"path"`
+	FilesSeen  int    `json:"filesSeen"`
+	BytesSeen  int64  `json:"bytesSeen"`
+	ReadErrors int    `json:"readErrors"`
+	TotalBytes int64  `json:"totalBytes"`
 }
 
 // NewApp creates a new App application struct
@@ -78,6 +107,135 @@ func (a *App) CreateCatalog(title string, directoryPath string, outputName strin
 		return nil, err
 	}
 	return result, nil
+}
+
+// throttledProgress returns a catalog.ProgressCallback that forwards at
+// most one event per 200ms as the scan-progress Wails event below, always
+// carrying the latest counters rather than every intermediate update. This
+// is the only place in the repository allowed to call runtime.EventsEmit
+// for scan progress -- internal/catalog must stay usable from the CLI with
+// no Wails runtime attached (COMPAT-04), so all throttling and emission
+// live here. The a.ctx == nil guard makes the returned closure safe to call
+// from a plain Go test with no Wails runtime attached.
+func (a *App) throttledProgress(totalBytes int64) catalog.ProgressCallback {
+	var lastEmit time.Time
+	return func(u catalog.ProgressUpdate) {
+		if a.ctx == nil {
+			return
+		}
+		if time.Since(lastEmit) < 200*time.Millisecond {
+			return
+		}
+		lastEmit = time.Now()
+		runtime.EventsEmit(a.ctx, "scan:progress", ScanProgress{
+			Path:       u.Path,
+			FilesSeen:  u.FilesSeen,
+			BytesSeen:  u.BytesSeen,
+			ReadErrors: u.ReadErrors,
+			TotalBytes: totalBytes,
+		})
+	}
+}
+
+// sourceTotalBytes is the denominator handed to throttledProgress for
+// percentage computation. It returns zero for now -- the frontend already
+// renders a zero/unknown total as the indeterminate "counting" sub-state --
+// and is the seam a later plan's volume total (Statfs) and folder pre-pass
+// both fill.
+func sourceTotalBytes(sourcePath string) int64 {
+	return 0
+}
+
+// StartScan runs a cancellable, option-driven scan: sourcePath is walked and
+// the resulting catalog is written into outputDir under outputRoot (and,
+// when opts.CopyToDirectory is set, copied there too), with progress
+// throttled onto the scan-progress event below. Both the primary write
+// destination and the secondary copy destination must resolve inside their
+// respective directories per osutil.ContainsPath before anything is walked
+// -- outputRoot and CopyToDirectory both arrive as free text from the
+// renderer (T-25-01, T-25-02). Only one scan may run at a time (T-25-03);
+// a concurrent call is rejected without disturbing the running scan's
+// cancel handle.
+func (a *App) StartScan(title, sourcePath, outputDir, outputRoot string, opts ScanOptions) (*models.CreateCatalogResult, error) {
+	absSource, err := filepath.Abs(sourcePath)
+	if err != nil {
+		return nil, err
+	}
+	absOutput, err := filepath.Abs(outputDir)
+	if err != nil {
+		return nil, err
+	}
+	if outputRoot == "" {
+		return nil, fmt.Errorf("outputRoot must not be empty")
+	}
+
+	// Resolve the output directory's symlinks (e.g. macOS's /var ->
+	// /private/var) before building the two destination paths, so both
+	// sides of the containment check below are in the same normalized
+	// form -- comparing a resolved base against an unresolved child would
+	// otherwise report a false escape for every legitimately-nested path.
+	resolvedOutput, err := filepath.EvalSymlinks(absOutput)
+	if err != nil {
+		return nil, err
+	}
+
+	jsonDest := filepath.Join(resolvedOutput, outputRoot+".json")
+	if ok, err := osutil.ContainsPath(resolvedOutput, jsonDest); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, fmt.Errorf("outputRoot %q escapes the output directory", outputRoot)
+	}
+	htmlDest := filepath.Join(resolvedOutput, outputRoot+".html")
+	if ok, err := osutil.ContainsPath(resolvedOutput, htmlDest); err != nil {
+		return nil, err
+	} else if !ok {
+		return nil, fmt.Errorf("outputRoot %q escapes the output directory", outputRoot)
+	}
+	absOutput = resolvedOutput
+
+	copyToDirectory := opts.CopyToDirectory
+	if copyToDirectory != "" {
+		absCopy, err := filepath.Abs(copyToDirectory)
+		if err != nil {
+			return nil, err
+		}
+		resolvedCopy, err := filepath.EvalSymlinks(absCopy)
+		if err != nil {
+			return nil, err
+		}
+		copyJSONDest := filepath.Join(resolvedCopy, outputRoot+".json")
+		if ok, err := osutil.ContainsPath(resolvedCopy, copyJSONDest); err != nil {
+			return nil, err
+		} else if !ok {
+			return nil, fmt.Errorf("outputRoot %q escapes the copy-to directory", outputRoot)
+		}
+		copyToDirectory = resolvedCopy
+	}
+
+	a.scanMu.Lock()
+	if a.activeScanCancel != nil {
+		a.scanMu.Unlock()
+		return nil, fmt.Errorf("a scan is already running")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.activeScanCancel = cancel
+	a.scanDone = make(chan struct{})
+	a.scanMu.Unlock()
+
+	defer func() {
+		a.scanMu.Lock()
+		close(a.scanDone)
+		a.activeScanCancel = nil
+		a.scanMu.Unlock()
+		cancel()
+	}()
+
+	catOpts := catalog.Options{WriteHTML: opts.WriteHTML, IncludeHidden: opts.IncludeHidden}
+	totalBytes := sourceTotalBytes(absSource)
+
+	return a.catalogService.CreateCatalogWithContext(
+		ctx, title, absSource, absOutput, outputRoot, copyToDirectory, catOpts, a.throttledProgress(totalBytes),
+	)
 }
 
 // SearchCatalogs searches across catalog files for a term
