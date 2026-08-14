@@ -244,11 +244,13 @@ func (a *App) OpenExternal(url string) {
 
 // RevealInFileManager asks the operating system to reveal path -- a
 // catalog's JSON file or its HTML companion -- in the platform's file
-// manager, selected within its containing folder. Delegates entirely to
-// internal/osutil, which validates the path and builds an argv-only
-// command; this binding adds no logic of its own.
-func (a *App) RevealInFileManager(path string) error {
-	return osutil.RevealInFileManager(path)
+// manager, selected within its containing folder. catalogDir is the
+// frontend's currently configured catalog directory; internal/osutil
+// rejects any path that does not resolve inside it, in addition to
+// validating the path itself and building an argv-only command. This
+// binding adds no logic of its own.
+func (a *App) RevealInFileManager(path string, catalogDir string) error {
+	return osutil.RevealInFileManager(path, catalogDir)
 }
 
 // GetVersion returns the application version injected at build time

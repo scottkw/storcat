@@ -23,7 +23,7 @@ export function OpenExternal(arg1:string):Promise<void>;
 
 export function ReadHtmlFile(arg1:string):Promise<string>;
 
-export function RevealInFileManager(arg1:string):Promise<void>;
+export function RevealInFileManager(arg1:string,arg2:string):Promise<void>;
 
 export function SearchCatalogs(arg1:string,arg2:string):Promise<Array<models.SearchResult>>;
 

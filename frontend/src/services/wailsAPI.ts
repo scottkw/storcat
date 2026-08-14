@@ -189,9 +189,13 @@ export const wailsAPI = {
     }
   },
 
-  revealInFileManager: async (path: string) => {
+  // catalogDir is the frontend's currently configured catalog directory --
+  // threaded through so the Go side can reject any path that does not
+  // resolve inside it (WR-02: this binding is callable from any renderer
+  // JS, not only this call site).
+  revealInFileManager: async (path: string, catalogDir: string) => {
     try {
-      await RevealInFileManager(path);
+      await RevealInFileManager(path, catalogDir);
       return { success: true as const };
     } catch (error: any) {
       return wailsError(error);

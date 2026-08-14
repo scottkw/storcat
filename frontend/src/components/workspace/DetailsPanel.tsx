@@ -89,7 +89,7 @@ const buttonBase: CSSProperties = {
 // actions operate on the catalog's own file path regardless of whether a
 // node is also selected -- neither ever receives a free-form or
 // user-typed path.
-function Footer({ catalog }: { catalog: models.CatalogMetadata }) {
+function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; catalogDir: string | null }) {
   const [platform, setPlatform] = useState<string | null>(null);
   const [openBusy, setOpenBusy] = useState(false);
   const [revealBusy, setRevealBusy] = useState(false);
@@ -131,7 +131,15 @@ function Footer({ catalog }: { catalog: models.CatalogMetadata }) {
     if (revealBusy) return;
     setRevealBusy(true);
     setError(null);
-    const result = await wailsAPI.revealInFileManager(catalog.path);
+    // catalogDir is required for the Go side's containment check (WR-02) --
+    // fail closed here rather than sending an empty directory the backend
+    // would just reject anyway.
+    if (!catalogDir) {
+      setError('No catalog directory configured.');
+      setRevealBusy(false);
+      return;
+    }
+    const result = await wailsAPI.revealInFileManager(catalog.path, catalogDir);
     if (!result.success) {
       setError(result.error);
     }
@@ -267,7 +275,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
           </div>
           <MetaRows rows={metaRows} />
         </div>
-        <Footer catalog={catalog} />
+        <Footer catalog={catalog} catalogDir={state.catalogDir} />
       </div>
     );
   }
@@ -328,7 +336,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
             backend surfaces. */}
         <MetaRows rows={metaRows} />
       </div>
-      <Footer catalog={catalog} />
+      <Footer catalog={catalog} catalogDir={state.catalogDir} />
     </div>
   );
 }

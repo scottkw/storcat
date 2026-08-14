@@ -121,7 +121,8 @@ func TestRevealArgv_HostilePath_Linux(t *testing.T) {
 }
 
 func TestRevealInFileManager_RejectsMissingPath(t *testing.T) {
-	err := RevealInFileManager(filepath.Join(t.TempDir(), "does-not-exist.json"))
+	dir := t.TempDir()
+	err := RevealInFileManager(filepath.Join(dir, "does-not-exist.json"), dir)
 	if err == nil {
 		t.Fatal("expected an error for a missing path, got nil")
 	}
@@ -129,7 +130,7 @@ func TestRevealInFileManager_RejectsMissingPath(t *testing.T) {
 
 func TestRevealInFileManager_RejectsDirectory(t *testing.T) {
 	dir := t.TempDir()
-	err := RevealInFileManager(dir)
+	err := RevealInFileManager(dir, dir)
 	if err == nil {
 		t.Fatal("expected an error for a directory, got nil")
 	}
@@ -141,9 +142,47 @@ func TestRevealInFileManager_RejectsDisallowedExtension(t *testing.T) {
 	if err := os.WriteFile(path, []byte("hello"), 0644); err != nil {
 		t.Fatalf("write test file: %v", err)
 	}
-	err := RevealInFileManager(path)
+	err := RevealInFileManager(path, dir)
 	if err == nil {
 		t.Fatal("expected an error for a disallowed extension, got nil")
+	}
+}
+
+func TestRevealInFileManager_RejectsMissingCatalogDir(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "catalog.json")
+	if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+	err := RevealInFileManager(path, "")
+	if err == nil {
+		t.Fatal("expected an error when no catalog directory is configured, got nil")
+	}
+}
+
+// TestRevealInFileManager_RejectsPathOutsideCatalogDir proves containment is
+// actually wired into RevealInFileManager itself, not just containsPath in
+// isolation -- a valid .json regular file, but outside catalogDir, must be
+// rejected before exec.Command is ever reached (so this test cannot pop a
+// real Finder/Explorer/file-manager window).
+func TestRevealInFileManager_RejectsPathOutsideCatalogDir(t *testing.T) {
+	base := t.TempDir()
+	catalogDir := filepath.Join(base, "catalogs")
+	outsideDir := filepath.Join(base, "outside")
+	if err := os.Mkdir(catalogDir, 0755); err != nil {
+		t.Fatalf("mkdir catalogDir: %v", err)
+	}
+	if err := os.Mkdir(outsideDir, 0755); err != nil {
+		t.Fatalf("mkdir outsideDir: %v", err)
+	}
+	path := filepath.Join(outsideDir, "catalog.json")
+	if err := os.WriteFile(path, []byte("{}"), 0644); err != nil {
+		t.Fatalf("write test file: %v", err)
+	}
+
+	err := RevealInFileManager(path, catalogDir)
+	if err == nil {
+		t.Fatal("expected an error for a path outside the configured catalog directory, got nil")
 	}
 }
 
@@ -170,8 +209,107 @@ func TestRevealInFileManager_ResolvesRelativePath(t *testing.T) {
 		t.Fatalf("chdir: %v", err)
 	}
 
-	err = RevealInFileManager("not-a-catalog.txt")
+	err = RevealInFileManager("not-a-catalog.txt", dir)
 	if err == nil {
 		t.Fatal("expected an error for a disallowed extension via a relative path, got nil")
 	}
+}
+
+// TestContainsPath exercises the containment check in isolation -- no
+// exec.Command in reach here at all -- covering the four scenarios WR-02
+// asked for: a legitimate in-directory path, a sibling directory that only
+// shares catalogDir's name as a string prefix, a "../" escape, and a
+// symlink whose resolved target lands outside catalogDir.
+func TestContainsPath(t *testing.T) {
+	base := t.TempDir()
+	catalogDir := filepath.Join(base, "catalogs")
+	if err := os.Mkdir(catalogDir, 0755); err != nil {
+		t.Fatalf("mkdir catalogDir: %v", err)
+	}
+
+	// resolvedCatalogDir mirrors what containsPath computes internally for
+	// catalogDir (filepath.Abs + filepath.EvalSymlinks). On macOS t.TempDir()
+	// lives under a symlinked /var -> /private/var, so building "resolved"
+	// test inputs from the raw (unresolved) catalogDir would compare a
+	// resolved base against an unresolved child and fail for the wrong
+	// reason. Every subtest below builds its "resolved" input from this same
+	// canonical form, exactly as RevealInFileManager does by running
+	// EvalSymlinks on the real file before calling containsPath.
+	resolvedCatalogDir, err := filepath.EvalSymlinks(catalogDir)
+	if err != nil {
+		t.Fatalf("EvalSymlinks(catalogDir): %v", err)
+	}
+
+	t.Run("legitimate path inside catalogDir", func(t *testing.T) {
+		resolved := filepath.Join(resolvedCatalogDir, "catalog.json")
+		ok, err := containsPath(catalogDir, resolved)
+		if err != nil {
+			t.Fatalf("containsPath returned an error: %v", err)
+		}
+		if !ok {
+			t.Error("expected a path inside catalogDir to be contained, got false")
+		}
+	})
+
+	t.Run("sibling directory sharing a name prefix", func(t *testing.T) {
+		// "/…/catalogs-evil" has "/…/catalogs" as a string prefix -- a naive
+		// strings.HasPrefix check would wrongly admit this.
+		evilDir := resolvedCatalogDir + "-evil"
+		if err := os.Mkdir(evilDir, 0755); err != nil {
+			t.Fatalf("mkdir evilDir: %v", err)
+		}
+		resolved := filepath.Join(evilDir, "catalog.json")
+		ok, err := containsPath(catalogDir, resolved)
+		if err != nil {
+			t.Fatalf("containsPath returned an error: %v", err)
+		}
+		if ok {
+			t.Error("expected a name-prefix-sharing sibling directory to NOT be contained, got true")
+		}
+	})
+
+	t.Run("dot-dot escape", func(t *testing.T) {
+		// filepath.Abs/Clean already collapse a literal "../" segment before
+		// containsPath ever runs (RevealInFileManager calls filepath.Abs on
+		// the input first), so the escape is exercised the way it actually
+		// arrives: an absolute, already-cleaned path outside catalogDir.
+		escaped := filepath.Clean(filepath.Join(resolvedCatalogDir, "..", "outside", "catalog.json"))
+		ok, err := containsPath(catalogDir, escaped)
+		if err != nil {
+			t.Fatalf("containsPath returned an error: %v", err)
+		}
+		if ok {
+			t.Error("expected a \"../\" escape to NOT be contained, got true")
+		}
+	})
+
+	t.Run("symlink pointing outside catalogDir", func(t *testing.T) {
+		outsideDir := filepath.Join(base, "outside-target")
+		if err := os.Mkdir(outsideDir, 0755); err != nil {
+			t.Fatalf("mkdir outsideDir: %v", err)
+		}
+		realFile := filepath.Join(outsideDir, "real-catalog.json")
+		if err := os.WriteFile(realFile, []byte("{}"), 0644); err != nil {
+			t.Fatalf("write real file: %v", err)
+		}
+		link := filepath.Join(catalogDir, "link.json")
+		if err := os.Symlink(realFile, link); err != nil {
+			t.Skipf("symlinks unavailable in this environment: %v", err)
+		}
+
+		// Mirrors what RevealInFileManager itself does before calling
+		// containsPath: resolve the symlink first, then check containment
+		// against the resolved (not the linked) location.
+		resolved, err := filepath.EvalSymlinks(link)
+		if err != nil {
+			t.Fatalf("EvalSymlinks: %v", err)
+		}
+		ok, err := containsPath(catalogDir, resolved)
+		if err != nil {
+			t.Fatalf("containsPath returned an error: %v", err)
+		}
+		if ok {
+			t.Error("expected a symlink resolving outside catalogDir to NOT be contained, got true")
+		}
+	})
 }

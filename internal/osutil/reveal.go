@@ -73,12 +73,54 @@ var allowedRevealExtensions = map[string]bool{
 	".html": true,
 }
 
+// containsPath reports whether resolved -- an already absolute,
+// symlink-resolved path -- lives inside catalogDir. catalogDir is resolved
+// to its own absolute, symlink-resolved form here so both sides of the
+// comparison are in the same normalized form before filepath.Rel runs.
+//
+// filepath.Rel, not strings.HasPrefix, is what makes this separator-aware:
+// a naive prefix check on "/catalogs-evil".HasPrefix("/catalogs") is true,
+// which would wrongly admit a sibling directory that merely shares
+// catalogDir's name as a string prefix. Rel instead returns a path that
+// starts with ".." whenever resolved falls outside catalogDir, which is
+// exactly what both a sibling directory and a "../" escape produce.
+//
+// Extracted as its own pure function -- like revealArgvFor above -- so
+// containment is exercised directly by table-driven tests without ever
+// reaching exec.Command.
+func containsPath(catalogDir, resolved string) (bool, error) {
+	absCatalogDir, err := filepath.Abs(catalogDir)
+	if err != nil {
+		return false, err
+	}
+	resolvedCatalogDir, err := filepath.EvalSymlinks(absCatalogDir)
+	if err != nil {
+		return false, err
+	}
+	rel, err := filepath.Rel(resolvedCatalogDir, resolved)
+	if err != nil {
+		return false, err
+	}
+	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+		return false, nil
+	}
+	return true, nil
+}
+
 // RevealInFileManager asks the operating system's file manager to reveal
 // path, selected within its containing folder. path is resolved to an
 // absolute, symlink-resolved form and validated -- must exist, must be a
-// regular file, must carry an allowed extension -- before anything else
-// happens; only after every check passes is an argument vector built and
-// run.
+// regular file, must carry an allowed extension, and must resolve inside
+// catalogDir (the caller's configured catalog directory) -- before anything
+// else happens; only after every check passes is an argument vector built
+// and run.
+//
+// catalogDir closes the gap the phase's plan (T-23-02) originally accepted:
+// this binding is reachable from any renderer JS, not only the one caller
+// that currently supplies a safe path, so extension + regular-file alone
+// let any `.json`/`.html` file on the OS user's own filesystem be revealed.
+// Requiring containment restricts the blast radius back to the catalog
+// directory the frontend actually configured.
 //
 // The command is always built as a name plus a distinct argument slice via
 // exec.Command, which never invokes a shell of any kind. path is always its
@@ -86,7 +128,7 @@ var allowedRevealExtensions = map[string]bool{
 // line or handed to an interpreter -- no character in path, however
 // hostile, can therefore be interpreted as a second command. This is the
 // entire mitigation for T-23-01, the phase's highest-severity threat.
-func RevealInFileManager(path string) error {
+func RevealInFileManager(path string, catalogDir string) error {
 	absPath, err := filepath.Abs(path)
 	if err != nil {
 		return fmt.Errorf("reveal %s: resolve path: %w", path, err)
@@ -95,6 +137,14 @@ func RevealInFileManager(path string) error {
 	// Resolve symlinks before any other check so a link cannot point the
 	// reveal at something the extension/regular-file checks below would
 	// otherwise be evaluating against the wrong target.
+	//
+	// ponytail: EvalSymlinks-then-Stat-then-exec leaves a TOCTOU window --
+	// nothing pins the resolved file between this check and the
+	// exec.Command call below, so a write-access attacker could swap it in
+	// between. Accepted: exploiting it already requires local write access
+	// to the exact resolved path, which grants far stronger primitives than
+	// "reveal the wrong file." Upgrade path if this file is ever revisited:
+	// open the resolved path with O_NOFOLLOW and pass the fd, not the path.
 	resolved, err := filepath.EvalSymlinks(absPath)
 	if err != nil {
 		return fmt.Errorf("reveal %s: %w", path, err)
@@ -113,6 +163,17 @@ func RevealInFileManager(path string) error {
 	ext := strings.ToLower(filepath.Ext(resolved))
 	if !allowedRevealExtensions[ext] {
 		return fmt.Errorf("reveal %s: unsupported extension %q", path, ext)
+	}
+
+	if catalogDir == "" {
+		return fmt.Errorf("reveal %s: no catalog directory configured", path)
+	}
+	ok, err := containsPath(catalogDir, resolved)
+	if err != nil {
+		return fmt.Errorf("reveal %s: resolve catalog directory: %w", path, err)
+	}
+	if !ok {
+		return fmt.Errorf("reveal %s: outside configured catalog directory", path)
 	}
 
 	name, args := revealArgvFor(runtime.GOOS, resolved)
