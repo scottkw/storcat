@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
-import { formatBytes, formatCount } from '../../lib/format';
+import { formatCount } from '../../lib/format';
 import { models } from '../../../wailsjs/go/models';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
+import PaletteResultList, { PALETTE_PAGE_STEP_FALLBACK } from './palette/PaletteResultList';
 
 export interface CommandPaletteProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ export interface CommandPaletteProps {
 
 const PALETTE_DEBOUNCE_MS = 200;
 const PALETTE_MIN_QUERY = 2;
+const PALETTE_LISTBOX_ID = 'ws-palette-listbox';
 
 // Always mounted by WorkspaceShell and returns null when closed -- it must
 // not be conditionally mounted, because the shared useModalBehavior hook
@@ -28,6 +30,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   // first in-flight query, so later keystrokes keep prior results visible
   // instead of flashing.
   const [settled, setSettled] = useState(false);
+  const [activeIndex, setActiveIndex] = useState(-1);
 
   // Wails bindings take no abort signal, so cancelling an in-flight request
   // is impossible -- gating the *handling* of the response is the only
@@ -36,6 +39,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
   // value still matches the ref's current value when it lands.
   const requestIdRef = useRef(0);
   const inputRef = useRef<HTMLInputElement>(null);
+  const listScrollRef = useRef<HTMLDivElement>(null);
 
   // Focus trap, Escape-to-close, scroll lock, and focus restore all arrive
   // through the shared hook -- the palette implements none of the four
@@ -87,11 +91,81 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     return () => clearTimeout(timer);
   }, [query, isOpen, state.catalogDir]);
 
+  // A fresh result set always starts on its first row; an empty one has no
+  // active row to activate. Keyed on the results array reference, which
+  // only changes when a new response (or a reset) lands.
+  useEffect(() => {
+    setActiveIndex(results.length > 0 ? 0 : -1);
+  }, [results]);
+
+  // The activation seam: in this plan, Enter/click just closes the palette
+  // (PLT-04's complete scope). Plan 24-05 extends this same handler with
+  // the catalog switch and reveal request PLT-05 specifies -- it adds to
+  // this seam rather than replacing it.
+  function handleActivate(_result: models.SearchResult) {
+    onClose();
+  }
+
+  // Reads the live viewport instead of hardcoding a step: clientHeight of
+  // the scroll region divided by the rendered height of one option row,
+  // floored and clamped to at least one row. Falls back when the ref or an
+  // option isn't measurable yet (e.g. first render).
+  function computePageStep(): number {
+    const container = listScrollRef.current;
+    if (!container) return PALETTE_PAGE_STEP_FALLBACK;
+    const firstOption = container.querySelector<HTMLElement>('[role="option"]');
+    if (!firstOption || firstOption.offsetHeight === 0) return PALETTE_PAGE_STEP_FALLBACK;
+    return Math.max(Math.floor(container.clientHeight / firstOption.offsetHeight), 1);
+  }
+
+  // Handles exactly the seven navigation/activation keys. Escape is
+  // deliberately left alone -- the shared useModalBehavior hook already
+  // closes on Escape from anywhere inside the panel, and intercepting it
+  // here would produce two close paths for one press.
+  function handleKeyDown(event: React.KeyboardEvent<HTMLInputElement>) {
+    const lastIndex = results.length - 1;
+    switch (event.key) {
+      case 'ArrowDown':
+        event.preventDefault();
+        setActiveIndex((i) => Math.min(i + 1, lastIndex));
+        break;
+      case 'ArrowUp':
+        event.preventDefault();
+        setActiveIndex((i) => Math.max(i - 1, 0));
+        break;
+      case 'Home':
+        event.preventDefault();
+        setActiveIndex(0);
+        break;
+      case 'End':
+        event.preventDefault();
+        setActiveIndex(lastIndex);
+        break;
+      case 'PageDown':
+        event.preventDefault();
+        setActiveIndex((i) => Math.min(i + computePageStep(), lastIndex));
+        break;
+      case 'PageUp':
+        event.preventDefault();
+        setActiveIndex((i) => Math.max(i - computePageStep(), 0));
+        break;
+      case 'Enter': {
+        event.preventDefault();
+        const active = results[activeIndex];
+        if (active) handleActivate(active);
+        break;
+      }
+      default:
+        return;
+    }
+  }
+
   if (!isOpen) return null;
 
   const trimmedQuery = query.trim();
   const isHint = trimmedQuery.length < PALETTE_MIN_QUERY || !state.catalogDir;
   const isSearching = !isHint && !settled;
+  const isResults = !isHint && !isSearching && total > 0;
 
   const filesIndexed = state.catalogs.reduce(
     (sum, catalog) => (typeof catalog.fileCount === 'number' ? sum + catalog.fileCount : sum),
@@ -107,6 +181,8 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
       : total > 50
         ? `50 of ${total}`
         : `${total} hits`;
+
+  const activeOptionId = isResults && activeIndex >= 0 ? `ws-palette-option-${activeIndex}` : undefined;
 
   return (
     <div className="ws-palette-scrim" onClick={onClose}>
@@ -135,8 +211,13 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
           <input
             className="ws-palette-input"
             ref={inputRef}
+            role="combobox"
+            aria-expanded={isResults}
+            aria-controls={PALETTE_LISTBOX_ID}
+            aria-activedescendant={activeOptionId}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
+            onKeyDown={handleKeyDown}
             placeholder={placeholder}
             aria-label="Search every catalog"
           />
@@ -144,37 +225,28 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             {readout}
           </span>
         </div>
-        <div className="ws-palette-list">
-          {results.map((result, i) => (
-            <div className="ws-palette-row" key={`${result.catalogFilePath}:${result.fullName}:${i}`}>
-              <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <span
-                  className="mono"
-                  style={{ fontSize: 12.5, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}
-                >
-                  {result.basename}
-                </span>
-                <span
-                  className="mono"
-                  style={{
-                    fontSize: 11,
-                    color: 'var(--dm)',
-                    overflow: 'hidden',
-                    textOverflow: 'ellipsis',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {result.fullPath}
-                </span>
-              </div>
-              <span className="mono" style={{ fontSize: 11, color: 'var(--dm)', flex: 'none' }}>
-                {result.catalog}
-              </span>
-              <span className="mono" style={{ fontSize: 11, color: 'var(--dm)', flex: 'none' }}>
-                {formatBytes(result.size)}
-              </span>
-            </div>
-          ))}
+        {isHint ? (
+          <div className="ws-palette-state">Type to search…</div>
+        ) : isSearching ? (
+          <div className="ws-palette-state">Searching…</div>
+        ) : isResults ? (
+          <PaletteResultList
+            id={PALETTE_LISTBOX_ID}
+            results={results}
+            total={total}
+            query={query}
+            activeIndex={activeIndex}
+            onActiveIndexChange={setActiveIndex}
+            onActivate={handleActivate}
+            scrollRef={listScrollRef}
+          />
+        ) : (
+          <div className="ws-palette-state">No file in any catalog matches that.</div>
+        )}
+        <div className="ws-palette-footer mono">
+          <span>↵ reveal in catalog</span>
+          <span>esc close</span>
+          <span style={{ marginLeft: 'auto' }}>searches names and paths</span>
         </div>
       </div>
     </div>

@@ -10,6 +10,8 @@ export interface PaletteResultListProps {
   onActiveIndexChange: (index: number) => void;
   onActivate: (result: models.SearchResult) => void;
   scrollRef: React.RefObject<HTMLDivElement>;
+  // Lets the consumer's combobox input point aria-controls at this listbox.
+  id?: string;
 }
 
 // Fallback page step for PageUp/PageDown when the viewport can't be
@@ -33,6 +35,7 @@ function PaletteResultList({
   onActiveIndexChange,
   onActivate,
   scrollRef,
+  id,
 }: PaletteResultListProps) {
   // Keeps the active option scrolled into view as the keyboard drives it.
   // 'nearest' is what keeps arrow-key traversal from jerking the list when
@@ -45,7 +48,7 @@ function PaletteResultList({
   }, [activeIndex, scrollRef]);
 
   return (
-    <div className="ws-palette-list" role="listbox" aria-label="Search results" ref={scrollRef}>
+    <div id={id} className="ws-palette-list" role="listbox" aria-label="Search results" ref={scrollRef}>
       {results.map((result, index) => (
         <PaletteResultRow
           key={result.catalogFilePath + PALETTE_KEY_SEPARATOR + result.fullName}
