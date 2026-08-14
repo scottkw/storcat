@@ -512,6 +512,14 @@
   text-align: right;
 }
 
+.ws-palette-truncation {
+  padding: 10px 14px;
+  border-top: 1px solid var(--l2);
+  font-size: 11.5px;
+  color: var(--dm);
+  line-height: 1.5;
+}
+
 .ws-status {
   height: 26px;
   flex: none;
