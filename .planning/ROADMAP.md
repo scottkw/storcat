@@ -62,7 +62,7 @@
 **Compatibility strategy:** COMPAT-01 through COMPAT-06 are cross-cutting regression guarantees, not new capability. They are distributed as success criteria across the phases whose changes could break them — Phase 23 (LoadCatalog/LoadCatalogFlat exercised against real v1.x/v2.x catalogs), Phase 25 (the only phase modifying the shared write path, the `ProgressCallback` signature, and the internal/catalog↔Wails boundary that the CLI depends on staying clean), Phase 26 (window-state persistence, rebuilt inside the new Settings modal), and Phase 28 (the closing full-CI-build/sign/release gate, run after the milestone's one new Go dependency and the frontend rewrite are both in place) — rather than collected into a standalone hardening phase at the end. A final-phase-only approach would let a regression introduced in Phase 23 or 25 go undetected until the last phase; distributing them means each guarantee is verified at the point where its supporting change actually lands, consistent with the milestone's autonomous-execution verification standard (Go tests + CLI re-run + dev-browser visual check per phase).
 
 - [x] **Phase 22: Shell + Token Layer** - Single-view workspace shell (toolbar, 3-pane grid, status bar) with the full 11-theme token layer and responsive tiers (completed 2026-08-13)
-- [ ] **Phase 23: Rail + Virtualized Tree** - Catalog rail and a 40k-node virtualized tree pane with a details panel, backed by a new LoadCatalogFlat method and a sidecar count cache
+- [x] **Phase 23: Rail + Virtualized Tree** - Catalog rail and a 40k-node virtualized tree pane with a details panel, backed by a new LoadCatalogFlat method and a sidecar count cache (completed 2026-08-13)
 - [ ] **Phase 24: Cmd-K Command Palette** - Cross-catalog ⌘K search with capped results and the shared modal-behavior hook
 - [ ] **Phase 25: Create Slide-over + Progress/Cancellation/Partial-Catalog** - Volume-aware create flow with live scan progress, real cancellation, and an error-tolerant partial-catalog path
 - [ ] **Phase 26: Settings** - Theme, density, rail position, and catalog defaults in one settings modal
@@ -120,7 +120,7 @@ Plans:
   4. User sees the catalog header (title, `.json`/`.html` chips, file count/JSON size/bytes-catalogued/modified-date line), a breadcrumb path with accent-colored ancestor segments, and a details panel that follows the current selection with working "Open HTML catalog" and "Reveal JSON in file manager" actions (TREE-04, TREE-05, TREE-07, TREE-08)
   5. User's scroll position and expansion state reset cleanly on catalog switch (TREE-06); the status bar shows live catalog count, indexed file count, and total bytes (SHELL-06); catalogs created by StorCat v1.x and v2.x open without conversion (COMPAT-01); and empty-library / unreadable-catalog states appear with file/byte-offset/reason/raw-parse-error detail (STATE-01, STATE-02)
 
-**Plans**: 6/6 plans executed
+**Plans**: 6/6 plans complete
 
 **Wave 1**
 
@@ -243,7 +243,7 @@ Plans:
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
-| 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | In Progress|  |
+| 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
 | 24. Cmd-K Command Palette | v3.0.0 | 0/TBD | Not started | - |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
