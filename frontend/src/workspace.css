@@ -96,6 +96,70 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 18px;
+  cursor: pointer;
+}
+
+/* Base fill set here (not inline) so :hover and the selected rule below can
+ * actually win -- Phase 22 recorded a defect where an inline background
+ * permanently outranked a hover rule. The selected rule is declared after
+ * :hover so a selected row keeps its fill even while the pointer is over it. */
+.ws-tree-row:hover {
+  background: var(--hov);
+}
+
+.ws-tree-row[data-selected='true'] {
+  background: var(--sel);
+}
+
+.ws-tree-caret {
+  width: 10px;
+  flex: none;
+  font-size: 10px;
+  line-height: 1;
+  text-align: center;
+  color: var(--fn);
+}
+
+.ws-tree-shape {
+  width: 9px;
+  height: 9px;
+  flex: none;
+  display: block;
+}
+
+.ws-tree-shape[data-kind='directory'] {
+  border-radius: 2px;
+  background: var(--ac);
+}
+
+.ws-tree-shape[data-kind='file'] {
+  border-radius: 50%;
+  background: var(--fn);
+}
+
+.ws-tree-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--fs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tx);
+}
+
+.ws-tree-row[data-selected='true'] .ws-tree-name {
+  color: var(--ac);
+}
+
+.ws-tree-size {
+  flex: none;
+  font-size: 11px;
+  color: var(--fn);
+  white-space: nowrap;
 }
 
 .ws-meta-row {
