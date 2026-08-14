@@ -45,8 +45,8 @@
 - [x] **TREE-04**: User sees the catalog header with title, `.json`/`.html` chips, and the metadata line (file count, JSON size, bytes catalogued, modified date)
 - [x] **TREE-05**: User sees a breadcrumb path for the current selection, with ancestor segments in the accent color
 - [x] **TREE-06**: User's scroll position and expansion state do not leak between catalogs when switching
-- [ ] **TREE-07**: User sees the details panel follow the current selection, showing name, path, key/value metadata, and the actions footer
-- [ ] **TREE-08**: User can open the catalog's HTML from the details panel, and reveal its JSON in the OS file manager
+- [x] **TREE-07**: User sees the details panel follow the current selection, showing name, path, key/value metadata, and the actions footer
+- [x] **TREE-08**: User can open the catalog's HTML from the details panel, and reveal its JSON in the OS file manager
 
 ### Palette — ⌘K search
 
@@ -174,8 +174,8 @@ Deferred — acknowledged but not in this roadmap.
 | TREE-04 | Phase 23 | Complete |
 | TREE-05 | Phase 23 | Complete |
 | TREE-06 | Phase 23 | Complete |
-| TREE-07 | Phase 23 | Pending |
-| TREE-08 | Phase 23 | Pending |
+| TREE-07 | Phase 23 | Complete |
+| TREE-08 | Phase 23 | Complete |
 | PLT-01 | Phase 24 | Pending |
 | PLT-02 | Phase 24 | Pending |
 | PLT-03 | Phase 24 | Pending |

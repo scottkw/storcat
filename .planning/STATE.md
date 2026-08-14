@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 23
 current_phase_name: Rail + Virtualized Tree
-status: executing
-stopped_at: Completed 23-05-PLAN.md
-last_updated: "2026-08-14T01:58:28.195Z"
+status: verifying
+stopped_at: Completed 23-06-PLAN.md (Phase 23 complete, all 6 plans)
+last_updated: "2026-08-14T02:17:33.079Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 13
-  completed_plans: 12
-  percent: 14
+  completed_plans: 13
+  percent: 29
 ---
 
 # Project State
@@ -30,10 +30,10 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 23 (Rail + Virtualized Tree) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [█████████░] 92%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -71,6 +71,7 @@ Progress: [█████████░] 92%
 | Phase 23 P03 | 17min | 3 tasks | 5 files |
 | Phase 23 P04 | 14min | 3 tasks | 5 files |
 | Phase 23 P05 | 45min | 2 tasks | 4 files |
+| Phase 23 P06 | 50min | 4 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -104,6 +105,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: Header renders in both ready branches (empty-catalog and rows) so a zero-file catalog still shows exact 0-value metadata
 - [Phase ?]: isUnreadable check runs before the loading branch so a catalog already known broken from the rail listing never flashes a loading state first
 - [Phase ?]: Fixed wailsAPI.ts's silent 'Unknown error' bug (Wails rejects with a plain string, not an Error instance) via extractErrorMessage(), applied to all 12 affected call sites
+- [Phase ?]: 23-06: No directory-containment check added to RevealInFileManager -- the plan's own threat model (T-23-02) explicitly rejected it since the locked signature carries no directory param
+- [Phase ?]: 23-06: macOS reveal verified via coordinator's direct AppleScript Finder-selection readback against the exact open -R argv this binding builds, including a hostile filename; Windows argv shape deferred (no Windows machine available), logged to WINDOWS.md
 
 ### Key Research Findings
 
@@ -135,6 +138,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T01:58:28.181Z
-Stopped at: Completed 23-05-PLAN.md
+Last session: 2026-08-14T02:17:33.047Z
+Stopped at: Completed 23-06-PLAN.md (Phase 23 complete, all 6 plans)
 Resume file: None
