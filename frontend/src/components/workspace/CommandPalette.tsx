@@ -21,7 +21,7 @@ const PALETTE_LISTBOX_ID = 'ws-palette-listbox';
 // lock and restore focus, and Phase 25's animated exit depends on the same
 // contract.
 function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
-  const { state } = useAppContext();
+  const { state, dispatch } = useAppContext();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<models.SearchResult[]>([]);
   const [total, setTotal] = useState(0);
@@ -98,11 +98,22 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     setActiveIndex(results.length > 0 ? 0 : -1);
   }, [results]);
 
-  // The activation seam: in this plan, Enter/click just closes the palette
-  // (PLT-04's complete scope). Plan 24-05 extends this same handler with
-  // the catalog switch and reveal request PLT-05 specifies -- it adds to
-  // this seam rather than replacing it.
-  function handleActivate(_result: models.SearchResult) {
+  // Full PLT-05 sequence. Dispatch order is load-bearing: SELECT_CATALOG
+  // clears pendingReveal as part of its atomic multi-field update (that
+  // clearing IS the stale-discard guarantee for a rail switch superseding
+  // a reveal) -- so issuing the reveal request before the catalog switch
+  // would have the switch immediately erase it, and every cross-catalog
+  // reveal would silently do nothing. Switch first, then request.
+  function handleActivate(result: models.SearchResult) {
+    if (result.catalogFilePath !== state.currentCatalogId) {
+      dispatch({ type: 'SELECT_CATALOG', payload: result.catalogFilePath });
+    }
+    // Dispatched unconditionally, including when the hit is already in the
+    // current catalog -- in that case tree.status is already 'ready', so
+    // TreePane's reveal effect fires on the next commit with no load in
+    // between. This is also the path the idempotent repeat-reveal case
+    // exercises.
+    dispatch({ type: 'SET_PENDING_REVEAL', payload: result.fullName });
     onClose();
   }
 
