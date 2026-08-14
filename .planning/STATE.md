@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 23
 current_phase_name: Rail + Virtualized Tree
 status: executing
-stopped_at: Completed 23-04-PLAN.md
-last_updated: "2026-08-14T01:43:39.686Z"
+stopped_at: Completed 23-05-PLAN.md
+last_updated: "2026-08-14T01:58:28.195Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 13
-  completed_plans: 11
+  completed_plans: 12
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 23 (Rail + Virtualized Tree) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [█████████░] 85%
+Progress: [█████████░] 92%
 
 ## Performance Metrics
 
@@ -70,6 +70,7 @@ Progress: [█████████░] 85%
 | Phase 23 P02 | 24min | 3 tasks | 9 files |
 | Phase 23 P03 | 17min | 3 tasks | 5 files |
 | Phase 23 P04 | 14min | 3 tasks | 5 files |
+| Phase 23 P05 | 45min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -99,6 +100,10 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: [Phase 23-04]: Directory chip's hover gets its own .ws-dir-chip:hover rule (border-color only), not a reuse of .ws-chip:hover which also recolors text -- 23-UI-SPEC calls for hover-border-only
 - [Phase ?]: [Phase 23-04]: SET_CATALOG_DIR clears currentCatalogId/tree/expanded/selected but deliberately leaves state.catalogs untouched -- the immediately-following SET_CATALOGS dispatch replaces the list
 - [Phase ?]: [Phase 23-04]: themeTokens.ts' safeGetItem/safeSetItem exported (were module-private) for reuse by CatalogRail.tsx's directory-persistence, instead of a second try/catch wrapper
+- [Phase ?]: Title stays base sans (not mono) in the catalog header, matching 23-04's rail-row precedent and the UI-SPEC's per-section contract over its general Typography summary
+- [Phase ?]: Header renders in both ready branches (empty-catalog and rows) so a zero-file catalog still shows exact 0-value metadata
+- [Phase ?]: isUnreadable check runs before the loading branch so a catalog already known broken from the rail listing never flashes a loading state first
+- [Phase ?]: Fixed wailsAPI.ts's silent 'Unknown error' bug (Wails rejects with a plain string, not an Error instance) via extractErrorMessage(), applied to all 12 affected call sites
 
 ### Key Research Findings
 
@@ -130,6 +135,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T01:43:28.810Z
-Stopped at: Completed 23-04-PLAN.md
+Last session: 2026-08-14T01:58:28.181Z
+Stopped at: Completed 23-05-PLAN.md
 Resume file: None

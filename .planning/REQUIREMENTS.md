@@ -42,7 +42,7 @@
 - [x] **TREE-01**: User can browse a catalog of 40,000+ nodes with smooth scrolling and no freeze
 - [x] **TREE-02**: User can expand and collapse directories; clicking a directory both toggles and selects it, clicking a file selects only
 - [x] **TREE-03**: User can expand every directory in the current catalog, or collapse back to root, from the breadcrumb bar
-- [ ] **TREE-04**: User sees the catalog header with title, `.json`/`.html` chips, and the metadata line (file count, JSON size, bytes catalogued, modified date)
+- [x] **TREE-04**: User sees the catalog header with title, `.json`/`.html` chips, and the metadata line (file count, JSON size, bytes catalogued, modified date)
 - [x] **TREE-05**: User sees a breadcrumb path for the current selection, with ancestor segments in the accent color
 - [x] **TREE-06**: User's scroll position and expansion state do not leak between catalogs when switching
 - [ ] **TREE-07**: User sees the details panel follow the current selection, showing name, path, key/value metadata, and the actions footer
@@ -171,7 +171,7 @@ Deferred — acknowledged but not in this roadmap.
 | TREE-01 | Phase 23 | Complete |
 | TREE-02 | Phase 23 | Complete |
 | TREE-03 | Phase 23 | Complete |
-| TREE-04 | Phase 23 | Pending |
+| TREE-04 | Phase 23 | Complete |
 | TREE-05 | Phase 23 | Complete |
 | TREE-06 | Phase 23 | Complete |
 | TREE-07 | Phase 23 | Pending |
