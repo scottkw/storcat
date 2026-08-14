@@ -44,16 +44,32 @@ created: 2026-08-14
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| *pending — filled after PLAN.md task IDs are assigned* | | | | | | | | | ⬜ pending |
+| 24-01-T1 | 24-01 | 1 | PLT-02, PLT-03 | T-24-02 | Search term stays a pure in-memory substring compare — never a path, a command, or a regex | Go unit (table-driven, tracer + tdd) | `go build ./... && go test ./internal/search/... ./cli/... -count=1` | ❌ Wave 0 — `internal/search/search_indexed_test.go` is created by this task | ⬜ pending |
+| 24-01-T2 | 24-01 | 1 | PLT-02 | T-24-01 | New binding's parameter surface is identical to the shipped `SearchCatalogs`; no new file-read reach | Go build + TS typecheck | `go build ./... && cd frontend && npx tsc --noEmit` | ✅ `app.go`, `frontend/src/services/wailsAPI.ts` | ⬜ pending |
+| 24-01-T3 | 24-01 | 1 | PLT-01, PLT-03 | T-24-03 | 200ms debounce + 2-char floor + Go-side cap bound request rate and payload | TS typecheck + bundle | `cd frontend && npx tsc --noEmit && npm run build` | ✅ `frontend/src/workspace.css`, `WorkspaceShell.tsx`, `Toolbar.tsx` | ⬜ pending |
+| 24-02-T1 | 24-02 | 2 | PLT-01, PLT-02, PLT-03 | T-24-04, T-24-06 | Binding-dependent assertions gated behind `:34115`; instrumentation never committed | Live browser (dev-browser) + full suite | `curl -sf -o /dev/null http://localhost:34115/ && go build ./... && go test ./... -count=1 && cd frontend && npx tsc --noEmit && npm run build` | N/A — no frontend test framework (TEST-01 deferred) | ⬜ pending |
+| 24-02-T2 | 24-02 | 2 | PLT-01 | — | — | **Manual-only** — ⌘K delivery in WKWebView cannot be observed from Chrome at `:34115` | *blocking `checkpoint:human-verify`* | N/A | ⬜ pending |
+| 24-03-T1 | 24-03 | 3 | PLT-07 | T-24-07, T-24-08 | Scroll lock and focus trap both release on the `isOpen:false` transition; Escape is never intercepted away | TS typecheck + bundle + source assertions | `cd frontend && npx tsc --noEmit && npm run build` | ❌ `frontend/src/hooks/useModalBehavior.ts` is created by this task | ⬜ pending |
+| 24-03-T2 | 24-03 | 3 | PLT-07 | T-24-07 | Exactly one implementation of the four behaviors; the palette registers no listener of its own | TS typecheck + live browser | `cd frontend && npx tsc --noEmit && npm run build` | ✅ `frontend/src/components/workspace/CommandPalette.tsx` | ⬜ pending |
+| 24-04-T1 | 24-04 | 4 | PLT-04 | **T-24-11 (high)** | Highlight is JSX text children only; raw-HTML injection banned and grep-enforced across the whole `palette/` directory | TS typecheck + bundle + negative grep + live browser | `cd frontend && npx tsc --noEmit && npm run build` | ❌ `palette/PaletteResultRow.tsx` is created by this task | ⬜ pending |
+| 24-04-T2 | 24-04 | 4 | PLT-03 | T-24-13 | Truncation line reads the Go-computed `total`, never the rendered row count | TS typecheck + bundle + live browser | `cd frontend && npx tsc --noEmit && npm run build` | ❌ `palette/PaletteResultList.tsx` is created by this task | ⬜ pending |
+| 24-04-T3 | 24-04 | 4 | PLT-03, PLT-04, PLT-06 | T-24-13, T-24-14 | Exact PLT-06 copy unreachable for a query that never ran; both text columns ellipsize | TS typecheck + fixed-string grep + live browser | `cd frontend && npx tsc --noEmit && npm run build` | ✅ `frontend/src/components/workspace/CommandPalette.tsx` | ⬜ pending |
+| 24-05-T1 | 24-05 | 5 | PLT-05 | T-24-15 | Ancestor walk bounded by `nodes.length`; terminates on the `-1` sentinel, never dereferences it | TS typecheck + bundle + source assertions (tdd) | `cd frontend && npx tsc --noEmit && npm run build` | ❌ `frontend/src/lib/reveal.ts` is created by this task | ⬜ pending |
+| 24-05-T2 | 24-05 | 5 | PLT-05 | T-24-16, T-24-17 | Merge-not-replace expansion; scroll separated from expansion by a `[visibleIndices]` effect boundary | TS typecheck + structural grep (`awk` line-order check) | `cd frontend && npx tsc --noEmit && npm run build` | ✅ `frontend/src/components/workspace/TreePane.tsx` | ⬜ pending |
+| 24-05-T3 | 24-05 | 5 | PLT-05 | T-24-18 | Catalog switch dispatched before the reveal request; a rail switch mid-load cancels the reveal | Live browser (multi-branch survival regression) + full suite | `cd frontend && npx tsc --noEmit && npm run build && cd .. && go build ./... && go test ./... -count=1` | N/A — no frontend test framework (TEST-01 deferred) | ⬜ pending |
 
 ---
 
 ## Wave 0 Requirements
 
-- [ ] A Go test file for the new capped-search surface (e.g. `internal/search/*_test.go`) — covers PLT-02/PLT-03 cap-at-50 and total-count behavior, **including the boundary cases: 0 matches, exactly 50, and 51 matches**
-- [ ] Extend (do **not** replace) `cli/search_test.go` with a regression assertion that `cli/search.go`'s output for a fixed fixture is unchanged by this phase's Go edits
+Both Wave 0 gaps are assigned to **24-01 Task 1**, the phase's leading tracer task — the capping logic and its boundary coverage land in the same commit, so no task in any later wave inherits a MISSING automated verify.
+
+- [ ] `internal/search/search_indexed_test.go` — covers PLT-02/PLT-03 cap-at-50 and total-count behavior, **including the boundary cases: 0 matches, exactly 50, and 51 matches**, plus the element-for-element parity assertion against `SearchCatalogs` for the same fixture and term → **24-01-T1**
+- [ ] Extend (do **not** replace) `cli/search_test.go` with a regression assertion that `cli/search.go`'s output for a fixed fixture is unchanged by this phase's Go edits → **24-01-T1**
 
 *No new frontend test infrastructure. Adding Vitest/Testing Library here would be scope creep against a locked deferral (TEST-01).*
+
+**Sampling continuity check:** no three consecutive tasks lack an `<automated>` verify. Every task in the map above carries one except `24-02-T2`, which is a blocking human checkpoint by necessity (WKWebView keystroke delivery is not observable from Chrome) and sits between two tasks that both run the full suite.
 
 ---
 
