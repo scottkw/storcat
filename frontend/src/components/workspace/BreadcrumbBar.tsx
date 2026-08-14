@@ -83,31 +83,40 @@ function BreadcrumbBar() {
         ))}
       </span>
       {loaded && (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={handleExpandAll}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') handleExpandAll();
+          style={{
+            flexShrink: 0,
+            fontSize: 11.5,
+            color: 'var(--ac)',
+            cursor: 'pointer',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
           }}
-          style={{ flexShrink: 0, fontSize: 11.5, color: 'var(--ac)', cursor: 'pointer' }}
         >
           Expand all
-        </span>
+        </button>
       )}
       {loaded && (
-        <span
-          role="button"
-          tabIndex={0}
+        <button
+          type="button"
           onClick={handleCollapse}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter' || event.key === ' ') handleCollapse();
-          }}
           className="ws-crumb-collapse"
-          style={{ flexShrink: 0, fontSize: 11.5, cursor: 'pointer' }}
+          style={{
+            flexShrink: 0,
+            fontSize: 11.5,
+            cursor: 'pointer',
+            background: 'transparent',
+            border: 'none',
+            padding: 0,
+            font: 'inherit',
+          }}
         >
           Collapse
-        </span>
+        </button>
       )}
     </div>
   );

@@ -221,6 +221,11 @@ function CatalogRail() {
                 className="ws-rail-row"
                 role="button"
                 tabIndex={0}
+                // data-selected drives the CSS fill; aria-current is what
+                // actually tells a screen reader which catalog is open. The
+                // visual state without the ARIA one means the selection is
+                // invisible to anyone not looking at the pixels.
+                aria-current={isSelected || undefined}
                 data-selected={isSelected || undefined}
                 onClick={() => dispatch({ type: 'SELECT_CATALOG', payload: catalog.path })}
                 onKeyDown={(event) => {
