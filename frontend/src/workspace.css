@@ -86,8 +86,77 @@
   color: var(--onac);
 }
 
+/* Rail row (RAIL-01/02/03/04). border-left is reserved at 2px transparent on
+ * every row -- selecting a row only swaps its color, so the accent border
+ * never shifts a row's content (the same "never remove from the DOM, only
+ * change color" discipline the status dot below uses for the same reason).
+ * Background is a class rule, not inline, so :hover can win -- Phase 22's
+ * "+New" pill defect precedent (an inline background permanently outranks a
+ * hover rule). The [data-selected] rule is declared after :hover so a
+ * selected row keeps its fill while the pointer is over it (same tie-break
+ * as .ws-tree-row). */
 .ws-rail-row {
   padding: var(--rp);
+  border-radius: 6px;
+  box-sizing: border-box;
+  border-left: 2px solid transparent;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.ws-rail-row:hover {
+  background: var(--hov);
+}
+
+.ws-rail-row[data-selected='true'] {
+  background: var(--sel);
+  border-left-color: var(--ac);
+}
+
+.ws-rail-row[data-selected='true'] .ws-rail-row-title {
+  color: var(--ac);
+}
+
+.ws-rail-row-line1 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ws-rail-dot {
+  width: 6px;
+  height: 6px;
+  flex: none;
+  display: block;
+  border-radius: 50%;
+}
+
+.ws-rail-row-title {
+  flex: 1;
+  min-width: 0;
+  font-size: 12.5px;
+  font-weight: 500;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--tx);
+}
+
+.ws-rail-row-size {
+  flex: none;
+  font-size: 10.5px;
+  color: var(--fn);
+  white-space: nowrap;
+}
+
+.ws-rail-row-meta {
+  font-size: 10.5px;
+  color: var(--fn);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .ws-tree-row {

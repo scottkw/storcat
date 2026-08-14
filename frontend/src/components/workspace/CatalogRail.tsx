@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
+import { formatBytes, formatCount } from '../../lib/format';
 
 const CATALOG_DIR_STORAGE_KEY = 'storcat-catalog-directory';
 
@@ -9,7 +10,8 @@ function CatalogRail() {
 
   // Tracer-minimal: on mount, read the persisted catalog directory and load
   // its catalogs once. The full directory-chip wiring (picking/changing the
-  // directory interactively) belongs to plan 23-04.
+  // directory interactively) and the filter's wiring belong to plan 23-04's
+  // task 2 -- this task only fills in the row contract.
   useEffect(() => {
     const persistedDir = localStorage.getItem(CATALOG_DIR_STORAGE_KEY);
     if (!persistedDir) return;
@@ -44,6 +46,8 @@ function CatalogRail() {
               color: 'var(--dm)',
             }}
           >
+            {/* Always the total, never the filtered subset (RAIL-01/RAIL-02) --
+                reads state.catalogs.length directly, independent of any filter. */}
             Catalogs <span style={{ color: 'var(--fn)' }}>{state.catalogs.length}</span>
           </span>
 
@@ -151,28 +155,44 @@ function CatalogRail() {
             </span>
           </div>
         ) : (
-          state.catalogs.map((catalog) => (
-            <div
-              key={catalog.path}
-              className="ws-rail-row"
-              role="button"
-              tabIndex={0}
-              onClick={() => dispatch({ type: 'SELECT_CATALOG', payload: catalog.path })}
-              onKeyDown={(event) => {
-                if (event.key === 'Enter' || event.key === ' ') {
-                  dispatch({ type: 'SELECT_CATALOG', payload: catalog.path });
-                }
-              }}
-              style={{
-                cursor: 'pointer',
-                fontSize: 12.5,
-                borderRadius: 6,
-                background: state.currentCatalogId === catalog.path ? 'var(--sel)' : 'transparent',
-              }}
-            >
-              {catalog.title}
-            </div>
-          ))
+          state.catalogs.map((catalog) => {
+            const isSelected = state.currentCatalogId === catalog.path;
+            const isBroken = catalog.parseError !== '';
+
+            return (
+              <div
+                key={catalog.path}
+                className="ws-rail-row"
+                role="button"
+                tabIndex={0}
+                data-selected={isSelected || undefined}
+                onClick={() => dispatch({ type: 'SELECT_CATALOG', payload: catalog.path })}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter' || event.key === ' ') {
+                    dispatch({ type: 'SELECT_CATALOG', payload: catalog.path });
+                  }
+                }}
+              >
+                <div className="ws-rail-row-line1">
+                  {/* Always in the DOM, transparent when healthy -- a broken
+                      catalog never changes row height (RAIL-04). */}
+                  <span
+                    className="ws-rail-dot"
+                    aria-hidden="true"
+                    style={{ background: isBroken ? '#e5534b' : 'transparent' }}
+                  />
+                  <span className="ws-rail-row-title">{catalog.title}</span>
+                  <span className="ws-rail-row-size mono">{formatBytes(catalog.size)}</span>
+                </div>
+                <div className="ws-rail-row-meta mono">
+                  {catalog.filename}
+                  {typeof catalog.fileCount === 'number'
+                    ? ` · ${formatCount(catalog.fileCount)} files`
+                    : ''}
+                </div>
+              </div>
+            );
+          })
         )}
       </div>
     </div>
