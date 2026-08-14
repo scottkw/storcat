@@ -36,7 +36,10 @@ type AppAction =
       type: 'TREE_LOADED';
       payload: { catalogId: string; nodes: models.FlatNode[]; fileCount: number; totalBytes: number };
     }
-  | { type: 'TREE_FAILED'; payload: { catalogId: string; message: string } };
+  | { type: 'TREE_FAILED'; payload: { catalogId: string; message: string } }
+  | { type: 'TOGGLE_EXPAND'; payload: string }
+  | { type: 'SET_EXPANDED'; payload: Record<string, boolean> }
+  | { type: 'SET_SELECTED'; payload: string | null };
 
 // Seeded once at module scope so a relaunch restores the user's persisted
 // density/rail-side choices rather than hardcoded defaults. readPersistedPrefs
@@ -95,6 +98,23 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'TREE_FAILED':
       if (action.payload.catalogId !== state.currentCatalogId) return state;
       return { ...state, tree: { status: 'error', message: action.payload.message } };
+    case 'TOGGLE_EXPAND': {
+      // A synchronous flip keyed by path -- a burst of clicks on the same
+      // caret applies in order with no lost update, and this never touches
+      // the node array (TREE-02, TREE-03 concurrency).
+      const path = action.payload;
+      if (state.expanded[path]) {
+        const { [path]: _dropped, ...rest } = state.expanded;
+        return { ...state, expanded: rest };
+      }
+      return { ...state, expanded: { ...state.expanded, [path]: true } };
+    }
+    case 'SET_EXPANDED':
+      // Replaces the whole map in one state update -- expand-all and
+      // collapse-to-root both use this, never a per-node dispatch loop.
+      return { ...state, expanded: action.payload };
+    case 'SET_SELECTED':
+      return { ...state, selected: action.payload };
     default:
       return state;
   }
