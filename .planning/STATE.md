@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 24
 current_phase_name: Cmd-K Command Palette
-status: executing
-stopped_at: Completed 24-04-PLAN.md
-last_updated: "2026-08-14T15:48:49.351Z"
+status: verifying
+stopped_at: Completed 24-05-PLAN.md
+last_updated: "2026-08-14T16:01:58.211Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 18
-  completed_plans: 17
-  percent: 29
+  completed_plans: 18
+  percent: 43
 ---
 
 # Project State
@@ -30,12 +30,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 24 (Cmd-K Command Palette) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-14 — Phase 24 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [█████████░] 94%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -78,6 +78,7 @@ Progress: [█████████░] 94%
 | Phase 24 P02 | 35min | 2 tasks | 0 files |
 | Phase 24 P03 | ~12min | 2 tasks | 2 files |
 | Phase 24 P04 | ~50min | 3 tasks | 4 files |
+| Phase 24 P05 | 35min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -121,6 +122,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 24-04: Highlight rendered as JSX text children only (never HTML string) to satisfy T-24-11 -- verified live with a fixture filename containing a literal <b> rendering as escaped text, zero real <b> elements
 - [Phase ?]: 24-04: PLT-03 truncation line reads the Go-computed total prop, never results.length -- prevents ever presenting a capped set as complete
 - [Phase ?]: 24-04: Added optional id prop to PaletteResultList (beyond its originating task's file list) so CommandPalette's combobox input can wire aria-controls to the listbox's real DOM id
+- [Phase ?]: 24-05: Removed the word dispatch from reveal.ts's own comments (used issued/call site instead) after the Task 1 purity grep matched the word inside prose, not just code
+- [Phase ?]: 24-05: mergeExpanded's idempotence check is a .some() scan for any ancestor path not already true, returning the input object unchanged by reference when nothing needs adding
+- [Phase ?]: 24-05: pendingReveal cleared inside SELECT_CATALOG's and SET_CATALOG_DIR's existing atomic reducer updates, giving stale-discard for a rail switch superseding a reveal for free, with no separate staleness comparison at the consuming effect
 
 ### Key Research Findings
 
@@ -160,8 +164,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T15:48:49.337Z
-Stopped at: Completed 24-04-PLAN.md
+Last session: 2026-08-14T16:01:58.198Z
+Stopped at: Completed 24-05-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 

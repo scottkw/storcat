@@ -151,7 +151,7 @@ Plans:
   3. User can navigate results by keyboard, click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette, and can dismiss the palette with Escape (PLT-04, PLT-05)
   4. Focus is trapped inside the palette while it's open and page scroll is locked behind it, via a shared modal-behavior hook (focus trap, Escape, scroll lock) that Phases 25-27's overlays reuse rather than reimplement (PLT-07)
 
-**Plans**: 4/5 plans executed (5 waves)
+**Plans**: 5/5 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -172,7 +172,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 24-05-PLAN.md — Reveal-to-tree: merge-not-replace ancestor expansion and the two-effect centred scroll (wave 5)
+- [x] 24-05-PLAN.md — Reveal-to-tree: merge-not-replace ancestor expansion and the two-effect centred scroll (wave 5)
 
 **UI hint**: yes
 
@@ -266,7 +266,7 @@ Plans:
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
-| 24. Cmd-K Command Palette | v3.0.0 | 4/5 | In Progress|  |
+| 24. Cmd-K Command Palette | v3.0.0 | 5/5 | In Progress|  |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |
