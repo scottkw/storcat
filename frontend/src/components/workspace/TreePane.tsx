@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
@@ -37,8 +37,6 @@ function TreePane() {
   // issued for so a load superseded by a newer selection is discarded.
   useEffect(() => {
     const catalogId = state.currentCatalogId;
-    if (scrollRef.current) scrollRef.current.scrollTop = 0;
-    virtualizer.scrollToOffset(0);
     if (!catalogId) return;
     wailsAPI.loadCatalogFlat(catalogId).then((result) => {
       if (result.success) {
@@ -57,6 +55,20 @@ function TreePane() {
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.currentCatalogId]);
+
+  // Scroll reset has to wait for the 'ready' branch to actually mount the
+  // scroll element. Resetting alongside the load dispatch above looks right
+  // but is a silent no-op: while status is 'loading' the rendered branch
+  // carries no ref, so scrollRef.current is null and the virtualizer has no
+  // scroll element to move -- it then reapplies its own stale offset when the
+  // real element appears. Keying this on the catalog id AND the ready
+  // transition is what makes a revisit land at the top (TREE-06).
+  useLayoutEffect(() => {
+    if (state.tree.status !== 'ready') return;
+    if (scrollRef.current) scrollRef.current.scrollTop = 0;
+    virtualizer.scrollToOffset(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.currentCatalogId, state.tree.status]);
 
   // Directory click toggles expansion AND selects, in that order; a file
   // click selects only -- the two are never unified into one handler that
