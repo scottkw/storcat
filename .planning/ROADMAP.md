@@ -63,7 +63,7 @@
 
 - [x] **Phase 22: Shell + Token Layer** - Single-view workspace shell (toolbar, 3-pane grid, status bar) with the full 11-theme token layer and responsive tiers (completed 2026-08-13)
 - [x] **Phase 23: Rail + Virtualized Tree** - Catalog rail and a 40k-node virtualized tree pane with a details panel, backed by a new LoadCatalogFlat method and a sidecar count cache (completed 2026-08-13)
-- [ ] **Phase 24: Cmd-K Command Palette** - Cross-catalog ⌘K search with capped results and the shared modal-behavior hook
+- [x] **Phase 24: Cmd-K Command Palette** - Cross-catalog ⌘K search with capped results and the shared modal-behavior hook (completed 2026-08-14)
 - [ ] **Phase 25: Create Slide-over + Progress/Cancellation/Partial-Catalog** - Volume-aware create flow with live scan progress, real cancellation, and an error-tolerant partial-catalog path
 - [ ] **Phase 26: Settings** - Theme, density, rail position, and catalog defaults in one settings modal
 - [ ] **Phase 27: Catalog Actions + Watch** - Rename, duplicate, delete-to-Trash, and live directory watching
@@ -266,7 +266,7 @@ Plans:
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
-| 24. Cmd-K Command Palette | v3.0.0 | 5/5 | In Progress|  |
+| 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |

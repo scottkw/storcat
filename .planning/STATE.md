@@ -2,11 +2,11 @@
 gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: Workspace Redesign
-current_phase: 24
-current_phase_name: Cmd-K Command Palette
-status: verifying
+current_phase: 25
+current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
+status: planning
 stopped_at: Completed 24-05-PLAN.md
-last_updated: "2026-08-14T16:01:58.211Z"
+last_updated: "2026-08-14T16:39:55.982Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
@@ -28,10 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 ## Current Position
 
-Phase: 24 (Cmd-K Command Palette) — EXECUTING
-Plan: 5 of 5
-Status: Phase complete — ready for verification
-Last activity: 2026-08-14 — Phase 24 execution started
+Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
+Plan: Not started
+Status: Ready to plan
+Last activity: 2026-08-14 — Phase 24 complete, transitioned to Phase 25
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
@@ -41,7 +41,7 @@ Progress: [██████████] 100%
 
 **Velocity:**
 
-- Total plans completed: 0
+- Total plans completed: 5
 - Average duration: —
 - Total execution time: —
 
@@ -49,7 +49,7 @@ Progress: [██████████] 100%
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 24 | 5 | - | - |
 
 **Recent Trend:**
 
