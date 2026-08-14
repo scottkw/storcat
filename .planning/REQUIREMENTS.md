@@ -50,9 +50,9 @@
 
 ### Palette — ⌘K search
 
-- [ ] **PLT-01**: User can open a search palette with ⌘K or by clicking the toolbar search field, with the input autofocused
-- [ ] **PLT-02**: User can search names and paths across every catalog in the directory
-- [ ] **PLT-03**: User sees at most 50 results, with a "Showing the first 50 of N hits" notice when more matched
+- [x] **PLT-01**: User can open a search palette with ⌘K or by clicking the toolbar search field, with the input autofocused
+- [x] **PLT-02**: User can search names and paths across every catalog in the directory
+- [x] **PLT-03**: User sees at most 50 results, with a "Showing the first 50 of N hits" notice when more matched
 - [ ] **PLT-04**: User can navigate results by keyboard and dismiss the palette with Escape
 - [ ] **PLT-05**: User can click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette
 - [ ] **PLT-06**: User sees "No file in any catalog matches that." when nothing matched
@@ -176,9 +176,9 @@ Deferred — acknowledged but not in this roadmap.
 | TREE-06 | Phase 23 | Complete |
 | TREE-07 | Phase 23 | Complete |
 | TREE-08 | Phase 23 | Complete |
-| PLT-01 | Phase 24 | Pending |
-| PLT-02 | Phase 24 | Pending |
-| PLT-03 | Phase 24 | Pending |
+| PLT-01 | Phase 24 | Complete |
+| PLT-02 | Phase 24 | Complete |
+| PLT-03 | Phase 24 | Complete |
 | PLT-04 | Phase 24 | Pending |
 | PLT-05 | Phase 24 | Pending |
 | PLT-06 | Phase 24 | Pending |
