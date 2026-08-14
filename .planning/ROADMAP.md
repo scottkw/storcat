@@ -189,9 +189,39 @@ Plans:
   4. User sees a distinct error state when the volume goes away mid-scan (showing where it stopped and the read errors encountered), can write a partial catalog, retry the scan, or cancel from that state, and closing the window mid-scan cancels the walk and writes nothing (CRT-10, CRT-11, CRT-13)
   5. User sees a done state listing every file written with its size and can open the new catalog in the workspace or catalog another volume; catalogs this flow writes are byte-for-byte the same JSON shape v2.3.0 wrote; and all six CLI subcommands keep behaving exactly as before, with `internal/catalog` still usable from the CLI without a Wails runtime context (CRT-12, COMPAT-02, COMPAT-03, COMPAT-04)
 
-**Plans**: TBD
+**Plans**: 7 plans (7 waves)
+Plans:
+
+**Wave 1**
+
+- [ ] 25-01-PLAN.md — Tracer: ctx-threaded catalog service, byte-compatible CLI wrapper, StartScan binding, animated slide-over shell, end-to-end folder→catalog path (wave 1)
+
+**Wave 2** *(blocked on Wave 1)*
+
+- [ ] 25-02-PLAN.md — Atomic writes, read-error classification, and the on-disk unreadable-subtree marker (wave 2)
+
+**Wave 3** *(blocked on Wave 2)*
+
+- [ ] 25-03-PLAN.md — Cancel handle, retained partial scan, partial-write binding, cancel-on-window-close (wave 3)
+
+**Wave 4** *(blocked on Wave 3)*
+
+- [ ] 25-04-PLAN.md — internal/volumes per-OS enumeration, ListVolumes binding, count-only pre-pass, platform-ledger entries (wave 4)
+
+**Wave 5** *(blocked on Wave 4)*
+
+- [ ] 25-05-PLAN.md — Volume picker, folder alternative, title/filename-root fields, live WILL WRITE preview, the three toggles (wave 5)
+
+**Wave 6** *(blocked on Wave 5)*
+
+- [ ] 25-06-PLAN.md — Live scanning body in both sub-states, cancellation from every close path, background hand-off and status-bar segment (wave 6)
+
+**Wave 7** *(blocked on Wave 6)*
+
+- [ ] 25-07-PLAN.md — Error state with partial-write/retry/close, done state in both flavours, four entry points, phase verification matrix (wave 7)
+
 **UI hint**: yes
-**Research flag**: This phase touches the only existing, tested Go code path this milestone modifies (`traverseDirectory`'s error-return contract, the `ProgressCallback` signature, and real `context.Context` cancellation) — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, particularly to resolve the forced-close partial-write policy and the on-disk "unreadable subtree" marker shape.
+**Research flag**: RESOLVED — the dedicated research pass ran (`25-RESEARCH.md`, confidence HIGH). Both flagged unknowns are answered: forced close and user cancel write nothing because the tree is complete in memory before any write is attempted, and the unreadable-subtree marker is two `omitempty` fields on `CatalogItem` (exact shape gated by a `checkpoint:decision` in 25-02, since it is a one-way on-disk format door). Research also surfaced a third, unflagged finding: `CreateCatalog` conflates the scanned source with the output directory, so the new context-aware method needs a genuinely separate `outputDir` parameter with the CLI wrapper defaulting it to today's behavior.
 
 ### Phase 26: Settings
 
