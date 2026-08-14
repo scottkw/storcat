@@ -62,8 +62,8 @@ No new sizes outside `22-UI-SPEC.md`'s declared scale (11 / 11.5 / 12 / 12.5 / 1
 |------|-----------------|
 | 11px | **New Sans (not mono) sub-role**: uppercase form-section labels — "Source volume", "Catalog title", "Filename root", "Options", "Will write" — 600 weight, `letter-spacing: 0.05em` (distinct from the rail/details header label's `0.04em` — both are valid `Label`-role instances at the same size, this is not a contradiction). Also: card mount-path (mono), header step label (mono), WALKING label (uppercase Sans), log lines (mono), toggle notes (mono) |
 | 11.5px | Card size column (mono), form-footer `⌘↵` hint (mono), scanning counters line (mono), walking path (mono, pulsing), error sub-line (mono), error/done explanation paragraphs, WILL WRITE box content (mono), done doneLine (mono), written-row path (mono) |
-| 12px | "…or choose any folder" link text, Cancel button text (form/scanning-adjacent), status-bar background-scan segment |
-| 12.5px | Volume-card tag text, form input values (title + filename root), Options row labels, footer Cancel (form step), "Run in background" button label, error/done secondary buttons ("Retry scan", "Catalog another volume"), Cancel button (error state) |
+| 12px | "…or choose any folder" link text, dismiss-button text (form/scanning-adjacent), status-bar background-scan segment |
+| 12.5px | Volume-card tag text, form input values (title + filename root), Options row labels, footer "Discard and close" (form step), "Run in background" button label, error/done secondary buttons ("Retry scan", "Catalog another volume"), "Close without writing" button (error state) |
 | 13px | Volume-card name (weight 500) — reuses the size Phase 22 declared for the toolbar app name; Create-catalog/Write-partial-catalog/Open-in-workspace primary-button labels (weight 600) |
 | 14px | Slide-over scanning title (Sans, weight 500) **and** scanning percentage (mono, `--ac`) — see correction below; error/done headline (weight 600) |
 | 15px | Slide-over header title (weight 600); round badge glyph (`!` / `✓`) |
@@ -120,7 +120,7 @@ reopen while closing    : clear the pending 260ms timer, closing = false, render
 
 **`useModalBehavior({ isOpen, onClose })` is called with the real `isOpen` (not `isOpen || closing`).** This is deliberate and load-bearing, per `24-UI-SPEC.md`'s E6 note written specifically for this consumer: the hook's scroll-unlock and focus-restore fire on the `true → false` transition, i.e. the instant a close is requested — not 260ms later at unmount. The background becomes scrollable and focus returns to the trigger element immediately, while the panel itself keeps visually sliding out for 260ms. Do not gate the hook call on `closing` — that would leave the page scroll-locked for the whole exit animation, the exact bug the hook's design note warns against.
 
-**All five close paths call the same `onClose` prop** (never a bespoke handler per trigger): Escape (handled inside `useModalBehavior`, fires regardless of internal focus), the header `×`, the form-step "Cancel" button, a scrim click (the panel itself stops click propagation, matching the palette's `onClick={{stop}}` convention), and the done-state "Open in workspace" button. **During the `scanning` state there is no separate "Cancel" button** — Escape / `×` / scrim click are the only three applicable paths, and per the Cancellation Contract below they cancel the running scan, not just close a form.
+**All five close paths call the same `onClose` prop** (never a bespoke handler per trigger): Escape (handled inside `useModalBehavior`, fires regardless of internal focus), the header `×`, the form-step "Discard and close" button, a scrim click (the panel itself stops click propagation, matching the palette's `onClick={{stop}}` convention), and the done-state "Open in workspace" button. **During the `scanning` state there is no separate close button** — Escape / `×` / scrim click are the only three applicable paths, and per the Cancellation Contract below they cancel the running scan, not just close a form.
 
 **Animation values (exact, from `README.md`'s Transitions section and the demo's `scslide`/`scslideout`/`scfade`/`scfadeout` keyframes):**
 
@@ -131,7 +131,7 @@ reopen while closing    : clear the pending 260ms timer, closing = false, render
 
 Two **new** keyframe pairs in `workspace.css` (distinct from the palette's existing 100ms `ws-palette-scrim-in` — do not reuse it, the timings differ): `ws-create-scrim-in` / `ws-create-scrim-out` and `ws-create-slide-in` / `ws-create-slide-out`. `will-change: transform` on the panel only. `@media (prefers-reduced-motion: reduce)`: both animations disabled (instant show/hide), same accessibility precedent the palette already set.
 
-Header (52px, flex none, 1px bottom border `--l`): title (15px/600) + step label (11px mono `--fn`) + `×` (16px `--dm`), per this table:
+Header (52px, flex none, 1px bottom border `--l`): title (15px/600) + step label (11px mono `--fn`) + `×` (16px `--dm`, **`aria-label="Close"`** — icon-only controls carry an accessible name per Phase 22's Icons contract, the same rule that gives the toolbar gear `aria-label="Settings"`), per this table:
 
 | Step | Title | Step label |
 |---|---|---|
@@ -193,7 +193,7 @@ Section label "Options" (same 11px/600 uppercase style), three toggle rows (`gap
 
 ### Footer (62px, `--p2`, 1px top border `--l`)
 
-`padding:0 18px; gap:12px`: "Create catalog" primary button (34px, `--ac` fill, `--onac` text, `border-radius:8px`, 13px/600) — starts the scan (CRT-06), disabled only per the volume/folder selection gate above · `⌘↵` hint (11.5px mono `--dm`) · "Cancel" (`margin-left:auto`, 12.5px `--dm`, no border) — one of the five CRT-01 close paths.
+`padding:0 18px; gap:12px`: "Create catalog" primary button (34px, `--ac` fill, `--onac` text, `border-radius:8px`, 13px/600) — starts the scan (CRT-06), disabled only per the volume/folder selection gate above · `⌘↵` hint (11.5px mono `--dm`) · "Discard and close" (`margin-left:auto`, 12.5px `--dm`, no border) — one of the five CRT-01 close paths.
 
 ---
 
@@ -228,7 +228,7 @@ Per `25-CONTEXT.md`'s locked backend decision (fast count-only pre-pass for a pl
 
 ### "Run in background" (CRT-08)
 
-Clicking it calls the same `onClose` as any other close path — the slide-over exit-animates closed exactly as it would for Cancel, while the scan itself continues uninterrupted in Go (the `context.Context` driving the walk is owned by `app.go`, not by the slide-over's mount state). See the Background Handoff Contract below for what appears in its place.
+Clicking it calls the same `onClose` as any other close path — the slide-over exit-animates closed exactly as it would for "Discard and close", while the scan itself continues uninterrupted in Go (the `context.Context` driving the walk is owned by `app.go`, not by the slide-over's mount state). See the Background Handoff Contract below for what appears in its place.
 
 ---
 
@@ -250,7 +250,7 @@ Triggered when the volume disappears mid-scan (`25-CONTEXT.md`: distinct from a 
 - Actions row (`margin-top:auto; gap:10px`):
   - **"Write partial catalog"** (primary, 34px, `--ac` fill, `--onac` text, `border-radius:8px`, 13px/600) — writes the atomic partial catalog (with the unreadable-subtree marker, shape resolved in plan-phase's research pass per `25-CONTEXT.md`), then transitions to the **partial** flavor of the Done state (see below). Button disables for the duration of the (fast, single-write) call — no separate "writing…" screen, consistent with no other local operation in this app getting one.
   - **"Retry scan"** (outlined, 34px, 1px `--l` border, `border-radius:8px`, 12.5px, hover border `--ac`) — returns to the `scanning` state on the **same already-selected source** (not back to the form/picker — CRT-11 says "retry the scan," not "re-pick a volume"), restarting from 0%/0 files.
-  - **"Cancel"** (text, 34px, no border, 12.5px `--dm`) — closes the slide-over via the standard close path; nothing was written (the error state itself never writes anything unless "Write partial catalog" was clicked).
+  - **"Close without writing"** (text, 34px, no border, 12.5px `--dm`) — closes the slide-over via the standard close path; nothing was written (the error state itself never writes anything unless "Write partial catalog" was clicked). The label names the consequence rather than the gesture, so a user in an error state is never left guessing whether dismissing it silently kept a partial result.
 
 ---
 
@@ -307,7 +307,7 @@ Opening the slide-over from any of these also closes the palette if it happens t
 | Toggle labels | "Also write HTML catalog" / "Copy both files to secondary location" / "Include hidden files" — verbatim from the handoff |
 | Secondary-toggle note (unset) | "Choose a folder when enabled" |
 | WILL WRITE label | "Will write" (renders uppercase via CSS) |
-| Form footer | "Create catalog" / `⌘↵` / "Cancel" |
+| Form footer | "Create catalog" / `⌘↵` / "Discard and close" |
 | Scanning counters (percentage-known) | `{seen} files` · `{seenBytes}` · `about {N}s left` / `finishing…` |
 | Scanning counters (counting sub-state) | `{seen} files found so far` |
 | Scanning percentage placeholder | "Counting…" (14px mono `--dm`, replaces `{pct}%` during the indeterminate sub-state) |
@@ -316,7 +316,7 @@ Opening the slide-over from any of these also closes the palette if it happens t
 | Error headline | "Stopped at {pct}% — the volume went away" |
 | Error sub-line | "{mountPath} · {seen} files walked" |
 | Error explanation | "Nothing was written yet. A partial catalog is still useful for a failing card — it records what could be read, and marks the gap." — verbatim |
-| Error actions | "Write partial catalog" / "Retry scan" / "Cancel" |
+| Error actions | "Write partial catalog" / "Retry scan" / "Close without writing" |
 | Done title | "{catalogTitle} catalogued" |
 | Done tag (partial only) | "partial" |
 | Done line (complete) | "{files} files · {bytes} · {duration}" |
@@ -332,7 +332,11 @@ Opening the slide-over from any of these also closes the palette if it happens t
 
 Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell, volume/folder picker, title+root+WILL-WRITE, options toggles, scanning body, error body, done body, background handoff/status-bar), resolved in autonomous mode per `25-CONTEXT.md`'s "Smart discuss (autonomous)" mode.
 
-**Applicable: 38 — resolved 38 (31 explicit, 7 backstop), unresolved 0.**
+**Probe result (re-run post-approval against the engine, not self-reported): 42 applicable categories across 8 surfaces, 1 element `unclassified`.**
+
+The engine's category set was diffed against this section's rows and found **11 classified categories unaddressed** — E3 `loading`/`populated`/`zero-one-many`, E4 `empty`/`long-text`, E7 `empty`/`loading`/`error`/`partial`, E8 `loading`/`long-text`. All 11 have since been resolved `explicit` and appear in the tables below. **E6 returned `unclassified` and therefore stays `unresolved`** — see the flagged assumption on that element; it is never auto-resolved with a backstop.
+
+**Final: 47 rows, 46 resolved (explicit), 1 element carrying an explicit unresolved assumption.** Rows exceeding the engine's proposed set are deliberate over-coverage, not drift.
 
 ### E1 — Slide-over shell (modal / interactive-control)
 
@@ -367,6 +371,9 @@ Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell,
 | overflow | ✅ explicit | WILL WRITE box wraps (`word-break:break-all; line-height:1.6`), unbounded height inside the already-scrollable form body. |
 | partial | ✅ explicit | WILL WRITE recomputes on every keystroke/toggle change — never stale, never requires a manual refresh. |
 | long-text | ✅ explicit | A very long catalog title or filename root is not truncated in the input (native field behavior); in the WILL WRITE preview it wraps via `word-break:break-all`, never overflows the box. |
+| loading | ✅ explicit | The two fields never show a loading state. Both are populated synchronously the moment a target is picked -- title defaults to the volume/folder name, filename root to its slugified form -- so there is no async gap between selection and an editable form. |
+| populated | ✅ explicit | With a target chosen, the WILL WRITE preview lists the exact output paths derived from the filename root: always one `.json`, plus the `.html` when that toggle is on, plus the secondary-location copies when that toggle is on. The preview is strictly derived and never independently editable. |
+| zero-one-many | ✅ explicit | The preview renders 1, 2, or 4 file rows depending on the two output toggles, all from one row template. No singular/plural branching in the surrounding copy -- the project-wide always-plural convention (`23-UI-SPEC.md` rail-row rule) extends here. |
 
 ### E4 — Options toggles (form / interactive-control)
 
@@ -376,6 +383,8 @@ Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell,
 | error | ✅ explicit | Cancelling the secondary-location folder picker reverts the toggle to off — not an error, a declined choice. |
 | partial | ✅ explicit | A toggle can be flipped mid-typing in the title/root fields with no interaction conflict — all four form controls are independent local state, not sequential steps. |
 | overflow | not applicable | Toggle rows have no variable-length content beyond the note text, already covered by E3's long-text row pattern (notes are short, fixed-format strings). |
+| empty | ✅ explicit | Every toggle has a defined default (write HTML on, copy-to-secondary off, include-hidden off), so no toggle ever renders in an unset or indeterminate visual state -- it is always definitively on or off. |
+| long-text | ✅ explicit | A chosen secondary-copy location can be an arbitrarily long path. It ellipsizes **from the left** inside the option row (the tail of a path is the informative end) and never wraps or widens the 560px panel. |
 
 ### E5 — Scanning body, both sub-states (static-content / interactive-control)
 
@@ -389,6 +398,15 @@ Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell,
 | long-text | ✅ explicit | Walking path and log lines both use `word-break:break-all` — a deeply nested absolute path never overflows its container. |
 
 ### E6 — Error body (static-content / interactive-control)
+
+> **⚠ unresolved — planner must treat as assumption.** The deterministic UI-consideration probe returned
+> `unclassified` for this element: its prose tripped no element-kind cue, so the engine proposed no category
+> set for it. Per the probe contract an `unclassified` row stays **unresolved** and is surfaced here rather
+> than auto-resolved with a backstop. The rows below were authored from the requirements (CRT-10/CRT-11)
+> directly, not proposed by the engine, so they carry no machine-checked completeness guarantee — the
+> planner should treat this element's state coverage as an explicit assumption and re-derive it when
+> planning the error body.
+
 
 | Category | Status | Resolution |
 |----------|--------|------------|
@@ -404,6 +422,10 @@ Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell,
 | zero-one-many | ✅ explicit | Written-file row count always matches the toggle set that was active at scan start (1–3 rows: JSON always, HTML/secondary conditionally) — never zero (a JSON write always happens on any successful or partial completion) and never a "many" case beyond the fixed toggle-driven set. |
 | overflow | ✅ explicit | Written-row paths use `word-break:break-all`; the list itself has no fixed max-height (at most 3 rows, no scroll needed). |
 | long-text | ✅ explicit | Same `word-break:break-all` convention as every other mono path surface in this phase. |
+| empty | ✅ explicit | A source directory containing zero files still produces a done state: the written-files list shows the `.json` (and `.html` when enabled), which exist regardless of source content. The done body therefore has no empty variant. |
+| loading | ✅ explicit | No loading state exists here -- the done body renders only after the write has completed. There is no window in which 'done' is displayed while a write is still in flight. |
+| error | ✅ explicit | A write failure never reaches the done body; it routes to the error body (E6) instead. Reaching 'done' is itself the assertion that the files were written. |
+| partial | ✅ explicit | The partial-catalog flavor is visually distinguished from the complete one (the two flavors named in this section), so a partial result can never be mistaken for a complete catalog at a glance -- that distinction is the whole point of CRT-11 offering the partial write. |
 
 ### E8 — Background handoff / status bar (nav / static-content)
 
@@ -413,6 +435,8 @@ Generated per `ui-consideration-probe.cjs` over 8 declared surfaces (form shell,
 | partial | ✅ explicit | The counting sub-state's status-bar copy ("counting…") is the one case CRT-08's literal wording doesn't cover — resolved as a Claude's-Discretion extension, documented in the Copywriting Contract. |
 | overflow | 🧪 backstop | A very long volume/folder name in the `● scanning {name} · …` segment could theoretically push the status bar's fixed 26px row — resolved by giving the segment the same `flex-shrink:0` + ellipsis treatment as the other three segments (name portion ellipsizes, not the whole segment); verified by observation with a long fixture name, not a boundary test. |
 | error | ✅ explicit | If the backgrounded scan itself fails (volume disappears while backgrounded), the status-bar segment disappears (no more "scanning") and re-opening the slide-over via any of the four entry points lands on the `error` state directly, carrying the failure's already-known `pct`/`seen`/log data — not the `form` state, since the failure already happened. |
+| loading | ✅ explicit | The segment appears only once a scan is actually running. During the indeterminate counting sub-state it shows the live file count rather than a fabricated percentage -- the no-spinner rule applies to the status bar exactly as it does inside the slide-over. |
+| long-text | ✅ explicit | A long volume name inside `* scanning <name> - N%` ellipsizes. The percentage never truncates: it is the actionable part of the segment, so the name yields space to it, not the reverse. |
 
 ---
 
