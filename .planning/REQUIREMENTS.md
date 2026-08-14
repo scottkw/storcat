@@ -60,18 +60,18 @@
 
 ### Create — the catalog creation flow
 
-- [ ] **CRT-01**: User can open a 560px right slide-over to create a catalog, which animates in over 340ms and out over 260ms without unmounting early
+- [x] **CRT-01**: User can open a 560px right slide-over to create a catalog, which animates in over 340ms and out over 260ms without unmounting early
 - [ ] **CRT-02**: User sees detected mounted volumes as selectable cards with name, mount path, size, and a `mounted` or `read errors` status
-- [ ] **CRT-03**: User can choose any folder instead of a detected volume
+- [x] **CRT-03**: User can choose any folder instead of a detected volume
 - [ ] **CRT-04**: User can set a catalog title and a filename root, and sees a live "WILL WRITE" preview of the files that will be produced
 - [ ] **CRT-05**: User can toggle write-HTML-alongside-JSON, copy-to-secondary-location, and include-hidden-files
-- [ ] **CRT-06**: User can start the scan with the Create button or ⌘↵
-- [ ] **CRT-07**: User sees live scan progress — percentage, files seen, bytes, estimated time remaining, the current walking path, and a newest-first log
+- [x] **CRT-06**: User can start the scan with the Create button or ⌘↵
+- [x] **CRT-07**: User sees live scan progress — percentage, files seen, bytes, estimated time remaining, the current walking path, and a newest-first log
 - [ ] **CRT-08**: User can hand a running scan to the status bar with "Run in background" and see `● scanning <name> · N%` there
 - [ ] **CRT-09**: User can cancel a scan and the underlying walk actually stops
 - [ ] **CRT-10**: User sees a distinct error state when the volume goes away mid-scan, showing where it stopped and the read errors encountered
 - [ ] **CRT-11**: User can write a partial catalog from the error state, retry the scan, or cancel
-- [ ] **CRT-12**: User sees a done state listing every file written with its size, and can open the new catalog in the workspace or catalog another volume
+- [x] **CRT-12**: User sees a done state listing every file written with its size, and can open the new catalog in the workspace or catalog another volume
 - [ ] **CRT-13**: Closing the window mid-scan cancels the walk and writes nothing
 
 ### Settings
@@ -109,9 +109,9 @@
 ### Compatibility — no regressions
 
 - [x] **COMPAT-01**: User can open catalogs created by StorCat v1.x and v2.x without conversion
-- [ ] **COMPAT-02**: Catalogs written by v3.0.0 are byte-for-byte the same JSON shape as v2.3.0 wrote, so external tools keep working
-- [ ] **COMPAT-03**: All six CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`) behave exactly as they did in v2.3.0
-- [ ] **COMPAT-04**: `internal/catalog` remains usable from the CLI without a Wails runtime context
+- [x] **COMPAT-02**: Catalogs written by v3.0.0 are byte-for-byte the same JSON shape as v2.3.0 wrote, so external tools keep working
+- [x] **COMPAT-03**: All six CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`) behave exactly as they did in v2.3.0
+- [x] **COMPAT-04**: `internal/catalog` remains usable from the CLI without a Wails runtime context
 - [ ] **COMPAT-05**: Window size and position persistence continues to work, controlled by the Settings toggle
 - [ ] **COMPAT-06**: The app builds, signs, notarizes, and releases on all existing CI platform targets
 
@@ -183,18 +183,18 @@ Deferred — acknowledged but not in this roadmap.
 | PLT-05 | Phase 24 | Complete |
 | PLT-06 | Phase 24 | Complete |
 | PLT-07 | Phase 24 | Complete |
-| CRT-01 | Phase 25 | Pending |
+| CRT-01 | Phase 25 | Complete |
 | CRT-02 | Phase 25 | Pending |
-| CRT-03 | Phase 25 | Pending |
+| CRT-03 | Phase 25 | Complete |
 | CRT-04 | Phase 25 | Pending |
 | CRT-05 | Phase 25 | Pending |
-| CRT-06 | Phase 25 | Pending |
-| CRT-07 | Phase 25 | Pending |
+| CRT-06 | Phase 25 | Complete |
+| CRT-07 | Phase 25 | Complete |
 | CRT-08 | Phase 25 | Pending |
 | CRT-09 | Phase 25 | Pending |
 | CRT-10 | Phase 25 | Pending |
 | CRT-11 | Phase 25 | Pending |
-| CRT-12 | Phase 25 | Pending |
+| CRT-12 | Phase 25 | Complete |
 | CRT-13 | Phase 25 | Pending |
 | SET-01 | Phase 26 | Pending |
 | SET-02 | Phase 26 | Pending |
@@ -217,9 +217,9 @@ Deferred — acknowledged but not in this roadmap.
 | STATE-02 | Phase 23 | Complete |
 | STATE-03 | Phase 28 | Pending |
 | COMPAT-01 | Phase 23 | Complete |
-| COMPAT-02 | Phase 25 | Pending |
-| COMPAT-03 | Phase 25 | Pending |
-| COMPAT-04 | Phase 25 | Pending |
+| COMPAT-02 | Phase 25 | Complete |
+| COMPAT-03 | Phase 25 | Complete |
+| COMPAT-04 | Phase 25 | Complete |
 | COMPAT-05 | Phase 26 | Pending |
 | COMPAT-06 | Phase 28 | Pending |
 

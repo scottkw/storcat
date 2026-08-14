@@ -4,16 +4,16 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 25
 current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
-status: planning
-stopped_at: Completed 24-05-PLAN.md
-last_updated: "2026-08-14T16:39:55.982Z"
+status: executing
+stopped_at: Completed 25-01-PLAN.md
+last_updated: "2026-08-14T20:07:16.640Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
   completed_phases: 3
-  total_plans: 18
-  completed_plans: 18
+  total_plans: 25
+  completed_plans: 19
   percent: 43
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
-Plan: Not started
-Status: Ready to plan
-Last activity: 2026-08-14 — Phase 24 complete, transitioned to Phase 25
+Plan: 2 of 7
+Status: Ready to execute
+Last activity: 2026-08-14 — Plan 25-01 (create slide-over tracer) complete
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 100%
+Progress: [████████░░] 76%
 
 ## Performance Metrics
 
@@ -79,6 +79,7 @@ Progress: [██████████] 100%
 | Phase 24 P03 | ~12min | 2 tasks | 2 files |
 | Phase 24 P04 | ~50min | 3 tasks | 4 files |
 | Phase 24 P05 | 35min | 3 tasks | 4 files |
+| Phase 25 P01 | 26min | 3 tasks | 21 files |
 
 ## Accumulated Context
 
@@ -125,6 +126,10 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 24-05: Removed the word dispatch from reveal.ts's own comments (used issued/call site instead) after the Task 1 purity grep matched the word inside prose, not just code
 - [Phase ?]: 24-05: mergeExpanded's idempotence check is a .some() scan for any ancestor path not already true, returning the input object unchanged by reference when nothing needs adding
 - [Phase ?]: 24-05: pendingReveal cleared inside SELECT_CATALOG's and SET_CATALOG_DIR's existing atomic reducer updates, giving stale-discard for a rail switch superseding a reveal for free, with no separate staleness comparison at the consuming effect
+- [Phase ?]: 25-01: Traverse-error classification (terminal vs. single-entry) deferred to plan 25-02; Task 1 only adds a ReadErrors counter on today's existing skip-and-continue paths
+- [Phase ?]: 25-01: StartScan resolves outputDir/copyToDirectory via filepath.EvalSymlinks before containment-checking -- macOS's /var -> /private/var symlink otherwise produces a false escape rejection for every legitimately-nested write
+- [Phase ?]: 25-01: CreateSlideOver's animated-exit closing flag uses a single useLayoutEffect keyed on isOpen, not the render-time setState pattern -- the latter breaks under React 18 StrictMode's development double-invoke, closing the panel with no visible exit animation
+- [Phase ?]: 25-01: ScanResultFile.size is optional and left unset -- CreateCatalogResult has no per-output-file byte count, and using totalSize (the scanned tree's sum) would misrepresent an individual file's own size
 
 ### Key Research Findings
 
@@ -150,7 +155,9 @@ Research complete — see `.planning/research/SUMMARY.md`, `ARCHITECTURE.md`, `P
 
 ### Blockers/Concerns
 
-None active. Two phases (25, 28) are pre-flagged as needing their own research pass before planning — not blockers, but plan-phase should account for the extra step.
+active. Two phases (25, 28) are pre-flagged as needing their own research pass before planning — not blockers, but plan-phase should account for the extra step.
+
+- 25-01: An unintended side effect was caused on the user's live desktop during live verification -- a stray osascript/System Events keystroke (attempting to target the StorCat app window, which did not reliably come to accessibility focus) landed in a Raycast Settings/Store window instead and appears to have installed a 'GIF Search' Raycast extension. Not requested. User should check Raycast's installed extensions and remove it if unwanted. All further OS-level UI automation was stopped immediately once noticed.
 
 ## Deferred Items
 
@@ -164,8 +171,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T16:01:58.198Z
-Stopped at: Completed 24-05-PLAN.md
+Last session: 2026-08-14T20:07:16.631Z
+Stopped at: Completed 25-01-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 
