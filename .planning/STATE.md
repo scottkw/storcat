@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 23
 current_phase_name: Rail + Virtualized Tree
 status: executing
-stopped_at: Completed 23-01-PLAN.md
-last_updated: "2026-08-14T01:00:38.485Z"
+stopped_at: Completed 23-02-PLAN.md
+last_updated: "2026-08-14T01:10:42.921Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 13
-  completed_plans: 8
+  completed_plans: 9
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 23 (Rail + Virtualized Tree) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [██████░░░░] 62%
+Progress: [███████░░░] 69%
 
 ## Performance Metrics
 
@@ -67,6 +67,7 @@ Progress: [██████░░░░] 62%
 | Phase 22 P06 | 3min | 3 tasks | 5 files |
 | Phase 22 P07 | 24min | 3 tasks | 5 files |
 | Phase 23 P01 | 11min | 3 tasks | 18 files |
+| Phase 23 P02 | 24min | 3 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -86,6 +87,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 23-01: Excluded catalog root from LoadCatalogFlat's flat array (root's direct children get Depth 0/ParentIdx -1) so an empty catalog yields a zero-length slice and a single top-level file renders as one row
 - [Phase ?]: 23-01: useVisibleRows requires a node's parent to be BOTH visible AND expanded, correcting 23-RESEARCH.md Pattern 3's visible-only sketch
 - [Phase ?]: 23-01: @tanstack/react-virtual@3.14.9 installed without re-raising the package-legitimacy checkpoint, per 23-CONTEXT.md's standing pre-approval
+- [Phase ?]: 23-02: Cache JSON serializes map[string]CountEntry directly (no wrapping struct) -- one less layer than the research sketch
+- [Phase ?]: 23-02: storcatConfigDir() extracted from config.NewManager as a pure, behavior-unchanged refactor so the counts cache resolves the same directory
+- [Phase ?]: 23-02: config.NewCountsCacheAt(path) exported (not test-private) so internal/search's tests can build a cache pointed at a temp path from outside the config package
 
 ### Key Research Findings
 
@@ -117,6 +121,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T01:00:38.474Z
-Stopped at: Completed 23-01-PLAN.md
+Last session: 2026-08-14T01:10:42.910Z
+Stopped at: Completed 23-02-PLAN.md
 Resume file: None

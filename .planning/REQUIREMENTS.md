@@ -14,7 +14,7 @@
 - [x] **SHELL-03**: User sees the details panel become a right drawer, toggled by a "Details" chip in the toolbar, at widths 1040–1279px (rail narrows to 236px)
 - [x] **SHELL-04**: User sees the tree keep priority below 1040px (rail 200px, details stays a drawer)
 - [x] **SHELL-05**: User can move the catalog rail to the right side, and the 1px divider moves with it
-- [ ] **SHELL-06**: User sees the status bar report catalog count, indexed file count, and total bytes
+- [x] **SHELL-06**: User sees the status bar report catalog count, indexed file count, and total bytes
 - [x] **SHELL-07**: User can drag the window by the toolbar without drag regions swallowing clicks on the search field, theme chip, or gear
 - [x] **SHELL-08**: On macOS, user sees the real traffic lights sitting inside the 46px toolbar (TitleBarHiddenInset); on Windows and Linux the native title bar sits above it
 - [x] **SHELL-09**: Overlays stack correctly at every window width — details panel below the create slide-over and search palette, which sit below dialogs and Settings
@@ -30,10 +30,10 @@
 
 ### Rail — the catalog list
 
-- [ ] **RAIL-01**: User sees every catalog in the configured catalog directory listed in the rail, with title, JSON size, filename, and file count
+- [x] **RAIL-01**: User sees every catalog in the configured catalog directory listed in the rail, with title, JSON size, filename, and file count
 - [ ] **RAIL-02**: User can filter the rail by typing, matching case-insensitively against title and filename, without the tree re-rendering on each keystroke
 - [x] **RAIL-03**: User can select a catalog from the rail, which loads its tree and clears the previous selection
-- [ ] **RAIL-04**: User sees a red status dot on the rail row of any catalog that failed to parse
+- [x] **RAIL-04**: User sees a red status dot on the rail row of any catalog that failed to parse
 - [ ] **RAIL-05**: User sees the current catalog directory as a chip in the rail header, and can change it
 - [ ] **RAIL-06**: User can open the create slide-over from the "＋ New" pill
 
@@ -103,7 +103,7 @@
 ### States — empty and error surfaces
 
 - [ ] **STATE-01**: User with no catalogs sees an empty-library state in both the rail and the tree pane, with "Catalog a volume" and "Choose catalog folder…" actions
-- [ ] **STATE-02**: User selecting an unreadable catalog sees why it failed — the file, the byte offset, the reason, and the raw parse error
+- [x] **STATE-02**: User selecting an unreadable catalog sees why it failed — the file, the byte offset, the reason, and the raw parse error
 - [ ] **STATE-03**: User can re-scan, open the `.html` instead, or remove an unreadable catalog from the library
 
 ### Compatibility — no regressions
@@ -152,7 +152,7 @@ Deferred — acknowledged but not in this roadmap.
 | SHELL-03 | Phase 22 | Complete |
 | SHELL-04 | Phase 22 | Complete |
 | SHELL-05 | Phase 22 | Complete |
-| SHELL-06 | Phase 23 | Pending |
+| SHELL-06 | Phase 23 | Complete |
 | SHELL-07 | Phase 22 | Complete |
 | SHELL-08 | Phase 22 | Complete |
 | SHELL-09 | Phase 22 | Complete |
@@ -162,10 +162,10 @@ Deferred — acknowledged but not in this roadmap.
 | THEME-04 | Phase 22 | Complete |
 | THEME-05 | Phase 22 | Complete |
 | THEME-06 | Phase 22 | Complete |
-| RAIL-01 | Phase 23 | Pending |
+| RAIL-01 | Phase 23 | Complete |
 | RAIL-02 | Phase 23 | Pending |
 | RAIL-03 | Phase 23 | Complete |
-| RAIL-04 | Phase 23 | Pending |
+| RAIL-04 | Phase 23 | Complete |
 | RAIL-05 | Phase 23 | Pending |
 | RAIL-06 | Phase 23 | Pending |
 | TREE-01 | Phase 23 | Complete |
@@ -214,7 +214,7 @@ Deferred — acknowledged but not in this roadmap.
 | WATCH-02 | Phase 27 | Pending |
 | WATCH-03 | Phase 27 | Pending |
 | STATE-01 | Phase 23 | Pending |
-| STATE-02 | Phase 23 | Pending |
+| STATE-02 | Phase 23 | Complete |
 | STATE-03 | Phase 28 | Pending |
 | COMPAT-01 | Phase 23 | Complete |
 | COMPAT-02 | Phase 25 | Pending |
