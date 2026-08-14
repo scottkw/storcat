@@ -8,6 +8,7 @@ import (
 
 	"storcat-wails/internal/catalog"
 	"storcat-wails/internal/config"
+	"storcat-wails/internal/osutil"
 	"storcat-wails/internal/search"
 	"storcat-wails/pkg/models"
 
@@ -239,6 +240,15 @@ func (a *App) GetCatalogHtmlPath(catalogPath string) (string, error) {
 // OpenExternal opens a URL or file in the system's default application
 func (a *App) OpenExternal(url string) {
 	runtime.BrowserOpenURL(a.ctx, url)
+}
+
+// RevealInFileManager asks the operating system to reveal path -- a
+// catalog's JSON file or its HTML companion -- in the platform's file
+// manager, selected within its containing folder. Delegates entirely to
+// internal/osutil, which validates the path and builds an argv-only
+// command; this binding adds no logic of its own.
+func (a *App) RevealInFileManager(path string) error {
+	return osutil.RevealInFileManager(path)
 }
 
 // GetVersion returns the application version injected at build time

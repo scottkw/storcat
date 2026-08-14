@@ -4,6 +4,7 @@ import {
   BrowseCatalogs,
   LoadCatalog,
   LoadCatalogFlat,
+  RevealInFileManager,
   GetConfig,
   SetTheme,
   SetSidebarPosition,
@@ -174,6 +175,15 @@ export const wailsAPI = {
       return { success: true };
     } catch (error: any) {
       return { success: false, error: error.message };
+    }
+  },
+
+  revealInFileManager: async (path: string) => {
+    try {
+      await RevealInFileManager(path);
+      return { success: true as const };
+    } catch (error: any) {
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 

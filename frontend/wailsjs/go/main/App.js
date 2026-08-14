@@ -42,6 +42,10 @@ export function ReadHtmlFile(arg1) {
   return window['go']['main']['App']['ReadHtmlFile'](arg1);
 }
 
+export function RevealInFileManager(arg1) {
+  return window['go']['main']['App']['RevealInFileManager'](arg1);
+}
+
 export function SearchCatalogs(arg1, arg2) {
   return window['go']['main']['App']['SearchCatalogs'](arg1, arg2);
 }
