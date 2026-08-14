@@ -32,19 +32,19 @@
 
 - [ ] **RAIL-01**: User sees every catalog in the configured catalog directory listed in the rail, with title, JSON size, filename, and file count
 - [ ] **RAIL-02**: User can filter the rail by typing, matching case-insensitively against title and filename, without the tree re-rendering on each keystroke
-- [ ] **RAIL-03**: User can select a catalog from the rail, which loads its tree and clears the previous selection
+- [x] **RAIL-03**: User can select a catalog from the rail, which loads its tree and clears the previous selection
 - [ ] **RAIL-04**: User sees a red status dot on the rail row of any catalog that failed to parse
 - [ ] **RAIL-05**: User sees the current catalog directory as a chip in the rail header, and can change it
 - [ ] **RAIL-06**: User can open the create slide-over from the "＋ New" pill
 
 ### Tree — the catalog browser
 
-- [ ] **TREE-01**: User can browse a catalog of 40,000+ nodes with smooth scrolling and no freeze
+- [x] **TREE-01**: User can browse a catalog of 40,000+ nodes with smooth scrolling and no freeze
 - [ ] **TREE-02**: User can expand and collapse directories; clicking a directory both toggles and selects it, clicking a file selects only
 - [ ] **TREE-03**: User can expand every directory in the current catalog, or collapse back to root, from the breadcrumb bar
 - [ ] **TREE-04**: User sees the catalog header with title, `.json`/`.html` chips, and the metadata line (file count, JSON size, bytes catalogued, modified date)
 - [ ] **TREE-05**: User sees a breadcrumb path for the current selection, with ancestor segments in the accent color
-- [ ] **TREE-06**: User's scroll position and expansion state do not leak between catalogs when switching
+- [x] **TREE-06**: User's scroll position and expansion state do not leak between catalogs when switching
 - [ ] **TREE-07**: User sees the details panel follow the current selection, showing name, path, key/value metadata, and the actions footer
 - [ ] **TREE-08**: User can open the catalog's HTML from the details panel, and reveal its JSON in the OS file manager
 
@@ -108,7 +108,7 @@
 
 ### Compatibility — no regressions
 
-- [ ] **COMPAT-01**: User can open catalogs created by StorCat v1.x and v2.x without conversion
+- [x] **COMPAT-01**: User can open catalogs created by StorCat v1.x and v2.x without conversion
 - [ ] **COMPAT-02**: Catalogs written by v3.0.0 are byte-for-byte the same JSON shape as v2.3.0 wrote, so external tools keep working
 - [ ] **COMPAT-03**: All six CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`) behave exactly as they did in v2.3.0
 - [ ] **COMPAT-04**: `internal/catalog` remains usable from the CLI without a Wails runtime context
@@ -164,16 +164,16 @@ Deferred — acknowledged but not in this roadmap.
 | THEME-06 | Phase 22 | Complete |
 | RAIL-01 | Phase 23 | Pending |
 | RAIL-02 | Phase 23 | Pending |
-| RAIL-03 | Phase 23 | Pending |
+| RAIL-03 | Phase 23 | Complete |
 | RAIL-04 | Phase 23 | Pending |
 | RAIL-05 | Phase 23 | Pending |
 | RAIL-06 | Phase 23 | Pending |
-| TREE-01 | Phase 23 | Pending |
+| TREE-01 | Phase 23 | Complete |
 | TREE-02 | Phase 23 | Pending |
 | TREE-03 | Phase 23 | Pending |
 | TREE-04 | Phase 23 | Pending |
 | TREE-05 | Phase 23 | Pending |
-| TREE-06 | Phase 23 | Pending |
+| TREE-06 | Phase 23 | Complete |
 | TREE-07 | Phase 23 | Pending |
 | TREE-08 | Phase 23 | Pending |
 | PLT-01 | Phase 24 | Pending |
@@ -216,7 +216,7 @@ Deferred — acknowledged but not in this roadmap.
 | STATE-01 | Phase 23 | Pending |
 | STATE-02 | Phase 23 | Pending |
 | STATE-03 | Phase 28 | Pending |
-| COMPAT-01 | Phase 23 | Pending |
+| COMPAT-01 | Phase 23 | Complete |
 | COMPAT-02 | Phase 25 | Pending |
 | COMPAT-03 | Phase 25 | Pending |
 | COMPAT-04 | Phase 25 | Pending |

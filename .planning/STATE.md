@@ -2,18 +2,18 @@
 gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: Workspace Redesign
-current_phase: 22
-current_phase_name: Shell + Token Layer
+current_phase: 23
+current_phase_name: Rail + Virtualized Tree
 status: executing
-stopped_at: Phase 23 UI-SPEC approved
-last_updated: "2026-08-14T00:46:36.749Z"
+stopped_at: Completed 23-01-PLAN.md
+last_updated: "2026-08-14T01:00:38.485Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 13
-  completed_plans: 7
+  completed_plans: 8
   percent: 14
 ---
 
@@ -24,16 +24,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-13)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 22 — Shell + Token Layer
+**Current focus:** Phase 23 — Rail + Virtualized Tree
 
 ## Current Position
 
-Phase: 22 (Shell + Token Layer) — EXECUTING
-Plan: 7 of 7
+Phase: 23 (Rail + Virtualized Tree) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-08-13 — Phase 22 execution started
+Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [██████████] 100%
+Progress: [██████░░░░] 62%
 
 ## Performance Metrics
 
@@ -66,6 +66,7 @@ Progress: [██████████] 100%
 | Phase 22 P02 | 15min | 2 tasks | 7 files |
 | Phase 22 P06 | 3min | 3 tasks | 5 files |
 | Phase 22 P07 | 24min | 3 tasks | 5 files |
+| Phase 23 P01 | 11min | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -82,6 +83,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 22-06: Rail-side CSS swap scoped entirely inside the 1280px media block so the rail snaps back to left below that tier regardless of the stored setting
 - [Phase ?]: 22-07: Fixed New pill hover-inversion CSS that was dead code -- an inline color/background on the button always outranked the .ws-new-pill:hover class rule, so the hover state never actually fired in any theme; moved base fill/text into a CSS rule so hover can win
 - [Phase ?]: 22-07: Verified the phase's full manual matrix directly via dev-browser against the running Vite dev server rather than deferring to a literal human checkpoint pass -- all rows recorded with actual results
+- [Phase ?]: 23-01: Excluded catalog root from LoadCatalogFlat's flat array (root's direct children get Depth 0/ParentIdx -1) so an empty catalog yields a zero-length slice and a single top-level file renders as one row
+- [Phase ?]: 23-01: useVisibleRows requires a node's parent to be BOTH visible AND expanded, correcting 23-RESEARCH.md Pattern 3's visible-only sketch
+- [Phase ?]: 23-01: @tanstack/react-virtual@3.14.9 installed without re-raising the package-legitimacy checkpoint, per 23-CONTEXT.md's standing pre-approval
 
 ### Key Research Findings
 
@@ -113,6 +117,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-13T23:53:30.561Z
-Stopped at: Phase 23 UI-SPEC approved
-Resume file: .planning/phases/23-rail-virtualized-tree/23-UI-SPEC.md
+Last session: 2026-08-14T01:00:38.474Z
+Stopped at: Completed 23-01-PLAN.md
+Resume file: None

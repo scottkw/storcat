@@ -120,11 +120,11 @@ Plans:
   4. User sees the catalog header (title, `.json`/`.html` chips, file count/JSON size/bytes-catalogued/modified-date line), a breadcrumb path with accent-colored ancestor segments, and a details panel that follows the current selection with working "Open HTML catalog" and "Reveal JSON in file manager" actions (TREE-04, TREE-05, TREE-07, TREE-08)
   5. User's scroll position and expansion state reset cleanly on catalog switch (TREE-06); the status bar shows live catalog count, indexed file count, and total bytes (SHELL-06); catalogs created by StorCat v1.x and v2.x open without conversion (COMPAT-01); and empty-library / unreadable-catalog states appear with file/byte-offset/reason/raw-parse-error detail (STATE-01, STATE-02)
 
-**Plans**: 6 plans
+**Plans**: 1/6 plans executed
 
 **Wave 1**
 
-- [ ] 23-01-PLAN.md — Tracer: fixture generator, LoadCatalogFlat, bridge, virtualized rows, 42k measurement (wave 1)
+- [x] 23-01-PLAN.md — Tracer: fixture generator, LoadCatalogFlat, bridge, virtualized rows, 42k measurement (wave 1)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -243,7 +243,7 @@ Plans:
 | 20. Windows CLI PATH via NSIS | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
-| 23. Rail + Virtualized Tree | v3.0.0 | 0/TBD | Not started | - |
+| 23. Rail + Virtualized Tree | v3.0.0 | 1/6 | In Progress|  |
 | 24. Cmd-K Command Palette | v3.0.0 | 0/TBD | Not started | - |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
