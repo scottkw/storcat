@@ -36,26 +36,39 @@ type Manager struct {
 	config     *Config
 }
 
-// NewManager creates a new config manager
-func NewManager() (*Manager, error) {
+// storcatConfigDir resolves (and creates, if missing) the directory
+// storcat's local JSON files live in -- config.json today, counts-cache.json
+// alongside it. Both the config Manager and the sidecar counts cache
+// resolve through this one helper so the directory can never drift between
+// the two.
+func storcatConfigDir() (string, error) {
 	// Get config directory
 	configDir, err := os.UserConfigDir()
 	if err != nil {
 		// Fallback to home directory
 		homeDir, err := os.UserHomeDir()
 		if err != nil {
-			return nil, err
+			return "", err
 		}
 		configDir = filepath.Join(homeDir, ".config")
 	}
 
 	// Create storcat config directory
-	storcatConfigDir := filepath.Join(configDir, "storcat")
-	if err := os.MkdirAll(storcatConfigDir, 0755); err != nil {
+	dir := filepath.Join(configDir, "storcat")
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return "", err
+	}
+	return dir, nil
+}
+
+// NewManager creates a new config manager
+func NewManager() (*Manager, error) {
+	storcatDir, err := storcatConfigDir()
+	if err != nil {
 		return nil, err
 	}
 
-	configPath := filepath.Join(storcatConfigDir, "config.json")
+	configPath := filepath.Join(storcatDir, "config.json")
 
 	m := &Manager{
 		configPath: configPath,
