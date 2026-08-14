@@ -29,6 +29,17 @@ function extractErrorMessage(error: any): string {
   return error?.message || 'Unknown error';
 }
 
+// The one place a caught Wails rejection turns into the wrapper's
+// {success: false, error} shape. Previously every catch block below
+// duplicated this three-line object literal, and five of them drifted to
+// read the (always-undefined, per extractErrorMessage's comment above)
+// `error.message` directly instead. Routing every catch block through this
+// single function makes that drift impossible to reintroduce one call site
+// at a time -- there is now exactly one line that reads a caught error.
+function wailsError(error: any): { success: false; error: string } {
+  return { success: false, error: extractErrorMessage(error) };
+}
+
 // Wrapper to match Electron API structure
 export const wailsAPI = {
   // Catalog operations
@@ -45,7 +56,7 @@ export const wailsAPI = {
         copyHtmlPath: result.copyHtmlPath,
       };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -54,7 +65,7 @@ export const wailsAPI = {
       const results = await SearchCatalogs(searchTerm, catalogDir);
       return { success: true, results };
     } catch (error: any) {
-      return { success: false, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -63,7 +74,7 @@ export const wailsAPI = {
       const catalogs = await BrowseCatalogs(catalogDir);
       return { success: true, catalogs };
     } catch (error: any) {
-      return { success: false, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -72,7 +83,7 @@ export const wailsAPI = {
       const catalog = await LoadCatalog(filePath);
       return { success: true, catalog };
     } catch (error: any) {
-      return { success: false, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -81,7 +92,7 @@ export const wailsAPI = {
       const flat = await LoadCatalogFlat(filePath);
       return { success: true as const, flat };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -91,7 +102,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -100,7 +111,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -109,7 +120,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -119,7 +130,7 @@ export const wailsAPI = {
       const config = await GetConfig();
       return { success: true as const, config };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -128,7 +139,7 @@ export const wailsAPI = {
       await SetTheme(theme);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return wailsError(error);
     }
   },
 
@@ -137,7 +148,7 @@ export const wailsAPI = {
       await SetSidebarPosition(position);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return wailsError(error);
     }
   },
 
@@ -146,7 +157,7 @@ export const wailsAPI = {
       await SetWindowSize(width, height);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return wailsError(error);
     }
   },
 
@@ -156,7 +167,7 @@ export const wailsAPI = {
       const htmlPath = await GetCatalogHtmlPath(catalogPath);
       return { success: true as const, htmlPath };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -165,7 +176,7 @@ export const wailsAPI = {
       const content = await ReadHtmlFile(filePath);
       return { success: true as const, content };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -174,7 +185,7 @@ export const wailsAPI = {
       await OpenExternal(url);
       return { success: true };
     } catch (error: any) {
-      return { success: false, error: error.message };
+      return wailsError(error);
     }
   },
 
@@ -183,7 +194,7 @@ export const wailsAPI = {
       await RevealInFileManager(path);
       return { success: true as const };
     } catch (error: any) {
-      return { success: false as const, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -193,7 +204,7 @@ export const wailsAPI = {
       const catalogs = await BrowseCatalogs(catalogDir);
       return { success: true, catalogs };
     } catch (error: any) {
-      return { success: false, error: extractErrorMessage(error) };
+      return wailsError(error);
     }
   },
 
@@ -213,7 +224,7 @@ export const wailsAPI = {
       return { success: true };
     } catch (error: any) {
       console.error('Failed to save window persistence setting:', error);
-      return { success: false, error: error.message };
+      return wailsError(error);
     }
   },
 
