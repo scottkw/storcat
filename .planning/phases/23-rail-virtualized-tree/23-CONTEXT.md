@@ -42,6 +42,14 @@ Wire real data into the shell Phase 22 built: the catalog rail lists and filters
 - The unreadable-catalog state (STATE-02) renders **inline in the tree pane** — filename, byte offset, reason, and the raw parser error in a `--ch` code box — with the rail keeping its red dot. Not a toast or modal: dismissible means losable, and the requirement is that the raw error stays inspectable.
 - Status bar counts (SHELL-06) are **derived from the rail array**, which already carries per-catalog counts once the sidecar cache lands. Summing three numbers does not need its own binding.
 
+### Resolved During Planning (from research findings)
+- **Ship the single `LoadCatalogFlat` call; do not chunk.** Research measured a synthetic 42,551-node catalog at **5.83 MB** (~144 bytes/node) of marshaled JSON. The Wails bridge is in-process, not a network hop, and the UI-SPEC already specifies a loading state for exactly this. Chunking is real machinery for a problem not yet observed — YAGNI. **But the plan must actually measure it** (time-to-first-row against the generated 40k fixture) and record the number, so "it's fine" is evidence rather than assumption. If the measurement is bad, chunking becomes a follow-up, not a guess made now.
+- **`CatalogItem.Name` holds a full relative path, not a basename** (`internal/catalog/service.go:86-90`) — this corrects the milestone `ARCHITECTURE.md` draft. The flat node carries BOTH: `Name` via `filepath.Base` and `Path` verbatim. Getting this wrong silently breaks the tree's row labels and the breadcrumb.
+- **`AppContext` does not yet have `currentCatalogId` / `expanded` / `selected`.** Phase 22 added only `density` / `railSide` / `detailOverlay`. The CONTEXT wording above describes the target shape; this phase actually adds those three.
+- **The sidecar cache must NOT copy `config.Manager` verbatim** — that manager has no mutex, and the cache is written from a background fill while the rail reads it. It needs its own concurrent-safe access.
+- **`parseError` detection uses a `json.Valid()` fast path**, falling back to a full `Unmarshal` only for the rare catalog that fails. `BrowseCatalogs` currently only stats files and never opens them, so this is genuinely new I/O on every rail load and must not be naive.
+- **`@tanstack/react-virtual` is pre-approved for install.** The package-legitimacy gate flags it `SUS`, but that heuristic fires on the latest version's publish date, not package age: it is the official TanStack package with ~21M weekly downloads. Install it; do not substitute or hand-roll. This authority replaces the checkpoint — do not re-raise it.
+
 ### Claude's Discretion
 - Flat-node struct field names and the exact `CatalogMetadata` JSON keys.
 - Sidecar cache file name, location beside the config, and its serialization format.
