@@ -120,7 +120,13 @@ Research complete — see `.planning/research/SUMMARY.md`, `ARCHITECTURE.md`, `P
 
 ### Pending Todos
 
-None.
+**Carried security obligations for Phase 26** (from `23-SECURITY.md` — must not be re-accepted a third time):
+- **T-22-05 — `CatalogModal` unsanitized `srcDoc`.** Accepted in Phases 22 and 23 *only* because no dispatcher of `openCatalogModal` exists. The plumbing beneath it is now live (`window.electronAPI` shim routes to real Go), so only the missing dispatcher stands between attacker-influenceable catalog HTML and an unsanitized `srcDoc`. Phase 26 must sanitize `htmlContent` or delete `CatalogModal.tsx` — not re-affirm the acceptance.
+- **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` containment.** Both are Wails-exposed and callable from any renderer JS but lack the containment/symlink/regular-file gate that `RevealInFileManager` got in review finding WR-02. Mechanical fix: thread `catalogDir` through both and reuse `internal/osutil`'s existing `containsPath` helper.
+
+**Open platform-gated items** (tracked in `.planning/WINDOWS.md`, sweep before v3.0.0 ships):
+- SHELL-07 — native Windows drag-vs-click arbitration (Phase 22, user-accepted as platform-gated).
+- TREE-08 — Windows `explorer /select,` argv shape at runtime (Phase 23). Unit-tested only; macOS reveal was verified against Finder's real selection.
 
 ### Blockers/Concerns
 
