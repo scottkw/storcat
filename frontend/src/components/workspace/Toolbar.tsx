@@ -7,9 +7,10 @@ export interface ToolbarProps {
   showDetailsChip: boolean;
   detailsOpen: boolean;
   onToggleDetails: () => void;
+  onOpenSearch: () => void;
 }
 
-function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails }: ToolbarProps) {
+function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails, onOpenSearch }: ToolbarProps) {
   // useLayoutEffect (not useEffect) so this fires before the browser paints,
   // closing React's own commit-to-paint gap. Environment() itself is still
   // async, so this narrows but does not eliminate the one-frame window.
@@ -59,6 +60,7 @@ function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails }: T
           type="button"
           className="no-drag ws-search"
           aria-label="Search every catalog"
+          onClick={onOpenSearch}
           style={{
             width: '100%',
             maxWidth: 460,
