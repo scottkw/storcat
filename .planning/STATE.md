@@ -141,7 +141,7 @@ Research complete — see `.planning/research/SUMMARY.md`, `ARCHITECTURE.md`, `P
 **Carried security obligations for Phase 26** (from `23-SECURITY.md` — must not be re-accepted a third time):
 
 - **T-22-05 — `CatalogModal` unsanitized `srcDoc`.** Accepted in Phases 22 and 23 *only* because no dispatcher of `openCatalogModal` exists. The plumbing beneath it is now live (`window.electronAPI` shim routes to real Go), so only the missing dispatcher stands between attacker-influenceable catalog HTML and an unsanitized `srcDoc`. Phase 26 must sanitize `htmlContent` or delete `CatalogModal.tsx` — not re-affirm the acceptance.
-- **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` containment.** Both are Wails-exposed and callable from any renderer JS but lack the containment/symlink/regular-file gate that `RevealInFileManager` got in review finding WR-02. Mechanical fix: thread `catalogDir` through both and reuse `internal/osutil`'s existing `containsPath` helper.
+- **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` / `SearchIndexed` containment.** All three are Wails-exposed and callable from any renderer JS but lack the containment/symlink/regular-file gate that `RevealInFileManager` got in review finding WR-02. Mechanical fix: thread `catalogDir` through each and reuse `internal/osutil`'s existing `containsPath` helper. **`App.SearchIndexed` was added to this sweep's target list by Phase 24** (threat T-24-01, recorded in all five 24-*-PLAN.md threat registers and confirmed by `24-SECURITY.md`) — it takes an arbitrary directory with the same parameter surface as its siblings, so it must not be missed when this sweep runs.
 
 **Open platform-gated items** (tracked in `.planning/WINDOWS.md`, sweep before v3.0.0 ships):
 
