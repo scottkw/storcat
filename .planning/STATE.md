@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 23
 current_phase_name: Rail + Virtualized Tree
 status: executing
-stopped_at: Completed 23-02-PLAN.md
-last_updated: "2026-08-14T01:10:42.921Z"
+stopped_at: Completed 23-03-PLAN.md
+last_updated: "2026-08-14T01:29:40.672Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 13
-  completed_plans: 9
+  completed_plans: 10
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 23 (Rail + Virtualized Tree) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [███████░░░] 69%
+Progress: [████████░░] 77%
 
 ## Performance Metrics
 
@@ -68,6 +68,7 @@ Progress: [███████░░░] 69%
 | Phase 22 P07 | 24min | 3 tasks | 5 files |
 | Phase 23 P01 | 11min | 3 tasks | 18 files |
 | Phase 23 P02 | 24min | 3 tasks | 9 files |
+| Phase 23 P03 | 17min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,10 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 23-02: Cache JSON serializes map[string]CountEntry directly (no wrapping struct) -- one less layer than the research sketch
 - [Phase ?]: 23-02: storcatConfigDir() extracted from config.NewManager as a pure, behavior-unchanged refactor so the counts cache resolves the same directory
 - [Phase ?]: 23-02: config.NewCountsCacheAt(path) exported (not test-private) so internal/search's tests can build a cache pointed at a temp path from outside the config package
+- [Phase ?]: 23-03: TOGGLE_EXPAND gates on node.type==='directory' (not hasChildren) per the plan's literal wording -- toggling a childless directory is a harmless no-op
+- [Phase ?]: 23-03: TreePane's empty-library branch also covers 'nothing selected yet' (catalogs exist but none picked) since the plan names no fifth state and this reuses the Phase 22 landing block
+- [Phase ?]: 23-03: BreadcrumbBar mounts only inside TreePane's rows branch, not during loading/empty-catalog/empty-library, since its catalog-header slot doesn't exist until 23-05
+- [Phase ?]: 23-03: Fixed a CSS Grid min-content bug -- .ws-tree needed its own min-width:0 (not just the breadcrumb path span's) so a deep selection's unbounded nowrap text truncates instead of widening the whole app
 
 ### Key Research Findings
 
@@ -121,6 +126,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T01:10:42.910Z
-Stopped at: Completed 23-02-PLAN.md
+Last session: 2026-08-14T01:29:40.660Z
+Stopped at: Completed 23-03-PLAN.md
 Resume file: None

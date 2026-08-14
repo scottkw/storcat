@@ -40,10 +40,10 @@
 ### Tree — the catalog browser
 
 - [x] **TREE-01**: User can browse a catalog of 40,000+ nodes with smooth scrolling and no freeze
-- [ ] **TREE-02**: User can expand and collapse directories; clicking a directory both toggles and selects it, clicking a file selects only
-- [ ] **TREE-03**: User can expand every directory in the current catalog, or collapse back to root, from the breadcrumb bar
+- [x] **TREE-02**: User can expand and collapse directories; clicking a directory both toggles and selects it, clicking a file selects only
+- [x] **TREE-03**: User can expand every directory in the current catalog, or collapse back to root, from the breadcrumb bar
 - [ ] **TREE-04**: User sees the catalog header with title, `.json`/`.html` chips, and the metadata line (file count, JSON size, bytes catalogued, modified date)
-- [ ] **TREE-05**: User sees a breadcrumb path for the current selection, with ancestor segments in the accent color
+- [x] **TREE-05**: User sees a breadcrumb path for the current selection, with ancestor segments in the accent color
 - [x] **TREE-06**: User's scroll position and expansion state do not leak between catalogs when switching
 - [ ] **TREE-07**: User sees the details panel follow the current selection, showing name, path, key/value metadata, and the actions footer
 - [ ] **TREE-08**: User can open the catalog's HTML from the details panel, and reveal its JSON in the OS file manager
@@ -102,7 +102,7 @@
 
 ### States — empty and error surfaces
 
-- [ ] **STATE-01**: User with no catalogs sees an empty-library state in both the rail and the tree pane, with "Catalog a volume" and "Choose catalog folder…" actions
+- [x] **STATE-01**: User with no catalogs sees an empty-library state in both the rail and the tree pane, with "Catalog a volume" and "Choose catalog folder…" actions
 - [x] **STATE-02**: User selecting an unreadable catalog sees why it failed — the file, the byte offset, the reason, and the raw parse error
 - [ ] **STATE-03**: User can re-scan, open the `.html` instead, or remove an unreadable catalog from the library
 
@@ -169,10 +169,10 @@ Deferred — acknowledged but not in this roadmap.
 | RAIL-05 | Phase 23 | Pending |
 | RAIL-06 | Phase 23 | Pending |
 | TREE-01 | Phase 23 | Complete |
-| TREE-02 | Phase 23 | Pending |
-| TREE-03 | Phase 23 | Pending |
+| TREE-02 | Phase 23 | Complete |
+| TREE-03 | Phase 23 | Complete |
 | TREE-04 | Phase 23 | Pending |
-| TREE-05 | Phase 23 | Pending |
+| TREE-05 | Phase 23 | Complete |
 | TREE-06 | Phase 23 | Complete |
 | TREE-07 | Phase 23 | Pending |
 | TREE-08 | Phase 23 | Pending |
@@ -213,7 +213,7 @@ Deferred — acknowledged but not in this roadmap.
 | WATCH-01 | Phase 27 | Pending |
 | WATCH-02 | Phase 27 | Pending |
 | WATCH-03 | Phase 27 | Pending |
-| STATE-01 | Phase 23 | Pending |
+| STATE-01 | Phase 23 | Complete |
 | STATE-02 | Phase 23 | Complete |
 | STATE-03 | Phase 28 | Pending |
 | COMPAT-01 | Phase 23 | Complete |
