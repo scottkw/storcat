@@ -3,10 +3,11 @@ phase: 24
 slug: cmd-k-command-palette
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
 # audit-milestone §5.5 distinguishes NOT-VALIDATED (draft) from PARTIAL (validated + nyquist_compliant: false) (#2117)
-status: draft
+status: validated
 nyquist_compliant: false
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-08-14
+validated: 2026-08-14
 ---
 
 # Phase 24 — Validation Strategy
@@ -64,8 +65,8 @@ created: 2026-08-14
 
 Both Wave 0 gaps are assigned to **24-01 Task 1**, the phase's leading tracer task — the capping logic and its boundary coverage land in the same commit, so no task in any later wave inherits a MISSING automated verify.
 
-- [ ] `internal/search/search_indexed_test.go` — covers PLT-02/PLT-03 cap-at-50 and total-count behavior, **including the boundary cases: 0 matches, exactly 50, and 51 matches**, plus the element-for-element parity assertion against `SearchCatalogs` for the same fixture and term → **24-01-T1**
-- [ ] Extend (do **not** replace) `cli/search_test.go` with a regression assertion that `cli/search.go`'s output for a fixed fixture is unchanged by this phase's Go edits → **24-01-T1**
+- [x] `internal/search/search_indexed_test.go` — covers PLT-02/PLT-03 cap-at-50 and total-count behavior, **including the boundary cases: 0 matches, exactly 50, and 51 matches**, plus the element-for-element parity assertion against `SearchCatalogs` for the same fixture and term → **24-01-T1** — **DONE**: `TestSearchIndexed_ZeroMatches`, `_ExactlyCapMatches`, `_OverCapMatches`, `_ParityWithSearchCatalogs`, `_CrossCatalogDuplicatePath`, `_UnreadableDirectory` (6 tests)
+- [x] Extend (do **not** replace) `cli/search_test.go` with a regression assertion that `cli/search.go`'s output for a fixed fixture is unchanged by this phase's Go edits → **24-01-T1** — **DONE**: `TestRunSearch_UnaffectedByIndexedCap` added; the 6 pre-existing `TestRunSearch_*` tests were left intact
 
 *No new frontend test infrastructure. Adding Vitest/Testing Library here would be scope creep against a locked deferral (TEST-01).*
 
@@ -88,11 +89,40 @@ Both Wave 0 gaps are assigned to **24-01 Task 1**, the phase's leading tracer ta
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 90s
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references — both Wave 0 items landed in 24-01-T1
+- [x] No watch-mode flags — Go `-count=1`, `tsc --noEmit`, `vite build` are all one-shot
+- [x] Feedback latency < 90s — measured full suite ~60–90s
+- [ ] `nyquist_compliant: true` set in frontmatter — **deliberately NOT set; see below**
 
-**Approval:** pending
+**Approval:** validated (PARTIAL) 2026-08-14
+
+`nyquist_compliant` stays `false` **by design, not by omission.** Five of the seven requirements (PLT-01, PLT-04, PLT-05, PLT-06, PLT-07) are frontend behaviors, and this project has no frontend test framework because **TEST-01 (Vitest + Testing Library) is an explicitly deferred milestone item**, recorded in STATE.md's Deferred Items table at v3.0.0 requirements definition. Closing these gaps automatically would mean installing that framework — scope creep against a locked deferral, and a decision that belongs to whoever retires TEST-01, not to this phase.
+
+They are therefore classified **manual-only**, and each was verified live rather than assumed. Marking `nyquist_compliant: true` here would misrepresent automated coverage the project has deliberately chosen not to have yet.
+
+---
+
+## Validation Audit 2026-08-14
+
+| Metric | Count |
+|--------|-------|
+| Requirements audited | 7 |
+| COVERED (automated) | 2 — PLT-02, PLT-03 |
+| Manual-only (structural, TEST-01 deferred) | 5 — PLT-01, PLT-04, PLT-05, PLT-06, PLT-07 |
+| Gaps found | 0 fillable |
+| Resolved | 0 (nothing fillable remained — both Wave 0 items already landed in 24-01-T1) |
+| Escalated | 0 |
+
+**Auditor not spawned.** The only gaps a `gsd-nyquist-auditor` run could have filled were the two Wave 0 Go test files, and both were already delivered by 24-01 Task 1 with the required 0/50/51 boundary cases. Every remaining gap is structurally manual pending TEST-01. Spawning the auditor would have produced either no change or a TEST-01 violation.
+
+### Evidence backing the manual-only classifications
+
+| Req | Live evidence recorded |
+|-----|------------------------|
+| PLT-01 | Human-verified in the real macOS WKWebView window: ⌘K opens with the caret in the input; a second ⌘K is a no-op preserving the query. **Resolved RESEARCH Open Question #1 positively.** Toolbar click path and autofocus additionally verified at `:34115` (`activeElement.className === "ws-palette-input"`). Ctrl+K on Windows/Linux remains unverified — WINDOWS.md ledger entry #2. |
+| PLT-04 | `:34115` — 60× ArrowDown clamps at option 49 with no wrap; Escape closes from inside the palette. |
+| PLT-05 | `:34115` — pre-expanded `VOL01`, `VOL01/102CANON`, `VOL03` all survived a reveal into collapsed `VOL02` (expanded set 3→5, no shrink); cross-catalog reveal `fixture-dcim → fixture-flat` selected the target; centred scroll measured at 18px delta on a 657px viewport. Re-confirmed after the WR-01/WR-02 structural fixes. |
+| PLT-06 | `:34115` — `zzznotfound` → 0 rows, 0 console errors; the verbatim string is unreachable from a query that never ran (1-char query shows the hint branch). |
+| PLT-07 | `:34115` — Tab never escapes the panel; `.ws-root` scroll lock cycles cleanly across 5 open/close cycles; focus restores to whichever control opened the palette. |
