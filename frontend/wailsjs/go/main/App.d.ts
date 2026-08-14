@@ -27,6 +27,8 @@ export function RevealInFileManager(arg1:string,arg2:string):Promise<void>;
 
 export function SearchCatalogs(arg1:string,arg2:string):Promise<Array<models.SearchResult>>;
 
+export function SearchIndexed(arg1:string,arg2:string):Promise<models.SearchIndexResult>;
+
 export function SelectDirectory():Promise<string>;
 
 export function SetSidebarPosition(arg1:string):Promise<void>;

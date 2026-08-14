@@ -50,6 +50,10 @@ export function SearchCatalogs(arg1, arg2) {
   return window['go']['main']['App']['SearchCatalogs'](arg1, arg2);
 }
 
+export function SearchIndexed(arg1, arg2) {
+  return window['go']['main']['App']['SearchIndexed'](arg1, arg2);
+}
+
 export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
 }

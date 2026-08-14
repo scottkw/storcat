@@ -1,6 +1,7 @@
 import {
   CreateCatalog,
   SearchCatalogs,
+  SearchIndexed,
   BrowseCatalogs,
   LoadCatalog,
   LoadCatalogFlat,
@@ -64,6 +65,18 @@ export const wailsAPI = {
     try {
       const results = await SearchCatalogs(searchTerm, catalogDir);
       return { success: true, results };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // GUI-only capped sibling of searchCatalogs, used by the ⌘K command
+  // palette: caps the response server-side while carrying the true match
+  // count in `indexed.total`.
+  searchIndexed: async (searchTerm: string, catalogDir: string) => {
+    try {
+      const indexed = await SearchIndexed(searchTerm, catalogDir);
+      return { success: true as const, indexed };
     } catch (error: any) {
       return wailsError(error);
     }

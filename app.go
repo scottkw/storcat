@@ -90,6 +90,18 @@ func (a *App) SearchCatalogs(searchTerm string, catalogDir string) ([]*models.Se
 	return a.searchService.SearchCatalogs(searchTerm, absPath)
 }
 
+// SearchIndexed is the GUI-only capped sibling of SearchCatalogs, used by
+// the ⌘K command palette. It caps the response at search.SearchIndexedCap
+// while carrying the true match count in the returned Total.
+func (a *App) SearchIndexed(searchTerm string, catalogDir string) (*models.SearchIndexResult, error) {
+	absPath, err := filepath.Abs(catalogDir)
+	if err != nil {
+		return nil, err
+	}
+
+	return a.searchService.SearchIndexed(searchTerm, absPath)
+}
+
 // BrowseCatalogs returns metadata for all catalogs in a directory
 func (a *App) BrowseCatalogs(catalogDir string) ([]*models.CatalogMetadata, error) {
 	absPath, err := filepath.Abs(catalogDir)
