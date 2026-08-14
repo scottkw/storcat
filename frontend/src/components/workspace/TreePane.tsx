@@ -4,6 +4,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { useVisibleRows } from '../../hooks/useVisibleRows';
 import { formatBytes } from '../../lib/format';
+import { findNodeIndexByPath, ancestorPathsOf, mergeExpanded } from '../../lib/reveal';
 import BreadcrumbBar from './BreadcrumbBar';
 import TreeHeader from './TreeHeader';
 import UnreadableCatalogPanel from './UnreadableCatalogPanel';
@@ -14,6 +15,10 @@ const EMPTY_NODES: models.FlatNode[] = [];
 function TreePane() {
   const { state, dispatch } = useAppContext();
   const scrollRef = useRef<HTMLDivElement>(null);
+  // Set by the reveal's merge/select effect (A) once a target has been
+  // located and expanded; consumed by the reveal's scroll effect (B), which
+  // fires only after visibleIndices has recomputed to include the target.
+  const revealScrollPathRef = useRef<string | null>(null);
 
   const nodes = state.tree.status === 'ready' ? state.tree.nodes : EMPTY_NODES;
   const visibleIndices = useVisibleRows(nodes, state.expanded);
@@ -67,8 +72,72 @@ function TreePane() {
     if (state.tree.status !== 'ready') return;
     if (scrollRef.current) scrollRef.current.scrollTop = 0;
     virtualizer.scrollToOffset(0);
+    // A catalog switch also drops any scroll request left over from a
+    // reveal that never landed (e.g. the palette revealed a target, then
+    // the user picked a different catalog from the rail before effect B's
+    // scroll fired). Layout effects run before passive effects in the same
+    // commit, so this can never clobber a request effect A sets in that
+    // same commit.
+    revealScrollPathRef.current = null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state.currentCatalogId, state.tree.status]);
+
+  // Reveal effect A: merge the target's ancestors into `expanded` and
+  // select the target. Keyed on [pendingReveal, tree.status] so it carries
+  // the request across the asynchronous gap while the catalog loads --
+  // it re-runs once tree.status flips to 'ready' even if pendingReveal
+  // itself hasn't changed since the palette set it.
+  useEffect(() => {
+    if (!state.pendingReveal || state.tree.status !== 'ready') return;
+
+    const targetIdx = findNodeIndexByPath(nodes, state.pendingReveal);
+    if (targetIdx === -1) {
+      // The catalog changed on disk between the search returning and the
+      // row being activated -- discard rather than retry; the palette has
+      // already closed and there is nothing left to point at.
+      dispatch({ type: 'SET_PENDING_REVEAL', payload: null });
+      return;
+    }
+
+    const ancestors = ancestorPathsOf(nodes, targetIdx);
+    const merged = mergeExpanded(state.expanded, ancestors);
+    // Only dispatch when the merge actually changes something -- this
+    // reference check is what makes a repeat reveal of an already-visible
+    // node produce no expansion change and no open/close flicker.
+    if (merged !== state.expanded) {
+      dispatch({ type: 'SET_EXPANDED', payload: merged });
+    }
+
+    dispatch({ type: 'SET_SELECTED', payload: state.pendingReveal });
+    revealScrollPathRef.current = state.pendingReveal;
+    dispatch({ type: 'SET_PENDING_REVEAL', payload: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.pendingReveal, state.tree.status]);
+
+  // Reveal effect B: scroll to the target's post-expansion visible
+  // position. Deliberately a SEPARATE effect from A, keyed on
+  // [visibleIndices] rather than fired inline in A. The `virtualizer`
+  // object in any given render is bound to that render's `count`, derived
+  // from `visibleIndices`, derived from the `expanded` map A has only just
+  // dispatched -- scrolling inside A would target a row list that does not
+  // yet contain the target. This effect waits for visibleIndices to
+  // recompute after the expansion commits.
+  useEffect(() => {
+    const path = revealScrollPathRef.current;
+    if (!path) return;
+
+    const visibleIdx = visibleIndices.findIndex((nodeIdx) => nodes[nodeIdx].path === path);
+    if (visibleIdx === -1) {
+      // The expansion dispatched by effect A hasn't committed into
+      // visibleIndices yet -- wait for the next recomputation rather than
+      // clearing the ref, so the next [visibleIndices] change tries again.
+      return;
+    }
+
+    revealScrollPathRef.current = null;
+    virtualizer.scrollToIndex(visibleIdx, { align: 'center' });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleIndices]);
 
   // Directory click toggles expansion AND selects, in that order; a file
   // click selects only -- the two are never unified into one handler that
