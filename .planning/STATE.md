@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 23
 current_phase_name: Rail + Virtualized Tree
 status: executing
-stopped_at: Completed 23-03-PLAN.md
-last_updated: "2026-08-14T01:29:40.672Z"
+stopped_at: Completed 23-04-PLAN.md
+last_updated: "2026-08-14T01:43:39.686Z"
 last_activity: 2026-08-13
 last_activity_desc: ROADMAP.md created for v3.0.0 (7 phases, 75/75 requirements mapped, 100% coverage)
 progress:
   total_phases: 7
   completed_phases: 1
   total_plans: 13
-  completed_plans: 10
+  completed_plans: 11
   percent: 14
 ---
 
@@ -29,11 +29,11 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 23 (Rail + Virtualized Tree) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 Status: Ready to execute
 Last activity: 2026-08-13 — Phase 23 execution started
 
-Progress: [████████░░] 77%
+Progress: [█████████░] 85%
 
 ## Performance Metrics
 
@@ -69,6 +69,7 @@ Progress: [████████░░] 77%
 | Phase 23 P01 | 11min | 3 tasks | 18 files |
 | Phase 23 P02 | 24min | 3 tasks | 9 files |
 | Phase 23 P03 | 17min | 3 tasks | 5 files |
+| Phase 23 P04 | 14min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -95,6 +96,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 23-03: TreePane's empty-library branch also covers 'nothing selected yet' (catalogs exist but none picked) since the plan names no fifth state and this reuses the Phase 22 landing block
 - [Phase ?]: 23-03: BreadcrumbBar mounts only inside TreePane's rows branch, not during loading/empty-catalog/empty-library, since its catalog-header slot doesn't exist until 23-05
 - [Phase ?]: 23-03: Fixed a CSS Grid min-content bug -- .ws-tree needed its own min-width:0 (not just the breadcrumb path span's) so a deep selection's unbounded nowrap text truncates instead of widening the whole app
+- [Phase ?]: [Phase 23-04]: Directory chip's hover gets its own .ws-dir-chip:hover rule (border-color only), not a reuse of .ws-chip:hover which also recolors text -- 23-UI-SPEC calls for hover-border-only
+- [Phase ?]: [Phase 23-04]: SET_CATALOG_DIR clears currentCatalogId/tree/expanded/selected but deliberately leaves state.catalogs untouched -- the immediately-following SET_CATALOGS dispatch replaces the list
+- [Phase ?]: [Phase 23-04]: themeTokens.ts' safeGetItem/safeSetItem exported (were module-private) for reuse by CatalogRail.tsx's directory-persistence, instead of a second try/catch wrapper
 
 ### Key Research Findings
 
@@ -126,6 +130,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T01:29:40.660Z
-Stopped at: Completed 23-03-PLAN.md
+Last session: 2026-08-14T01:43:28.810Z
+Stopped at: Completed 23-04-PLAN.md
 Resume file: None

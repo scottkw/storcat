@@ -31,10 +31,10 @@
 ### Rail — the catalog list
 
 - [x] **RAIL-01**: User sees every catalog in the configured catalog directory listed in the rail, with title, JSON size, filename, and file count
-- [ ] **RAIL-02**: User can filter the rail by typing, matching case-insensitively against title and filename, without the tree re-rendering on each keystroke
+- [x] **RAIL-02**: User can filter the rail by typing, matching case-insensitively against title and filename, without the tree re-rendering on each keystroke
 - [x] **RAIL-03**: User can select a catalog from the rail, which loads its tree and clears the previous selection
 - [x] **RAIL-04**: User sees a red status dot on the rail row of any catalog that failed to parse
-- [ ] **RAIL-05**: User sees the current catalog directory as a chip in the rail header, and can change it
+- [x] **RAIL-05**: User sees the current catalog directory as a chip in the rail header, and can change it
 - [ ] **RAIL-06**: User can open the create slide-over from the "＋ New" pill
 
 ### Tree — the catalog browser
@@ -163,10 +163,10 @@ Deferred — acknowledged but not in this roadmap.
 | THEME-05 | Phase 22 | Complete |
 | THEME-06 | Phase 22 | Complete |
 | RAIL-01 | Phase 23 | Complete |
-| RAIL-02 | Phase 23 | Pending |
+| RAIL-02 | Phase 23 | Complete |
 | RAIL-03 | Phase 23 | Complete |
 | RAIL-04 | Phase 23 | Complete |
-| RAIL-05 | Phase 23 | Pending |
+| RAIL-05 | Phase 23 | Complete |
 | RAIL-06 | Phase 23 | Pending |
 | TREE-01 | Phase 23 | Complete |
 | TREE-02 | Phase 23 | Complete |
