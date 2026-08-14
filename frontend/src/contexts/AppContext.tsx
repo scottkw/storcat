@@ -43,6 +43,7 @@ type AppAction =
   | { type: 'TREE_FAILED'; payload: { catalogId: string; message: string } }
   | { type: 'TOGGLE_EXPAND'; payload: string }
   | { type: 'SET_EXPANDED'; payload: Record<string, boolean> }
+  | { type: 'MERGE_EXPANDED'; payload: string[] }
   | { type: 'SET_SELECTED'; payload: string | null }
   | { type: 'SET_PENDING_REVEAL'; payload: string | null };
 
@@ -139,6 +140,29 @@ function appReducer(state: AppState, action: AppAction): AppState {
       // Replaces the whole map in one state update -- expand-all and
       // collapse-to-root both use this, never a per-node dispatch loop.
       return { ...state, expanded: action.payload };
+    case 'MERGE_EXPANDED': {
+      // Structurally distinct from SET_EXPANDED: this case can only ever
+      // add entries, never drop the ones already there. WR-01 -- the reveal
+      // path used to rely on a caller (lib/reveal.ts#mergeExpanded) spreading
+      // `state.expanded` before dispatching SET_EXPANDED; a future caller
+      // that forgot that step would silently collapse every open branch.
+      // Folding the merge into the reducer itself removes that possibility
+      // at the type level -- there is no way to dispatch MERGE_EXPANDED with
+      // "replace" semantics.
+      let changed = false;
+      const next = { ...state.expanded };
+      for (const path of action.payload) {
+        if (next[path] !== true) {
+          next[path] = true;
+          changed = true;
+        }
+      }
+      // Returning the same state object when nothing changed lets React's
+      // reducer bail-out skip the re-render -- this is what makes a repeat
+      // reveal of an already-visible node a no-op, the same idempotence the
+      // old mergeExpanded() reference check provided at the call site.
+      return changed ? { ...state, expanded: next } : state;
+    }
     case 'SET_SELECTED':
       return { ...state, selected: action.payload };
     case 'SET_PENDING_REVEAL':

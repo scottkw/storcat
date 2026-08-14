@@ -4,8 +4,12 @@ import { models } from '../../wailsjs/go/models';
  * Pure helpers behind the ⌘K palette's "reveal in tree" path (PLT-05). No
  * React, no DOM, and nothing that mutates reducer state lives in this file
  * -- every function here takes plain data in and returns plain data out, so
- * the ancestor-walk and merge logic is readable and reviewable on its own.
- * Consumed exclusively by TreePane.tsx's reveal effects.
+ * the ancestor-walk logic is readable and reviewable on its own. Consumed
+ * exclusively by TreePane.tsx's reveal effects. The merge-into-`expanded`
+ * step used to live here (`mergeExpanded`) but was folded into the
+ * reducer's MERGE_EXPANDED case (AppContext.tsx, WR-01) so the merge-vs-
+ * replace semantics are enforced structurally rather than by caller
+ * discipline.
  */
 
 /**
@@ -43,32 +47,4 @@ export function ancestorPathsOf(nodes: models.FlatNode[], targetIdx: number): st
     steps++;
   }
   return ancestors;
-}
-
-/**
- * Merges `ancestorPaths` into `current`, never replacing it. This exists
- * because the reducer's SET_EXPANDED case (AppContext.tsx) performs a full
- * replace -- `return { ...state, expanded: action.payload }` -- correct for
- * its two existing callers (expand-all passes the full set, collapse-to-root
- * passes {}), but wrong for a reveal: a caller that issued only the
- * ancestor chain as the payload would erase every other branch the user had
- * open. Spreading `current` first is the fix, and it belongs here at the
- * call site, not in the reducer.
- *
- * Returns `current` itself, unchanged by reference, when every supplied path
- * is already `true` -- so a repeated reveal of the same node produces no
- * expansion state change and the caller can skip the update entirely.
- */
-export function mergeExpanded(
-  current: Record<string, boolean>,
-  ancestorPaths: string[]
-): Record<string, boolean> {
-  const needsUpdate = ancestorPaths.some((path) => current[path] !== true);
-  if (!needsUpdate) return current;
-
-  const merged = { ...current };
-  for (const path of ancestorPaths) {
-    merged[path] = true;
-  }
-  return merged;
 }

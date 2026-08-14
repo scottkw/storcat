@@ -4,7 +4,7 @@ import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { useVisibleRows } from '../../hooks/useVisibleRows';
 import { formatBytes } from '../../lib/format';
-import { findNodeIndexByPath, ancestorPathsOf, mergeExpanded } from '../../lib/reveal';
+import { findNodeIndexByPath, ancestorPathsOf } from '../../lib/reveal';
 import BreadcrumbBar from './BreadcrumbBar';
 import TreeHeader from './TreeHeader';
 import UnreadableCatalogPanel from './UnreadableCatalogPanel';
@@ -100,13 +100,11 @@ function TreePane() {
     }
 
     const ancestors = ancestorPathsOf(nodes, targetIdx);
-    const merged = mergeExpanded(state.expanded, ancestors);
-    // Only dispatch when the merge actually changes something -- this
-    // reference check is what makes a repeat reveal of an already-visible
-    // node produce no expansion change and no open/close flicker.
-    if (merged !== state.expanded) {
-      dispatch({ type: 'SET_EXPANDED', payload: merged });
-    }
+    // MERGE_EXPANDED is structurally merge-only (WR-01) -- the reducer
+    // itself bails out to the same state object when every ancestor is
+    // already expanded, so a repeat reveal of an already-visible node still
+    // produces no expansion change and no open/close flicker.
+    dispatch({ type: 'MERGE_EXPANDED', payload: ancestors });
 
     dispatch({ type: 'SET_SELECTED', payload: state.pendingReveal });
     revealScrollPathRef.current = state.pendingReveal;
