@@ -68,8 +68,22 @@ export function useModalBehavior({
     if (initialFocusRef?.current) {
       initialFocusRef.current.focus();
     } else if (container) {
+      // WR-03: `container` is a plain overlay <div> with no `tabindex`
+      // attribute by default, so `.focus()` on it alone is a silent no-op --
+      // a <div> without tabindex is not a focus target. Give it one (-1: a
+      // programmatic target, not a Tab stop) before focusing so a consumer
+      // that supplies no initialFocusRef and has no focusable descendant
+      // (Phase 25-27's overlays, per 24-CONTEXT.md) still lands focus inside
+      // the trap instead of leaving it wherever it already was.
       const [first] = getFocusableElements(container);
-      (first ?? container).focus();
+      if (first) {
+        first.focus();
+      } else {
+        if (container.tabIndex < 0 && !container.hasAttribute('tabindex')) {
+          container.tabIndex = -1;
+        }
+        container.focus();
+      }
     }
 
     // 3. Lock scroll on the resolved element, saving its previous inline
