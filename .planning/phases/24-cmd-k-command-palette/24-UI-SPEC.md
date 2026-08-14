@@ -195,9 +195,9 @@ The hook's exact signature/return shape (ref callback vs. object of refs, whethe
 
 ## UI Considerations
 
-Generated per `ui-consideration-probe.cjs`'s categories, resolved in autonomous mode (this phase's `24-CONTEXT.md` was itself gathered in "Smart discuss (autonomous)" mode with all grey areas pre-accepted).
+Generated per `ui-consideration-probe.cjs`, run against the six surfaces below after checker approval (this phase's `24-CONTEXT.md` was itself gathered in "Smart discuss (autonomous)" mode with all grey areas pre-accepted).
 
-**Applicable: 6 surfaces × up to 8 categories — every row below is either explicitly resolved or is not applicable to that surface (noted), 0 unresolved.**
+**Probe result: 33 applicable categories across 6 surfaces, 0 unclassified. All 33 resolved `explicit`, 0 `unresolved`, 0 dismissed.** Rows marked *not applicable* are categories the probe did not raise for that surface but which are noted for completeness; every category the probe *did* raise carries a concrete resolution.
 
 ### E1 — Palette overlay & panel shell (modal / interactive-control)
 
@@ -218,6 +218,7 @@ Generated per `ui-consideration-probe.cjs`'s categories, resolved in autonomous 
 | error | ✅ explicit | Same resolution as E1 — no distinct input-level error state. |
 | overflow | ✅ explicit | Input `flex: 1`, no visible max-length; a pathologically long query simply scrolls within the native `<input>` — no custom truncation needed for an editable field. |
 | long-text | ✅ explicit | Same as overflow — native input behavior, no wrapping concern (single-line field). |
+| partial | ✅ explicit | Two partial-input cases, both defined: (a) a 1-character query is *typed but not searched* — the body stays in the hint state and the right-aligned readout reads `"Type to search…"`, not a zero count; (b) a ≥2-character query whose debounce has not yet fired, or whose request is in flight while a *previous* result set is still on screen — the prior results stay rendered and the readout switches to `"Searching…"`. The input is never cleared, disabled, or visually degraded during an in-flight search. |
 
 ### E3 — Palette result body: four states (list-collection / static-content)
 
@@ -238,6 +239,11 @@ Generated per `ui-consideration-probe.cjs`'s categories, resolved in autonomous 
 |----------|--------|------------|
 | partial | ✅ explicit | The button's visual footprint is completely unchanged from Phase 22 — only behavior (an `onClick`) is added. No new hover/focus/active visual state beyond what `.ws-search:hover`/`:focus-visible` already declares. |
 | overflow | not applicable | No layout change to the toolbar from this phase. |
+| empty | ✅ explicit | The trigger renders identically when the catalog directory is empty or unset — it is **never disabled or hidden** for an empty library. Opening the palette with zero catalogs is allowed and lands in the hint state; typing ≥2 characters then yields PLT-06's `"No file in any catalog matches that."`, which is the correct and honest answer for an empty library. Disabling the trigger would hide the ⌘K affordance from exactly the user who most needs to discover it. |
+| loading | ✅ explicit | The trigger has no loading state. Opening the palette is synchronous (local component state) — there is no async gap between click and panel mount, so no pending/disabled treatment is needed or permitted. |
+| error | ✅ explicit | The trigger cannot fail: it flips local open state and nothing else. A downstream search failure surfaces inside the palette body (E3), never on the trigger. |
+| populated | ✅ explicit | The trigger's appearance is identical in every data state — **no result count, badge, or dot** is ever added to it. Its content is fixed: magnifier icon, `"Search every catalog…"`, and the `⌘K` badge. |
+| long-text | ✅ explicit | The trigger renders only fixed literals, never variable-length data, so no truncation rule applies to it. Its `max-width: 460px` with `min-width: 0` (Phase 22) already handles narrow-window compression of the fixed label. |
 
 ### E5 — Reveal-to-tree navigation (nav / interactive-control)
 
@@ -247,6 +253,10 @@ Generated per `ui-consideration-probe.cjs`'s categories, resolved in autonomous 
 | error | ✅ explicit | If the target catalog somehow fails to load between the search returning it as a hit and the user clicking it (e.g. the file was deleted in that window), the tree pane falls back to its existing unreadable-catalog/error surfaces (`23-UI-SPEC.md`, STATE-02) — the reveal request is simply discarded rather than retried or surfaced as a palette-specific error, since the palette has already closed by this point. |
 | overflow | ✅ explicit | `scrollToIndex(visibleIdx, { align: 'center' })` — reuses the existing virtualizer instance; no new scroll-region concern beyond what `23-UI-SPEC.md`'s tree contract already covers. |
 | zero-one-many | not applicable | A reveal always targets exactly one node. |
+| partial | ✅ explicit | **Load-bearing constraint.** A reveal frequently lands in a *partially expanded* tree — the user may already have some of the target's ancestors open, especially when the hit is in the catalog they are already browsing. Ancestor expansion must therefore **set each ancestor to `true`**, never toggle it. Phase 23 shipped `TOGGLE_EXPAND`, which would *collapse* any ancestor that was already open and leave the target invisible — the reveal must use `SET_EXPANDED` (merging the ancestor chain into the existing map) or an equivalent set-semantics action, never a per-ancestor `TOGGLE_EXPAND` loop. Revealing the same node twice in a row must be idempotent, not an open/close flicker. |
+| populated | ✅ explicit | The success case: every ancestor of the target is expanded, the target row is selected (adopting the tree's existing selected-row treatment from `23-UI-SPEC.md` — the palette introduces no second selection visual), and the row is scrolled to vertical center. The details panel updates to the revealed node through the same `selected` state it already reads, with no palette-specific path. |
+| empty | ✅ explicit | A hit implies the node existed when the search ran, so an empty target is only reachable if the catalog changed on disk in the window between the search returning and the user activating the row. In that case the flat load yields zero nodes, `TreePane` renders its existing empty-catalog state (`23-UI-SPEC.md`), and the pending reveal is **discarded rather than retried** — the palette has already closed and there is nothing left to point at. |
+| long-text | ✅ explicit | A deeply nested hit expands a long ancestor chain and selects a row at high indent depth. No new rule is needed: the tree row's existing `min-width: 0` + ellipsis treatment and the breadcrumb's collapse-to-root rule (both `23-UI-SPEC.md`, the latter fixed during Phase 23 execution specifically so a deep selection truncates instead of widening the app) already cover it. The reveal must not introduce horizontal scrolling to make a deep path visible. |
 
 ### E6 — Shared modal-behavior hook (interactive-control)
 
@@ -254,6 +264,8 @@ Generated per `ui-consideration-probe.cjs`'s categories, resolved in autonomous 
 |----------|--------|------------|
 | error | ✅ explicit | If `onClose` is called while already closed (a defensive double-call), the hook must be a no-op rather than throw — since three future phases will call this hook from different overlay shapes, an unguarded double-close would be a recurring bug source, not a one-off. |
 | partial | ✅ explicit | The hook must tolerate being mounted with `isOpen: false` initially (the common case — every consumer starts closed) without running any of the four behaviors until `isOpen` flips true. |
+| loading | ✅ explicit | The hook performs no asynchronous work — all four behaviors (trap, Escape, scroll lock, focus restore) apply synchronously on the `isOpen` transition, so the autofocus in PLT-01 lands in the same frame the panel mounts and there is no window in which the overlay is visible but unfocused or untrapped. **Consequence for Phase 25:** its slide-over animates *out* over 260ms without unmounting early, so the hook must release scroll lock and restore focus on the `isOpen: false` transition itself, not on unmount — a hook that cleaned up in an unmount effect would leave the page scroll-locked for the whole exit animation. |
+| long-text | not applicable | The hook renders no markup and no text of its own; it only attaches behavior to a consumer's overlay. |
 
 ---
 
