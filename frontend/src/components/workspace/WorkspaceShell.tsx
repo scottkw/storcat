@@ -5,6 +5,7 @@ import TreePane from './TreePane';
 import DetailsPanel from './DetailsPanel';
 import StatusBar from './StatusBar';
 import CommandPalette from './CommandPalette';
+import CreateSlideOver from './CreateSlideOver';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useAppContext } from '../../contexts/AppContext';
 import { applyTokens, readPersistedPrefs } from '../../themeTokens';
@@ -54,17 +55,29 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
   // preventDefault unconditionally so no webview/browser default engages on
   // any platform. The functional state update makes a second press while
   // already open a no-op rather than a re-open that would discard the query
-  // in progress.
+  // in progress. Opening the palette also closes the create slide-over --
+  // both overlays share the --z-overlay layer and are mutually exclusive by
+  // construction (25-UI-SPEC.md).
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        setPaletteOpen((open) => (open ? open : true));
+        setPaletteOpen((open) => {
+          if (!open) dispatch({ type: 'SET_CREATE_OPEN', payload: false });
+          return open ? open : true;
+        });
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [dispatch]);
+
+  // Opening the create slide-over (from the rail's + New pill or any other
+  // entry point) closes the palette, the other direction of the same
+  // mutual-exclusion contract above.
+  useEffect(() => {
+    if (state.createOpen) setPaletteOpen(false);
+  }, [state.createOpen]);
 
   return (
     <div className="ws-root" data-rail-side={state.railSide}>
@@ -89,6 +102,7 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
         </>
       )}
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
+      <CreateSlideOver isOpen={state.createOpen} onClose={() => dispatch({ type: 'SET_CREATE_OPEN', payload: false })} />
       <StatusBar />
     </div>
   );

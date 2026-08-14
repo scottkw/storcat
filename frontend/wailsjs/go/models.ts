@@ -27,6 +27,27 @@ export namespace config {
 
 }
 
+export namespace main {
+	
+	export class ScanOptions {
+	    writeHTML: boolean;
+	    includeHidden: boolean;
+	    copyToDirectory: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new ScanOptions(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.writeHTML = source["writeHTML"];
+	        this.includeHidden = source["includeHidden"];
+	        this.copyToDirectory = source["copyToDirectory"];
+	    }
+	}
+
+}
+
 export namespace models {
 	
 	export class CatalogItem {

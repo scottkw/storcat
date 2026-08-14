@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Density, RailSide, readPersistedPrefs } from '../themeTokens';
 import { models } from '../../wailsjs/go/models';
+import { ScanProgress, ScanResultFile, ScanState } from '../types/scan';
 
 // Types
 
@@ -27,6 +28,13 @@ export interface AppState {
   // the asynchronous gap between the catalog switch and the flat tree
   // arriving. TreePane consumes and clears it once the tree is ready.
   pendingReveal: string | null;
+  // Whether the create slide-over is open. Lifted to AppContext (not local
+  // CreateSlideOver state) so a later plan's background-handoff/status-bar
+  // segment can re-open it into its current live state (25-UI-SPEC.md).
+  createOpen: boolean;
+  // The create flow's scan state machine, lifted for the same reason --
+  // survives the slide-over's own mount/unmount across a close/reopen.
+  scan: ScanState;
 }
 
 type AppAction =
@@ -46,7 +54,24 @@ type AppAction =
   | { type: 'MERGE_EXPANDED'; payload: string[] }
   | { type: 'SET_SELECTED'; payload: string | null }
   | { type: 'SET_PENDING_REVEAL'; payload: string | null }
-  | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } };
+  | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } }
+  | { type: 'SET_CREATE_OPEN'; payload: boolean }
+  | { type: 'SCAN_STARTED'; payload: { title: string } }
+  | { type: 'SCAN_PROGRESS'; payload: ScanProgress }
+  | { type: 'SCAN_FAILED'; payload: { message: string } }
+  | {
+      type: 'SCAN_DONE';
+      payload: {
+        title: string;
+        jsonPath: string;
+        files: ScanResultFile[];
+        fileCount: number;
+        totalSize: number;
+        durationMs: number;
+        partial: boolean;
+      };
+    }
+  | { type: 'SCAN_RESET' };
 
 // Seeded once at module scope so a relaunch restores the user's persisted
 // density/rail-side choices rather than hardcoded defaults. readPersistedPrefs
@@ -64,7 +89,17 @@ const initialState: AppState = {
   expanded: {},
   selected: null,
   pendingReveal: null,
+  createOpen: false,
+  scan: { status: 'idle' },
 };
+
+// Extracts the in-progress/terminal title from whichever ScanState variant
+// is active, for SCAN_FAILED (which only carries a message, not a title) to
+// preserve the title the scan was already running under. 'idle' has no
+// title of its own.
+function scanTitleOf(scan: ScanState): string {
+  return 'title' in scan ? scan.title : '';
+}
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -186,6 +221,75 @@ function appReducer(state: AppState, action: AppAction): AppState {
         pendingReveal: action.payload.path,
       };
     }
+    case 'SET_CREATE_OPEN':
+      // Returning the same state object when the value is unchanged is what
+      // makes opening an already-open slide-over a true no-op (CRT-01
+      // idempotency) -- React's reducer bail-out skips the re-render.
+      if (state.createOpen === action.payload) return state;
+      return { ...state, createOpen: action.payload };
+    case 'SCAN_STARTED':
+      return {
+        ...state,
+        scan: { status: 'counting', title: action.payload.title, filesSeen: 0, startedAt: Date.now() },
+      };
+    case 'SCAN_PROGRESS': {
+      // A late event after the scan has already reached a terminal state
+      // (or was reset to idle) must never resurrect it -- CRT-07
+      // concurrency.
+      if (state.scan.status !== 'counting' && state.scan.status !== 'scanning') return state;
+
+      const prev = state.scan;
+      const incoming = action.payload;
+      // Clamped to the max of the previous and incoming value so an
+      // out-of-order event can never make a counter go backwards (CRT-07
+      // concurrency).
+      const filesSeen = Math.max(prev.filesSeen, incoming.filesSeen);
+      const prevBytesSeen = prev.status === 'scanning' ? prev.bytesSeen : 0;
+      const bytesSeen = Math.max(prevBytesSeen, incoming.bytesSeen);
+      const prevReadErrors = prev.status === 'scanning' ? prev.readErrors : 0;
+      const readErrors = Math.max(prevReadErrors, incoming.readErrors);
+
+      if (incoming.totalBytes > 0) {
+        return {
+          ...state,
+          scan: {
+            status: 'scanning',
+            title: prev.title,
+            filesSeen,
+            bytesSeen,
+            totalBytes: incoming.totalBytes,
+            readErrors,
+            startedAt: prev.startedAt,
+          },
+        };
+      }
+
+      return {
+        ...state,
+        scan: { status: 'counting', title: prev.title, filesSeen, startedAt: prev.startedAt },
+      };
+    }
+    case 'SCAN_FAILED':
+      return {
+        ...state,
+        scan: { status: 'error', title: scanTitleOf(state.scan), message: action.payload.message },
+      };
+    case 'SCAN_DONE':
+      return {
+        ...state,
+        scan: {
+          status: 'done',
+          title: action.payload.title,
+          jsonPath: action.payload.jsonPath,
+          files: action.payload.files,
+          fileCount: action.payload.fileCount,
+          totalSize: action.payload.totalSize,
+          durationMs: action.payload.durationMs,
+          partial: action.payload.partial,
+        },
+      };
+    case 'SCAN_RESET':
+      return { ...state, scan: { status: 'idle' } };
     default:
       return state;
   }

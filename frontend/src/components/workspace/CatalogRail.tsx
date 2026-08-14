@@ -90,11 +90,11 @@ function CatalogRail() {
             Catalogs <span style={{ color: 'var(--fn)' }}>{state.catalogs.length}</span>
           </span>
 
-          {/* Renders, hover-styled, and stays inert -- its target (the create
-              slide-over) is Phase 25. Never attach a handler here (RAIL-06). */}
+          {/* RAIL-06: opens the create slide-over. */}
           <button
             type="button"
             className="ws-new-pill"
+            onClick={() => dispatch({ type: 'SET_CREATE_OPEN', payload: true })}
             style={{
               display: 'flex',
               alignItems: 'center',

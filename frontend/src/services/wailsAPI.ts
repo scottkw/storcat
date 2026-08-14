@@ -17,7 +17,9 @@ import {
   GetWindowPersistence,
   SetWindowPersistence,
   GetVersion,
+  StartScan,
 } from '../../wailsjs/go/main/App';
+import { main } from '../../wailsjs/go/models';
 
 // Wails' generated bindings reject a Go error's message as a plain string,
 // not an Error instance -- `error.message` is undefined for every rejection
@@ -56,6 +58,24 @@ export const wailsAPI = {
         copyJsonPath: result.copyJsonPath,
         copyHtmlPath: result.copyHtmlPath,
       };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // sourcePath (walked) and outputDir (written) are genuinely distinct --
+  // the create slide-over always passes the app's configured catalog
+  // directory as outputDir, never the scanned source.
+  startScan: async (
+    title: string,
+    sourcePath: string,
+    outputDir: string,
+    outputRoot: string,
+    opts: { writeHTML: boolean; includeHidden: boolean; copyToDirectory: string }
+  ) => {
+    try {
+      const result = await StartScan(title, sourcePath, outputDir, outputRoot, opts as main.ScanOptions);
+      return { success: true as const, result };
     } catch (error: any) {
       return wailsError(error);
     }
