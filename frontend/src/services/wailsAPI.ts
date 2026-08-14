@@ -3,6 +3,7 @@ import {
   SearchCatalogs,
   BrowseCatalogs,
   LoadCatalog,
+  LoadCatalogFlat,
   GetConfig,
   SetTheme,
   SetSidebarPosition,
@@ -60,6 +61,15 @@ export const wailsAPI = {
       return { success: true, catalog };
     } catch (error: any) {
       return { success: false, error: error.message || 'Unknown error' };
+    }
+  },
+
+  loadCatalogFlat: async (filePath: string) => {
+    try {
+      const flat = await LoadCatalogFlat(filePath);
+      return { success: true as const, flat };
+    } catch (error: any) {
+      return { success: false as const, error: error.message || 'Unknown error' };
     }
   },
 

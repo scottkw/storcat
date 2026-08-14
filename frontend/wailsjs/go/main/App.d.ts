@@ -17,6 +17,8 @@ export function GetWindowPersistence():Promise<boolean>;
 
 export function LoadCatalog(arg1:string):Promise<models.CatalogItem>;
 
+export function LoadCatalogFlat(arg1:string):Promise<models.FlatCatalog>;
+
 export function OpenExternal(arg1:string):Promise<void>;
 
 export function ReadHtmlFile(arg1:string):Promise<string>;

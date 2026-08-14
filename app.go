@@ -97,6 +97,16 @@ func (a *App) LoadCatalog(filePath string) (*models.CatalogItem, error) {
 	return a.searchService.LoadCatalog(absPath)
 }
 
+// LoadCatalogFlat reads and parses a catalog JSON file, returning it as a
+// single flattened node array ready for the virtualized tree pane.
+func (a *App) LoadCatalogFlat(filePath string) (*models.FlatCatalog, error) {
+	absPath, err := filepath.Abs(filePath)
+	if err != nil {
+		return nil, err
+	}
+	return a.searchService.LoadCatalogFlat(absPath)
+}
+
 // GetConfig returns the current configuration
 func (a *App) GetConfig() *config.Config {
 	if a.configManager == nil {

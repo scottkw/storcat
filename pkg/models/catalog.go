@@ -31,6 +31,29 @@ type CatalogMetadata struct {
 	HasHtml  bool   `json:"hasHtml"`
 }
 
+// FlatNode is one node of a flattened catalog tree, render-ready for the
+// virtualized tree pane. Name is the basename (filepath.Base of the source
+// CatalogItem.Name); Path is that same source field verbatim -- the two are
+// kept separate because CatalogItem.Name holds a full relative display path,
+// not a basename.
+type FlatNode struct {
+	Name        string `json:"name"`
+	Path        string `json:"path"`
+	Type        string `json:"type"`
+	Size        int64  `json:"size"`
+	Depth       int    `json:"depth"`
+	ParentIdx   int    `json:"parentIdx"`
+	HasChildren bool   `json:"hasChildren"`
+}
+
+// FlatCatalog is the full flattened node array for one catalog, returned in
+// a single call so the frontend never round-trips to Go per expand/collapse.
+type FlatCatalog struct {
+	Nodes      []FlatNode `json:"nodes"`
+	FileCount  int        `json:"fileCount"`
+	TotalBytes int64      `json:"totalBytes"`
+}
+
 // CreateCatalogResult holds the output paths and statistics from a CreateCatalog call
 type CreateCatalogResult struct {
 	JsonPath     string `json:"jsonPath"`
