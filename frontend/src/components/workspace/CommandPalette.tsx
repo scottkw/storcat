@@ -202,7 +202,7 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
         ref={containerRef}
         role="dialog"
         aria-modal="true"
-        aria-label="Search every catalog"
+        aria-label="Search palette"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="ws-palette-input-row">
@@ -224,7 +224,11 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
             ref={inputRef}
             role="combobox"
             aria-expanded={isResults}
-            aria-controls={PALETTE_LISTBOX_ID}
+            // Only reference the listbox while it is actually in the DOM -- the
+            // result list renders only in the Results state, so an unconditional
+            // aria-controls points at a missing id in the hint/searching/empty
+            // states.
+            aria-controls={isResults ? PALETTE_LISTBOX_ID : undefined}
             aria-activedescendant={activeOptionId}
             value={query}
             onChange={(event) => setQuery(event.target.value)}
