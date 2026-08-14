@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"html"
@@ -13,8 +14,22 @@ import (
 	"storcat-wails/pkg/models"
 )
 
-// ProgressCallback is called during directory traversal with the current path
-type ProgressCallback func(path string)
+// ProgressUpdate is reported to a ProgressCallback as the walk proceeds.
+// FilesSeen and BytesSeen are running totals for the whole scan so far (not
+// deltas since the previous update); ReadErrors counts skipped single-entry
+// read failures so far. This type lives under internal/, so no consumer
+// outside this module can import it -- its one existing caller (the CLI, via
+// the CreateCatalog wrapper) passes nil.
+type ProgressUpdate struct {
+	Path       string `json:"path"`
+	FilesSeen  int    `json:"filesSeen"`
+	BytesSeen  int64  `json:"bytesSeen"`
+	ReadErrors int    `json:"readErrors"`
+}
+
+// ProgressCallback is called during directory traversal with the current
+// progress snapshot.
+type ProgressCallback func(ProgressUpdate)
 
 // Service handles catalog creation and management
 type Service struct{}
@@ -24,54 +39,142 @@ func NewService() *Service {
 	return &Service{}
 }
 
-// CreateCatalog generates JSON and HTML catalogs for the specified directory
+// walkState carries per-scan counters and options through the recursive
+// traverseDirectory walk. Counter mutation happens at the call sites in
+// traverseDirectory, never inside report, so a file's size is added exactly
+// once regardless of how many times report is called. scanRoot is unused by
+// this plan's error handling (today's single-entry skip-and-continue is
+// unchanged); it exists as the seam a later plan's terminal-vs-single-entry
+// classification (re-probing the scan root) will need.
+type walkState struct {
+	scanRoot   string
+	opts       Options
+	onProgress ProgressCallback
+
+	filesSeen  int
+	bytesSeen  int64
+	readErrors int
+}
+
+// report forwards the current counters to onProgress for displayPath, when a
+// callback is configured. It never mutates a counter itself.
+func (st *walkState) report(displayPath string) {
+	if st.onProgress == nil {
+		return
+	}
+	st.onProgress(ProgressUpdate{
+		Path:       displayPath,
+		FilesSeen:  st.filesSeen,
+		BytesSeen:  st.bytesSeen,
+		ReadErrors: st.readErrors,
+	})
+}
+
+// CreateCatalog is the CLI's compatibility-preserving thin wrapper around
+// CreateCatalogWithContext: context.Background() (no cancellation),
+// sourcePath and outputDir both set to directoryPath (the CLI has always
+// written its output into the directory it scanned), and
+// Options{WriteHTML: true} -- NOT the zero value. The CLI has always written
+// both JSON and HTML unconditionally; constructing Options{} here would
+// silently drop HTML output from every `storcat create` run with no
+// compile-time signal (see TestCreateCatalog_WrapperWritesHTML). cli/create.go
+// calls this method unedited and must never need to change.
 func (s *Service) CreateCatalog(title, directoryPath, outputRoot string, copyToDirectory string, onProgress ProgressCallback) (*models.CreateCatalogResult, error) {
-	// Traverse directory and build catalog
-	catalog, err := s.traverseDirectory(directoryPath, directoryPath, onProgress)
+	return s.CreateCatalogWithContext(
+		context.Background(),
+		title,
+		directoryPath, // sourcePath: walked
+		directoryPath, // outputDir: written -- SAME as source, preserving today's exact behavior
+		outputRoot,
+		copyToDirectory,
+		Options{WriteHTML: true}, // NOT the zero value -- see the doc comment above
+		onProgress,
+	)
+}
+
+// CreateCatalogWithContext walks sourcePath and writes the resulting catalog
+// into outputDir under outputRoot. The entire tree is built in memory before
+// any write is attempted -- that ordering, not a rollback mechanism, is what
+// makes "a cancelled scan writes nothing" true. A future change must never
+// replace this with an incremental-write design that writes partial results
+// as the walk proceeds.
+func (s *Service) CreateCatalogWithContext(ctx context.Context, title, sourcePath, outputDir, outputRoot, copyToDirectory string, opts Options, onProgress ProgressCallback) (*models.CreateCatalogResult, error) {
+	st := &walkState{
+		scanRoot:   sourcePath,
+		opts:       opts,
+		onProgress: onProgress,
+	}
+
+	tree, err := s.traverseDirectory(ctx, sourcePath, sourcePath, st)
 	if err != nil {
 		return nil, fmt.Errorf("failed to traverse directory: %w", err)
 	}
 
-	// Create JSON file (bare object format)
-	jsonPath := filepath.Join(directoryPath, outputRoot+".json")
-	if err := s.writeJSONFile(catalog, jsonPath); err != nil {
-		return nil, fmt.Errorf("failed to write JSON: %w", err)
+	// Re-check cancellation after the walk completes and before any write is
+	// attempted -- traverseDirectory can return a non-error partial tree in
+	// some skip-and-continue paths, so this is the authoritative gate.
+	if err := ctx.Err(); err != nil {
+		return nil, err
 	}
 
-	// Create HTML file
-	htmlPath := filepath.Join(directoryPath, outputRoot+".html")
-	if err := s.writeHTMLFile(catalog, title, htmlPath); err != nil {
-		return nil, fmt.Errorf("failed to write HTML: %w", err)
+	return s.WriteCatalogFrom(tree, title, outputDir, outputRoot, copyToDirectory, opts)
+}
+
+// WriteCatalogFrom writes an already-built tree to outputDir under
+// outputRoot: the JSON file always, the HTML sibling only when
+// opts.WriteHTML, then a secondary copy of whichever files were written when
+// copyToDirectory is non-empty. This is the single write path
+// CreateCatalogWithContext uses, and the one later plans' partial-catalog
+// and retry flows reuse.
+func (s *Service) WriteCatalogFrom(tree *models.CatalogItem, title, outputDir, outputRoot, copyToDirectory string, opts Options) (*models.CreateCatalogResult, error) {
+	jsonPath := filepath.Join(outputDir, outputRoot+".json")
+	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+		return nil, fmt.Errorf("failed to write JSON: %w", err)
 	}
 
 	result := &models.CreateCatalogResult{
 		JsonPath:  jsonPath,
-		HtmlPath:  htmlPath,
-		FileCount: s.countFiles(catalog),
-		TotalSize: catalog.Size,
+		FileCount: s.countFiles(tree),
+		TotalSize: tree.Size,
 	}
 
-	// Copy to secondary directory if specified
+	if opts.WriteHTML {
+		htmlPath := filepath.Join(outputDir, outputRoot+".html")
+		if err := s.writeHTMLFile(tree, title, htmlPath); err != nil {
+			return nil, fmt.Errorf("failed to write HTML: %w", err)
+		}
+		result.HtmlPath = htmlPath
+	}
+
 	if copyToDirectory != "" {
 		copyJSONPath := filepath.Join(copyToDirectory, outputRoot+".json")
-		copyHTMLPath := filepath.Join(copyToDirectory, outputRoot+".html")
-
 		if err := s.copyFile(jsonPath, copyJSONPath); err != nil {
 			return nil, fmt.Errorf("failed to copy JSON: %w", err)
 		}
-		if err := s.copyFile(htmlPath, copyHTMLPath); err != nil {
-			return nil, fmt.Errorf("failed to copy HTML: %w", err)
-		}
-
 		result.CopyJsonPath = copyJSONPath
-		result.CopyHtmlPath = copyHTMLPath
+
+		if opts.WriteHTML {
+			copyHTMLPath := filepath.Join(copyToDirectory, outputRoot+".html")
+			if err := s.copyFile(result.HtmlPath, copyHTMLPath); err != nil {
+				return nil, fmt.Errorf("failed to copy HTML: %w", err)
+			}
+			result.CopyHtmlPath = copyHTMLPath
+		}
 	}
 
 	return result, nil
 }
 
-// traverseDirectory recursively builds catalog structure
-func (s *Service) traverseDirectory(dirPath, basePath string, onProgress ProgressCallback) (*models.CatalogItem, error) {
+// traverseDirectory recursively builds catalog structure. ctx.Err() is
+// checked at the very top, before os.Stat, so cancellation is prompt for
+// every syscall that hasn't started yet (an already-in-flight blocked
+// syscall is a documented, accepted Go runtime limitation -- see
+// 25-RESEARCH.md Pitfall 3).
+func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath string, st *walkState) (*models.CatalogItem, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, fmt.Errorf("scan cancelled: %w", err)
+	}
+
 	info, err := os.Stat(dirPath)
 	if err != nil {
 		return nil, err
@@ -89,13 +192,11 @@ func (s *Service) traverseDirectory(dirPath, basePath string, onProgress Progres
 		displayPath = "./"
 	}
 
-	// Report progress
-	if onProgress != nil {
-		onProgress(displayPath)
-	}
-
 	// Handle files
 	if info.Mode().IsRegular() {
+		st.filesSeen++
+		st.bytesSeen += info.Size()
+		st.report(displayPath)
 		return &models.CatalogItem{
 			Type: "file",
 			Name: displayPath,
@@ -105,9 +206,14 @@ func (s *Service) traverseDirectory(dirPath, basePath string, onProgress Progres
 
 	// Handle directories
 	if info.IsDir() {
+		st.report(displayPath)
+
 		entries, err := os.ReadDir(dirPath)
 		if err != nil {
-			// Return empty directory if we can't read it
+			// Return empty directory if we can't read it. This plan adds
+			// signal only (ReadErrors), never a behavior change -- terminal
+			// vs. single-entry classification is a later plan's job.
+			st.readErrors++
 			return &models.CatalogItem{
 				Type:     "directory",
 				Name:     displayPath,
@@ -131,15 +237,22 @@ func (s *Service) traverseDirectory(dirPath, basePath string, onProgress Progres
 		var totalSize int64
 
 		for _, entry := range entries {
-			// Skip hidden files (starting with .)
-			if strings.HasPrefix(entry.Name(), ".") {
+			// Skip hidden files (starting with .) unless IncludeHidden is set
+			if !st.opts.IncludeHidden && strings.HasPrefix(entry.Name(), ".") {
 				continue
 			}
 
 			childPath := filepath.Join(dirPath, entry.Name())
-			childItem, err := s.traverseDirectory(childPath, basePath, onProgress)
+			childItem, err := s.traverseDirectory(ctx, childPath, basePath, st)
 			if err != nil {
+				if ctx.Err() != nil {
+					// Cancellation must propagate, not be swallowed as a
+					// single-entry read error -- otherwise the walk would
+					// keep going and CancelWritesNothing would not hold.
+					return nil, err
+				}
 				// Skip items we can't access
+				st.readErrors++
 				continue
 			}
 

@@ -1,7 +1,9 @@
 package catalog
 
 import (
+	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -68,7 +70,7 @@ func TestEmptyDirContents(t *testing.T) {
 		t.Fatalf("failed to create .DS_Store: %v", err)
 	}
 
-	item, err := s.traverseDirectory(tmpDir, tmpDir, nil)
+	item, err := s.traverseDirectory(context.Background(), tmpDir, tmpDir, &walkState{})
 	if err != nil {
 		t.Fatalf("traverseDirectory failed: %v", err)
 	}
@@ -112,7 +114,7 @@ func TestSymlinkTraversal(t *testing.T) {
 		t.Skipf("symlinks not supported on this system: %v", err)
 	}
 
-	item, err := s.traverseDirectory(tmpDir, tmpDir, nil)
+	item, err := s.traverseDirectory(context.Background(), tmpDir, tmpDir, &walkState{})
 	if err != nil {
 		t.Fatalf("traverseDirectory failed: %v", err)
 	}
@@ -204,4 +206,251 @@ func min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// TestCreateCatalog_WrapperWritesHTML is the regression guard for the
+// zero-value option-struct pitfall: the CLI wrapper path must always
+// produce a non-empty HtmlPath, and that file must actually exist on disk.
+func TestCreateCatalog_WrapperWritesHTML(t *testing.T) {
+	s := NewService()
+	tmpDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmpDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	result, err := s.CreateCatalog("Test", tmpDir, "out", "", nil)
+	if err != nil {
+		t.Fatalf("CreateCatalog failed: %v", err)
+	}
+	if result.HtmlPath == "" {
+		t.Fatal("expected a non-empty HtmlPath from the CLI wrapper")
+	}
+	if _, err := os.Stat(result.HtmlPath); err != nil {
+		t.Errorf("expected HTML file to exist at %s: %v", result.HtmlPath, err)
+	}
+}
+
+// TestCreateCatalog_WrapperWritesIntoScannedDirectory verifies the wrapper
+// writes <root>.json and <root>.html inside the scanned directory, exactly
+// as v2.3.0 did.
+func TestCreateCatalog_WrapperWritesIntoScannedDirectory(t *testing.T) {
+	s := NewService()
+	tmpDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(tmpDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	result, err := s.CreateCatalog("Test", tmpDir, "out", "", nil)
+	if err != nil {
+		t.Fatalf("CreateCatalog failed: %v", err)
+	}
+
+	wantJSON := filepath.Join(tmpDir, "out.json")
+	wantHTML := filepath.Join(tmpDir, "out.html")
+	if result.JsonPath != wantJSON {
+		t.Errorf("JsonPath = %q, want %q", result.JsonPath, wantJSON)
+	}
+	if result.HtmlPath != wantHTML {
+		t.Errorf("HtmlPath = %q, want %q", result.HtmlPath, wantHTML)
+	}
+}
+
+// TestCreateCatalogWithContext_OutputDirDistinctFromSource verifies that,
+// given a source temp dir and a separate output temp dir, the JSON and HTML
+// land in the output dir and the source dir gains no new files.
+func TestCreateCatalogWithContext_OutputDirDistinctFromSource(t *testing.T) {
+	s := NewService()
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(sourceDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	result, err := s.CreateCatalogWithContext(
+		context.Background(), "Test", sourceDir, outputDir, "out", "", Options{WriteHTML: true}, nil,
+	)
+	if err != nil {
+		t.Fatalf("CreateCatalogWithContext failed: %v", err)
+	}
+
+	if filepath.Dir(result.JsonPath) != outputDir {
+		t.Errorf("JSON written to %q, want inside %q", result.JsonPath, outputDir)
+	}
+	if filepath.Dir(result.HtmlPath) != outputDir {
+		t.Errorf("HTML written to %q, want inside %q", result.HtmlPath, outputDir)
+	}
+
+	entries, err := os.ReadDir(sourceDir)
+	if err != nil {
+		t.Fatalf("read sourceDir: %v", err)
+	}
+	if len(entries) != 1 {
+		t.Errorf("sourceDir gained new files, want only the original fixture: %+v", entries)
+	}
+}
+
+// TestCreateCatalogWithContext_CancelWritesNothing verifies that a context
+// cancelled before the call returns an error satisfying
+// errors.Is(err, context.Canceled), and the output directory contains zero
+// entries afterwards.
+func TestCreateCatalogWithContext_CancelWritesNothing(t *testing.T) {
+	s := NewService()
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(sourceDir, "a.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := s.CreateCatalogWithContext(
+		ctx, "Test", sourceDir, outputDir, "out", "", Options{WriteHTML: true}, nil,
+	)
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("expected errors.Is(err, context.Canceled), got %v", err)
+	}
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		t.Fatalf("read outputDir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected outputDir to remain empty after cancellation, got %+v", entries)
+	}
+}
+
+// TestCreateCatalogWithContext_ProgressCounters verifies the progress
+// callback receives monotonically non-decreasing FilesSeen and BytesSeen,
+// and a final FilesSeen equal to the result's FileCount.
+func TestCreateCatalogWithContext_ProgressCounters(t *testing.T) {
+	s := NewService()
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	for _, name := range []string{"a.txt", "b.txt", "c.txt"} {
+		if err := os.WriteFile(filepath.Join(sourceDir, name), []byte("hello"), 0644); err != nil {
+			t.Fatalf("write fixture %s: %v", name, err)
+		}
+	}
+
+	var updates []ProgressUpdate
+	onProgress := func(u ProgressUpdate) {
+		updates = append(updates, u)
+	}
+
+	result, err := s.CreateCatalogWithContext(
+		context.Background(), "Test", sourceDir, outputDir, "out", "", Options{WriteHTML: true}, onProgress,
+	)
+	if err != nil {
+		t.Fatalf("CreateCatalogWithContext failed: %v", err)
+	}
+
+	if len(updates) == 0 {
+		t.Fatal("expected at least one progress update")
+	}
+
+	lastFiles, lastBytes := 0, int64(0)
+	for _, u := range updates {
+		if u.FilesSeen < lastFiles {
+			t.Errorf("FilesSeen went backwards: %d then %d", lastFiles, u.FilesSeen)
+		}
+		if u.BytesSeen < lastBytes {
+			t.Errorf("BytesSeen went backwards: %d then %d", lastBytes, u.BytesSeen)
+		}
+		lastFiles, lastBytes = u.FilesSeen, u.BytesSeen
+	}
+
+	final := updates[len(updates)-1]
+	if final.FilesSeen != result.FileCount {
+		t.Errorf("final FilesSeen = %d, want result.FileCount = %d", final.FilesSeen, result.FileCount)
+	}
+}
+
+// TestCreateCatalog_JSONShapeUnchanged verifies that marshalling a
+// hand-built tree through the write path yields the exact byte sequence the
+// pre-change writer produced for the same tree -- key order, no
+// indentation, no new keys (COMPAT-02).
+func TestCreateCatalog_JSONShapeUnchanged(t *testing.T) {
+	s := NewService()
+	tree := &models.CatalogItem{
+		Type: "directory",
+		Name: "./",
+		Size: 5,
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./a.txt", Size: 5},
+		},
+	}
+
+	tmpDir := t.TempDir()
+	jsonPath := filepath.Join(tmpDir, "test.json")
+	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+		t.Fatalf("writeJSONFile failed: %v", err)
+	}
+
+	data, err := os.ReadFile(jsonPath)
+	if err != nil {
+		t.Fatalf("failed to read output file: %v", err)
+	}
+
+	want := `{"type":"directory","name":"./","size":5,"contents":[{"type":"file","name":"./a.txt","size":5,"contents":null}]}`
+	if string(data) != want {
+		t.Errorf("JSON shape changed:\ngot:  %s\nwant: %s", string(data), want)
+	}
+}
+
+// TestCreateCatalogWithContext_IncludeHidden verifies that with the
+// include-hidden option off a dotfile is absent from contents; with it on
+// the dotfile appears. Default (wrapper) behavior is off.
+func TestCreateCatalogWithContext_IncludeHidden(t *testing.T) {
+	s := NewService()
+
+	buildDir := func(t *testing.T) string {
+		dir := t.TempDir()
+		if err := os.WriteFile(filepath.Join(dir, ".hidden"), []byte("h"), 0644); err != nil {
+			t.Fatalf("write fixture: %v", err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "visible.txt"), []byte("v"), 0644); err != nil {
+			t.Fatalf("write fixture: %v", err)
+		}
+		return dir
+	}
+
+	t.Run("off by default", func(t *testing.T) {
+		sourceDir := buildDir(t)
+		outputDir := t.TempDir()
+		result, err := s.CreateCatalogWithContext(
+			context.Background(), "Test", sourceDir, outputDir, "out", "", Options{WriteHTML: true}, nil,
+		)
+		if err != nil {
+			t.Fatalf("CreateCatalogWithContext failed: %v", err)
+		}
+		if result.FileCount != 1 {
+			t.Errorf("FileCount = %d, want 1 (hidden file excluded)", result.FileCount)
+		}
+	})
+
+	t.Run("on when requested", func(t *testing.T) {
+		sourceDir := buildDir(t)
+		outputDir := t.TempDir()
+		result, err := s.CreateCatalogWithContext(
+			context.Background(), "Test", sourceDir, outputDir, "out", "", Options{WriteHTML: true, IncludeHidden: true}, nil,
+		)
+		if err != nil {
+			t.Fatalf("CreateCatalogWithContext failed: %v", err)
+		}
+		if result.FileCount != 2 {
+			t.Errorf("FileCount = %d, want 2 (hidden file included)", result.FileCount)
+		}
+	})
+
+	t.Run("wrapper default is off", func(t *testing.T) {
+		sourceDir := buildDir(t)
+		result, err := s.CreateCatalog("Test", sourceDir, "out", "", nil)
+		if err != nil {
+			t.Fatalf("CreateCatalog failed: %v", err)
+		}
+		if result.FileCount != 1 {
+			t.Errorf("FileCount = %d, want 1 (wrapper default excludes hidden files)", result.FileCount)
+		}
+	})
 }

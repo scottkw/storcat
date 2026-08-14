@@ -68,7 +68,7 @@ func (a *App) CreateCatalog(title string, directoryPath string, outputName strin
 	}
 
 	// Progress callback (could be used to send progress to frontend in future)
-	progressCallback := func(path string) {
+	progressCallback := func(update catalog.ProgressUpdate) {
 		// For now, we don't send progress updates
 		// In the future, we could use Wails events to send updates to frontend
 	}
