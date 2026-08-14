@@ -275,14 +275,16 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 	return nil, fmt.Errorf("unsupported file type: %s", dirPath)
 }
 
-// writeJSONFile writes catalog in bare object format (no indentation)
+// writeJSONFile writes catalog in bare object format (no indentation),
+// routed through WriteFileAtomic so a crash mid-write can never leave a
+// truncated .json at path.
 func (s *Service) writeJSONFile(catalog *models.CatalogItem, path string) error {
 	jsonBytes, err := json.Marshal(catalog)
 	if err != nil {
 		return err
 	}
 
-	return os.WriteFile(path, jsonBytes, 0644)
+	return WriteFileAtomic(path, jsonBytes, 0644)
 }
 
 // writeHTMLFile generates the HTML catalog with exact tree formatting
@@ -341,7 +343,7 @@ func (s *Service) writeHTMLFile(catalog *models.CatalogItem, title, path string)
 </body>
 </html>`, html.EscapeString(title), html.EscapeString(title), treeStructure, totalSize, dirCount, fileCount)
 
-	return os.WriteFile(path, []byte(htmlContent), 0644)
+	return WriteFileAtomic(path, []byte(htmlContent), 0644)
 }
 
 // generateTreeStructure creates the tree visual representation
