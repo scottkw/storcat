@@ -162,3 +162,7 @@ None - no external service configuration required.
 ---
 *Phase: 24-cmd-k-command-palette*
 *Completed: 2026-08-14*
+
+## Self-Check: PASSED
+
+All 14 claimed files verified present on disk; all 4 claimed commit hashes (`4e828186`, `2f226ef2`, `391dcfa0`, `7afd649f`) verified present in git log.
