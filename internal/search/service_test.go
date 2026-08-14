@@ -3,8 +3,11 @@ package search
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
+
+	"storcat-wails/internal/config"
 )
 
 // writeTestCatalog creates a temp directory with a minimal valid JSON catalog file
@@ -162,5 +165,208 @@ func TestBrowseCatalogsCreated(t *testing.T) {
 	}
 	if !found {
 		t.Errorf("Created %q does not contain 'T' separator — looks like old non-RFC3339 format", created)
+	}
+}
+
+func TestBrowseCatalogs_ParseError_WellFormedV2(t *testing.T) {
+	s := NewService()
+	dir, _, _ := writeTestCatalog(t)
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if results[0].ParseError != "" {
+		t.Errorf("expected empty ParseError for a well-formed v2 catalog, got %q", results[0].ParseError)
+	}
+}
+
+func TestBrowseCatalogs_ParseError_WellFormedV1Array(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	content := []byte(`[{"type":"directory","name":"root","size":100,"contents":[]}]`)
+	if err := os.WriteFile(filepath.Join(dir, "array.json"), content, 0644); err != nil {
+		t.Fatalf("failed to write test catalog: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if results[0].ParseError != "" {
+		t.Errorf("expected empty ParseError for a well-formed v1 array-wrapped catalog, got %q", results[0].ParseError)
+	}
+}
+
+func TestBrowseCatalogs_ParseError_Truncated(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	content := []byte(`{"type":"directory","name":"./","size":0,"contents":[{"type":"file","name":"a"`)
+	if err := os.WriteFile(filepath.Join(dir, "truncated.json"), content, 0644); err != nil {
+		t.Fatalf("failed to write test catalog: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if !strings.Contains(results[0].ParseError, "byte ") {
+		t.Errorf("expected ParseError to contain a byte offset for a truncated document, got %q", results[0].ParseError)
+	}
+}
+
+func TestBrowseCatalogs_ParseError_Malformed(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	content := []byte(`{not valid json at all`)
+	if err := os.WriteFile(filepath.Join(dir, "malformed.json"), content, 0644); err != nil {
+		t.Fatalf("failed to write test catalog: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if !strings.Contains(results[0].ParseError, "byte ") {
+		t.Errorf("expected ParseError to contain a byte offset for malformed JSON, got %q", results[0].ParseError)
+	}
+}
+
+func TestBrowseCatalogs_ParseError_UnreadableFile(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("skipping permission test: running as root ignores mode bits")
+	}
+
+	s := NewService()
+	dir := t.TempDir()
+	filePath := filepath.Join(dir, "noperm.json")
+	if err := os.WriteFile(filePath, []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("failed to write test catalog: %v", err)
+	}
+	if err := os.Chmod(filePath, 0000); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+	t.Cleanup(func() { os.Chmod(filePath, 0644) })
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if results[0].ParseError == "" {
+		t.Fatal("expected a non-empty ParseError for an unreadable file")
+	}
+	if strings.Contains(results[0].ParseError, "byte ") {
+		t.Errorf("expected a read error (not a byte-offset syntax error) for an unreadable file, got %q", results[0].ParseError)
+	}
+}
+
+func TestBrowseCatalogs_ReturnsFilenameOrder(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	// Written out of alphabetical order so a passing test proves
+	// BrowseCatalogs sorts by filename rather than relying on incidental
+	// filesystem/creation order.
+	names := []string{"zebra.json", "apple.json", "mango.json"}
+	for _, n := range names {
+		content := []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`)
+		if err := os.WriteFile(filepath.Join(dir, n), content, 0644); err != nil {
+			t.Fatalf("failed to write %s: %v", n, err)
+		}
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 3 {
+		t.Fatalf("expected 3 catalog results, got %d", len(results))
+	}
+
+	want := []string{"apple.json", "mango.json", "zebra.json"}
+	for i, w := range want {
+		if results[i].Name != w {
+			t.Errorf("result[%d].Name = %q, want %q (filename order)", i, results[i].Name, w)
+		}
+	}
+}
+
+func TestBrowseCatalogs_CountsCache_HitAndMiss(t *testing.T) {
+	s := NewService()
+	dir, filePath, _ := writeTestCatalog(t)
+
+	// No cache wired at all: fields must be nil, never a fabricated zero.
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs (no cache) failed: %v", err)
+	}
+	if results[0].FileCount != nil || results[0].TotalBytes != nil {
+		t.Fatalf("expected nil FileCount/TotalBytes with no cache wired, got %v/%v", results[0].FileCount, results[0].TotalBytes)
+	}
+
+	cache, err := config.NewCountsCacheAt(filepath.Join(t.TempDir(), "counts-cache.json"))
+	if err != nil {
+		t.Fatalf("NewCountsCacheAt: %v", err)
+	}
+	s.SetCountsCache(cache)
+
+	// Cache wired but cold: still a miss for this exact key.
+	results, err = s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs (cold cache) failed: %v", err)
+	}
+	if results[0].FileCount != nil || results[0].TotalBytes != nil {
+		t.Fatalf("expected nil FileCount/TotalBytes on cache miss, got %v/%v", results[0].FileCount, results[0].TotalBytes)
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("stat: %v", err)
+	}
+	key := config.CountsKey(filePath, info.ModTime(), info.Size())
+	if err := cache.Put(key, config.CountEntry{FileCount: 7, TotalBytes: 4096}); err != nil {
+		t.Fatalf("Put: %v", err)
+	}
+
+	results, err = s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs (warm cache) failed: %v", err)
+	}
+	if results[0].FileCount == nil || *results[0].FileCount != 7 {
+		t.Errorf("expected FileCount=7 on cache hit, got %v", results[0].FileCount)
+	}
+	if results[0].TotalBytes == nil || *results[0].TotalBytes != 4096 {
+		t.Errorf("expected TotalBytes=4096 on cache hit, got %v", results[0].TotalBytes)
+	}
+}
+
+func TestDetectParseError_AllocsValidLessThanInvalid(t *testing.T) {
+	valid := []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`)
+	invalid := []byte(`{not valid json at all`)
+
+	validAllocs := testing.AllocsPerRun(100, func() {
+		_ = detectParseError(valid)
+	})
+	invalidAllocs := testing.AllocsPerRun(100, func() {
+		_ = detectParseError(invalid)
+	})
+
+	if !(validAllocs < invalidAllocs) {
+		t.Errorf("expected fewer allocations for a valid document (%v) than an invalid one (%v)", validAllocs, invalidAllocs)
 	}
 }

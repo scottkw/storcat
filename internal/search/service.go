@@ -9,15 +9,55 @@ import (
 	"time"
 
 	"github.com/djherbis/times"
+	"storcat-wails/internal/config"
 	"storcat-wails/pkg/models"
 )
 
 // Service handles catalog searching
-type Service struct{}
+type Service struct {
+	countsCache *config.CountsCache
+}
 
 // NewService creates a new search service
 func NewService() *Service {
 	return &Service{}
+}
+
+// SetCountsCache wires a sidecar counts cache into the service so
+// BrowseCatalogs can populate FileCount/TotalBytes on a cache hit. Every
+// access is nil-safe: cli/search.go and cli/show.go construct the service
+// via NewService() with no cache and must keep compiling and behaving
+// identically.
+func (s *Service) SetCountsCache(cache *config.CountsCache) {
+	s.countsCache = cache
+}
+
+// detectParseError returns an empty string when data is valid JSON. json.Valid
+// scans without allocating the target structure, so a healthy catalog pays
+// only that scan. Only on invalid data does it attempt a real unmarshal --
+// mirroring LoadCatalog's own array-then-object attempt order -- to extract
+// a *json.SyntaxError's byte offset and reason.
+func detectParseError(data []byte) string {
+	if json.Valid(data) {
+		return ""
+	}
+
+	// json.Valid already failed, so any Unmarshal below hits the same
+	// syntax error at the same byte offset; the array-then-object order is
+	// kept anyway to mirror LoadCatalog's own attempt order.
+	var arr []*models.CatalogItem
+	err := json.Unmarshal(data, &arr)
+	if err == nil {
+		var obj models.CatalogItem
+		err = json.Unmarshal(data, &obj)
+	}
+	if err == nil {
+		return "" // unreachable: json.Valid already reported this data invalid
+	}
+	if syn, ok := err.(*json.SyntaxError); ok {
+		return fmt.Sprintf("byte %d: %s", syn.Offset, syn.Error())
+	}
+	return err.Error()
 }
 
 // SearchCatalogs searches all JSON catalogs in the specified directory for the search term
@@ -185,15 +225,43 @@ func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMeta
 		_, htmlErr := os.Stat(htmlPath)
 		hasHtml := htmlErr == nil
 
+		// Parse status: a genuinely new read+scan cost -- BrowseCatalogs
+		// previously only stat'd this file. json.Valid's fast path keeps
+		// the common (valid) case to one read plus one linear scan.
+		var parseErr string
+		if data, readErr := os.ReadFile(filePath); readErr != nil {
+			parseErr = readErr.Error()
+		} else {
+			parseErr = detectParseError(data)
+		}
+
+		// Counts: cache-backed, never computed inline here. A miss leaves
+		// both pointers nil rather than blocking the rail or fabricating a
+		// zero.
+		var fileCount *int
+		var totalBytes *int64
+		if s.countsCache != nil {
+			key := config.CountsKey(filePath, info.ModTime(), info.Size())
+			if entry, ok := s.countsCache.Get(key); ok {
+				fc := entry.FileCount
+				tb := entry.TotalBytes
+				fileCount = &fc
+				totalBytes = &tb
+			}
+		}
+
 		catalogs = append(catalogs, &models.CatalogMetadata{
-			Title:    title,
-			Name:     entry.Name(),
-			Filename: entry.Name(),
-			Size:     info.Size(),
-			Created:  createdTime.Format(time.RFC3339),
-			Modified: info.ModTime().Format(time.RFC3339),
-			FilePath: filePath,
-			HasHtml:  hasHtml,
+			Title:      title,
+			Name:       entry.Name(),
+			Filename:   entry.Name(),
+			Size:       info.Size(),
+			Created:    createdTime.Format(time.RFC3339),
+			Modified:   info.ModTime().Format(time.RFC3339),
+			FilePath:   filePath,
+			HasHtml:    hasHtml,
+			FileCount:  fileCount,
+			TotalBytes: totalBytes,
+			ParseError: parseErr,
 		})
 	}
 

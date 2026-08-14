@@ -1,12 +1,14 @@
 package search
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
 	"strings"
 	"testing"
 
+	"storcat-wails/internal/config"
 	"storcat-wails/internal/fixture"
 )
 
@@ -161,5 +163,75 @@ func TestLoadCatalogFlat_DepthCap(t *testing.T) {
 	}
 	if !strings.Contains(err.Error(), "512") {
 		t.Errorf("expected error to name the 512 depth limit, got: %v", err)
+	}
+}
+
+func TestLoadCatalogFlat_MissingFile(t *testing.T) {
+	s := NewService()
+	_, err := s.LoadCatalogFlat("/nonexistent/does-not-exist.json")
+	if err == nil {
+		t.Fatal("expected an error for a missing file")
+	}
+	if !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("expected a not-exist error, got: %v", err)
+	}
+}
+
+func TestLoadCatalogFlat_PermissionDenied(t *testing.T) {
+	if os.Geteuid() == 0 {
+		t.Skip("skipping permission test: running as root ignores mode bits")
+	}
+
+	s := NewService()
+	dir := t.TempDir()
+	filePath := writeFlattenTestCatalog(t, dir, "noperm.json", `{"type":"directory","name":"./","size":0,"contents":[]}`)
+	if err := os.Chmod(filePath, 0000); err != nil {
+		t.Fatalf("chmod: %v", err)
+	}
+	t.Cleanup(func() { os.Chmod(filePath, 0644) })
+
+	_, err := s.LoadCatalogFlat(filePath)
+	if err == nil {
+		t.Fatal("expected an error for a permission-denied file")
+	}
+	if !errors.Is(err, os.ErrPermission) {
+		t.Errorf("expected a permission error, got: %v", err)
+	}
+	if errors.Is(err, os.ErrNotExist) {
+		t.Error("permission-denied error must be distinguishable from not-exist, got a not-exist error")
+	}
+}
+
+func TestLoadCatalogFlat_OpportunisticCacheFill(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	filePath := writeFlattenTestCatalog(t, dir, "nested.json", nestedCatalogJSON)
+
+	cache, err := config.NewCountsCacheAt(filepath.Join(t.TempDir(), "counts-cache.json"))
+	if err != nil {
+		t.Fatalf("NewCountsCacheAt: %v", err)
+	}
+	s.SetCountsCache(cache)
+
+	flat, err := s.LoadCatalogFlat(filePath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFlat: %v", err)
+	}
+
+	info, err := os.Stat(filePath)
+	if err != nil {
+		t.Fatalf("stat: %v", err)
+	}
+	key := config.CountsKey(filePath, info.ModTime(), info.Size())
+
+	entry, ok := cache.Get(key)
+	if !ok {
+		t.Fatal("expected LoadCatalogFlat to opportunistically fill the counts cache")
+	}
+	if entry.FileCount != flat.FileCount {
+		t.Errorf("cached FileCount = %d, want %d (matching the walk's own count)", entry.FileCount, flat.FileCount)
+	}
+	if entry.TotalBytes != flat.TotalBytes {
+		t.Errorf("cached TotalBytes = %d, want %d (matching the walk's own total)", entry.TotalBytes, flat.TotalBytes)
 	}
 }

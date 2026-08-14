@@ -29,6 +29,15 @@ type CatalogMetadata struct {
 	Modified string `json:"modified"`
 	FilePath string `json:"path"`
 	HasHtml  bool   `json:"hasHtml"`
+	// FileCount and TotalBytes are pointers so the frontend can tell "not
+	// computed yet" (a sidecar-cache miss) from "genuinely zero" -- nil
+	// rather than a confident 0 on every rail row until the cache warms.
+	FileCount  *int   `json:"fileCount"`
+	TotalBytes *int64 `json:"totalBytes"`
+	// ParseError is empty for a catalog that reads and parses cleanly, and
+	// otherwise carries a byte offset plus the parser's own reason (or the
+	// raw read error, for a file that can't be opened at all).
+	ParseError string `json:"parseError"`
 }
 
 // FlatNode is one node of a flattened catalog tree, render-ready for the

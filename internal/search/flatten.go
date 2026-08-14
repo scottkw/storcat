@@ -2,8 +2,10 @@ package search
 
 import (
 	"fmt"
+	"os"
 	"path/filepath"
 
+	"storcat-wails/internal/config"
 	"storcat-wails/pkg/models"
 )
 
@@ -61,6 +63,21 @@ func (s *Service) LoadCatalogFlat(filePath string) (*models.FlatCatalog, error) 
 	for _, child := range root.Contents {
 		if err := walk(child, 0, -1); err != nil {
 			return nil, err
+		}
+	}
+
+	// Opportunistic cache fill: this walk already computed FileCount and
+	// TotalBytes for free, so persist them under the same key BrowseCatalogs
+	// looks up by. A failure to persist is ignored -- the counts are
+	// convenience data, and a cache problem must never become a load
+	// problem.
+	if s.countsCache != nil {
+		if info, statErr := os.Stat(filePath); statErr == nil {
+			key := config.CountsKey(filePath, info.ModTime(), info.Size())
+			_ = s.countsCache.Put(key, config.CountEntry{
+				FileCount:  flat.FileCount,
+				TotalBytes: flat.TotalBytes,
+			})
 		}
 	}
 
