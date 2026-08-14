@@ -265,6 +265,15 @@
   text-overflow: ellipsis;
 }
 
+/* Details panel's inert overflow ("...") button -- hover only, no click
+ * handler exists this phase (TREE-07). Matches the prototype's own
+ * style-hover (border-color + icon color both shift to accent). */
+.ws-details-overflow:hover,
+.ws-details-overflow:focus-visible {
+  border-color: var(--ac);
+  color: var(--ac);
+}
+
 /* Shell layout */
 
 .ws-root {
