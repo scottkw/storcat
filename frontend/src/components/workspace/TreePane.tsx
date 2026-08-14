@@ -5,6 +5,7 @@ import { wailsAPI } from '../../services/wailsAPI';
 import { useVisibleRows } from '../../hooks/useVisibleRows';
 import { formatBytes } from '../../lib/format';
 import BreadcrumbBar from './BreadcrumbBar';
+import TreeHeader from './TreeHeader';
 import { models } from '../../../wailsjs/go/models';
 
 const EMPTY_NODES: models.FlatNode[] = [];
@@ -176,6 +177,7 @@ function TreePane() {
   if (state.tree.status === 'ready' && nodes.length === 0) {
     return (
       <div className="ws-tree">
+        <TreeHeader />
         <div
           className="pane-scroll"
           style={{
@@ -198,6 +200,7 @@ function TreePane() {
 
   return (
     <div className="ws-tree">
+      <TreeHeader />
       <BreadcrumbBar />
       <div className="pane-scroll" ref={scrollRef} role="tree">
         <div style={{ height: virtualizer.getTotalSize(), position: 'relative' }}>
