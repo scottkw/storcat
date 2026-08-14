@@ -274,6 +274,14 @@
   color: var(--ac);
 }
 
+/* Reveal-in-file-manager footer button (TREE-08): outlined, hover border
+ * only -- matches the primary "Open HTML catalog" button's own fill for
+ * contrast without a second accent-colored surface competing for attention. */
+.ws-details-reveal:hover,
+.ws-details-reveal:focus-visible {
+  border-color: var(--ac);
+}
+
 /* Shell layout */
 
 .ws-root {

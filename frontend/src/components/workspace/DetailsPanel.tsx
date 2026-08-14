@@ -1,5 +1,10 @@
+import type { CSSProperties } from 'react';
+import { useLayoutEffect, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatBytes, formatCount, formatDate } from '../../lib/format';
+import { wailsAPI } from '../../services/wailsAPI';
+import { Environment } from '../../../wailsjs/runtime/runtime';
+import { models } from '../../../wailsjs/go/models';
 
 export interface DetailsPanelProps {
   variant?: 'pane' | 'drawer';
@@ -59,6 +64,121 @@ function OverflowButton() {
     >
       <span aria-hidden="true">⋯</span>
     </button>
+  );
+}
+
+function revealButtonLabel(platform: string | null): string {
+  if (platform === 'darwin') return 'Reveal JSON in Finder';
+  if (platform === 'windows') return 'Reveal JSON in Explorer';
+  return 'Reveal JSON in file manager';
+}
+
+const buttonBase: CSSProperties = {
+  height: 30,
+  borderRadius: 7,
+  fontSize: 12.5,
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  cursor: 'pointer',
+};
+
+// Exactly two actions this phase (TREE-08) -- the handoff's third footer
+// action (the volume re-scan trigger) is omitted entirely, not rendered
+// inert, because its backend surface (Phase 28) does not exist here. Both
+// actions operate on the catalog's own file path regardless of whether a
+// node is also selected -- neither ever receives a free-form or
+// user-typed path.
+function Footer({ catalog }: { catalog: models.CatalogMetadata }) {
+  const [platform, setPlatform] = useState<string | null>(null);
+  const [openBusy, setOpenBusy] = useState(false);
+  const [revealBusy, setRevealBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Same deferred-call-with-catch pattern Toolbar.tsx already established:
+  // Environment() throws synchronously outside a real Wails webview, so
+  // deferring through a resolved promise turns that into a catchable
+  // rejection instead of one that would take down this component.
+  useLayoutEffect(() => {
+    let cancelled = false;
+    Promise.resolve()
+      .then(() => Environment())
+      .then((env) => {
+        if (!cancelled) setPlatform(env.platform);
+      })
+      .catch(() => {
+        // Platform query unavailable -- the generic wording below covers it.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  async function handleOpenHtml() {
+    if (openBusy) return;
+    setOpenBusy(true);
+    setError(null);
+    const htmlPathResult = await wailsAPI.getCatalogHtmlPath(catalog.path);
+    if (htmlPathResult.success) {
+      await wailsAPI.openExternal(htmlPathResult.htmlPath);
+    } else {
+      setError(htmlPathResult.error);
+    }
+    setOpenBusy(false);
+  }
+
+  async function handleReveal() {
+    if (revealBusy) return;
+    setRevealBusy(true);
+    setError(null);
+    const result = await wailsAPI.revealInFileManager(catalog.path);
+    if (!result.success) {
+      setError(result.error);
+    }
+    setRevealBusy(false);
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, flex: 'none' }}>
+      {/* Omitted entirely (not greyed) when the catalog has no HTML
+          companion -- a button whose only possible outcome is an error is
+          worse than no button, mirroring the header chip's own rule. */}
+      {catalog.hasHtml && (
+        <button
+          type="button"
+          onClick={handleOpenHtml}
+          disabled={openBusy}
+          style={{
+            ...buttonBase,
+            background: 'var(--ac)',
+            color: 'var(--onac)',
+            fontWeight: 600,
+            border: 'none',
+            opacity: openBusy ? 0.7 : 1,
+          }}
+        >
+          Open HTML catalog
+        </button>
+      )}
+      <button
+        type="button"
+        className="ws-details-reveal"
+        onClick={handleReveal}
+        disabled={revealBusy}
+        style={{
+          ...buttonBase,
+          background: 'transparent',
+          border: '1px solid var(--l)',
+          color: 'var(--tx)',
+          opacity: revealBusy ? 0.7 : 1,
+        }}
+      >
+        {revealButtonLabel(platform)}
+      </button>
+      {error && (
+        <span style={{ fontSize: 11, color: '#e5534b', lineHeight: 1.4 }}>{error}</span>
+      )}
+    </div>
   );
 }
 
@@ -147,6 +267,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
           </div>
           <MetaRows rows={metaRows} />
         </div>
+        <Footer catalog={catalog} />
       </div>
     );
   }
@@ -207,6 +328,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
             backend surfaces. */}
         <MetaRows rows={metaRows} />
       </div>
+      <Footer catalog={catalog} />
     </div>
   );
 }
