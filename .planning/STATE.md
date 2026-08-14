@@ -28,10 +28,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 ## Current Position
 
-Phase: 23 (Rail + Virtualized Tree) — EXECUTING
-Plan: 6 of 6
-Status: Phase complete — ready for verification
-Last activity: 2026-08-13 — Phase 23 execution started
+Phase: 24 (Cmd-K Command Palette) — NOT STARTED
+Plan: — of — in current phase (not yet discussed or planned)
+Status: Ready to discuss
+Last activity: 2026-08-14 — Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled
+
+Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
 Progress: [██████████] 100%
 
@@ -144,6 +146,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T02:17:33.047Z
-Stopped at: Completed 23-06-PLAN.md (Phase 23 complete, all 6 plans)
+Last session: 2026-08-14
+Stopped at: Phase 23 fully closed (all post-execution gates done). Next action is Phase 24 discuss.
 Resume file: None
+Resume command: `/gsd-autonomous --from 24`
+
+**Read before resuming — worktree isolation.** `workflow.use_worktrees` was re-enabled for Phase 24 onward, but Claude Code's harness forks agent worktrees from `origin/HEAD`, NOT from local HEAD. Local `main` is ~95 commits ahead of `origin/main`, so until `main` is pushed, every executor will land in a checkout that predates all of v3.0.0 and will halt on a worktree base mismatch. Either push `main` first, or set `workflow.use_worktrees` back to `false` to run executors sequentially on the main tree (which is how Phases 22 and 23 were built).
