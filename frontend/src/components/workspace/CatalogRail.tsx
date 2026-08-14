@@ -1,28 +1,67 @@
-import { useEffect } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { formatBytes, formatCount } from '../../lib/format';
+import { safeGetItem, safeSetItem } from '../../themeTokens';
 
 const CATALOG_DIR_STORAGE_KEY = 'storcat-catalog-directory';
 
 function CatalogRail() {
   const { state, dispatch } = useAppContext();
 
-  // Tracer-minimal: on mount, read the persisted catalog directory and load
-  // its catalogs once. The full directory-chip wiring (picking/changing the
-  // directory interactively) and the filter's wiring belong to plan 23-04's
-  // task 2 -- this task only fills in the row contract.
+  // The filter string lives only here, never in AppContext, read through
+  // useDeferredValue for the matching pass. This isolation -- not a
+  // debounce timer -- is the entire mechanism by which the tree survives
+  // typing untouched (RAIL-02, locked in 23-CONTEXT.md).
+  const [filterInput, setFilterInput] = useState('');
+  const deferredFilter = useDeferredValue(filterInput);
+  const trimmedFilter = deferredFilter.trim();
+
+  const loadCatalogsForDirectory = useCallback(
+    (dir: string) => {
+      wailsAPI.browseCatalogs(dir).then((result) => {
+        if (result.success) {
+          dispatch({ type: 'SET_CATALOGS', payload: result.catalogs ?? [] });
+        }
+        // A failed listing (missing/unreadable directory) leaves state.catalogs
+        // untouched -- combined with the empty initial array this renders the
+        // same empty-library state as zero catalogs, with no console error.
+      });
+    },
+    [dispatch]
+  );
+
+  // On mount, read the persisted catalog directory (if any) and load its
+  // catalogs once. No persisted directory -> do not call the listing binding
+  // at all; the empty-library state below covers that case (STATE-01).
   useEffect(() => {
-    const persistedDir = localStorage.getItem(CATALOG_DIR_STORAGE_KEY);
+    const persistedDir = safeGetItem(CATALOG_DIR_STORAGE_KEY);
     if (!persistedDir) return;
     dispatch({ type: 'SET_CATALOG_DIR', payload: persistedDir });
-    wailsAPI.browseCatalogs(persistedDir).then((result) => {
-      if (result.success) {
-        dispatch({ type: 'SET_CATALOGS', payload: result.catalogs ?? [] });
-      }
-    });
+    loadCatalogsForDirectory(persistedDir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleChooseDirectory = async () => {
+    const result = await wailsAPI.selectDirectory();
+    if (!result.success || !result.path) return;
+    safeSetItem(CATALOG_DIR_STORAGE_KEY, result.path);
+    dispatch({ type: 'SET_CATALOG_DIR', payload: result.path });
+    loadCatalogsForDirectory(result.path);
+  };
+
+  // Case-insensitive substring match against title + filename together,
+  // preserving the array's existing order -- no re-sort, no ranking.
+  const filteredCatalogs = useMemo(() => {
+    if (!trimmedFilter) return state.catalogs;
+    const needle = trimmedFilter.toLowerCase();
+    return state.catalogs.filter(
+      (catalog) =>
+        catalog.title.toLowerCase().includes(needle) || catalog.filename.toLowerCase().includes(needle)
+    );
+  }, [state.catalogs, trimmedFilter]);
+
+  const showZeroMatch = trimmedFilter !== '' && filteredCatalogs.length === 0 && state.catalogs.length > 0;
 
   return (
     <div className="ws-rail">
@@ -47,10 +86,12 @@ function CatalogRail() {
             }}
           >
             {/* Always the total, never the filtered subset (RAIL-01/RAIL-02) --
-                reads state.catalogs.length directly, independent of any filter. */}
+                reads state.catalogs.length directly, independent of trimmedFilter. */}
             Catalogs <span style={{ color: 'var(--fn)' }}>{state.catalogs.length}</span>
           </span>
 
+          {/* Renders, hover-styled, and stays inert -- its target (the create
+              slide-over) is Phase 25. Never attach a handler here (RAIL-06). */}
           <button
             type="button"
             className="ws-new-pill"
@@ -82,18 +123,25 @@ function CatalogRail() {
           </button>
         </div>
 
-        <div
-          className="mono"
+        <button
+          type="button"
+          className="ws-dir-chip mono"
+          onClick={handleChooseDirectory}
+          aria-label="Choose catalog directory"
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 7,
+            width: '100%',
             fontSize: 11,
             color: 'var(--dm)',
             background: 'var(--ch)',
             border: '1px solid var(--l)',
             borderRadius: 6,
             padding: '5px 8px',
+            cursor: 'pointer',
+            textAlign: 'left',
+            font: 'inherit',
           }}
         >
           <svg
@@ -112,7 +160,7 @@ function CatalogRail() {
           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {state.catalogDir ?? 'No catalog directory set'}
           </span>
-        </div>
+        </button>
 
         <div
           style={{
@@ -128,6 +176,8 @@ function CatalogRail() {
           <input
             aria-label="Filter catalogs"
             placeholder="Filter catalogs…"
+            value={filterInput}
+            onChange={(event) => setFilterInput(event.target.value)}
             style={{
               width: '100%',
               fontSize: 12,
@@ -154,8 +204,14 @@ function CatalogRail() {
               Catalog a volume →
             </span>
           </div>
+        ) : showZeroMatch ? (
+          <div style={{ padding: '16px 10px', textAlign: 'center' }}>
+            <span style={{ fontSize: 11.5, color: 'var(--dm)' }}>
+              No catalogs match &quot;{deferredFilter}&quot;.
+            </span>
+          </div>
         ) : (
-          state.catalogs.map((catalog) => {
+          filteredCatalogs.map((catalog) => {
             const isSelected = state.currentCatalogId === catalog.path;
             const isBroken = catalog.parseError !== '';
 
@@ -169,6 +225,7 @@ function CatalogRail() {
                 onClick={() => dispatch({ type: 'SELECT_CATALOG', payload: catalog.path })}
                 onKeyDown={(event) => {
                   if (event.key === 'Enter' || event.key === ' ') {
+                    event.preventDefault();
                     dispatch({ type: 'SELECT_CATALOG', payload: catalog.path });
                   }
                 }}

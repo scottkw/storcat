@@ -67,7 +67,18 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_DETAIL_OVERLAY':
       return { ...state, detailOverlay: action.payload };
     case 'SET_CATALOG_DIR':
-      return { ...state, catalogDir: action.payload };
+      // Changing directories clears the current catalog, returns the tree to
+      // idle, and empties expansion/selection in the same case -- without
+      // this a directory change can leave the tree showing a catalog that is
+      // no longer in the (not-yet-reloaded) list (RAIL-05).
+      return {
+        ...state,
+        catalogDir: action.payload,
+        currentCatalogId: null,
+        tree: { status: 'idle' },
+        expanded: {},
+        selected: null,
+      };
     case 'SET_CATALOGS':
       return { ...state, catalogs: action.payload };
     case 'SELECT_CATALOG':

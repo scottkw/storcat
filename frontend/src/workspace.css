@@ -73,6 +73,14 @@
   border-color: var(--ac);
 }
 
+/* Directory chip (RAIL-05): only the border reacts on hover, matching
+ * .ws-search's convention above -- unlike .ws-chip, its text color does not
+ * shift, per 23-UI-SPEC's explicit "hover border only". */
+.ws-dir-chip:hover,
+.ws-dir-chip:focus-visible {
+  border-color: var(--ac);
+}
+
 /* Base fill/text set here (not inline) so the :hover rule below can win --
  * an inline style on the element would always outrank this selector
  * regardless of :hover, silently disabling the inversion. */

@@ -183,7 +183,10 @@ export function applyTokens(theme: Theme, density: Density): void {
   root.style.setProperty('--link-hover', legacy.linkHover);
 }
 
-function safeGetItem(key: string): string | null {
+// Exported so other modules persisting their own `storcat-*` keys (e.g. the
+// rail's catalog-directory chip in plan 23-04) reuse this try/catch wrapper
+// instead of a second copy -- the pattern this file established, not a new one.
+export function safeGetItem(key: string): string | null {
   try {
     return localStorage.getItem(key);
   } catch {
@@ -191,7 +194,7 @@ function safeGetItem(key: string): string | null {
   }
 }
 
-function safeSetItem(key: string, value: string): void {
+export function safeSetItem(key: string, value: string): void {
   try {
     localStorage.setItem(key, value);
   } catch {
