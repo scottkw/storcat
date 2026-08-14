@@ -98,3 +98,25 @@ func TestRunSearch_Help(t *testing.T) {
 		t.Errorf("expected exit code 0 for search --help, got %d", exitCode)
 	}
 }
+
+// TestRunSearch_UnaffectedByIndexedCap is the tripwire for Phase 24's GUI-only
+// SearchIndexed addition: cli/search.go calls the uncapped SearchCatalogs
+// directly (cli/search.go:61-62), not SearchIndexed, so the CLI's table
+// output must be identical to its pre-Phase-24 behavior. If this test ever
+// fails, cli/search.go was changed to route through the capped path --
+// which the phase's plan explicitly forbids.
+func TestRunSearch_UnaffectedByIndexedCap(t *testing.T) {
+	dir := t.TempDir()
+	writeTestCatalog(t, dir, "mycat")
+
+	exitCode := 0
+	stdout, _ := captureOutput(func() {
+		exitCode = cli.Run([]string{"search", "test", dir}, "2.0.0")
+	})
+	if exitCode != 0 {
+		t.Errorf("expected exit code 0, got %d", exitCode)
+	}
+	if !strings.Contains(stdout, "test.txt") {
+		t.Errorf("expected 'test.txt' basename in rendered table, got %q", stdout)
+	}
+}

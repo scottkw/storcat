@@ -19,6 +19,17 @@ type SearchResult struct {
 	Size            int64  `json:"size"`
 }
 
+// SearchIndexResult is the GUI-only capped transport for the ⌘K palette's
+// live search. Total is the true match count across every catalog in the
+// directory; Results is the first SearchIndexedCap of them, in the same
+// order SearchCatalogs produced -- never re-sorted, never re-matched. The
+// CLI's `storcat search` keeps using SearchCatalogs directly and is
+// unaffected by this struct's existence.
+type SearchIndexResult struct {
+	Results []*SearchResult `json:"results"`
+	Total   int             `json:"total"`
+}
+
 // CatalogMetadata represents metadata about a catalog file
 type CatalogMetadata struct {
 	Title    string `json:"title"`
