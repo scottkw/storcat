@@ -17,6 +17,17 @@ import {
   GetVersion,
 } from '../../wailsjs/go/main/App';
 
+// Wails' generated bindings reject a Go error's message as a plain string,
+// not an Error instance -- `error.message` is undefined for every rejection
+// from this bridge, which silently downgraded every real Go error (a
+// missing file, a permission error, a parse failure) to the fallback
+// 'Unknown error' string. Every catch block below reads through this so a
+// caller (e.g. the unreadable-catalog panel) sees the real cause verbatim.
+function extractErrorMessage(error: any): string {
+  if (typeof error === 'string') return error;
+  return error?.message || 'Unknown error';
+}
+
 // Wrapper to match Electron API structure
 export const wailsAPI = {
   // Catalog operations
@@ -33,7 +44,7 @@ export const wailsAPI = {
         copyHtmlPath: result.copyHtmlPath,
       };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -42,7 +53,7 @@ export const wailsAPI = {
       const results = await SearchCatalogs(searchTerm, catalogDir);
       return { success: true, results };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false, error: extractErrorMessage(error) };
     }
   },
 
@@ -51,7 +62,7 @@ export const wailsAPI = {
       const catalogs = await BrowseCatalogs(catalogDir);
       return { success: true, catalogs };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false, error: extractErrorMessage(error) };
     }
   },
 
@@ -60,7 +71,7 @@ export const wailsAPI = {
       const catalog = await LoadCatalog(filePath);
       return { success: true, catalog };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false, error: extractErrorMessage(error) };
     }
   },
 
@@ -69,7 +80,7 @@ export const wailsAPI = {
       const flat = await LoadCatalogFlat(filePath);
       return { success: true as const, flat };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -79,7 +90,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -88,7 +99,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -97,7 +108,7 @@ export const wailsAPI = {
       const path = await SelectDirectory();
       return { success: true as const, path };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -107,7 +118,7 @@ export const wailsAPI = {
       const config = await GetConfig();
       return { success: true as const, config };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -144,7 +155,7 @@ export const wailsAPI = {
       const htmlPath = await GetCatalogHtmlPath(catalogPath);
       return { success: true as const, htmlPath };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -153,7 +164,7 @@ export const wailsAPI = {
       const content = await ReadHtmlFile(filePath);
       return { success: true as const, content };
     } catch (error: any) {
-      return { success: false as const, error: error.message || 'Unknown error' };
+      return { success: false as const, error: extractErrorMessage(error) };
     }
   },
 
@@ -172,7 +183,7 @@ export const wailsAPI = {
       const catalogs = await BrowseCatalogs(catalogDir);
       return { success: true, catalogs };
     } catch (error: any) {
-      return { success: false, error: error.message || 'Unknown error' };
+      return { success: false, error: extractErrorMessage(error) };
     }
   },
 

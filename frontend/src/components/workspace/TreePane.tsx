@@ -6,6 +6,7 @@ import { useVisibleRows } from '../../hooks/useVisibleRows';
 import { formatBytes } from '../../lib/format';
 import BreadcrumbBar from './BreadcrumbBar';
 import TreeHeader from './TreeHeader';
+import UnreadableCatalogPanel from './UnreadableCatalogPanel';
 import { models } from '../../../wailsjs/go/models';
 
 const EMPTY_NODES: models.FlatNode[] = [];
@@ -69,11 +70,20 @@ function TreePane() {
 
   const selectedCatalog = state.catalogs.find((catalog) => catalog.path === state.currentCatalogId);
 
-  // Four mutually exclusive states, never more than one rendered at once:
+  // A catalog can arrive broken by either route: the rail listing already
+  // flagged it (parseError, known the instant it's selected -- no need to
+  // wait for the load) or the load itself failed after selection (tree
+  // status 'error'). Either one routes to the diagnostic panel, which
+  // replaces the entire pane -- no header, no breadcrumb, no rows.
+  const isUnreadable =
+    (selectedCatalog?.parseError ?? '') !== '' || state.tree.status === 'error';
+
+  // Five mutually exclusive states, never more than one rendered at once:
   // empty library (no directory configured, or the directory holds no
-  // catalogs, or nothing has been selected yet), a quiet loading line while
-  // LoadCatalogFlat is in flight, a distinct empty-catalog message when the
-  // loaded array has zero nodes, and rows.
+  // catalogs, or nothing has been selected yet), the unreadable-catalog
+  // panel, a quiet loading line while LoadCatalogFlat is in flight, a
+  // distinct empty-catalog message when the loaded array has zero nodes,
+  // and rows.
   if (!state.catalogDir || state.catalogs.length === 0 || !state.currentCatalogId) {
     return (
       <div className="ws-tree">
@@ -155,6 +165,14 @@ function TreePane() {
             </div>
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (isUnreadable) {
+    return (
+      <div className="ws-tree">
+        <UnreadableCatalogPanel />
       </div>
     );
   }
