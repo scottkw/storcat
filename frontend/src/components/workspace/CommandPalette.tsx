@@ -98,22 +98,19 @@ function CommandPalette({ isOpen, onClose }: CommandPaletteProps) {
     setActiveIndex(results.length > 0 ? 0 : -1);
   }, [results]);
 
-  // Full PLT-05 sequence. Dispatch order is load-bearing: SELECT_CATALOG
-  // clears pendingReveal as part of its atomic multi-field update (that
-  // clearing IS the stale-discard guarantee for a rail switch superseding
-  // a reveal) -- so issuing the reveal request before the catalog switch
-  // would have the switch immediately erase it, and every cross-catalog
-  // reveal would silently do nothing. Switch first, then request.
+  // Full PLT-05 sequence, as one atomic action (WR-02). REVEAL_HIT's reducer
+  // case applies the catalog switch (when the hit isn't already the current
+  // catalog) and sets pendingReveal in the same state update -- there is no
+  // longer a two-dispatch ordering for a future edit to get wrong. When the
+  // hit is already in the current catalog, tree.status is already 'ready',
+  // so TreePane's reveal effect fires on the next commit with no load in
+  // between; this is also the path the idempotent repeat-reveal case
+  // exercises.
   function handleActivate(result: models.SearchResult) {
-    if (result.catalogFilePath !== state.currentCatalogId) {
-      dispatch({ type: 'SELECT_CATALOG', payload: result.catalogFilePath });
-    }
-    // Dispatched unconditionally, including when the hit is already in the
-    // current catalog -- in that case tree.status is already 'ready', so
-    // TreePane's reveal effect fires on the next commit with no load in
-    // between. This is also the path the idempotent repeat-reveal case
-    // exercises.
-    dispatch({ type: 'SET_PENDING_REVEAL', payload: result.fullName });
+    dispatch({
+      type: 'REVEAL_HIT',
+      payload: { catalogId: result.catalogFilePath, path: result.fullName },
+    });
     onClose();
   }
 

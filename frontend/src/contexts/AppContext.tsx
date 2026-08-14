@@ -45,7 +45,8 @@ type AppAction =
   | { type: 'SET_EXPANDED'; payload: Record<string, boolean> }
   | { type: 'MERGE_EXPANDED'; payload: string[] }
   | { type: 'SET_SELECTED'; payload: string | null }
-  | { type: 'SET_PENDING_REVEAL'; payload: string | null };
+  | { type: 'SET_PENDING_REVEAL'; payload: string | null }
+  | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } };
 
 // Seeded once at module scope so a relaunch restores the user's persisted
 // density/rail-side choices rather than hardcoded defaults. readPersistedPrefs
@@ -167,6 +168,24 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, selected: action.payload };
     case 'SET_PENDING_REVEAL':
       return { ...state, pendingReveal: action.payload };
+    case 'REVEAL_HIT': {
+      // WR-02 -- folds CommandPalette's two load-bearing, order-dependent
+      // dispatches (SELECT_CATALOG then SET_PENDING_REVEAL) into one atomic
+      // update. SELECT_CATALOG's clearing of pendingReveal was what made the
+      // dispatch order matter; a single action has no ordering to get wrong.
+      // Only resets tree/expanded/selected when the reveal actually targets
+      // a different catalog -- a same-catalog reveal (the hit is already the
+      // open catalog) must not blow away in-progress expansion/selection.
+      const switching = action.payload.catalogId !== state.currentCatalogId;
+      return {
+        ...state,
+        currentCatalogId: action.payload.catalogId,
+        tree: switching ? { status: 'loading' } : state.tree,
+        expanded: switching ? {} : state.expanded,
+        selected: switching ? null : state.selected,
+        pendingReveal: action.payload.path,
+      };
+    }
     default:
       return state;
   }
