@@ -56,7 +56,7 @@
 - [ ] **PLT-04**: User can navigate results by keyboard and dismiss the palette with Escape
 - [ ] **PLT-05**: User can click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette
 - [ ] **PLT-06**: User sees "No file in any catalog matches that." when nothing matched
-- [ ] **PLT-07**: Focus is trapped inside the palette while open, and page scroll is locked behind it
+- [x] **PLT-07**: Focus is trapped inside the palette while open, and page scroll is locked behind it
 
 ### Create — the catalog creation flow
 
@@ -182,7 +182,7 @@ Deferred — acknowledged but not in this roadmap.
 | PLT-04 | Phase 24 | Pending |
 | PLT-05 | Phase 24 | Pending |
 | PLT-06 | Phase 24 | Pending |
-| PLT-07 | Phase 24 | Pending |
+| PLT-07 | Phase 24 | Complete |
 | CRT-01 | Phase 25 | Pending |
 | CRT-02 | Phase 25 | Pending |
 | CRT-03 | Phase 25 | Pending |
