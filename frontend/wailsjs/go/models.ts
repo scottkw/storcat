@@ -74,6 +74,9 @@ export namespace models {
 	    modified: string;
 	    path: string;
 	    hasHtml: boolean;
+	    fileCount?: number;
+	    totalBytes?: number;
+	    parseError: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new CatalogMetadata(source);
@@ -89,6 +92,9 @@ export namespace models {
 	        this.modified = source["modified"];
 	        this.path = source["path"];
 	        this.hasHtml = source["hasHtml"];
+	        this.fileCount = source["fileCount"];
+	        this.totalBytes = source["totalBytes"];
+	        this.parseError = source["parseError"];
 	    }
 	}
 	export class CreateCatalogResult {

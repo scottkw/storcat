@@ -35,6 +35,17 @@ func NewApp() *App {
 	catalogService := catalog.NewService()
 	searchService := search.NewService()
 
+	// Wire the sidecar counts cache into the search service. Same
+	// tolerance pattern as configManager above: a construction failure
+	// must leave the app fully usable, with the search service simply
+	// holding no cache (SetCountsCache is nil-safe) rather than aborting
+	// startup.
+	countsCache, err := config.NewCountsCache()
+	if err != nil {
+		countsCache = nil
+	}
+	searchService.SetCountsCache(countsCache)
+
 	return &App{
 		catalogService: catalogService,
 		searchService:  searchService,
