@@ -32,7 +32,7 @@ func (s *Service) LoadCatalogFlat(filePath string) (*models.FlatCatalog, error) 
 
 	var walk func(item *models.CatalogItem, depth, parentIdx int) error
 	walk = func(item *models.CatalogItem, depth, parentIdx int) error {
-		if depth > maxFlattenDepth {
+		if depth >= maxFlattenDepth {
 			return fmt.Errorf("%s: exceeds maximum catalog depth of %d", item.Name, maxFlattenDepth)
 		}
 
