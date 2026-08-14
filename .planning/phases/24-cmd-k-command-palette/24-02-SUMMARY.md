@@ -33,18 +33,17 @@ key-files:
   modified: []
 
 key-decisions:
-  - "No code changes were required in this plan -- all seven of Task 1's live checks passed against the tracer's existing implementation with no defect found, so files_modified's four listed files (CommandPalette.tsx, WorkspaceShell.tsx, Toolbar.tsx, search_indexed.go) remain byte-identical to 24-01"
+  - "No code changes were required in this plan -- all seven of Task 1's live checks and all four of Task 2's manual/DOM checks passed against the tracer's existing implementation with no defect found, so files_modified's four listed files (CommandPalette.tsx, WorkspaceShell.tsx, Toolbar.tsx, search_indexed.go) remain byte-identical to 24-01"
   - "Chose 'FILE' (matches all 400 nodes of the -shape flat fixture) for the >50-cap check and '00' (matches 39 of the -shape dcim fixture's 48 nodes plus all 400 flat nodes) for the cross-catalog check, because dcim's filename sorts alphabetically before flat's so the capped top-50 response is guaranteed to include rows from both catalogs"
   - "Restarted a stale wails dev instance mid-plan (coordinator-approved, since killing processes required permission this executor's sandbox does not have): the instance serving :34115 at task start had been built one minute before the commit that added App.SearchIndexed, so window.go.main.App lacked the very binding this plan verifies, despite curl -sf returning 200 the whole time"
+  - "RESOLVED, phase's largest risk: RESEARCH Open Question #1 answered POSITIVE -- macOS WKWebView does NOT reserve ⌘K; the real native StorCat.app window delivers it to WorkspaceShell's window keydown listener exactly as the repo's one Escape-listener precedent suggested. No Wails options.App.Menu accelerator fallback is needed; 24-CONTEXT.md's locked architecture stands as-is for Phases 25-27 to build on"
+  - "An initial user report of the palette opening on a rail-filter click, without ⌘K, was investigated (not accepted at face value): source inspection showed CatalogRail's filter input has no click/focus handler and receives no palette prop, then a DOM-level check confirmed clicking the rail filter leaves .ws-palette-scrim at 0 while clicking .ws-search opens it. The user confirmed they had actually clicked the toolbar search bar (which sits close to the rail filter and reads 'Search every catalog... ⌘K'). No defect exists; no code change made"
+  - "Task 2's step 3 (⌘K override while a text field is focused) was re-verified at the DOM level in Chromium at :34115 rather than repeating it in the native window, because the native-runtime question (does WKWebView deliver the keystroke at all) was already settled by the human in steps 1-2 of the same checkpoint -- what remained (does the app's own listener wrongly exclude focused inputs) is pure app-code behavior needing no webview"
 
 patterns-established:
   - "SearchIndexed live-evidence checks are keyed to generator-printed nodes= counts, never guessed -- 'FILE' against a -shape flat -files 400 fixture predicts exactly total=400; verified with jq/grep against the raw fixture JSON before trusting the UI's rendered total"
 
-requirements-completed: []
-# PLT-02 and PLT-03 are proven live by Task 1 below. PLT-01 is NOT marked complete --
-# its keyboard-open path (⌘K reaching a window keydown listener inside real macOS
-# WKWebView, RESEARCH Open Question #1) is Task 2, a blocking human checkpoint not
-# yet run. Do not mark PLT-01 complete until Task 2 returns an observed pass.
+requirements-completed: [PLT-01, PLT-02, PLT-03]
 
 coverage:
   - id: D1
@@ -104,29 +103,33 @@ coverage:
         status: pass
     human_judgment: false
   - id: D8
-    description: "⌘K reaches a window keydown listener inside the real macOS WKWebView packaged app (RESEARCH Open Question #1), plus the second-press no-op and rail-filter-focused override behaviors"
+    description: "⌘K reaches a window keydown listener inside the real macOS WKWebView packaged app (RESEARCH Open Question #1) -- POSITIVE result, plus the second-press no-op and rail-filter-focused override behaviors"
     requirement: "PLT-01"
-    verification: []
+    verification:
+      - kind: manual_procedural
+        ref: "Human, native StorCat.app window: ⌘K from tree pane opens palette with caret in input (step 1); second ⌘K while open is a no-op (step 2)"
+        status: pass
+      - kind: automated_ui
+        ref: "dev-browser :34115: rail filter focused with value 'fix', Meta+K -> scrim 0->1, filter value unchanged, focus moves to ws-palette-input; palette value 'query', Meta+K again -> scrim stays 1, value unchanged (step 3 DOM-level re-verification)"
+        status: pass
     human_judgment: true
-    rationale: "Cannot be observed from a Chrome/Playwright session against :34115 -- Chrome is not WKWebView and this is the phase's one load-bearing unknown per 24-RESEARCH.md Open Question #1. This is Task 2, a blocking checkpoint:human-verify not yet run at the time this SUMMARY was written."
+    rationale: "Step 1 (does WKWebView deliver ⌘K at all) can only be observed by a human at the real native window -- this is RESEARCH Open Question #1, the phase's largest risk, and it resolved POSITIVE. Step 3's focused-input override was additionally re-verified at the DOM level since the native-runtime question was already settled by steps 1-2."
 
 # Metrics
-duration: ~20min (Task 1 only; Task 2 not started)
+duration: ~35min (Task 1 ~20min + Task 2 ~15min, excluding checkpoint wait time)
 completed: 2026-08-14
-status: halted
+status: complete
 ---
 
-# Phase 24 Plan 02: Live Multi-Catalog Search Proof (Task 1 of 2) Summary
+# Phase 24 Plan 02: Live Multi-Catalog Search Proof + ⌘K Native-Window Confirmation Summary
 
-**PLT-02/PLT-03 proven live against a real 448-node two-catalog fixture directory at wails dev's :34115 -- the 50-cap, the true total, cross-catalog non-dedup, the 2-char floor, the 200ms debounce, and the stale-response guard are all observed numbers, not inferred from the Go unit tests. Task 2 (⌘K in the real macOS window) has NOT run.**
-
-**PLAN STATUS: HALTED, NOT COMPLETE.** Task 1 (this record) is done. Task 2 -- a blocking `checkpoint:human-verify` that only a human at the real native StorCat.app window can answer -- is pending. Do not treat PLT-01 as proven until Task 2 returns.
+**PLT-01/02/03 all proven live: PLT-02/PLT-03 against a real 448-node two-catalog fixture directory at wails dev's :34115 (50-cap, true total, cross-catalog non-dedup, 2-char floor, 200ms debounce, stale guard -- all observed numbers), and PLT-01's ⌘K keyboard-open path confirmed by a human at the real native macOS StorCat.app window. RESEARCH Open Question #1 is answered POSITIVE: WKWebView does not reserve ⌘K.**
 
 ## Performance
 
-- **Duration:** ~20 min for Task 1 (fixture generation through full-suite verification)
-- **Tasks:** 1 of 2 (Task 2 pending)
-- **Files modified:** 0 (no defect found in the tracer's files; nothing needed repair)
+- **Duration:** ~35 min total (Task 1 ~20 min live search proof; Task 2 ~15 min native-window checkpoint plus its DOM-level re-verification of step 3)
+- **Tasks:** 2 of 2, complete
+- **Files modified:** 0 (no defect found in any of the tracer's files across both tasks; nothing needed repair)
 
 ## Accomplishments (Task 1 only)
 
@@ -141,6 +144,21 @@ All seven of Task 1's numbered checks, run against `wails dev` on `:34115` via t
 7. **Escape closes the palette.** Pressed Escape; observed `.ws-palette-scrim` count = **0** (component unmounted, per its `isOpen ? ... : null` contract). PASS.
 
 Cumulative `SearchIndexed` call count across the whole session: **4** (one each for "FILE", "00", the "FILE_000" burst, and "zzznotfound" -- the "F" 1-char query correctly contributed 0).
+
+## Accomplishments (Task 2)
+
+Task 2's four numbered checks, run against the real native macOS **StorCat.app** window plus a DOM-level re-verification of step 3 at :34115:
+
+1. **PASS (human, native window). RESOLVES RESEARCH Open Question #1 -- POSITIVE.** ⌘K pressed from the tree pane opened the palette with the caret already in its input. **macOS WKWebView does NOT reserve ⌘K before the page sees it.** This is the phase's largest risk, and it retires clean: no `options.App.Menu` accelerator fallback is required, and `24-CONTEXT.md`'s locked architecture (a plain `window` keydown listener) is sound as-is. **Phases 25-27 inherit this answer and do not need to re-litigate it.**
+2. **PASS (human, native window).** A second ⌘K while the palette was already open was a no-op: no close, no reopen, no discarded query-in-progress.
+3. **PASS.** First reported as a possible defect ("palette opened on a rail-filter click, no ⌘K pressed"), investigated rather than accepted:
+   - Source check: `CatalogRail.tsx`'s filter `<input>` has only a plain `onChange`, no click/focus handler, and the component receives no palette-related prop -- there is no code path from that input to opening the palette.
+   - DOM-level check at :34115: clicking `input[aria-label="Filter catalogs"]` leaves `.ws-palette-scrim` count at **0** (palette does not open); clicking `.ws-search` brings scrim count to **1** (correct PLT-01 click path).
+   - The user confirmed they had actually clicked the toolbar search bar, not the rail filter -- the two controls sit close together, and the toolbar one reads "Search every catalog… ⌘K". **No defect; no code change.**
+   - The step's actual assertion (⌘K still opens the palette when a text field is focused, without inserting a literal "k") was then verified at the DOM level: rail filter focused with value `"fix"`, Meta+K pressed → scrim `0`→**1**, filter value **still `"fix"`** (no leaked keystroke), focus moved to `.ws-palette-input`. Typed `"query"` into the palette, pressed Meta+K again → scrim stayed **1**, palette value **still `"query"`** (no-op reconfirmed at the DOM level). This re-verification used Chromium at :34115, which is adequate here because the native-runtime question (does WKWebView deliver the keystroke) was already settled by the human in steps 1-2 -- what step 3 additionally tests (does the app's own listener wrongly exclude focused inputs) is pure app-code behavior needing no webview.
+4. **NOT AVAILABLE.** No Windows or Linux machine was on hand to repeat step 1 with Ctrl+K. Logged as **`.planning/WINDOWS.md` ledger entry #2** (phase 24, `WorkspaceShell.tsx`, kind `deviation`) alongside Phase 23's `explorer /select,` gap (`TREE-08`) and Phase 22's `SHELL-07`. Not re-appended here -- the entry already exists.
+
+**Incidental finding (not a defect, no fix this phase):** the toolbar search *button* and the palette *input* both carry `aria-label="Search every catalog"`. Two distinct controls sharing one accessible name is a minor a11y smell -- it briefly caused a DOM probe during step 3's investigation to misreport which element was focused. Violates no PLT requirement; worth a look during a future `/gsd-ui-review`, not changed now.
 
 **No defect was found in any of the tracer's own files** (`CommandPalette.tsx`, `WorkspaceShell.tsx`, `Toolbar.tsx`, `search_indexed.go`). All seven checks passed against the existing 24-01 implementation with zero edits required.
 
@@ -198,46 +216,53 @@ This directory is outside the repository and outside the scratchpad's guaranteed
 
 ## Task Commits
 
-Task 1 required no code changes (no defect found), so there is no `feat`/`fix` commit for it. This SUMMARY's own commit is the record of Task 1's completion.
+Neither task required code changes (no defect found in either), so there is no `feat`/`fix` commit for either. This SUMMARY's own commits are the record of both tasks' completion:
+
+1. **Task 1: Live end-to-end proof of the capped search path** - `00c67683` (docs)
+2. **Task 2: Confirm ⌘K reaches the frontend inside the real macOS application window** - commit follows this summary update (docs)
 
 ## Files Created/Modified
 
-None -- Task 1 found no defects in `CommandPalette.tsx`, `WorkspaceShell.tsx`, `Toolbar.tsx`, or `search_indexed.go` and made no edits.
+None -- neither task found a defect in `CommandPalette.tsx`, `WorkspaceShell.tsx`, `Toolbar.tsx`, or `search_indexed.go`; no edits were made.
 
 ## Decisions Made
 
-See `key-decisions` in frontmatter: search-term selection rationale (`FILE` / `00`), no-code-change outcome, and the coordinator-approved `wails dev` restart.
+See `key-decisions` in frontmatter: search-term selection rationale (`FILE` / `00`), no-code-change outcome, the coordinator-approved `wails dev` restart, the ⌘K/WKWebView positive resolution, and the rail-filter-click non-defect investigation.
 
 ## Deviations from Plan
 
 ### Auto-fixed Issues
 
-None -- Rules 1-3 were never triggered because every check passed against the existing implementation with no bug, missing functionality, or blocking issue found in the tracer's files.
+None -- Rules 1-3 were never triggered. Every check in both tasks passed against the existing implementation with no bug, missing functionality, or blocking issue found in the tracer's files.
 
-### Process Deviation (not a Rule 1-3/4 code deviation)
+### Process Deviations (not Rule 1-3/4 code deviations)
 
-**Stale `wails dev` binary blocked all live evidence at task start.** See "Environment Incident" section above for full detail. This was an environment/process staleness issue, not a defect in any plan file, and was resolved via a `checkpoint:human-action` (process restart requires permissions this executor's sandbox denies) rather than any of the four deviation rules -- no plan file was edited to work around it.
+**1. Stale `wails dev` binary blocked all live evidence at Task 1's start.** See "Environment Incident" section above. Environment/process staleness, not a defect in any plan file; resolved via a `checkpoint:human-action` (process restart requires permissions this executor's sandbox denies) rather than any of the four code-deviation rules -- no plan file was edited.
+
+**2. Ctrl+K on Windows/Linux not runtime-verified (Task 2 step 4).** No such machine was available. Logged to `.planning/WINDOWS.md` as ledger entry #2 (phase 24, `WorkspaceShell.tsx`) rather than silently assumed passing. Not a defect -- the `metaKey || ctrlKey` code path is identical to the macOS path already confirmed live; only the OS-level key-reservation question remains unverified on those platforms, same category as `SHELL-07`/`TREE-08`.
 
 ---
 
-**Total deviations:** 0 code deviations. 1 environment/process incident (stale dev binary), resolved via coordinator-approved restart, documented above for future-phase reuse.
-**Impact on plan:** None on scope. Task 1's evidence is fully live and fresh (captured against the rebuilt, verified-fresh `wails dev` instance).
+**Total deviations:** 0 code deviations. 2 environment/process items (stale dev binary resolved via restart; Ctrl+K platform gap logged to WINDOWS.md entry #2), documented above for future-phase reuse.
+**Impact on plan:** None on scope. All live evidence in both tasks is fresh and observed, not assumed.
 
 ## Issues Encountered
 
-The stale-binary incident above. No other issues.
+The stale-binary incident (Task 1) and the rail-filter-click investigation (Task 2, resolved as a non-defect -- see Accomplishments above). No other issues.
 
 ## User Setup Required
 
-None for Task 1. Task 2 requires a human physically at the real macOS StorCat.app window (see checkpoint below) -- that is the plan's designed manual step, not an external-service setup.
+None. Task 2's human-at-the-native-window step was the plan's designed manual checkpoint, now complete -- not an external-service setup.
 
 ## Next Phase Readiness
 
-- PLT-02 and PLT-03 are proven live and can be relied on by 24-03/24-04/24-05 without re-verification.
-- PLT-01's click-open, second-press no-op (implied by the always-mounted contract already exercised), Escape-close, debounce, and stale-guard behaviors are proven. **Only the ⌘K keyboard-open path inside a real WKWebView remains unverified** -- Task 2, next.
+- PLT-01, PLT-02, and PLT-03 are all proven live and can be relied on by 24-03/24-04/24-05 without re-verification.
+- **RESEARCH Open Question #1 is retired POSITIVE**: WKWebView delivers ⌘K to a plain `window` keydown listener. No architecture change is needed; `24-CONTEXT.md`'s locked design stands for Phases 25-27.
 - The `localStorage` directory-pointing technique and the `curl`-is-not-freshness lesson are recorded above for Phases 25-28's own dev-browser verification work.
-- **This plan is not complete.** Do not advance `.planning/STATE.md`'s plan counter or mark `requirements-completed` for PLT-01 until Task 2 returns an observed result.
+- Ctrl+K on Windows/Linux remains unverified (WINDOWS.md entry #2) -- sweep before v3.0.0 ships, alongside SHELL-07/TREE-08.
+- A minor a11y smell (duplicate `aria-label="Search every catalog"` on both `.ws-search` and `.ws-palette-input`) is flagged for a future `/gsd-ui-review` pass, not fixed this phase.
+- **This plan is complete.** Both tasks done, all seven PLT-02/PLT-03 checks plus all four PLT-01 checks recorded with observed results.
 
 ---
 *Phase: 24-cmd-k-command-palette*
-*Completed: 2026-08-14 (Task 1 only; plan halted pending Task 2)*
+*Completed: 2026-08-14*

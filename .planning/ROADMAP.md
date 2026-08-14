@@ -151,7 +151,7 @@ Plans:
   3. User can navigate results by keyboard, click a hit to switch to its catalog, expand every ancestor, select it, scroll it into view, and close the palette, and can dismiss the palette with Escape (PLT-04, PLT-05)
   4. Focus is trapped inside the palette while it's open and page scroll is locked behind it, via a shared modal-behavior hook (focus trap, Escape, scroll lock) that Phases 25-27's overlays reuse rather than reimplement (PLT-07)
 
-**Plans**: 1/5 plans executed (5 waves)
+**Plans**: 2/5 plans executed (5 waves)
 
 Plans:
 **Wave 1**
@@ -160,7 +160,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 24-02-PLAN.md — Tracer verification gate: ⌘K delivery inside the real WKWebView window, plus live proof of the cap and the stale guard at :34115 (wave 2)
+- [x] 24-02-PLAN.md — Tracer verification gate: ⌘K delivery inside the real WKWebView window, plus live proof of the cap and the stale guard at :34115 (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -266,7 +266,7 @@ Plans:
 | 21. Auto version and auto distribution | v2.3.0 | 1/1 | Complete | 2026-03-28 |
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
-| 24. Cmd-K Command Palette | v3.0.0 | 1/5 | In Progress|  |
+| 24. Cmd-K Command Palette | v3.0.0 | 2/5 | In Progress|  |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 0/TBD | Not started | - |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |
