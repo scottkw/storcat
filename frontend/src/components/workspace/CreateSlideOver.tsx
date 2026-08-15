@@ -2,17 +2,17 @@ import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
-import { formatBytes } from '../../lib/format';
 import { slugifyRoot } from '../../lib/scanFormat';
 import { safeGetItem } from '../../themeTokens';
 import { EventsOn } from '../../../wailsjs/runtime/runtime';
-import type { CloseReason, ScanProgress, ScanSource } from '../../types/scan';
+import type { CloseReason, ScanProgress, ScanResultFile, ScanSource } from '../../types/scan';
 import { classifyScanFailure, sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
 import VolumePicker from './create/VolumePicker';
 import CreateForm from './create/CreateForm';
 import OptionsToggles, { SECONDARY_DIR_STORAGE_KEY, type OptionsToggleValues } from './create/OptionsToggles';
 import ScanningBody from './create/ScanningBody';
 import ErrorBody from './create/ErrorBody';
+import DoneBody from './create/DoneBody';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -20,6 +20,39 @@ export interface CreateSlideOverProps {
 }
 
 const EXIT_DURATION_MS = 260;
+
+// Shared by the form step's initial useState and "Catalog another volume"'s
+// reset (DoneBody, plan 25-07) -- one literal, not two, so the two can never
+// drift apart.
+const DEFAULT_OPTIONS: OptionsToggleValues = {
+  writeHTML: true,
+  copyToSecondary: false,
+  includeHidden: false,
+};
+
+// Shared by handleCreate's success branch and handleWritePartial: one row
+// per file CreateCatalogResult actually reports as written, gated on each
+// path field's own presence rather than the toggle values -- htmlPath is
+// always a field (possibly ""), copyJsonPath/copyHtmlPath are omitempty, so
+// checking the string itself is the same "was this actually written" test
+// either way. Structurally typed (not a named import) so both StartScan's
+// and WritePartialCatalog's identically-shaped results satisfy it.
+function filesFromResult(result: {
+  jsonPath: string;
+  jsonSize: number;
+  htmlPath: string;
+  htmlSize?: number;
+  copyJsonPath?: string;
+  copyJsonSize?: number;
+  copyHtmlPath?: string;
+  copyHtmlSize?: number;
+}): ScanResultFile[] {
+  const files: ScanResultFile[] = [{ path: result.jsonPath, size: result.jsonSize }];
+  if (result.htmlPath) files.push({ path: result.htmlPath, size: result.htmlSize });
+  if (result.copyJsonPath) files.push({ path: result.copyJsonPath, size: result.copyJsonSize });
+  if (result.copyHtmlPath) files.push({ path: result.copyHtmlPath, size: result.copyHtmlSize });
+  return files;
+}
 
 // Always mounted by WorkspaceShell (same pattern as CommandPalette) and must
 // not be conditionally mounted -- the shared useModalBehavior hook below
@@ -69,11 +102,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   const [selectedSource, setSelectedSource] = useState<ScanSource | null>(null);
   const [title, setTitle] = useState('');
   const [root, setRoot] = useState('');
-  const [options, setOptions] = useState<OptionsToggleValues>({
-    writeHTML: true,
-    copyToSecondary: false,
-    includeHidden: false,
-  });
+  const [options, setOptions] = useState<OptionsToggleValues>(DEFAULT_OPTIONS);
   // Read once at mount, same persisted key OptionsToggles writes to -- both
   // start from the same value, and OptionsToggles reports every change back
   // through onSecondaryDirChange so this copy never drifts from its own.
@@ -151,6 +180,12 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     // Zero means "no known total" -- resolveScanTotal then runs a count-only
     // pre-pass instead (CRT-07). A plain folder has no volume-level probe.
     const totalBytesHint = selectedSource.kind === 'volume' ? selectedSource.volume.totalBytes : 0;
+    // Captured locally rather than re-read from state.scan.startedAt after
+    // the fact -- state updates are async, and by the time this function's
+    // await resolves, scan.startedAt could belong to a different render's
+    // closure (or, after a retry, a stale one). This local value is what
+    // the completed scan's real duration is measured against.
+    const startedAt = Date.now();
 
     dispatch({ type: 'SCAN_STARTED', payload: { title: resolvedTitle } });
 
@@ -184,15 +219,10 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
       payload: {
         title: resolvedTitle,
         jsonPath: result.jsonPath,
-        // Go's CreateCatalogResult reports the catalog's total scanned
-        // content size, not each output file's own on-disk byte count --
-        // no `size` field is set here rather than fabricating one.
-        files: result.htmlPath
-          ? [{ path: result.jsonPath }, { path: result.htmlPath }]
-          : [{ path: result.jsonPath }],
+        files: filesFromResult(result),
         fileCount: result.fileCount,
         totalSize: result.totalSize,
-        durationMs: 0,
+        durationMs: Date.now() - startedAt,
         partial: false,
       },
     });
@@ -232,12 +262,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
       payload: {
         title: failedScan.title,
         jsonPath: result.jsonPath,
-        files: result.htmlPath
-          ? [
-              { path: result.jsonPath, size: result.jsonSize },
-              { path: result.htmlPath, size: result.htmlSize },
-            ]
-          : [{ path: result.jsonPath, size: result.jsonSize }],
+        files: filesFromResult(result),
         fileCount: result.fileCount,
         totalSize: result.totalSize,
         // A partial write's duration is meaningless (the walk that
@@ -261,6 +286,20 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     }
     dispatch({ type: 'SCAN_RESET' });
     onClose();
+  }
+
+  // The done state's secondary action -- does NOT close the panel (unlike
+  // every CRT-01 close path): resets the form fields to their defaults and
+  // returns to the form step in the same still-open panel. No re-entry
+  // animation is needed since the panel itself never left; VolumePicker's
+  // own on-mount effect re-enumerates volumes fresh the instant it remounts
+  // (SCAN_RESET flips scan.status to 'idle', so isForm renders it again).
+  function handleCatalogAnother() {
+    setSelectedSource(null);
+    setTitle('');
+    setRoot('');
+    setOptions(DEFAULT_OPTIONS);
+    dispatch({ type: 'SCAN_RESET' });
   }
 
   // Wires ⌘↵ to the same handler the Create button uses (CRT-06) --
@@ -383,22 +422,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
         )}
 
         {isDone && scan.status === 'done' && (
-          <div className="ws-create-body">
-            <div className="ws-create-done-body">
-              <div className="ws-create-done-title">{scan.title} catalogued</div>
-              <div className="ws-create-done-line mono">
-                {scan.fileCount} files · {formatBytes(scan.totalSize)}
-              </div>
-              <div className="ws-create-file-list">
-                {scan.files.map((file) => (
-                  <div className="ws-create-file-row" key={file.path}>
-                    <span className="ws-create-file-shape" aria-hidden="true" />
-                    <span className="ws-create-file-path mono">{file.path}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <DoneBody scan={scan} onOpenInWorkspace={handleOpenInWorkspace} onCatalogAnother={handleCatalogAnother} />
         )}
 
         {isForm && (
@@ -423,13 +447,6 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
           </div>
         )}
 
-        {isDone && (
-          <div className="ws-create-footer">
-            <button type="button" className="ws-create-btn ws-create-btn-primary" onClick={handleOpenInWorkspace}>
-              Open in workspace
-            </button>
-          </div>
-        )}
       </div>
     </div>
   );
