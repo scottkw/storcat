@@ -14,6 +14,14 @@ export function CreateCatalog(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateCatalog'](arg1, arg2, arg3, arg4);
 }
 
+export function DeleteCatalog(arg1, arg2, arg3) {
+  return window['go']['main']['App']['DeleteCatalog'](arg1, arg2, arg3);
+}
+
+export function DuplicateCatalog(arg1, arg2) {
+  return window['go']['main']['App']['DuplicateCatalog'](arg1, arg2);
+}
+
 export function GetCatalogHtmlPath(arg1, arg2) {
   return window['go']['main']['App']['GetCatalogHtmlPath'](arg1, arg2);
 }

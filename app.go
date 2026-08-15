@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 
@@ -822,6 +823,101 @@ func (a *App) RenameCatalog(jsonPath string, catalogDir string, newTitle string)
 
 	if err := catalog.RenameCatalog(resolved, newTitle); err != nil {
 		return fmt.Errorf("rename %s: %w", jsonPath, err)
+	}
+	return nil
+}
+
+// DuplicateCatalog copies jsonPath (and its .html companion, if present) to
+// the next free "-copy"/"-copy-N" filename root, returning the new .json
+// path so the frontend can select the new catalog if it chooses to.
+// catalogDir is the frontend's currently configured catalog directory;
+// jsonPath is resolved (filepath.Abs then filepath.EvalSymlinks) and
+// checked against catalogDir via osutil.ContainsPath before anything is
+// read or written -- the same containment treatment RenameCatalog carries.
+// Discharges T-27-02 for this binding.
+func (a *App) DuplicateCatalog(jsonPath string, catalogDir string) (string, error) {
+	if catalogDir == "" {
+		return "", fmt.Errorf("duplicate %s: no catalog directory configured", jsonPath)
+	}
+
+	abs, err := filepath.Abs(jsonPath)
+	if err != nil {
+		return "", fmt.Errorf("duplicate %s: %w", jsonPath, err)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", fmt.Errorf("duplicate %s: %w", jsonPath, err)
+	}
+	ok, err := osutil.ContainsPath(catalogDir, resolved)
+	if err != nil {
+		return "", fmt.Errorf("duplicate %s: resolve catalog directory: %w", jsonPath, err)
+	}
+	if !ok {
+		return "", fmt.Errorf("duplicate %s: outside configured catalog directory", jsonPath)
+	}
+	if filepath.Ext(resolved) != ".json" {
+		return "", fmt.Errorf("duplicate %s: not a catalog JSON file", jsonPath)
+	}
+
+	newPath, err := catalog.DuplicateCatalog(resolved)
+	if err != nil {
+		return newPath, fmt.Errorf("duplicate %s: %w", jsonPath, err)
+	}
+	return newPath, nil
+}
+
+// DeleteCatalog moves jsonPath -- and, when deleteHtml is true, its derived
+// .html companion -- to the OS Trash. catalogDir is the frontend's
+// currently configured catalog directory; jsonPath is resolved and
+// containment-checked exactly like RenameCatalog and DuplicateCatalog
+// before anything is derived or trashed. The .html companion is always
+// derived here with the repo's one .json/.html convention
+// (strings.TrimSuffix(resolved, ".json") + ".html", matching
+// internal/search/service.go) -- it is never accepted from the renderer, so
+// the frontend cannot name an arbitrary second file for deletion.
+//
+// osutil.TrashPaths re-runs its own containment gate on every path handed
+// to it, including the derived .html -- deliberate belt-and-braces: this
+// binding's gate covers the caller-supplied path, TrashPaths's own gate
+// covers whatever was derived, and neither depends on the other having run.
+// The HTML companion is not stat'd here before being passed along;
+// TrashPaths already skips a path that does not exist, so a second check
+// here would just be a second place for the two to disagree.
+//
+// There is no permanent-deletion branch, no "force" parameter, and no
+// fallback of any kind in this method -- ACT-05 is not a default that may
+// be softened.
+func (a *App) DeleteCatalog(jsonPath string, catalogDir string, deleteHtml bool) error {
+	if catalogDir == "" {
+		return fmt.Errorf("delete %s: no catalog directory configured", jsonPath)
+	}
+
+	abs, err := filepath.Abs(jsonPath)
+	if err != nil {
+		return fmt.Errorf("delete %s: %w", jsonPath, err)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return fmt.Errorf("delete %s: %w", jsonPath, err)
+	}
+	ok, err := osutil.ContainsPath(catalogDir, resolved)
+	if err != nil {
+		return fmt.Errorf("delete %s: resolve catalog directory: %w", jsonPath, err)
+	}
+	if !ok {
+		return fmt.Errorf("delete %s: outside configured catalog directory", jsonPath)
+	}
+	if filepath.Ext(resolved) != ".json" {
+		return fmt.Errorf("delete %s: not a catalog JSON file", jsonPath)
+	}
+
+	paths := []string{resolved}
+	if deleteHtml {
+		paths = append(paths, strings.TrimSuffix(resolved, ".json")+".html")
+	}
+
+	if err := osutil.TrashPaths(catalogDir, paths...); err != nil {
+		return fmt.Errorf("delete %s: %w", jsonPath, err)
 	}
 	return nil
 }

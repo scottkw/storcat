@@ -11,6 +11,10 @@ export function CancelScan():Promise<void>;
 
 export function CreateCatalog(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.CreateCatalogResult>;
 
+export function DeleteCatalog(arg1:string,arg2:string,arg3:boolean):Promise<void>;
+
+export function DuplicateCatalog(arg1:string,arg2:string):Promise<string>;
+
 export function GetCatalogHtmlPath(arg1:string,arg2:string):Promise<string>;
 
 export function GetConfig():Promise<config.Config>;

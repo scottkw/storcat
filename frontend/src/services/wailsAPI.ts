@@ -23,6 +23,8 @@ import {
   ReadHtmlFile,
   GetCatalogHtmlPath,
   RenameCatalog,
+  DuplicateCatalog,
+  DeleteCatalog,
   OpenExternal,
   GetWindowPersistence,
   SetWindowPersistence,
@@ -345,6 +347,32 @@ export const wailsAPI = {
   renameCatalog: async (jsonPath: string, catalogDir: string, newTitle: string) => {
     try {
       await RenameCatalog(jsonPath, catalogDir, newTitle);
+      return { success: true as const };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // catalogDir is the frontend's currently configured catalog directory --
+  // threaded through so the Go side can reject any path that does not
+  // resolve inside it (T-27-02), exactly as renameCatalog already does
+  // above. jsonPath is the resulting new catalog's .json path.
+  duplicateCatalog: async (jsonPath: string, catalogDir: string) => {
+    try {
+      const newPath = await DuplicateCatalog(jsonPath, catalogDir);
+      return { success: true as const, jsonPath: newPath };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Moves jsonPath -- and, when deleteHtml is true, its .html companion --
+  // to the OS Trash. The .html path is always derived on the Go side, never
+  // accepted here, so this call can never name an arbitrary second file for
+  // deletion.
+  deleteCatalog: async (jsonPath: string, catalogDir: string, deleteHtml: boolean) => {
+    try {
+      await DeleteCatalog(jsonPath, catalogDir, deleteHtml);
       return { success: true as const };
     } catch (error: any) {
       return wailsError(error);
