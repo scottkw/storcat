@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 27
 current_phase_name: Catalog Actions + Watch
 status: executing
-stopped_at: Completed 27-04-PLAN.md
-last_updated: "2026-08-15T18:11:45.845Z"
+stopped_at: Completed 27-05-PLAN.md
+last_updated: "2026-08-15T23:13:00.558Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 34
+  completed_plans: 35
   percent: 71
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 27 (Catalog Actions + Watch) — EXECUTING
-Plan: 5 of 7
+Plan: 6 of 7
 Status: Ready to execute
 Last activity: 2026-08-15 — Phase 27 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [█████████░] 92%
+Progress: [██████████] 95%
 
 ## Performance Metrics
 
@@ -97,6 +97,7 @@ Progress: [█████████░] 92%
 | Phase 27 P02 | 5min | 2 tasks | 4 files |
 | Phase 27 P03 | 6min | 3 tasks | 10 files |
 | Phase 27 P04 | ~20min | 3 tasks | 5 files |
+| Phase 27 P05 | 35min | 2 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -185,6 +186,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 27-04: Menu.tsx's arrow-key/Enter/Space handling lives in a React onKeyDown prop on the menu container, not a document-level listener, so it never collides with useModalBehavior's own window keydown listener that owns Escape
 - [Phase ?]: 27-04: Fixed a real bug -- RenameDialog's pre-fill selection collapsed to a trailing caret because .select() ran against the input's stale pre-render DOM value; fixed by syncing input.value imperatively before .focus()/.select() so React's reconciliation doesn't clobber the selection
 - [Phase ?]: 27-04: Duplicate and Delete menu items report an explicit 'not yet connected' message via onError rather than being disabled or silently no-oping -- 27-05 replaces both handlers in the same DetailsPanel.tsx file
+- [Phase ?]: 27-05: Added CLEAR_CURRENT_CATALOG reducer action (clears currentCatalogId/selected only) since no existing AppContext action cleared it without also selecting/loading something
+- [Phase ?]: 27-05: chmod-based directory-permission test did not reproduce a real Trash failure on macOS (wastebasket routes through Finder/osascript); chflags uchg on the target file reliably did
 
 ### Key Research Findings
 
@@ -230,8 +233,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T18:11:45.826Z
-Stopped at: Completed 27-04-PLAN.md
+Last session: 2026-08-15T23:13:00.532Z
+Stopped at: Completed 27-05-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
