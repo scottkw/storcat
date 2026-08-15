@@ -560,12 +560,48 @@
   flex: none;
   display: flex;
   align-items: center;
-  gap: 16px;
+  justify-content: space-between;
   padding: 0 14px;
   background: var(--p2);
   border-top: 1px solid var(--l);
   font-size: 11px;
   color: var(--fn);
+}
+
+.ws-status-left {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* 25-UI-SPEC: the status bar's first-ever right-aligned segment. The dot
+ * and text are a static accent color, never animated -- the in-panel
+ * WALKING text is this app's one permitted looping animation, and
+ * repeating that motion here would be a second, more distracting instance
+ * of it. The segment itself never shrinks; only the name inside it
+ * ellipsizes, so the percentage -- the actionable part -- stays fully
+ * visible. */
+.ws-status-scan {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font: inherit;
+  font-size: 11px;
+  color: var(--ac);
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ws-status-scan-name {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* 25-UI-SPEC: Create slide-over shell. Distinct timings and keyframes from
@@ -628,7 +664,8 @@
   .ws-create-scrim,
   .ws-create-scrim-exit,
   .ws-create-panel,
-  .ws-create-panel-exit {
+  .ws-create-panel-exit,
+  .ws-create-walking-path {
     animation: none;
   }
 }
@@ -803,9 +840,12 @@
 }
 
 .ws-create-scan-body {
+  flex: 1;
+  padding: 22px 18px;
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 22px;
+  overflow: hidden;
 }
 
 .ws-create-scan-title-row {
@@ -825,6 +865,11 @@
   color: var(--ac);
 }
 
+/* Counting sub-state: muted, not accent -- this is not yet progress. */
+.ws-create-scan-pct-counting {
+  color: var(--dm);
+}
+
 .ws-create-progress {
   height: 6px;
   border-radius: 3px;
@@ -840,6 +885,80 @@
 .ws-create-scan-counters {
   font-size: 11.5px;
   color: var(--dm);
+}
+
+.ws-create-walking {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ws-create-walking-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--dm);
+}
+
+/* The one permitted looping animation in this app (25-UI-SPEC.md) -- do
+ * not add a second pulsing/animated element anywhere else, including the
+ * status-bar segment (T-25-UI-SPEC Background Handoff Contract: its dot is
+ * a static glyph specifically to avoid a second instance of this motion). */
+.ws-create-walking-path {
+  font-size: 11.5px;
+  color: var(--ac);
+  word-break: break-all;
+  animation: ws-create-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes ws-create-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .35; }
+}
+
+.ws-create-log {
+  background: var(--ch);
+  border-radius: 9px;
+  padding: 12px;
+  max-height: 300px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ws-create-log-line {
+  font-size: 11px;
+  color: var(--dm);
+  word-break: break-all;
+}
+
+.ws-create-scan-footer {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-create-btn-outline {
+  height: 32px;
+  flex: none;
+  border-radius: 8px;
+  border: 1px solid var(--l);
+  background: transparent;
+  color: var(--dm);
+  font-size: 12.5px;
+  padding: 0 14px;
+  cursor: pointer;
+}
+
+.ws-create-btn-outline:hover {
+  border-color: var(--ac);
+}
+
+.ws-create-scan-footer-note {
+  font-size: 12px;
+  color: var(--fn);
 }
 
 .ws-create-done-title {

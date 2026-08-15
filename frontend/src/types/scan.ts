@@ -76,6 +76,11 @@ export type ScanState =
       title: string;
       filesSeen: number;
       startedAt: number;
+      // currentPath/log are the scanning body's WALKING line and its
+      // capped newest-first log (25-UI-SPEC E5) -- both real, live values
+      // from the running walk, present in both sub-states.
+      currentPath: string;
+      log: string[];
     }
   | {
       status: 'scanning';
@@ -85,6 +90,8 @@ export type ScanState =
       totalBytes: number;
       readErrors: number;
       startedAt: number;
+      currentPath: string;
+      log: string[];
     }
   | { status: 'error'; title: string; message: string }
   | {
@@ -118,6 +125,16 @@ const SOURCE_LOSS_MARKER = 'source unavailable';
 export type ScanFailure =
   | { kind: 'cancelled'; message: string }
   | { kind: 'sourceLoss'; message: string };
+
+/**
+ * The two intents a close gesture can carry during the scanning state
+ * (25-UI-SPEC.md's Cancellation Contract, CRT-09): Escape / the header ×
+ * / a scrim click mean "stop the walk," while "Run in background" means
+ * "leave it running." Modeled as an explicit argument on the panel's one
+ * close handler rather than inferred from which element was clicked, so a
+ * future close trigger can't silently default to the wrong intent.
+ */
+export type CloseReason = 'cancel-the-scan' | 'leave-it-running';
 
 /**
  * classifyScanFailure inspects a StartScan rejection's message (already

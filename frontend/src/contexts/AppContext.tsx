@@ -101,6 +101,12 @@ function scanTitleOf(scan: ScanState): string {
   return 'title' in scan ? scan.title : '';
 }
 
+// The scanning body's log box retains at most this many newest-first lines
+// (25-UI-SPEC E5 overflow) -- enforced here, at the point a line is
+// appended to retained state, rather than only at render, so the state
+// itself never grows unbounded over a long-running scan (T-25-23).
+const SCAN_LOG_CAP = 9;
+
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
     case 'SET_DENSITY':
@@ -230,7 +236,14 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SCAN_STARTED':
       return {
         ...state,
-        scan: { status: 'counting', title: action.payload.title, filesSeen: 0, startedAt: Date.now() },
+        scan: {
+          status: 'counting',
+          title: action.payload.title,
+          filesSeen: 0,
+          startedAt: Date.now(),
+          currentPath: '',
+          log: [],
+        },
       };
     case 'SCAN_PROGRESS': {
       // A late event after the scan has already reached a terminal state
@@ -248,6 +261,16 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const bytesSeen = Math.max(prevBytesSeen, incoming.bytesSeen);
       const prevReadErrors = prev.status === 'scanning' ? prev.readErrors : 0;
       const readErrors = Math.max(prevReadErrors, incoming.readErrors);
+      // The WALKING line always shows the newest known path; an event
+      // carrying no path (never expected, but harmless if it happened)
+      // leaves it unchanged rather than blanking it. A new path is pushed
+      // onto the log only when it actually differs from the current top
+      // line, so a repeated event can't duplicate the same entry.
+      const currentPath = incoming.path || prev.currentPath;
+      const log =
+        incoming.path && incoming.path !== prev.log[0]
+          ? [incoming.path, ...prev.log].slice(0, SCAN_LOG_CAP)
+          : prev.log;
 
       if (incoming.totalBytes > 0) {
         return {
@@ -260,13 +283,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
             totalBytes: incoming.totalBytes,
             readErrors,
             startedAt: prev.startedAt,
+            currentPath,
+            log,
           },
         };
       }
 
       return {
         ...state,
-        scan: { status: 'counting', title: prev.title, filesSeen, startedAt: prev.startedAt },
+        scan: { status: 'counting', title: prev.title, filesSeen, startedAt: prev.startedAt, currentPath, log },
       };
     }
     case 'SCAN_FAILED':

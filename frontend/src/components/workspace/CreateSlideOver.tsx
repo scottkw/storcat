@@ -3,14 +3,15 @@ import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
 import { formatBytes } from '../../lib/format';
-import { scanPercent, slugifyRoot } from '../../lib/scanFormat';
+import { slugifyRoot } from '../../lib/scanFormat';
 import { safeGetItem } from '../../themeTokens';
 import { EventsOn } from '../../../wailsjs/runtime/runtime';
-import type { ScanProgress, ScanSource } from '../../types/scan';
-import { sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
+import type { CloseReason, ScanProgress, ScanSource } from '../../types/scan';
+import { classifyScanFailure, sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
 import VolumePicker from './create/VolumePicker';
 import CreateForm from './create/CreateForm';
 import OptionsToggles, { SECONDARY_DIR_STORAGE_KEY, type OptionsToggleValues } from './create/OptionsToggles';
+import ScanningBody from './create/ScanningBody';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -83,22 +84,45 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   // render condition below -- its scroll-unlock and focus-restore must fire
   // the instant a close is requested, not 260ms later when the exit
   // animation finishes (same contract CommandPalette documents).
-  const { containerRef } = useModalBehavior({ isOpen, onClose });
+  // handleCloseRequest is a hoisted function declaration (defined further
+  // down in this component), so referencing it here is safe -- by the time
+  // Escape can actually fire, the component has already finished at least
+  // one full render.
+  const { containerRef } = useModalBehavior({
+    isOpen,
+    onClose: () => {
+      handleCloseRequest('cancel-the-scan');
+    },
+  });
 
   const scan = state.scan;
 
-  // Progress subscription is keyed on the open state, not on scan status --
-  // it tears down when the panel closes (no "run in background" live
-  // updates this plan; that is CRT-08, out of scope here) and is
-  // re-established on reopen. Returning EventsOn's own unsubscribe function
-  // is what keeps a StrictMode double-invoke from leaking a second listener.
+  // Always subscribed, never gated on isOpen -- CreateSlideOver is always
+  // mounted by WorkspaceShell (see this component's own top comment), so a
+  // scan sent to the background via "Run in background" (CRT-08) keeps
+  // updating AppContext's lifted scan state -- and therefore the status
+  // bar's segment -- while the panel itself is closed. Returning EventsOn's
+  // own unsubscribe function is what keeps a StrictMode double-invoke from
+  // leaking a second listener.
   useEffect(() => {
-    if (!isOpen) return;
     const unsubscribe = EventsOn('scan:progress', (payload: ScanProgress) => {
       dispatch({ type: 'SCAN_PROGRESS', payload });
     });
     return unsubscribe;
-  }, [isOpen, dispatch]);
+  }, [dispatch]);
+
+  // The single close handler every close trigger routes through (CRT-01,
+  // CRT-09). During the scanning state a "cancel-the-scan" request cancels
+  // the underlying context before the exit runs; "leave-it-running" (Run in
+  // background) and every non-scanning-state request close with no
+  // cancellation. Never a bespoke handler per trigger.
+  async function handleCloseRequest(reason: CloseReason) {
+    const currentlyScanning = scan.status === 'counting' || scan.status === 'scanning';
+    if (currentlyScanning && reason === 'cancel-the-scan') {
+      await wailsAPI.cancelScan();
+    }
+    onClose();
+  }
 
   async function handleCreate() {
     // The ref guard (not the `submitting` state) is what actually makes a
@@ -133,7 +157,16 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     setSubmitting(false);
 
     if (!outcome.success) {
-      dispatch({ type: 'SCAN_FAILED', payload: { message: outcome.error } });
+      // A cancellation (Escape / close / scrim / window close mid-scan)
+      // produces no error UI at all -- the panel is already closing, so the
+      // scan simply resets to idle. Only a source loss (the volume vanished
+      // mid-walk) transitions to the error member, which plan 25-07 renders.
+      const failure = classifyScanFailure(outcome.error);
+      if (failure.kind === 'sourceLoss') {
+        dispatch({ type: 'SCAN_FAILED', payload: { message: failure.message } });
+      } else {
+        dispatch({ type: 'SCAN_RESET' });
+      }
       return;
     }
 
@@ -215,12 +248,10 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   const effectiveRoot = root.trim() || (sourceDisplayName && slugifyRoot(sourceDisplayName)) || 'catalog';
   const activeSecondaryDir = options.copyToSecondary ? secondaryDir : '';
 
-  const pct = scan.status === 'scanning' ? scanPercent(scan.bytesSeen, scan.totalBytes) : null;
-
   return (
     <div
       className={`ws-create-scrim${isOpen ? '' : ' ws-create-scrim-exit'}`}
-      onClick={onClose}
+      onClick={() => handleCloseRequest('cancel-the-scan')}
     >
       <div
         className={`ws-create-panel${isOpen ? '' : ' ws-create-panel-exit'}`}
@@ -233,63 +264,53 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
         <div className="ws-create-header">
           <span className="ws-create-header-title">{headerTitle}</span>
           <span className="ws-create-header-step mono">{headerStep}</span>
-          <button type="button" className="ws-create-close" onClick={onClose} aria-label="Close">
+          <button
+            type="button"
+            className="ws-create-close"
+            onClick={() => handleCloseRequest('cancel-the-scan')}
+            aria-label="Close"
+          >
             ×
           </button>
         </div>
 
-        <div className="ws-create-body">
-          {isForm && (
-            <>
-              {scan.status === 'error' && <div className="ws-create-error-banner">{scan.message}</div>}
-              <VolumePicker selected={selectedSource} onSelect={setSelectedSource} />
-              <CreateForm
-                source={selectedSource}
-                title={title}
-                onTitleChange={setTitle}
-                root={root}
-                onRootChange={setRoot}
-                catalogDir={state.catalogDir ?? ''}
-                writeHTML={options.writeHTML}
-                secondaryDir={activeSecondaryDir}
-                existingCatalogFilenames={existingCatalogFilenames}
-              />
-              <OptionsToggles
-                values={options}
-                onValuesChange={setOptions}
-                secondaryDir={secondaryDir}
-                onSecondaryDirChange={setSecondaryDir}
-                disabled={isScanning}
-                effectiveRoot={effectiveRoot}
-              />
-              {!state.catalogDir && (
-                <div className="ws-create-error-banner">
-                  Choose a catalog directory from the rail before creating a catalog.
-                </div>
-              )}
-            </>
-          )}
-
-          {isScanning && (
-            <div className="ws-create-scan-body">
-              <div className="ws-create-scan-title-row">
-                <span className="ws-create-scan-title">{scan.title}</span>
-                <span className="ws-create-scan-pct mono">{pct !== null ? `${pct}%` : 'Counting…'}</span>
+        {isForm && (
+          <div className="ws-create-body">
+            {scan.status === 'error' && <div className="ws-create-error-banner">{scan.message}</div>}
+            <VolumePicker selected={selectedSource} onSelect={setSelectedSource} />
+            <CreateForm
+              source={selectedSource}
+              title={title}
+              onTitleChange={setTitle}
+              root={root}
+              onRootChange={setRoot}
+              catalogDir={state.catalogDir ?? ''}
+              writeHTML={options.writeHTML}
+              secondaryDir={activeSecondaryDir}
+              existingCatalogFilenames={existingCatalogFilenames}
+            />
+            <OptionsToggles
+              values={options}
+              onValuesChange={setOptions}
+              secondaryDir={secondaryDir}
+              onSecondaryDirChange={setSecondaryDir}
+              disabled={isScanning}
+              effectiveRoot={effectiveRoot}
+            />
+            {!state.catalogDir && (
+              <div className="ws-create-error-banner">
+                Choose a catalog directory from the rail before creating a catalog.
               </div>
-              {pct !== null && (
-                <div className="ws-create-progress">
-                  <div className="ws-create-progress-fill" style={{ width: `${pct}%` }} />
-                </div>
-              )}
-              <div className="ws-create-scan-counters mono">
-                {scan.status === 'scanning'
-                  ? `${scan.filesSeen} files · ${formatBytes(scan.bytesSeen)}`
-                  : `${scan.filesSeen} files found so far`}
-              </div>
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {isDone && scan.status === 'done' && (
+        {(scan.status === 'counting' || scan.status === 'scanning') && (
+          <ScanningBody scan={scan} onRunInBackground={() => handleCloseRequest('leave-it-running')} />
+        )}
+
+        {isDone && scan.status === 'done' && (
+          <div className="ws-create-body">
             <div className="ws-create-done-body">
               <div className="ws-create-done-title">{scan.title} catalogued</div>
               <div className="ws-create-done-line mono">
@@ -304,8 +325,8 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
                 ))}
               </div>
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {isForm && (
           <div className="ws-create-footer">
@@ -322,7 +343,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
               type="button"
               className="ws-create-btn ws-create-btn-text"
               style={{ marginLeft: 'auto' }}
-              onClick={onClose}
+              onClick={() => handleCloseRequest('cancel-the-scan')}
             >
               Discard and close
             </button>
