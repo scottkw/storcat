@@ -97,15 +97,25 @@ function ErrorBody({ scan, writingPartial, onWritePartial, onRetry, onCloseWitho
             this button is clickable the prior context has already released
             -- no separate wait is needed beyond the submitting-ref guard
             CreateSlideOver's handleCreate already applies to every start
-            (T-25-24). */}
-        <button type="button" className="ws-create-btn-outline" onClick={onRetry}>
+            (T-25-24). Disabled while writingPartial is true (CR-02/WR-02):
+            retrying while a partial write is still in flight would clear
+            the retained tree that write is reading from, racing the write
+            for the state it records on completion. */}
+        <button type="button" className="ws-create-btn-outline" disabled={writingPartial} onClick={onRetry}>
           Retry scan
         </button>
         {/* Text tertiary: names the consequence, not the gesture -- a user
             here is never left guessing whether closing quietly kept a
             partial result. Runs the same close handler every other close
-            path uses; writes nothing on its own. */}
-        <button type="button" className="ws-create-btn ws-create-btn-text" onClick={onCloseWithoutWriting}>
+            path uses; writes nothing on its own. Disabled while
+            writingPartial is true (CR-02/WR-02) so an in-flight write always
+            finishes and updates state before the user can navigate away. */}
+        <button
+          type="button"
+          className="ws-create-btn ws-create-btn-text"
+          disabled={writingPartial}
+          onClick={onCloseWithoutWriting}
+        >
           Close without writing
         </button>
       </div>
