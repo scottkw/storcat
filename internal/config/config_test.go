@@ -392,6 +392,40 @@ func TestSetDefaultFilenameRoot_EmptyIsValid(t *testing.T) {
 	}
 }
 
+// TestSetSecondaryDirectory verifies SetSecondaryDirectory updates the
+// in-memory config.
+func TestSetSecondaryDirectory(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetSecondaryDirectory("/Volumes/Backup"); err != nil {
+		t.Fatalf("SetSecondaryDirectory(\"/Volumes/Backup\") error: %v", err)
+	}
+
+	if got := m.Get().SecondaryDirectory; got != "/Volumes/Backup" {
+		t.Errorf("Get().SecondaryDirectory = %q, want %q", got, "/Volumes/Backup")
+	}
+}
+
+// TestSetSecondaryDirectory_Persists verifies SetSecondaryDirectory writes
+// synchronously to disk -- a second Manager loaded from the same path
+// reports the same value.
+func TestSetSecondaryDirectory_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetSecondaryDirectory("/Volumes/Backup"); err != nil {
+		t.Fatalf("SetSecondaryDirectory(\"/Volumes/Backup\") error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().SecondaryDirectory; got != "/Volumes/Backup" {
+		t.Errorf("after reload: SecondaryDirectory = %q, want %q", got, "/Volumes/Backup")
+	}
+}
+
 // TestManager_ConcurrentSetters interleaves SetDensity, SetSettingsMigrated
 // and Get() across goroutines and asserts no error is returned. Run under
 // -race (SET-05 concurrency edge) -- this is the reason Manager gained a

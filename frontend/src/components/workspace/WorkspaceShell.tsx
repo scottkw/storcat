@@ -10,6 +10,7 @@ import SettingsDialog from './SettingsDialog';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useAppContext } from '../../contexts/AppContext';
 import { applyTokens, readPersistedPrefs } from '../../themeTokens';
+import { hydrateSettings } from '../../settingsStore';
 
 export interface WorkspaceShellProps {
   themeName: string;
@@ -32,6 +33,31 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
   useEffect(() => {
     applyTokens(readPersistedPrefs().theme, state.density);
   }, [state.density]);
+
+  // Runs the marker-gated localStorage-to-config migration and hydrates
+  // the config-only settings slice (defaultFilenameRoot, etc.) plus the
+  // catalog directory into AppContext. Empty deps -- fires once per mount;
+  // hydrateSettings() itself is deduped behind a module-level in-flight
+  // promise, so React 18 StrictMode's development double-invoke of this
+  // effect still issues exactly one getConfig() round trip. The `cancelled`
+  // flag matches Toolbar.tsx/DetailsPanel.tsx's own deferred-promise
+  // pattern -- a result resolving after unmount is dropped, not dispatched.
+  useEffect(() => {
+    let cancelled = false;
+    hydrateSettings().then((result) => {
+      if (cancelled || !result) return;
+      dispatch({ type: 'SETTINGS_HYDRATED', payload: result.settings });
+      // The reducer's SET_CATALOG_DIR guard (AppContext.tsx) makes this a
+      // no-op when CatalogRail's own mount effect already set the same
+      // value first -- no ordering coupling exists between the two effects.
+      if (result.catalogDirectory) {
+        dispatch({ type: 'SET_CATALOG_DIR', payload: result.catalogDirectory });
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [dispatch]);
 
   // One close path for both Escape and backdrop click.
   const closeDrawer = () => dispatch({ type: 'SET_DETAIL_OVERLAY', payload: false });

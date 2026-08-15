@@ -15,6 +15,7 @@ import {
   SetRailSide,
   SetCatalogDirectory,
   SetDefaultFilenameRoot,
+  SetSecondaryDirectory,
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
@@ -277,6 +278,15 @@ export const wailsAPI = {
   setDefaultFilenameRoot: async (root: string) => {
     try {
       await SetDefaultFilenameRoot(root);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setSecondaryDirectory: async (dir: string) => {
+    try {
+      await SetSecondaryDirectory(dir);
       return { success: true };
     } catch (error: any) {
       return wailsError(error);

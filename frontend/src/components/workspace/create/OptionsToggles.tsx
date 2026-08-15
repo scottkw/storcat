@@ -1,10 +1,9 @@
 import { wailsAPI } from '../../../services/wailsAPI';
-import { safeSetItem } from '../../../themeTokens';
+import { SECONDARY_DIR_KEY, setSecondaryDirectorySetting } from '../../../settingsStore';
 
-// Exported so CreateSlideOver can read the same persisted key at mount
-// (for the WILL WRITE preview's initial secondary-dir value) without a
-// second, drifting copy of the string literal.
-export const SECONDARY_DIR_STORAGE_KEY = 'storcat-secondary-directory';
+// Re-exported so CreateSlideOver's existing import keeps compiling --
+// settingsStore.ts is now the one home for this storage-key literal.
+export const SECONDARY_DIR_STORAGE_KEY = SECONDARY_DIR_KEY;
 
 export interface OptionsToggleValues {
   writeHTML: boolean;
@@ -102,7 +101,7 @@ function OptionsToggles({
     }
     const result = await wailsAPI.selectDirectory();
     if (!result.success || !result.path) return; // cancelled -- a declined choice, not an error
-    safeSetItem(SECONDARY_DIR_STORAGE_KEY, result.path);
+    setSecondaryDirectorySetting(result.path);
     onSecondaryDirChange(result.path);
     onValuesChange({ ...values, copyToSecondary: true });
   }
@@ -112,7 +111,7 @@ function OptionsToggles({
     if (disabled || !secondaryDir) return;
     const result = await wailsAPI.selectDirectory();
     if (!result.success || !result.path) return;
-    safeSetItem(SECONDARY_DIR_STORAGE_KEY, result.path);
+    setSecondaryDirectorySetting(result.path);
     onSecondaryDirChange(result.path);
   }
 

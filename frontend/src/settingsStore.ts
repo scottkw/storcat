@@ -13,9 +13,9 @@
 // Every later setter this phase adds (theme, rail side, catalog directory,
 // filename root, the four toggles) copies this exact two-write shape.
 
-import { Density, DENSITY_KEY, RailSide, RAIL_SIDE_KEY, THEME_KEY, safeSetItem } from './themeTokens';
+import { Density, DENSITY_KEY, RailSide, RAIL_SIDE_KEY, THEME_KEY, safeGetItem, safeSetItem } from './themeTokens';
 import { wailsAPI } from './services/wailsAPI';
-import { Theme } from './themes';
+import { Theme, getThemeById } from './themes';
 
 export { DENSITY_KEY };
 
@@ -84,4 +84,103 @@ export const DEFAULT_APP_SETTINGS: AppSettings = {
 // to remove.
 export function setDefaultFilenameRootSetting(root: string): void {
   void wailsAPI.setDefaultFilenameRoot(root);
+}
+
+// The one home for the secondary-directory storage-key literal --
+// OptionsToggles and CreateSlideOver both import it from here.
+export const SECONDARY_DIR_KEY = 'storcat-secondary-directory';
+
+export function setSecondaryDirectorySetting(dir: string): void {
+  safeSetItem(SECONDARY_DIR_KEY, dir);
+  void wailsAPI.setSecondaryDirectory(dir);
+}
+
+export interface HydratedSettings {
+  settings: AppSettings;
+  catalogDirectory: string;
+}
+
+// Deduped behind this module-level in-flight promise so React 18
+// StrictMode's development double-invoke of the calling effect (and any
+// other concurrent caller) can never run the migration below twice --
+// every caller in the same tick (or while the first call is still in
+// flight) shares the one getConfig() round trip and the one migration
+// pass.
+let hydratePromise: Promise<HydratedSettings | null> | null = null;
+
+export function hydrateSettings(): Promise<HydratedSettings | null> {
+  if (!hydratePromise) hydratePromise = doHydrate();
+  return hydratePromise;
+}
+
+async function doHydrate(): Promise<HydratedSettings | null> {
+  const initial = await wailsAPI.getConfig();
+  // A config the app cannot read is not a reason to crash the shell -- the
+  // localStorage boot cache already painted the right theme, and the app
+  // stays usable, un-hydrated, for this launch.
+  if (!initial.success) return null;
+  let cfg = initial.config;
+
+  // Migration gate: the persisted marker is the ONLY signal -- never a
+  // comparison against a config field looking like a zero value (a real
+  // user setting could legitimately be "" or the same as a default).
+  if (!cfg.settingsMigrated) {
+    // Each of the five cached keys is validated through the exact same
+    // allowlist readPersistedPrefs() (themeTokens.ts) uses for the boot
+    // read, before being written to a durable config field -- an invalid
+    // or missing value is skipped, leaving the Go default in place
+    // (T-26-09).
+    const storedThemeId = safeGetItem(THEME_KEY);
+    if (storedThemeId && getThemeById(storedThemeId)) {
+      await wailsAPI.setTheme(storedThemeId);
+    }
+    const storedDensity = safeGetItem(DENSITY_KEY);
+    if (storedDensity === 'Compact' || storedDensity === 'Comfortable') {
+      await wailsAPI.setDensity(storedDensity);
+    }
+    const storedRailSide = safeGetItem(RAIL_SIDE_KEY);
+    if (storedRailSide === 'Left' || storedRailSide === 'Right') {
+      await wailsAPI.setRailSide(storedRailSide);
+    }
+    const storedCatalogDir = safeGetItem(CATALOG_DIR_KEY);
+    if (storedCatalogDir) {
+      await wailsAPI.setCatalogDirectory(storedCatalogDir);
+    }
+    const storedSecondaryDir = safeGetItem(SECONDARY_DIR_KEY);
+    if (storedSecondaryDir) {
+      await wailsAPI.setSecondaryDirectory(storedSecondaryDir);
+    }
+    // Never deletes a localStorage key -- they remain the synchronous boot
+    // cache, and keeping them is also what makes a mis-migration
+    // recoverable (clearing the marker re-runs the migration against
+    // untouched source values).
+    await wailsAPI.setSettingsMigrated(true);
+    const reread = await wailsAPI.getConfig();
+    if (reread.success) cfg = reread.config;
+  }
+
+  // Write back the other direction: config -> cache, only when the
+  // config's own value passes that key's allowlist (T-26-10) -- so a
+  // config edited outside the app (or by a future CLI) converges into the
+  // boot cache on the next launch, and a stale/legacy value can never
+  // poison the pre-paint read.
+  if (getThemeById(cfg.theme)) safeSetItem(THEME_KEY, cfg.theme);
+  if (cfg.density === 'Compact' || cfg.density === 'Comfortable') safeSetItem(DENSITY_KEY, cfg.density);
+  if (cfg.railSide === 'Left' || cfg.railSide === 'Right') safeSetItem(RAIL_SIDE_KEY, cfg.railSide);
+  if (cfg.catalogDirectory) safeSetItem(CATALOG_DIR_KEY, cfg.catalogDirectory);
+  if (cfg.secondaryDirectory) safeSetItem(SECONDARY_DIR_KEY, cfg.secondaryDirectory);
+
+  const settings: AppSettings = {
+    defaultFilenameRoot: cfg.defaultFilenameRoot,
+    // writeHtml/copyToSecondary/watchDirectory have no Go config field yet
+    // (plan 26-05 adds them) -- DEFAULT_APP_SETTINGS' values stand in until
+    // then.
+    writeHtml: DEFAULT_APP_SETTINGS.writeHtml,
+    copyToSecondary: DEFAULT_APP_SETTINGS.copyToSecondary,
+    secondaryDirectory: cfg.secondaryDirectory,
+    watchDirectory: DEFAULT_APP_SETTINGS.watchDirectory,
+    rememberWindow: cfg.windowPersistenceEnabled,
+  };
+
+  return { settings, catalogDirectory: cfg.catalogDirectory };
 }
