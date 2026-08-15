@@ -579,6 +579,14 @@ func (a *App) SetSettingsMigrated(migrated bool) error {
 	return a.configManager.SetSettingsMigrated(migrated)
 }
 
+// SetRailSide saves the catalog rail side preference
+func (a *App) SetRailSide(side string) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetRailSide(side)
+}
+
 // SetWindowSize saves the window size preference
 func (a *App) SetWindowSize(width, height int) error {
 	if a.configManager == nil {

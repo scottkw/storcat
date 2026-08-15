@@ -1563,6 +1563,13 @@
   color: var(--onac);
 }
 
+/* Rail-position segments use 4px 14px, not the density row's 4px 12px --
+   literal handoff geometry transcribed by 26-UI-SPEC, not a rounding error
+   (same precedent as 25-UI-SPEC's 32px-vs-34px button-height distinction). */
+.ws-rail-seg .ws-seg-option {
+  padding: 4px 14px;
+}
+
 .ws-settings-footer {
   height: 56px;
   flex: none;

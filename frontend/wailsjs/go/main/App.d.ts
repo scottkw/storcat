@@ -39,6 +39,8 @@ export function SelectDirectory():Promise<string>;
 
 export function SetDensity(arg1:string):Promise<void>;
 
+export function SetRailSide(arg1:string):Promise<void>;
+
 export function SetSettingsMigrated(arg1:boolean):Promise<void>;
 
 export function SetSidebarPosition(arg1:string):Promise<void>;

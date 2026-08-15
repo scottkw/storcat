@@ -70,6 +70,10 @@ export function SetDensity(arg1) {
   return window['go']['main']['App']['SetDensity'](arg1);
 }
 
+export function SetRailSide(arg1) {
+  return window['go']['main']['App']['SetRailSide'](arg1);
+}
+
 export function SetSettingsMigrated(arg1) {
   return window['go']['main']['App']['SetSettingsMigrated'](arg1);
 }

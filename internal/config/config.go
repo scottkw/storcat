@@ -22,6 +22,10 @@ type Config struct {
 	WindowPersistenceEnabled bool   `json:"windowPersistenceEnabled"`
 	Density                  string `json:"density"`         // "Compact" or "Comfortable"
 	SettingsMigrated         bool   `json:"settingsMigrated"` // set once legacy localStorage settings keys have been folded into this config
+	// RailSide is the catalog rail's side ("Left" or "Right") -- a genuinely
+	// new field, not a rename or repurpose of the orphaned SidebarPosition
+	// above (26-CONTEXT.md's discretion resolution).
+	RailSide string `json:"railSide"`
 }
 
 // DefaultConfig returns default application settings
@@ -36,6 +40,7 @@ func DefaultConfig() *Config {
 		WindowPersistenceEnabled: true,
 		Density:                  "Comfortable",
 		SettingsMigrated:         false,
+		RailSide:                 "Left",
 	}
 }
 
@@ -217,5 +222,13 @@ func (m *Manager) SetSettingsMigrated(migrated bool) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.config.SettingsMigrated = migrated
+	return m.saveLocked()
+}
+
+// SetRailSide updates the catalog rail's side preference.
+func (m *Manager) SetRailSide(side string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.RailSide = side
 	return m.saveLocked()
 }

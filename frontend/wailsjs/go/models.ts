@@ -10,6 +10,7 @@ export namespace config {
 	    windowPersistenceEnabled: boolean;
 	    density: string;
 	    settingsMigrated: boolean;
+	    railSide: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -26,6 +27,7 @@ export namespace config {
 	        this.windowPersistenceEnabled = source["windowPersistenceEnabled"];
 	        this.density = source["density"];
 	        this.settingsMigrated = source["settingsMigrated"];
+	        this.railSide = source["railSide"];
 	    }
 	}
 

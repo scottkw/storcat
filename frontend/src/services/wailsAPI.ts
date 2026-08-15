@@ -12,6 +12,7 @@ import {
   SetWindowSize,
   SetDensity,
   SetSettingsMigrated,
+  SetRailSide,
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
@@ -247,6 +248,15 @@ export const wailsAPI = {
   setSettingsMigrated: async (migrated: boolean) => {
     try {
       await SetSettingsMigrated(migrated);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setRailSide: async (side: string) => {
+    try {
+      await SetRailSide(side);
       return { success: true };
     } catch (error: any) {
       return wailsError(error);

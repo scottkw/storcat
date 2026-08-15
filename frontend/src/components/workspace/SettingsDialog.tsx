@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
-import { setDensitySetting, setThemeSetting } from '../../settingsStore';
+import { setDensitySetting, setRailSideSetting, setThemeSetting } from '../../settingsStore';
 import { wailsAPI } from '../../services/wailsAPI';
 import { readPersistedPrefs } from '../../themeTokens';
 import SegmentedControl from './settings/SegmentedControl';
@@ -106,6 +106,26 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
                   setDensitySetting(next);
                 }}
               />
+            </div>
+            <div className="ws-settings-row">
+              <div className="ws-settings-row-text">
+                <span className="ws-settings-row-label">Catalog rail position</span>
+                <span className="ws-settings-row-note">Details panel takes the other side</span>
+              </div>
+              <div className="ws-rail-seg">
+                <SegmentedControl
+                  options={[
+                    { value: 'Left', label: 'Left' },
+                    { value: 'Right', label: 'Right' },
+                  ]}
+                  value={state.railSide}
+                  ariaLabel="Catalog rail position"
+                  onChange={(next) => {
+                    dispatch({ type: 'SET_RAIL_SIDE', payload: next });
+                    setRailSideSetting(next);
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -13,7 +13,7 @@
 // Every later setter this phase adds (theme, rail side, catalog directory,
 // filename root, the four toggles) copies this exact two-write shape.
 
-import { Density, DENSITY_KEY, THEME_KEY, safeSetItem } from './themeTokens';
+import { Density, DENSITY_KEY, RailSide, RAIL_SIDE_KEY, THEME_KEY, safeSetItem } from './themeTokens';
 import { wailsAPI } from './services/wailsAPI';
 import { Theme } from './themes';
 
@@ -35,4 +35,9 @@ export function setThemeSetting(theme: Theme): void {
   safeSetItem(THEME_KEY, theme.id);
   void wailsAPI.setTheme(theme.id);
   window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme } }));
+}
+
+export function setRailSideSetting(side: RailSide): void {
+  safeSetItem(RAIL_SIDE_KEY, side);
+  void wailsAPI.setRailSide(side);
 }
