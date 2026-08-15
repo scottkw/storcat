@@ -63,8 +63,8 @@
 - [x] **CRT-01**: User can open a 560px right slide-over to create a catalog, which animates in over 340ms and out over 260ms without unmounting early
 - [x] **CRT-02**: User sees detected mounted volumes as selectable cards with name, mount path, size, and a `mounted` or `read errors` status
 - [x] **CRT-03**: User can choose any folder instead of a detected volume
-- [ ] **CRT-04**: User can set a catalog title and a filename root, and sees a live "WILL WRITE" preview of the files that will be produced
-- [ ] **CRT-05**: User can toggle write-HTML-alongside-JSON, copy-to-secondary-location, and include-hidden-files
+- [x] **CRT-04**: User can set a catalog title and a filename root, and sees a live "WILL WRITE" preview of the files that will be produced
+- [x] **CRT-05**: User can toggle write-HTML-alongside-JSON, copy-to-secondary-location, and include-hidden-files
 - [x] **CRT-06**: User can start the scan with the Create button or ⌘↵
 - [x] **CRT-07**: User sees live scan progress — percentage, files seen, bytes, estimated time remaining, the current walking path, and a newest-first log
 - [ ] **CRT-08**: User can hand a running scan to the status bar with "Run in background" and see `● scanning <name> · N%` there
@@ -186,8 +186,8 @@ Deferred — acknowledged but not in this roadmap.
 | CRT-01 | Phase 25 | Complete |
 | CRT-02 | Phase 25 | Complete |
 | CRT-03 | Phase 25 | Complete |
-| CRT-04 | Phase 25 | Pending |
-| CRT-05 | Phase 25 | Pending |
+| CRT-04 | Phase 25 | Complete |
+| CRT-05 | Phase 25 | Complete |
 | CRT-06 | Phase 25 | Complete |
 | CRT-07 | Phase 25 | Complete |
 | CRT-08 | Phase 25 | Pending |
