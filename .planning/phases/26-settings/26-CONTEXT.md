@@ -35,12 +35,15 @@ Users configure theme, density, rail position, and catalog defaults from one set
 - **11 theme cards, each a 4-swatch strip plus a light/dark tag**, rendered from the existing `THEMES` array, which PROJECT.md already records as authoritative.
 - **Theme applies immediately on click** — SET-05 specifies no save step and `applyTokens()` already runs synchronously. No apply-on-close.
 - **Density and rail position use segmented controls**, a new shared control introduced by this phase in the same way Phase 25 introduced the toggle switch.
+- **The footer version string is rendered from the existing `GetVersion()` binding, and `wails.json`'s `productVersion` is bumped `2.3.0` → `3.0.0` in this phase** (USER decision, resolving 26-RESEARCH.md Open Question 2). The UI-SPEC's locked copy `"StorCat 3.0.0 · settings save as you change them"` is therefore produced dynamically, not hardcoded — one source of truth, no hand-updated string at each release. Accepted side effect: build artifacts stamp `3.0.0` from this phase onward, ahead of the v3.0.0 release itself.
 
 ### Claude's Discretion
 - Config field names/JSON keys and the migration's exact detection mechanism.
 - Settings dialog component decomposition and section ordering.
 - Segmented-control markup and its ARIA pattern.
 - Whether the theme chip opens Settings scrolled to the theme section or at the top.
+- **Theme state plumbing** (26-RESEARCH.md Open Question 1): default to reusing the existing `themeChange` CustomEvent that `DevStateSwitcher.tsx` already names as the future Settings path, rather than lifting theme into the `AppContext` reducer. Either satisfies SET-02; take the larger refactor only if the plan finds a concrete reason.
+- **Dead `Config.SidebarPosition` / `SetSidebarPosition`** (26-RESEARCH.md Open Question 3): default to leaving both in place, untouched and unrepurposed, with a one-line note that they are intentionally orphaned v1 leftovers distinct from the new `railSide` field. They are not the new concept, and deleting a persisted config field is not this phase's job.
 </decisions>
 
 <code_context>
