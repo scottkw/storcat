@@ -235,7 +235,28 @@ Plans:
   3. User can set the catalog directory, a default filename root, and the four catalog toggles (write HTML, copy to secondary location, watch directory, remember window size and position) (SET-04)
   4. User's settings save as they're changed with no explicit save step, and window size/position persistence continues to work exactly as it did pre-milestone, controlled by this same toggle (SET-05, COMPAT-05)
 
-**Plans**: TBD
+**Plans**: 5 plans (5 waves)
+Plans:
+**Wave 1**
+
+- [ ] 26-01-PLAN.md — Tracer: settings spine end to end (Go config → binding → write-through store → dialog), Row density, and all three entry points (wave 1)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 26-02-PLAN.md — Theme section: 11 theme cards, plus the catalog rail-position row (wave 2)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 26-03-PLAN.md — Catalogs: directory row, default filename root, and the one-time localStorage→config migration and hydration (wave 3)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 26-04-PLAN.md — Security discharge: T-22-05 catalog-modal deletion and FU-23-A containment on GetCatalogHtmlPath/OpenExternal (wave 4)
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 26-05-PLAN.md — The four catalog toggles including COMPAT-05 window persistence, shared ToggleRow, and the phase verification matrix (wave 5)
+
 **UI hint**: yes
 
 ### Phase 27: Catalog Actions + Watch
