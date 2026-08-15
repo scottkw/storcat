@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 26
 current_phase_name: Settings
-status: executing
-stopped_at: Completed 26-04-PLAN.md
-last_updated: "2026-08-15T14:34:26.468Z"
+status: verifying
+stopped_at: Completed 26-05-PLAN.md -- phase 26 (Settings) complete, ready for verification
+last_updated: "2026-08-15T15:03:51.514Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 30
-  completed_plans: 29
-  percent: 57
+  completed_plans: 30
+  percent: 71
 ---
 
 # Project State
@@ -30,12 +30,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 26 (Settings) — EXECUTING
 Plan: 5 of 5
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15 — Phase 26 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -91,6 +91,7 @@ Progress: [██████████] 97%
 | Phase 26 P02 | 8min | 2 tasks | 11 files |
 | Phase 26 P03 | 19min | 3 tasks | 15 files |
 | Phase 26 P04 | ~25min | 3 tasks | 12 files |
+| Phase 26 P05 | 27min | 3 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -167,6 +168,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 26-03: Editing config.json on disk while wails dev is running is a no-op against the live in-memory config.Manager singleton -- live migration testing must reset state through the real Set* bindings instead
 - [Phase ?]: 26-04: OpenExternal restricted to file:// URLs and bare absolute paths inside catalogDir via osutil.ResolveContainedFileURL, reusing ContainsPath/allowedRevealExtensions -- no second containment implementation
 - [Phase ?]: 26-04: Reachability of openCatalogModal re-confirmed by grep immediately before deleting CatalogModal.tsx, discharging T-22-05 by removal rather than sanitization
+- [Phase ?]: 26-05: WindowPersistenceEnabled remains the sole window-persistence field -- COMPAT-05's toggle drives it directly via the pre-existing SetWindowPersistence binding, pinned by grep-based acceptance criteria
+- [Phase ?]: 26-05: Added TestSetWindowPersistence_Idempotent (Rule 2) to close a must_have truth COMPAT-05 idempotency the plan's literal task list didn't explicitly enumerate a test for
+- [Phase ?]: 26-05: COMPAT-05's both-direction persistence proof used window.runtime.WindowSetSize/SetPosition/Quit plus a real wails dev process restart -- not a reasoning-only claim
 
 ### Key Research Findings
 
@@ -212,8 +216,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T14:34:26.452Z
-Stopped at: Completed 26-04-PLAN.md
+Last session: 2026-08-15T15:03:51.497Z
+Stopped at: Completed 26-05-PLAN.md -- phase 26 (Settings) complete, ready for verification
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 

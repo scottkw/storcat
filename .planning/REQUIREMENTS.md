@@ -112,7 +112,7 @@
 - [x] **COMPAT-02**: Catalogs written by v3.0.0 are byte-for-byte the same JSON shape as v2.3.0 wrote, so external tools keep working
 - [x] **COMPAT-03**: All six CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`) behave exactly as they did in v2.3.0
 - [x] **COMPAT-04**: `internal/catalog` remains usable from the CLI without a Wails runtime context
-- [ ] **COMPAT-05**: Window size and position persistence continues to work, controlled by the Settings toggle
+- [x] **COMPAT-05**: Window size and position persistence continues to work, controlled by the Settings toggle
 - [ ] **COMPAT-06**: The app builds, signs, notarizes, and releases on all existing CI platform targets
 
 ## v2 Requirements
@@ -220,7 +220,7 @@ Deferred — acknowledged but not in this roadmap.
 | COMPAT-02 | Phase 25 | Complete |
 | COMPAT-03 | Phase 25 | Complete |
 | COMPAT-04 | Phase 25 | Complete |
-| COMPAT-05 | Phase 26 | Pending |
+| COMPAT-05 | Phase 26 | Complete |
 | COMPAT-06 | Phase 28 | Pending |
 
 **Coverage:**
