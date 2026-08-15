@@ -104,6 +104,16 @@ func storcatConfigDir() (string, error) {
 	return dir, nil
 }
 
+// NewDefaultManager returns a Manager pre-loaded with DefaultConfig() and no
+// configPath -- for callers (app.go's NewApp) that need a working,
+// non-persisting fallback when the disk-backed NewManager fails. Save()
+// fails gracefully (empty configPath -> os.WriteFile error, caught by the
+// setters' `_ = m.Save()`-style callers) rather than every accessor
+// panicking on a nil config.
+func NewDefaultManager() *Manager {
+	return &Manager{config: DefaultConfig()}
+}
+
 // NewManager creates a new config manager
 func NewManager() (*Manager, error) {
 	storcatDir, err := storcatConfigDir()

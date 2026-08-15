@@ -598,3 +598,24 @@ func TestManager_ConcurrentSetters(t *testing.T) {
 		t.Errorf("concurrent setter returned error: %v", err)
 	}
 }
+
+// TestNewDefaultManager_GetDoesNotPanic pins the NewApp() fallback path
+// (config.NewManager() erroring) against the CR-01 regression: a Manager
+// with a nil config panics on the first Get()/GetWindowPersistence() call
+// instead of degrading gracefully. NewDefaultManager must always leave
+// config populated.
+func TestNewDefaultManager_GetDoesNotPanic(t *testing.T) {
+	m := NewDefaultManager()
+
+	cfg := m.Get()
+	if cfg == nil {
+		t.Fatal("NewDefaultManager().Get() = nil, want non-nil default config")
+	}
+	if got, want := cfg.Theme, DefaultConfig().Theme; got != want {
+		t.Errorf("NewDefaultManager().Get().Theme = %q, want %q", got, want)
+	}
+
+	if got, want := m.GetWindowPersistence(), DefaultConfig().WindowPersistenceEnabled; got != want {
+		t.Errorf("NewDefaultManager().GetWindowPersistence() = %v, want %v", got, want)
+	}
+}

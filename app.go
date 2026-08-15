@@ -113,7 +113,7 @@ func NewApp() *App {
 	configManager, err := config.NewManager()
 	if err != nil {
 		// If config fails, just create one with defaults
-		configManager = &config.Manager{}
+		configManager = config.NewDefaultManager()
 	}
 
 	// Initialize services
