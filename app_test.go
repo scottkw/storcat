@@ -33,7 +33,7 @@ func TestGetCatalogHtmlPath_ReturnsHtmlPathWhenFileExists(t *testing.T) {
 	}
 
 	app := &App{}
-	got, err := app.GetCatalogHtmlPath(jsonPath)
+	got, err := app.GetCatalogHtmlPath(jsonPath, dir)
 	if err != nil {
 		t.Fatalf("GetCatalogHtmlPath returned unexpected error: %v", err)
 	}
@@ -55,7 +55,7 @@ func TestGetCatalogHtmlPath_ReturnsErrorWhenHtmlFileMissing(t *testing.T) {
 	}
 
 	app := &App{}
-	got, err := app.GetCatalogHtmlPath(jsonPath)
+	got, err := app.GetCatalogHtmlPath(jsonPath, dir)
 	if err == nil {
 		t.Fatalf("GetCatalogHtmlPath expected an error for missing .html file, got path %q", got)
 	}
@@ -79,12 +79,101 @@ func TestGetCatalogHtmlPath_NonJsonInputAppendsHtmlExtension(t *testing.T) {
 	}
 
 	app := &App{}
-	got, err := app.GetCatalogHtmlPath(basePath)
+	got, err := app.GetCatalogHtmlPath(basePath, dir)
 	if err != nil {
 		t.Fatalf("GetCatalogHtmlPath returned unexpected error: %v", err)
 	}
 	if got != htmlPath {
 		t.Errorf("GetCatalogHtmlPath = %q, want %q", got, htmlPath)
+	}
+}
+
+// TestGetCatalogHtmlPath_RejectsEmptyCatalogDir verifies that
+// GetCatalogHtmlPath rejects an empty catalogDir even when a real
+// .json/.html pair exists on disk. Addresses FU-23-A.
+func TestGetCatalogHtmlPath_RejectsEmptyCatalogDir(t *testing.T) {
+	dir := t.TempDir()
+
+	jsonPath := filepath.Join(dir, "mycatalog.json")
+	htmlPath := filepath.Join(dir, "mycatalog.html")
+	if err := os.WriteFile(jsonPath, []byte(`{}`), 0644); err != nil {
+		t.Fatalf("failed to create temp json file: %v", err)
+	}
+	if err := os.WriteFile(htmlPath, []byte(`<html></html>`), 0644); err != nil {
+		t.Fatalf("failed to create temp html file: %v", err)
+	}
+
+	app := &App{}
+	got, err := app.GetCatalogHtmlPath(jsonPath, "")
+	if err == nil {
+		t.Fatalf("GetCatalogHtmlPath expected an error for empty catalogDir, got path %q", got)
+	}
+	if got != "" {
+		t.Errorf("GetCatalogHtmlPath returned non-empty string on error: %q", got)
+	}
+}
+
+// TestGetCatalogHtmlPath_RejectsPathOutsideCatalogDir verifies that
+// GetCatalogHtmlPath rejects an html file that lives in a sibling
+// directory sharing catalogDir's name as a string prefix -- the case a
+// naive strings.HasPrefix check would wrongly admit. Addresses FU-23-A.
+func TestGetCatalogHtmlPath_RejectsPathOutsideCatalogDir(t *testing.T) {
+	base := t.TempDir()
+	catalogDir := filepath.Join(base, "catalogs")
+	if err := os.Mkdir(catalogDir, 0755); err != nil {
+		t.Fatalf("mkdir catalogDir: %v", err)
+	}
+	evilDir := catalogDir + "-evil"
+	if err := os.Mkdir(evilDir, 0755); err != nil {
+		t.Fatalf("mkdir evilDir: %v", err)
+	}
+
+	jsonPath := filepath.Join(evilDir, "mycatalog.json")
+	htmlPath := filepath.Join(evilDir, "mycatalog.html")
+	if err := os.WriteFile(jsonPath, []byte(`{}`), 0644); err != nil {
+		t.Fatalf("failed to create temp json file: %v", err)
+	}
+	if err := os.WriteFile(htmlPath, []byte(`<html></html>`), 0644); err != nil {
+		t.Fatalf("failed to create temp html file: %v", err)
+	}
+
+	app := &App{}
+	got, err := app.GetCatalogHtmlPath(jsonPath, catalogDir)
+	if err == nil {
+		t.Fatalf("GetCatalogHtmlPath expected an error for a path outside catalogDir, got path %q", got)
+	}
+	if got != "" {
+		t.Errorf("GetCatalogHtmlPath returned non-empty string on error: %q", got)
+	}
+}
+
+// TestOpenExternal_RejectsBeforeTouchingRuntime verifies that OpenExternal
+// rejects an out-of-directory path or a non-file scheme during validation,
+// before ever reaching the Wails runtime call -- proven here by using an
+// App with a nil context, which would panic/dereference-fail if the
+// runtime call were reached. Addresses FU-23-A.
+func TestOpenExternal_RejectsBeforeTouchingRuntime(t *testing.T) {
+	base := t.TempDir()
+	catalogDir := filepath.Join(base, "catalogs")
+	if err := os.Mkdir(catalogDir, 0755); err != nil {
+		t.Fatalf("mkdir catalogDir: %v", err)
+	}
+	outsideDir := filepath.Join(base, "outside")
+	if err := os.Mkdir(outsideDir, 0755); err != nil {
+		t.Fatalf("mkdir outsideDir: %v", err)
+	}
+	outsidePath := filepath.Join(outsideDir, "catalog.html")
+	if err := os.WriteFile(outsidePath, []byte(`<html></html>`), 0644); err != nil {
+		t.Fatalf("write outside file: %v", err)
+	}
+
+	app := &App{} // ctx is nil -- reaching runtime.BrowserOpenURL would fail
+
+	if err := app.OpenExternal(outsidePath, catalogDir); err == nil {
+		t.Fatal("expected an error for a path outside catalogDir, got nil")
+	}
+	if err := app.OpenExternal("http://example.com", catalogDir); err == nil {
+		t.Fatal("expected an error for a non-file scheme, got nil")
 	}
 }
 
