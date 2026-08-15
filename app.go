@@ -15,6 +15,7 @@ import (
 	"storcat-wails/internal/osutil"
 	"storcat-wails/internal/search"
 	"storcat-wails/internal/volumes"
+	"storcat-wails/internal/watch"
 	"storcat-wails/pkg/models"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -64,6 +65,14 @@ type App struct {
 	// writing again. It is a separate lock from scanMu so StartScan/CancelScan
 	// are never blocked behind an in-flight partial write.
 	writeMu sync.Mutex
+
+	// watchMu guards watcher. Watching is one-at-a-time by design (the app
+	// follows a single configured catalog directory), so a single
+	// mutex-guarded field is the simplest correct implementation -- no
+	// directory-keyed map, matching scanMu's own one-at-a-time rationale
+	// above.
+	watchMu sync.Mutex
+	watcher *watch.Watcher
 }
 
 // lastScanRequest captures the parameters a source-loss scan was started
@@ -143,6 +152,9 @@ func NewApp() *App {
 // so we can call the runtime methods
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	// Starting the watcher here (not in NewApp) means emitCatalogsChanged
+	// already has a live context by the time any filesystem event can fire.
+	a.applyWatchState()
 }
 
 // CreateCatalog creates a new catalog from a directory
@@ -588,13 +600,79 @@ func (a *App) SetRailSide(side string) error {
 	return a.configManager.SetRailSide(side)
 }
 
+// emitCatalogsChanged is the second and last place in this repository
+// allowed to call runtime.EventsEmit (throttledProgress, above, is the
+// first) -- internal/watch must stay usable from the CLI with no Wails
+// runtime attached (COMPAT-04), so app.go alone bridges its callback to the
+// frontend. The event carries no payload: 27-CONTEXT.md locks the bare
+// catalogs:changed signal, since the rail already re-lists via the
+// idempotent BrowseCatalogs, and a per-file delta would create a second
+// code path that could disagree with it. The a.ctx == nil guard -- the same
+// one throttledProgress uses -- makes this method safe to invoke from a
+// plain Go test with no Wails runtime attached, and safe to invoke before
+// Wails startup.
+func (a *App) emitCatalogsChanged() {
+	if a.ctx == nil {
+		return
+	}
+	runtime.EventsEmit(a.ctx, "catalogs:changed")
+}
+
+// applyWatchState is the one place the watcher starts or stops. It always
+// stops any existing watcher first, unconditionally, so it is idempotent
+// and safe to call on every relevant change (startup, a watch-directory
+// toggle, or a catalog-directory change) with no separate "is it already
+// running" check anywhere else.
+//
+// A watcher that fails to start degrades silently, leaving a.watcher nil:
+// 27-UI-SPEC.md's E4 resolution is explicit that the status-bar indicator
+// is optimistic, tied to the setting rather than a confirmed running
+// watcher, under the same non-critical-background-state precedent Phase 26
+// established. There is deliberately no watcher-health event and no new
+// frontend surface for this -- 27-RESEARCH.md Pitfall 9 names that as scope
+// creep beyond WATCH-01 and the approved UI contract, and this app has no
+// toast system to surface it through in any case. Callers never inspect a
+// result from this method for the same reason: there is nothing a caller
+// could usefully do about a watcher that would not start.
+func (a *App) applyWatchState() {
+	a.watchMu.Lock()
+	defer a.watchMu.Unlock()
+
+	if a.watcher != nil {
+		a.watcher.Close()
+		a.watcher = nil
+	}
+
+	if a.configManager == nil {
+		return
+	}
+	cfg := a.configManager.Get()
+	if cfg == nil || !cfg.WatchDirectory || cfg.CatalogDirectory == "" {
+		return
+	}
+
+	w, err := watch.New(cfg.CatalogDirectory, watch.DefaultDebounce, a.emitCatalogsChanged)
+	if err != nil {
+		return
+	}
+	a.watcher = w
+}
+
 // SetCatalogDirectory saves the configured catalog directory -- the same
 // value the rail's directory chip and Settings' Catalogs section share.
+// Persists first, then rebuilds the watcher against the new directory
+// (27-CONTEXT.md's locked "stop and restart on directory change") --
+// persisting first is what makes applyWatchState's config read see the new
+// value; reversing the order would start a watcher against stale state.
 func (a *App) SetCatalogDirectory(dir string) error {
 	if a.configManager == nil {
 		return nil
 	}
-	return a.configManager.SetCatalogDirectory(dir)
+	if err := a.configManager.SetCatalogDirectory(dir); err != nil {
+		return err
+	}
+	a.applyWatchState()
+	return nil
 }
 
 // SetDefaultFilenameRoot saves the default filename root pre-filled into
@@ -630,13 +708,19 @@ func (a *App) SetCopyToSecondary(enabled bool) error {
 	return a.configManager.SetCopyToSecondary(enabled)
 }
 
-// SetWatchDirectory persists the watch-directory toggle's value. This phase
-// (26) only stores the value -- the watcher itself is Phase 27.
+// SetWatchDirectory persists the watch-directory toggle's value, then
+// starts or stops the watcher to match. Persists first, same ordering
+// rationale as SetCatalogDirectory: applyWatchState reads the just-saved
+// value back from configManager.
 func (a *App) SetWatchDirectory(enabled bool) error {
 	if a.configManager == nil {
 		return nil
 	}
-	return a.configManager.SetWatchDirectory(enabled)
+	if err := a.configManager.SetWatchDirectory(enabled); err != nil {
+		return err
+	}
+	a.applyWatchState()
+	return nil
 }
 
 // SetWindowSize saves the window size preference
@@ -724,6 +808,25 @@ func (a *App) beforeClose(ctx context.Context) bool {
 		_ = a.configManager.SetWindowPosition(x, y)
 	}
 	return false // false = allow close
+}
+
+// shutdown fires once, unconditionally, after Wails has confirmed the close
+// -- unlike beforeClose, which can return true to prevent the close (as it
+// already does for an active scan) and therefore runs on paths that may not
+// lead to a quit at all. WATCH-03 requires the watcher to be genuinely
+// released, not merely ignored, on every quit path, so its release belongs
+// here rather than only inside beforeClose's conditional branches. See this
+// plan's <recorded_decision id="shutdown-hook"> for the full rationale.
+// beforeClose's own scan-cancellation logic is untouched by this addition.
+// ctx is required by Wails' OnShutdown hook signature and is otherwise
+// unused here.
+func (a *App) shutdown(_ context.Context) {
+	a.watchMu.Lock()
+	defer a.watchMu.Unlock()
+	if a.watcher != nil {
+		a.watcher.Close()
+		a.watcher = nil
+	}
 }
 
 // SelectDirectory opens a directory selection dialog
