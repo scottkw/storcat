@@ -20,6 +20,7 @@ import {
   StartScan,
   CancelScan,
   WritePartialCatalog,
+  ListVolumes,
 } from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
 
@@ -102,6 +103,18 @@ export const wailsAPI = {
     try {
       const result = await WritePartialCatalog();
       return { success: true as const, result };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Lists the machine's currently mounted volumes (name, mount path,
+  // size, free space, readable flag) for the create flow's volume-card
+  // picker. Always resolves to an array, even when nothing is mounted.
+  listVolumes: async () => {
+    try {
+      const result = await ListVolumes();
+      return { success: true as const, volumes: result };
     } catch (error: any) {
       return wailsError(error);
     }

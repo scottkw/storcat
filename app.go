@@ -13,6 +13,7 @@ import (
 	"storcat-wails/internal/config"
 	"storcat-wails/internal/osutil"
 	"storcat-wails/internal/search"
+	"storcat-wails/internal/volumes"
 	"storcat-wails/pkg/models"
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
@@ -67,6 +68,14 @@ type ScanOptions struct {
 	WriteHTML       bool   `json:"writeHTML"`
 	IncludeHidden   bool   `json:"includeHidden"`
 	CopyToDirectory string `json:"copyToDirectory"`
+	// TotalBytesHint is the total the selected volume card already
+	// computed (from ListVolumes' TotalBytes), used as the scan's
+	// denominator with no pre-pass. Zero means no such total exists (the
+	// plain-folder "choose any folder" path) -- resolveScanTotal then
+	// runs catalog.MeasureTree's count-only pre-pass instead. Zero is
+	// therefore the wire signal for "denominator unknown," never a real
+	// hint of an empty volume.
+	TotalBytesHint int64 `json:"totalBytesHint"`
 }
 
 // ScanProgress is the scan-progress event payload shape. TotalBytes is
@@ -165,13 +174,34 @@ func (a *App) throttledProgress(totalBytes int64) catalog.ProgressCallback {
 	}
 }
 
-// sourceTotalBytes is the denominator handed to throttledProgress for
-// percentage computation. It returns zero for now -- the frontend already
-// renders a zero/unknown total as the indeterminate "counting" sub-state --
-// and is the seam a later plan's volume total (Statfs) and folder pre-pass
-// both fill.
-func sourceTotalBytes(sourcePath string) int64 {
-	return 0
+// resolveScanTotal returns the scan's real denominator: hint unchanged
+// when non-zero (no pre-pass runs at all), or -- when hint is zero, the
+// "denominator unknown" wire signal -- the result of a count-only
+// catalog.MeasureTree pre-pass over sourcePath, which is what fills that
+// seam for the plain-folder case (CRT-03) where no volume total exists.
+// A two-pass count for every scan was rejected (25-CONTEXT.md); running
+// MeasureTree only on this branch is what keeps that cost paid at most
+// once per scan, and never at all for a volume source.
+//
+// While the pre-pass runs, its own progress is forwarded through a
+// zero-total throttled emitter -- the frontend renders that as a live
+// file count, never a fabricated percentage, until this function returns
+// the real total and the caller starts the walk proper with it.
+func (a *App) resolveScanTotal(ctx context.Context, sourcePath string, opts catalog.Options, hint int64, testHook catalog.ProgressCallback) (int64, error) {
+	if hint != 0 {
+		return hint, nil
+	}
+	prePassProgress := a.throttledProgress(0)
+	_, measuredBytes, err := catalog.MeasureTree(ctx, sourcePath, opts, func(u catalog.ProgressUpdate) {
+		if testHook != nil {
+			testHook(u)
+		}
+		prePassProgress(u)
+	})
+	if err != nil {
+		return 0, err
+	}
+	return measuredBytes, nil
 }
 
 // StartScan runs a cancellable, option-driven scan: sourcePath is walked and
@@ -283,7 +313,11 @@ func (a *App) startScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 	// internal/catalog/service.go) deliberately never sets this, preserving
 	// v2.3.0's skip-and-continue behavior exactly.
 	catOpts := catalog.Options{WriteHTML: opts.WriteHTML, IncludeHidden: opts.IncludeHidden, HaltOnSourceLoss: true}
-	totalBytes := sourceTotalBytes(absSource)
+
+	totalBytes, err := a.resolveScanTotal(ctx, absSource, catOpts, opts.TotalBytesHint, testHook)
+	if err != nil {
+		return nil, err
+	}
 
 	progress := a.throttledProgress(totalBytes)
 	onProgress := func(u catalog.ProgressUpdate) {
@@ -574,6 +608,14 @@ func (a *App) SelectDirectory() (string, error) {
 		Title: "Select Directory",
 	})
 	return path, err
+}
+
+// ListVolumes returns the machine's currently mounted volumes -- name,
+// mount path, size, free space and a readable flag -- for the create
+// flow's volume-card picker (CRT-02). Delegates to internal/volumes with
+// no logic of its own, matching this file's other thin bindings.
+func (a *App) ListVolumes() ([]volumes.Volume, error) {
+	return volumes.List()
 }
 
 // ReadHtmlFile reads the contents of an HTML file

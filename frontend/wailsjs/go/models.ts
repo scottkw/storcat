@@ -33,6 +33,7 @@ export namespace main {
 	    writeHTML: boolean;
 	    includeHidden: boolean;
 	    copyToDirectory: string;
+	    totalBytesHint: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new ScanOptions(source);
@@ -43,6 +44,7 @@ export namespace main {
 	        this.writeHTML = source["writeHTML"];
 	        this.includeHidden = source["includeHidden"];
 	        this.copyToDirectory = source["copyToDirectory"];
+	        this.totalBytesHint = source["totalBytesHint"];
 	    }
 	}
 
@@ -258,6 +260,31 @@ export namespace models {
 		    }
 		    return a;
 		}
+	}
+
+}
+
+export namespace volumes {
+	
+	export class Volume {
+	    name: string;
+	    mountPath: string;
+	    totalBytes: number;
+	    freeBytes: number;
+	    readable: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Volume(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.mountPath = source["mountPath"];
+	        this.totalBytes = source["totalBytes"];
+	        this.freeBytes = source["freeBytes"];
+	        this.readable = source["readable"];
+	    }
 	}
 
 }

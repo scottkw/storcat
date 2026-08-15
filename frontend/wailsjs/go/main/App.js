@@ -30,6 +30,10 @@ export function GetWindowPersistence() {
   return window['go']['main']['App']['GetWindowPersistence']();
 }
 
+export function ListVolumes() {
+  return window['go']['main']['App']['ListVolumes']();
+}
+
 export function LoadCatalog(arg1) {
   return window['go']['main']['App']['LoadCatalog'](arg1);
 }

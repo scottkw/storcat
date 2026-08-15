@@ -336,7 +336,12 @@ func TestStartScan_RetainsPartialOnSourceLoss(t *testing.T) {
 		}
 	}
 
-	_, err := app.startScan("Test", sourceDir, outputDir, "out", ScanOptions{WriteHTML: true}, testHook)
+	// TotalBytesHint is non-zero so resolveScanTotal skips the pre-pass
+	// entirely -- this test's removal timing is keyed to the real walk
+	// visiting subA's file, which would otherwise fire during MeasureTree's
+	// own pass over the same tree instead (see TestStartScan_MeasuresWhenNoHintSupplied
+	// for that pre-pass path's own coverage).
+	_, err := app.startScan("Test", sourceDir, outputDir, "out", ScanOptions{WriteHTML: true, TotalBytesHint: 4096}, testHook)
 	if err == nil {
 		t.Fatal("expected a non-nil error for a source loss, got nil")
 	}
@@ -597,5 +602,81 @@ func TestBeforeCloseDecision_AllowsCloseWhenIdle(t *testing.T) {
 
 	if got := app.beforeClose(context.Background()); got != false {
 		t.Errorf("beforeClose() = %v, want false (allow close) when idle", got)
+	}
+}
+
+// TestStartScan_UsesTotalHintWhenSupplied verifies that a non-zero total
+// hint is used as-is and that no pre-pass runs -- tested at
+// resolveScanTotal directly rather than through the full StartScan/EventsEmit
+// path, for the same reason 25-03's SUMMARY documents for every other
+// progress-shaped test in this file: a.throttledProgress's real emission
+// path requires a live Wails runtime context (a.ctx), which log.Fatals on
+// any fake context this headless test could construct, so a.ctx stays nil
+// here and the wire-level ScanProgress.TotalBytes delivery itself is not
+// independently verifiable outside a running wails dev session. Proof
+// that no pre-pass ran: sourcePath points at a directory that does not
+// exist, which MeasureTree would otherwise have to tolerate via its
+// single-entry stat-failure path (bumping readErrors, not aborting) --
+// the assertion instead is that resolveScanTotal never touches the
+// filesystem or the callback at all when hint is non-zero.
+func TestStartScan_UsesTotalHintWhenSupplied(t *testing.T) {
+	app := &App{}
+	var called bool
+
+	total, err := app.resolveScanTotal(context.Background(), "/does/not/exist", catalog.Options{}, 4096, func(catalog.ProgressUpdate) {
+		called = true
+	})
+	if err != nil {
+		t.Fatalf("resolveScanTotal: %v", err)
+	}
+	if total != 4096 {
+		t.Errorf("total = %d, want 4096 (the supplied hint, unchanged)", total)
+	}
+	if called {
+		t.Error("testHook was invoked -- a pre-pass ran even though a non-zero hint was supplied")
+	}
+}
+
+// TestStartScan_MeasuresWhenNoHintSupplied verifies that a zero hint runs
+// catalog.MeasureTree's count-only pre-pass and returns its measured byte
+// total. See TestStartScan_UsesTotalHintWhenSupplied's doc comment for why
+// this is tested at resolveScanTotal directly rather than via the full
+// EventsEmit-dependent StartScan path.
+func TestStartScan_MeasuresWhenNoHintSupplied(t *testing.T) {
+	app := &App{}
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "a.txt"), []byte("hello"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	var sawPrePassProgress bool
+	total, err := app.resolveScanTotal(context.Background(), dir, catalog.Options{}, 0, func(catalog.ProgressUpdate) {
+		// This is the pre-pass's own progress report, driven through
+		// MeasureTree -- its firing at all proves the pre-pass actually
+		// ran (a zero hint never skips straight to a real total).
+		sawPrePassProgress = true
+	})
+	if err != nil {
+		t.Fatalf("resolveScanTotal: %v", err)
+	}
+	if total != 5 {
+		t.Errorf("total = %d, want 5 (MeasureTree's measured byte count)", total)
+	}
+	if !sawPrePassProgress {
+		t.Error("expected the pre-pass to report progress through the callback")
+	}
+}
+
+// TestListVolumes_ReturnsSliceWithoutError verifies the binding returns
+// the volumes package's list unchanged and never a nil slice.
+func TestListVolumes_ReturnsSliceWithoutError(t *testing.T) {
+	app := &App{}
+
+	got, err := app.ListVolumes()
+	if err != nil {
+		t.Fatalf("ListVolumes() error = %v", err)
+	}
+	if got == nil {
+		t.Error("ListVolumes() returned a nil slice, want a non-nil (possibly empty) slice")
 	}
 }
