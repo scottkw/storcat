@@ -3,11 +3,12 @@ import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
 import { formatBytes } from '../../lib/format';
-import { scanPercent } from '../../lib/scanFormat';
+import { scanPercent, slugifyRoot } from '../../lib/scanFormat';
 import { EventsOn } from '../../../wailsjs/runtime/runtime';
 import type { ScanProgress, ScanSource } from '../../types/scan';
 import { sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
 import VolumePicker from './create/VolumePicker';
+import CreateForm from './create/CreateForm';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -15,14 +16,6 @@ export interface CreateSlideOverProps {
 }
 
 const EXIT_DURATION_MS = 260;
-
-function slugify(name: string): string {
-  const slug = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
-  return slug || 'catalog';
-}
 
 // Always mounted by WorkspaceShell (same pattern as CommandPalette) and must
 // not be conditionally mounted -- the shared useModalBehavior hook below
@@ -111,7 +104,10 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     const sourcePath = sourcePathOf(selectedSource);
     const displayName = sourceDisplayNameOf(selectedSource);
     const resolvedTitle = title.trim() || displayName;
-    const resolvedRoot = root.trim() || slugify(displayName);
+    const resolvedRoot = root.trim() || slugifyRoot(displayName) || 'catalog';
+    // Zero means "no known total" -- resolveScanTotal then runs a count-only
+    // pre-pass instead (CRT-07). A plain folder has no volume-level probe.
+    const totalBytesHint = selectedSource.kind === 'volume' ? selectedSource.volume.totalBytes : 0;
 
     dispatch({ type: 'SCAN_STARTED', payload: { title: resolvedTitle } });
 
@@ -119,6 +115,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
       writeHTML: true,
       includeHidden: false,
       copyToDirectory: '',
+      totalBytesHint,
     });
 
     submittingRef.current = false;
@@ -191,7 +188,10 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
   const canCreate = !submitting && (scan.status === 'idle' || scan.status === 'error') && !!selectedSource && !!state.catalogDir;
 
-  const sourceDisplayName = selectedSource ? sourceDisplayNameOf(selectedSource) : '';
+  // The rail's already-loaded listing for the configured catalog directory
+  // -- the cheapest correct source for the WILL WRITE preview's "already
+  // exists" qualifier, per this plan's explicit no-new-binding instruction.
+  const existingCatalogFilenames = new Set(state.catalogs.map((catalog) => catalog.filename));
 
   const pct = scan.status === 'scanning' ? scanPercent(scan.bytesSeen, scan.totalBytes) : null;
 
@@ -221,27 +221,17 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
             <>
               {scan.status === 'error' && <div className="ws-create-error-banner">{scan.message}</div>}
               <VolumePicker selected={selectedSource} onSelect={setSelectedSource} />
-              <div className="ws-create-field">
-                <label className="ws-create-label">Catalog title</label>
-                <input
-                  className="ws-create-input"
-                  value={title}
-                  onChange={(event) => setTitle(event.target.value)}
-                  placeholder={sourceDisplayName || 'Untitled catalog'}
-                />
-              </div>
-              <div className="ws-create-field">
-                <label className="ws-create-label">Filename root</label>
-                <div className="ws-create-input-suffix-row">
-                  <input
-                    className="ws-create-input mono"
-                    value={root}
-                    onChange={(event) => setRoot(event.target.value)}
-                    placeholder={sourceDisplayName ? slugify(sourceDisplayName) : 'catalog'}
-                  />
-                  <span className="ws-create-suffix mono">.json / .html</span>
-                </div>
-              </div>
+              <CreateForm
+                source={selectedSource}
+                title={title}
+                onTitleChange={setTitle}
+                root={root}
+                onRootChange={setRoot}
+                catalogDir={state.catalogDir ?? ''}
+                writeHTML
+                secondaryDir=""
+                existingCatalogFilenames={existingCatalogFilenames}
+              />
               {!state.catalogDir && (
                 <div className="ws-create-error-banner">
                   Choose a catalog directory from the rail before creating a catalog.

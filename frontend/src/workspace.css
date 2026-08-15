@@ -982,6 +982,30 @@
   color: var(--ac);
 }
 
+.ws-create-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.ws-create-willwrite {
+  padding: 12px;
+  border-radius: 9px;
+  background: var(--ch);
+  border: 1px solid var(--l2);
+  font-size: 11.5px;
+  line-height: 1.6;
+}
+
+.ws-create-willwrite-row {
+  word-break: break-all;
+  color: var(--tx);
+}
+
+.ws-create-willwrite-exists {
+  color: var(--dm);
+}
+
 /* IBM Plex Sans/Mono @font-face declarations are vendored in plan 22-02
  * (wave 2), alongside the woff2 asset files themselves. Until then the
  * font-family references above fall through to the next stack entry. */

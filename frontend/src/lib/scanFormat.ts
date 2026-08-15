@@ -33,3 +33,48 @@ export function formatEta(bytesSeen: number, totalBytes: number, elapsedMs: numb
   const remainingSeconds = Math.max(1, Math.round(remainingMs / 1000));
   return `about ${remainingSeconds}s left`;
 }
+
+/**
+ * Lowercases, collapses every run of non-alphanumeric characters to a
+ * single hyphen, and trims leading/trailing hyphens -- the filename-root
+ * placeholder's derivation from a source's display name. Pure; an empty or
+ * all-symbol input returns an empty string, and the caller (CreateForm)
+ * applies the final "catalog" fallback, matching the title field's own
+ * never-block-Create rule of leaving fallback application to the caller.
+ */
+export function slugifyRoot(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+export interface WillWritePathsArgs {
+  catalogDir: string;
+  root: string;
+  writeHtml: boolean;
+  secondaryDir?: string;
+}
+
+/**
+ * The WILL WRITE preview's exact output paths, in the fixed, deterministic
+ * order the contract requires: the JSON in the catalog directory first,
+ * then the HTML there when enabled, then the secondary-location copies (in
+ * the same JSON-then-HTML order) when a secondary directory is set. Callers
+ * render this array as given and never sort or reverse it.
+ */
+export function willWritePaths({ catalogDir, root, writeHtml, secondaryDir }: WillWritePathsArgs): string[] {
+  const paths = [joinDisplayPath(catalogDir, `${root}.json`)];
+  if (writeHtml) paths.push(joinDisplayPath(catalogDir, `${root}.html`));
+  if (secondaryDir) {
+    paths.push(joinDisplayPath(secondaryDir, `${root}.json`));
+    if (writeHtml) paths.push(joinDisplayPath(secondaryDir, `${root}.html`));
+  }
+  return paths;
+}
+
+/** Joins a directory and filename for display, tolerant of a trailing
+ * separator on the directory so the preview never shows a doubled slash. */
+function joinDisplayPath(dir: string, filename: string): string {
+  return `${dir.replace(/[\\/]+$/, '')}/${filename}`;
+}

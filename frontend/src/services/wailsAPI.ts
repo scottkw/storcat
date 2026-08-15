@@ -74,7 +74,7 @@ export const wailsAPI = {
     sourcePath: string,
     outputDir: string,
     outputRoot: string,
-    opts: { writeHTML: boolean; includeHidden: boolean; copyToDirectory: string }
+    opts: { writeHTML: boolean; includeHidden: boolean; copyToDirectory: string; totalBytesHint: number }
   ) => {
     try {
       const result = await StartScan(title, sourcePath, outputDir, outputRoot, opts as main.ScanOptions);
