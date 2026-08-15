@@ -66,6 +66,14 @@ export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
 }
 
+export function SetDensity(arg1) {
+  return window['go']['main']['App']['SetDensity'](arg1);
+}
+
+export function SetSettingsMigrated(arg1) {
+  return window['go']['main']['App']['SetSettingsMigrated'](arg1);
+}
+
 export function SetSidebarPosition(arg1) {
   return window['go']['main']['App']['SetSidebarPosition'](arg1);
 }

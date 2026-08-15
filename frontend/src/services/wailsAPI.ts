@@ -10,6 +10,8 @@ import {
   SetTheme,
   SetSidebarPosition,
   SetWindowSize,
+  SetDensity,
+  SetSettingsMigrated,
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
@@ -227,6 +229,24 @@ export const wailsAPI = {
   setWindowSize: async (width: number, height: number) => {
     try {
       await SetWindowSize(width, height);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setDensity: async (density: string) => {
+    try {
+      await SetDensity(density);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setSettingsMigrated: async (migrated: boolean) => {
+    try {
+      await SetSettingsMigrated(migrated);
       return { success: true };
     } catch (error: any) {
       return wailsError(error);

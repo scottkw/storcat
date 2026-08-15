@@ -8,6 +8,8 @@ export namespace config {
 	    windowX: number;
 	    windowY: number;
 	    windowPersistenceEnabled: boolean;
+	    density: string;
+	    settingsMigrated: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -22,6 +24,8 @@ export namespace config {
 	        this.windowX = source["windowX"];
 	        this.windowY = source["windowY"];
 	        this.windowPersistenceEnabled = source["windowPersistenceEnabled"];
+	        this.density = source["density"];
+	        this.settingsMigrated = source["settingsMigrated"];
 	    }
 	}
 

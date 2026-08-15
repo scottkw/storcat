@@ -4,17 +4,24 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 // Config holds application settings
 type Config struct {
-	Theme                   string `json:"theme"`                   // "light" or "dark"
-	SidebarPosition         string `json:"sidebarPosition"`         // "left" or "right"
-	WindowWidth             int    `json:"windowWidth"`
-	WindowHeight            int    `json:"windowHeight"`
-	WindowX                 int    `json:"windowX"`
-	WindowY                 int    `json:"windowY"`
-	WindowPersistenceEnabled bool  `json:"windowPersistenceEnabled"`
+	Theme string `json:"theme"` // "light" or "dark"
+	// SidebarPosition is an intentionally-orphaned v1 leftover, distinct from
+	// this milestone's rail-side concept (which lives in the frontend's
+	// AppContext/localStorage, not here). Left in place, untouched
+	// (26-RESEARCH.md Pitfall 2, resolved by 26-CONTEXT.md's discretion note).
+	SidebarPosition          string `json:"sidebarPosition"` // "left" or "right"
+	WindowWidth              int    `json:"windowWidth"`
+	WindowHeight             int    `json:"windowHeight"`
+	WindowX                  int    `json:"windowX"`
+	WindowY                  int    `json:"windowY"`
+	WindowPersistenceEnabled bool   `json:"windowPersistenceEnabled"`
+	Density                  string `json:"density"`         // "Compact" or "Comfortable"
+	SettingsMigrated         bool   `json:"settingsMigrated"` // set once legacy localStorage settings keys have been folded into this config
 }
 
 // DefaultConfig returns default application settings
@@ -27,6 +34,8 @@ func DefaultConfig() *Config {
 		WindowX:                  0,
 		WindowY:                  0,
 		WindowPersistenceEnabled: true,
+		Density:                  "Comfortable",
+		SettingsMigrated:         false,
 	}
 }
 
@@ -34,6 +43,11 @@ func DefaultConfig() *Config {
 type Manager struct {
 	configPath string
 	config     *Config
+	// mu guards every read and write of config below. Get() returns a copy
+	// under RLock rather than the live *Config pointer so a caller can never
+	// race a concurrent Set* call mutating the same struct from a different
+	// Wails-dispatched goroutine (T-26-02).
+	mu sync.RWMutex
 }
 
 // storcatConfigDir resolves (and creates, if missing) the directory
@@ -89,7 +103,9 @@ func (m *Manager) Load() error {
 	data, err := os.ReadFile(m.configPath)
 	if err != nil {
 		if os.IsNotExist(err) {
+			m.mu.Lock()
 			m.config = DefaultConfig()
+			m.mu.Unlock()
 			return nil
 		}
 		return err
@@ -100,12 +116,24 @@ func (m *Manager) Load() error {
 		return err
 	}
 
+	m.mu.Lock()
 	m.config = &config
+	m.mu.Unlock()
 	return nil
 }
 
 // Save writes config to disk
 func (m *Manager) Save() error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.saveLocked()
+}
+
+// saveLocked marshals and writes m.config to disk. Callers must already
+// hold m.mu (write lock) -- it takes no lock of its own so a setter can
+// mutate and save atomically inside one critical section without a
+// double-acquire against the exported Save().
+func (m *Manager) saveLocked() error {
 	data, err := json.MarshalIndent(m.config, "", "  ")
 	if err != nil {
 		return err
@@ -114,44 +142,80 @@ func (m *Manager) Save() error {
 	return os.WriteFile(m.configPath, data, 0644)
 }
 
-// Get returns current config
+// Get returns a copy of the current config, not the live pointer. This is a
+// deliberate behavior change from earlier versions: App.GetConfig, domReady
+// and beforeClose only ever read fields off the result, and returning a
+// copy under RLock is what makes concurrent Set* calls arriving on separate
+// Wails goroutines race-free for those callers.
 func (m *Manager) Get() *Config {
-	return m.config
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+	cfg := *m.config
+	return &cfg
 }
 
 // SetTheme updates theme setting
 func (m *Manager) SetTheme(theme string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.config.Theme = theme
-	return m.Save()
+	return m.saveLocked()
 }
 
 // SetSidebarPosition updates sidebar position
 func (m *Manager) SetSidebarPosition(position string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.config.SidebarPosition = position
-	return m.Save()
+	return m.saveLocked()
 }
 
 // SetWindowSize updates window dimensions
 func (m *Manager) SetWindowSize(width, height int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.config.WindowWidth = width
 	m.config.WindowHeight = height
-	return m.Save()
+	return m.saveLocked()
 }
 
 // SetWindowPosition updates window coordinates
 func (m *Manager) SetWindowPosition(x, y int) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.config.WindowX = x
 	m.config.WindowY = y
-	return m.Save()
+	return m.saveLocked()
 }
 
 // SetWindowPersistence updates the window state persistence toggle
 func (m *Manager) SetWindowPersistence(enabled bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
 	m.config.WindowPersistenceEnabled = enabled
-	return m.Save()
+	return m.saveLocked()
 }
 
 // GetWindowPersistence returns whether window state persistence is enabled
 func (m *Manager) GetWindowPersistence() bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
 	return m.config.WindowPersistenceEnabled
+}
+
+// SetDensity updates the row-density preference
+func (m *Manager) SetDensity(density string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.Density = density
+	return m.saveLocked()
+}
+
+// SetSettingsMigrated marks whether the legacy localStorage settings keys
+// have been folded into this config (consumed by plan 26-02's migration).
+func (m *Manager) SetSettingsMigrated(migrated bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.SettingsMigrated = migrated
+	return m.saveLocked()
 }

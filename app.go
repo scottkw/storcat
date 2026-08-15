@@ -562,6 +562,23 @@ func (a *App) SetSidebarPosition(position string) error {
 	return a.configManager.SetSidebarPosition(position)
 }
 
+// SetDensity saves the row-density preference
+func (a *App) SetDensity(density string) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetDensity(density)
+}
+
+// SetSettingsMigrated marks whether the legacy localStorage settings keys
+// have been folded into the Go config (plan 26-02's migration).
+func (a *App) SetSettingsMigrated(migrated bool) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetSettingsMigrated(migrated)
+}
+
 // SetWindowSize saves the window size preference
 func (a *App) SetWindowSize(width, height int) error {
 	if a.configManager == nil {

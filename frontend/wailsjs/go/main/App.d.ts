@@ -37,6 +37,10 @@ export function SearchIndexed(arg1:string,arg2:string):Promise<models.SearchInde
 
 export function SelectDirectory():Promise<string>;
 
+export function SetDensity(arg1:string):Promise<void>;
+
+export function SetSettingsMigrated(arg1:boolean):Promise<void>;
+
 export function SetSidebarPosition(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;

@@ -1355,3 +1355,175 @@
 /* IBM Plex Sans/Mono @font-face declarations are vendored in plan 22-02
  * (wave 2), alongside the woff2 asset files themselves. Until then the
  * font-family references above fall through to the next stack entry. */
+
+/* Settings dialog (26-UI-SPEC.md "Dialog Shell, Entry Points & Overlay
+ * Coexistence"). Own keyframe per this project's one-keyframe-per-surface
+ * convention (25-UI-SPEC.md) -- not a shared class with the palette scrim,
+ * even though the values are identical. */
+@keyframes ws-settings-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ws-settings-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 9, .62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-dialog);
+  animation: ws-settings-scrim-in 100ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-settings-scrim {
+    animation: none;
+  }
+}
+
+.ws-settings-panel {
+  width: 660px;
+  max-height: 700px;
+  border-radius: 12px;
+  background: var(--p);
+  border: 1px solid var(--l);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ws-settings-header {
+  height: 50px;
+  flex: none;
+  border-bottom: 1px solid var(--l);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.ws-settings-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.ws-settings-hint {
+  font-size: 11px;
+  color: var(--fn);
+}
+
+.ws-settings-close-x {
+  margin-left: auto;
+  font-size: 16px;
+  color: var(--dm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.ws-settings-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.ws-settings-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-settings-section-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dm);
+}
+
+.ws-settings-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.ws-settings-row-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.ws-settings-row-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx);
+}
+
+.ws-settings-row-note {
+  font-size: 11.5px;
+  color: var(--dm);
+}
+
+.ws-seg {
+  display: flex;
+  gap: 3px;
+  padding: 3px;
+  border-radius: 8px;
+  background: var(--ch);
+  border: 1px solid var(--l);
+  flex: none;
+}
+
+.ws-seg-option {
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+  background: transparent;
+  color: var(--dm);
+  border: none;
+}
+
+.ws-seg-option-active {
+  background: var(--ac);
+  color: var(--onac);
+}
+
+.ws-settings-footer {
+  height: 56px;
+  flex: none;
+  background: var(--p2);
+  border-top: 1px solid var(--l);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 16px;
+}
+
+.ws-settings-status {
+  font-size: 11px;
+  color: var(--fn);
+}
+
+.ws-settings-close-btn {
+  margin-left: auto;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: var(--ac);
+  color: var(--onac);
+  font-size: 12.5px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+}

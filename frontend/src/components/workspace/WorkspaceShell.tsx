@@ -6,6 +6,7 @@ import DetailsPanel from './DetailsPanel';
 import StatusBar from './StatusBar';
 import CommandPalette from './CommandPalette';
 import CreateSlideOver from './CreateSlideOver';
+import SettingsDialog from './SettingsDialog';
 import { useMediaQuery } from '../../hooks/useMediaQuery';
 import { useAppContext } from '../../contexts/AppContext';
 import { applyTokens, readPersistedPrefs } from '../../themeTokens';
@@ -23,6 +24,7 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
   const isWide = useMediaQuery('(min-width: 1280px)');
 
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Density lives in the reducer; re-apply the token layer whenever it
   // changes so the reducer field is not inert. Theme isn't reducer state
@@ -79,6 +81,22 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
     if (state.createOpen) setPaletteOpen(false);
   }, [state.createOpen]);
 
+  // Global ⌘,/Ctrl+, listener -- mirrors the ⌘K listener above exactly:
+  // preventDefault unconditionally, functional state update so a second
+  // press while already open is a no-op. Task 2 adds the overlay-coexistence
+  // rules (no-op during a foreground scan, closing the palette/create
+  // slide-over first); this task only needs the open path to work.
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === ',') {
+        event.preventDefault();
+        setSettingsOpen((open) => (open ? open : true));
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, []);
+
   return (
     <div className="ws-root" data-rail-side={state.railSide}>
       <Toolbar
@@ -103,6 +121,7 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
       )}
       <CommandPalette isOpen={paletteOpen} onClose={() => setPaletteOpen(false)} />
       <CreateSlideOver isOpen={state.createOpen} onClose={() => dispatch({ type: 'SET_CREATE_OPEN', payload: false })} />
+      <SettingsDialog isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
       <StatusBar />
     </div>
   );
