@@ -253,8 +253,9 @@ func TestTrashPaths_PropagatesSeamErrorVerbatim(t *testing.T) {
 
 // TestTrashPaths_NonASCIIPathReachesSeamByteIdentical proves no escaping,
 // quoting, or re-encoding is applied by this code before the seam is
-// called -- the wastebasket macOS backend does its own (weaker) escaping
-// downstream, but this package must hand it the exact resolved path.
+// called -- the underlying trash library's macOS backend does its own
+// (weaker) escaping downstream, but this package must hand it the exact
+// resolved path.
 func TestTrashPaths_NonASCIIPathReachesSeamByteIdentical(t *testing.T) {
 	dir := t.TempDir()
 	name := "카탈로그 report café.json"
