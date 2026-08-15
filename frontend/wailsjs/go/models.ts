@@ -55,6 +55,8 @@ export namespace models {
 	    name: string;
 	    size: number;
 	    contents: CatalogItem[];
+	    unreadable?: boolean;
+	    readError?: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new CatalogItem(source);
@@ -66,6 +68,8 @@ export namespace models {
 	        this.name = source["name"];
 	        this.size = source["size"];
 	        this.contents = this.convertValues(source["contents"], CatalogItem);
+	        this.unreadable = source["unreadable"];
+	        this.readError = source["readError"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

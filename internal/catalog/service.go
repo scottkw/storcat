@@ -3,6 +3,7 @@ package catalog
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"html"
 	"io"
@@ -39,13 +40,15 @@ func NewService() *Service {
 	return &Service{}
 }
 
+// maxReadErrorEntries caps the number of recorded read-error entries kept
+// on a walkState, so a device failing on every entry cannot grow an
+// unbounded slice. The readErrors counter itself stays uncapped.
+const maxReadErrorEntries = 50
+
 // walkState carries per-scan counters and options through the recursive
 // traverseDirectory walk. Counter mutation happens at the call sites in
 // traverseDirectory, never inside report, so a file's size is added exactly
-// once regardless of how many times report is called. scanRoot is unused by
-// this plan's error handling (today's single-entry skip-and-continue is
-// unchanged); it exists as the seam a later plan's terminal-vs-single-entry
-// classification (re-probing the scan root) will need.
+// once regardless of how many times report is called.
 type walkState struct {
 	scanRoot   string
 	opts       Options
@@ -54,6 +57,9 @@ type walkState struct {
 	filesSeen  int
 	bytesSeen  int64
 	readErrors int
+
+	readErrorEntries []ReadErrorEntry
+	terminal         bool
 }
 
 // report forwards the current counters to onProgress for displayPath, when a
@@ -68,6 +74,33 @@ func (st *walkState) report(displayPath string) {
 		BytesSeen:  st.bytesSeen,
 		ReadErrors: st.readErrors,
 	})
+}
+
+// recordReadError increments the uncapped read-error counter and appends a
+// bounded entry (the most recent maxReadErrorEntries only).
+func (st *walkState) recordReadError(path string, err error) {
+	st.readErrors++
+	st.readErrorEntries = append(st.readErrorEntries, ReadErrorEntry{Path: path, Reason: err.Error()})
+	if len(st.readErrorEntries) > maxReadErrorEntries {
+		st.readErrorEntries = st.readErrorEntries[len(st.readErrorEntries)-maxReadErrorEntries:]
+	}
+}
+
+// classify re-probes the SCAN ROOT -- not the failing subdirectory -- with a
+// cheap stat, and sets/returns st.terminal when the root itself no longer
+// stats. When HaltOnSourceLoss is false, classification never runs and
+// every read failure keeps today's skip-and-continue behavior unchanged.
+// This root re-probe is the whole classification: a failure that leaves the
+// root reachable is one bad entry; a failure that takes the root with it is
+// a vanished source.
+func (st *walkState) classify() bool {
+	if !st.opts.HaltOnSourceLoss {
+		return false
+	}
+	if _, err := os.Stat(st.scanRoot); err != nil {
+		st.terminal = true
+	}
+	return st.terminal
 }
 
 // CreateCatalog is the CLI's compatibility-preserving thin wrapper around
@@ -107,6 +140,20 @@ func (s *Service) CreateCatalogWithContext(ctx context.Context, title, sourcePat
 
 	tree, err := s.traverseDirectory(ctx, sourcePath, sourcePath, st)
 	if err != nil {
+		// Three outcomes, distinguished before touching the write path: a
+		// cancelled context writes nothing; a source-loss error is returned
+		// with its populated partial scan attached and writes nothing;
+		// anything else is a genuine traversal failure.
+		var srcErr *SourceUnavailableError
+		if errors.As(err, &srcErr) {
+			srcErr.Partial = &PartialScan{
+				Tree:       tree,
+				FilesSeen:  st.filesSeen,
+				BytesSeen:  st.bytesSeen,
+				ReadErrors: st.readErrorEntries,
+			}
+			return nil, srcErr
+		}
 		return nil, fmt.Errorf("failed to traverse directory: %w", err)
 	}
 
@@ -210,16 +257,24 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 
 		entries, err := os.ReadDir(dirPath)
 		if err != nil {
-			// Return empty directory if we can't read it. This plan adds
-			// signal only (ReadErrors), never a behavior change -- terminal
-			// vs. single-entry classification is a later plan's job.
-			st.readErrors++
-			return &models.CatalogItem{
+			st.recordReadError(dirPath, err)
+			node := &models.CatalogItem{
 				Type:     "directory",
 				Name:     displayPath,
 				Size:     0,
 				Contents: []*models.CatalogItem{},
-			}, nil
+			}
+			if st.classify() {
+				// The scan root itself is gone: this is the origin node --
+				// mark it and propagate a source-loss error carrying what
+				// was built so far (nothing, at this node).
+				node.Unreadable = true
+				node.ReadError = err.Error()
+				return node, &SourceUnavailableError{SourcePath: st.scanRoot}
+			}
+			// Root still reachable: today's skip-and-continue behavior,
+			// unchanged -- an empty, error-free directory node.
+			return node, nil
 		}
 
 		// Sort entries: directories first, then files, alphabetically
@@ -251,8 +306,48 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 					// keep going and CancelWritesNothing would not hold.
 					return nil, err
 				}
-				// Skip items we can't access
-				st.readErrors++
+
+				var srcErr *SourceUnavailableError
+				if errors.As(err, &srcErr) {
+					// A deeper level already detected and marked the
+					// origin node. Keep whatever partial child came back,
+					// stop iterating this directory's remaining siblings,
+					// and propagate the same error upward unmarked -- only
+					// the origin node carries the marker fields.
+					if childItem != nil {
+						contents = append(contents, childItem)
+						totalSize += childItem.Size
+					}
+					if contents == nil {
+						contents = []*models.CatalogItem{}
+					}
+					return &models.CatalogItem{
+						Type:     "directory",
+						Name:     displayPath,
+						Size:     totalSize,
+						Contents: contents,
+					}, err
+				}
+
+				// Plain single-entry failure (e.g. os.Stat failed for this
+				// child). Record it and classify against the scan root.
+				st.recordReadError(childPath, err)
+				if st.classify() {
+					if contents == nil {
+						contents = []*models.CatalogItem{}
+					}
+					node := &models.CatalogItem{
+						Type:     "directory",
+						Name:     displayPath,
+						Size:     totalSize,
+						Contents: contents,
+					}
+					node.Unreadable = true
+					node.ReadError = err.Error()
+					return node, &SourceUnavailableError{SourcePath: st.scanRoot}
+				}
+				// Skip items we can't access -- unchanged byte-for-byte
+				// behavior when the root is still reachable.
 				continue
 			}
 

@@ -454,3 +454,240 @@ func TestCreateCatalogWithContext_IncludeHidden(t *testing.T) {
 		}
 	})
 }
+
+// TestTraverseDirectory_SingleEntryErrorSkipsAndContinues verifies that one
+// unreadable child among readable siblings is dropped from contents, no
+// error is returned, and the read-error counter increments by exactly one --
+// today's v2.3.0 skip-and-continue behavior, unchanged.
+func TestTraverseDirectory_SingleEntryErrorSkipsAndContinues(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "ok1.txt"), []byte("a"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "ok2.txt"), []byte("b"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	brokenLink := filepath.Join(dir, "broken")
+	if err := os.Symlink(filepath.Join(dir, "does-not-exist"), brokenLink); err != nil {
+		t.Skipf("symlinks not supported on this system: %v", err)
+	}
+
+	st := &walkState{scanRoot: dir}
+	item, err := s.traverseDirectory(context.Background(), dir, dir, st)
+	if err != nil {
+		t.Fatalf("traverseDirectory failed: %v", err)
+	}
+	if len(item.Contents) != 2 {
+		t.Fatalf("expected 2 readable siblings, got %d: %+v", len(item.Contents), item.Contents)
+	}
+	for _, c := range item.Contents {
+		if filepath.Base(c.Name) == "broken" {
+			t.Errorf("unreadable child must not appear in contents: %+v", c)
+		}
+	}
+	if st.readErrors != 1 {
+		t.Errorf("readErrors = %d, want 1", st.readErrors)
+	}
+}
+
+// TestTraverseDirectory_TerminalSourceLossStopsWalk verifies that, with
+// HaltOnSourceLoss enabled, a read failure that also takes the scan root
+// itself unreachable is classified as terminal: the call returns an error
+// errors.As-matching *SourceUnavailableError, the carried partial tree
+// contains only the nodes walked before the loss, and no directory after
+// the failure point is descended into.
+func TestTraverseDirectory_TerminalSourceLossStopsWalk(t *testing.T) {
+	s := NewService()
+	root := t.TempDir()
+	subA := filepath.Join(root, "subA")
+	subB := filepath.Join(root, "subB")
+	subC := filepath.Join(root, "subC")
+	for _, d := range []string{subA, subB, subC} {
+		if err := os.MkdirAll(d, 0755); err != nil {
+			t.Fatalf("mkdir %s: %v", d, err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(subA, "ok.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(subC, "other.txt"), []byte("z"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	// subA sorts before subB and subC (directories-first, alphabetical), so
+	// it is fully walked first. The progress callback fires exactly when
+	// subA's file is seen -- at that point, remove the scan root itself out
+	// from under the walk, simulating a volume disappearing mid-scan.
+	// subB is processed next: its own os.Stat now fails because its parent
+	// (root) is gone, triggering classification. subC must never be
+	// reached.
+	var removed bool
+	st := &walkState{
+		scanRoot: root,
+		opts:     Options{HaltOnSourceLoss: true},
+		onProgress: func(u ProgressUpdate) {
+			if !removed && filepath.Base(u.Path) == "ok.txt" {
+				removed = true
+				if err := os.RemoveAll(root); err != nil {
+					t.Fatalf("remove root: %v", err)
+				}
+			}
+		},
+	}
+
+	item, err := s.traverseDirectory(context.Background(), root, root, st)
+
+	var srcErr *SourceUnavailableError
+	if !errors.As(err, &srcErr) {
+		t.Fatalf("expected an error matching *SourceUnavailableError, got %v", err)
+	}
+	if item == nil {
+		t.Fatal("expected a non-nil partial node")
+	}
+	if len(item.Contents) != 1 {
+		t.Fatalf("expected exactly 1 node walked before the loss (subA), got %d: %+v", len(item.Contents), item.Contents)
+	}
+	if filepath.Base(item.Contents[0].Name) != "subA" {
+		t.Errorf("expected subA in the partial tree, got %+v", item.Contents[0])
+	}
+	if !st.terminal {
+		t.Error("expected walkState.terminal to be set")
+	}
+}
+
+// TestCreateCatalogWithContext_SourceLossWritesNothing verifies that
+// through the public entry point, a terminal source loss leaves the output
+// directory empty -- the write path is never reached.
+func TestCreateCatalogWithContext_SourceLossWritesNothing(t *testing.T) {
+	s := NewService()
+	sourceDir := t.TempDir()
+	outputDir := t.TempDir()
+	subA := filepath.Join(sourceDir, "subA")
+	subB := filepath.Join(sourceDir, "subB")
+	if err := os.MkdirAll(subA, 0755); err != nil {
+		t.Fatalf("mkdir subA: %v", err)
+	}
+	if err := os.MkdirAll(subB, 0755); err != nil {
+		t.Fatalf("mkdir subB: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(subA, "ok.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	var removed bool
+	onProgress := func(u ProgressUpdate) {
+		if !removed && filepath.Base(u.Path) == "ok.txt" {
+			removed = true
+			if err := os.RemoveAll(sourceDir); err != nil {
+				t.Fatalf("remove sourceDir: %v", err)
+			}
+		}
+	}
+
+	_, err := s.CreateCatalogWithContext(
+		context.Background(), "Test", sourceDir, outputDir, "out", "",
+		Options{WriteHTML: true, HaltOnSourceLoss: true}, onProgress,
+	)
+
+	var srcErr *SourceUnavailableError
+	if !errors.As(err, &srcErr) {
+		t.Fatalf("expected an error matching *SourceUnavailableError, got %v", err)
+	}
+	if srcErr.Partial == nil {
+		t.Fatal("expected a populated PartialScan on the returned error")
+	}
+	if srcErr.Partial.FilesSeen != 1 {
+		t.Errorf("Partial.FilesSeen = %d, want 1", srcErr.Partial.FilesSeen)
+	}
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		t.Fatalf("read outputDir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected outputDir to remain empty after a source-loss stop, got %+v", entries)
+	}
+}
+
+// TestCreateCatalog_WrapperDoesNotHaltOnSourceLoss verifies that the CLI
+// wrapper leaves HaltOnSourceLoss false, so a single-entry failure -- even
+// one that would classify as terminal if halting were enabled -- reproduces
+// v2.3.0's skip-and-continue behavior exactly and returns no error.
+func TestCreateCatalog_WrapperDoesNotHaltOnSourceLoss(t *testing.T) {
+	s := NewService()
+	sourceDir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(sourceDir, "ok.txt"), []byte("hi"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	brokenLink := filepath.Join(sourceDir, "broken")
+	if err := os.Symlink(filepath.Join(sourceDir, "does-not-exist"), brokenLink); err != nil {
+		t.Skipf("symlinks not supported on this system: %v", err)
+	}
+
+	result, err := s.CreateCatalog("Test", sourceDir, "out", "", nil)
+	if err != nil {
+		t.Fatalf("CreateCatalog (CLI wrapper) failed: %v, want no error (matches v2.3.0 skip-and-continue)", err)
+	}
+	if result.FileCount != 1 {
+		t.Errorf("FileCount = %d, want 1 (unreadable entry silently skipped)", result.FileCount)
+	}
+}
+
+// TestWritePartialCatalog_Marker verifies that writing a partial tree
+// through the shared write path produces JSON in which exactly the marked
+// directory node carries the marker keys, and no other node does.
+func TestWritePartialCatalog_Marker(t *testing.T) {
+	s := NewService()
+	tree := &models.CatalogItem{
+		Type: "directory",
+		Name: "./",
+		Size: 5,
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./a.txt", Size: 5},
+			{
+				Type:       "directory",
+				Name:       "./gone",
+				Size:       0,
+				Contents:   []*models.CatalogItem{},
+				Unreadable: true,
+				ReadError:  "stat ./gone: no such file or directory",
+			},
+		},
+	}
+
+	tmpDir := t.TempDir()
+	jsonPath := filepath.Join(tmpDir, "test.json")
+	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+		t.Fatalf("writeJSONFile failed: %v", err)
+	}
+
+	data, err := os.ReadFile(jsonPath)
+	if err != nil {
+		t.Fatalf("read output file: %v", err)
+	}
+
+	var decoded map[string]interface{}
+	if err := json.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("decode written JSON: %v", err)
+	}
+	contents := decoded["contents"].([]interface{})
+	fileNode := contents[0].(map[string]interface{})
+	dirNode := contents[1].(map[string]interface{})
+
+	if _, ok := fileNode["unreadable"]; ok {
+		t.Errorf("clean node must not carry the unreadable key: %+v", fileNode)
+	}
+	if _, ok := fileNode["readError"]; ok {
+		t.Errorf("clean node must not carry the readError key: %+v", fileNode)
+	}
+	if dirNode["unreadable"] != true {
+		t.Errorf("marked node must carry unreadable:true, got %+v", dirNode)
+	}
+	if dirNode["readError"] != "stat ./gone: no such file or directory" {
+		t.Errorf("marked node must carry its readError, got %+v", dirNode)
+	}
+	if decoded["unreadable"] != nil {
+		t.Errorf("root node must not carry the marker keys, got %+v", decoded)
+	}
+}

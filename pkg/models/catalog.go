@@ -1,11 +1,27 @@
 package models
 
-// CatalogItem represents a file or directory in the catalog
+// CatalogItem represents a file or directory in the catalog.
+//
+// Unreadable and ReadError appear ONLY on a partial catalog written after a
+// scan-root loss (CRT-10/CRT-11) -- they mark the single directory node
+// where the loss was first detected. Both are absent-when-zero, so a
+// complete scan (the overwhelming majority of catalogs) omits them entirely
+// and its JSON is byte-for-byte the v2.3.0 shape (COMPAT-02). This is the
+// one scoped, deliberate divergence from that byte-identical guarantee, and
+// it exists only in the partial-catalog path. No reader in this repository
+// rejects unrecognized JSON keys, so these two keys are silently ignored by
+// every catalog reader that doesn't yet know about them.
 type CatalogItem struct {
 	Type     string         `json:"type"`
 	Name     string         `json:"name"`
 	Size     int64          `json:"size"`
 	Contents []*CatalogItem `json:"contents"`
+	// Unreadable is true only on the directory node where a scan-root loss
+	// was first detected during the walk.
+	Unreadable bool `json:"unreadable,omitempty"`
+	// ReadError carries the reason the walk stopped at this node. Non-empty
+	// exactly when Unreadable is true.
+	ReadError string `json:"readError,omitempty"`
 }
 
 // SearchResult represents a search result from catalog files

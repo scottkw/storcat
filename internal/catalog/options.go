@@ -14,4 +14,13 @@ type Options struct {
 	// IncludeHidden controls whether dot-prefixed entries are walked. False
 	// (the zero value) preserves today's default: dotfiles are skipped.
 	IncludeHidden bool
+	// HaltOnSourceLoss controls whether a read failure that also takes the
+	// scan root itself unreachable is treated as terminal (stop descending,
+	// return a *SourceUnavailableError carrying the partial tree) rather
+	// than today's skip-and-continue. The zero value (false) is what
+	// preserves v2.3.0's CLI behavior: the CLI wrapper must NEVER set this
+	// true. The GUI binding sets it true so a vanished volume reaches the
+	// error/partial-catalog UI (CRT-10/CRT-11) instead of silently
+	// producing a catalog missing everything after the loss.
+	HaltOnSourceLoss bool
 }

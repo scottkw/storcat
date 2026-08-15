@@ -370,3 +370,69 @@ func TestDetectParseError_AllocsValidLessThanInvalid(t *testing.T) {
 		t.Errorf("expected fewer allocations for a valid document (%v) than an invalid one (%v)", validAllocs, invalidAllocs)
 	}
 }
+
+// TestLoadCatalog_ToleratesMarkerFields verifies that a catalog JSON
+// carrying the phase 25-02 partial-catalog marker keys (unreadable,
+// readError) parses without error and produces the same node count as the
+// same tree without them -- no reader in this repo rejects unrecognized
+// JSON keys.
+func TestLoadCatalog_ToleratesMarkerFields(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+	content := []byte(`{"type":"directory","name":"./","size":5,"contents":[` +
+		`{"type":"file","name":"./a.txt","size":5,"contents":null},` +
+		`{"type":"directory","name":"./gone","size":0,"contents":[],"unreadable":true,"readError":"stat ./gone: no such file or directory"}` +
+		`]}`)
+	filePath := filepath.Join(dir, "partial.json")
+	if err := os.WriteFile(filePath, content, 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	item, err := s.LoadCatalog(filePath)
+	if err != nil {
+		t.Fatalf("LoadCatalog failed to tolerate marker fields: %v", err)
+	}
+	if len(item.Contents) != 2 {
+		t.Fatalf("expected 2 direct children, got %d", len(item.Contents))
+	}
+}
+
+// TestLoadCatalogFlat_ToleratesMarkerFields is LoadCatalog's flattening
+// sibling: same fixture, same tolerance requirement, plus a node-count
+// check against the equivalent marker-free tree.
+func TestLoadCatalogFlat_ToleratesMarkerFields(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	withMarkers := []byte(`{"type":"directory","name":"./","size":5,"contents":[` +
+		`{"type":"file","name":"./a.txt","size":5,"contents":null},` +
+		`{"type":"directory","name":"./gone","size":0,"contents":[],"unreadable":true,"readError":"stat ./gone: no such file or directory"}` +
+		`]}`)
+	withMarkersPath := filepath.Join(dir, "partial.json")
+	if err := os.WriteFile(withMarkersPath, withMarkers, 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	withoutMarkers := []byte(`{"type":"directory","name":"./","size":5,"contents":[` +
+		`{"type":"file","name":"./a.txt","size":5,"contents":null},` +
+		`{"type":"directory","name":"./gone","size":0,"contents":[]}` +
+		`]}`)
+	withoutMarkersPath := filepath.Join(dir, "clean.json")
+	if err := os.WriteFile(withoutMarkersPath, withoutMarkers, 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	flatWithMarkers, err := s.LoadCatalogFlat(withMarkersPath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFlat failed to tolerate marker fields: %v", err)
+	}
+	flatWithoutMarkers, err := s.LoadCatalogFlat(withoutMarkersPath)
+	if err != nil {
+		t.Fatalf("LoadCatalogFlat (marker-free) failed: %v", err)
+	}
+
+	if len(flatWithMarkers.Nodes) != len(flatWithoutMarkers.Nodes) {
+		t.Errorf("node count with markers = %d, without markers = %d, want equal",
+			len(flatWithMarkers.Nodes), len(flatWithoutMarkers.Nodes))
+	}
+}
