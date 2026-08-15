@@ -235,7 +235,7 @@ Plans:
   3. User can set the catalog directory, a default filename root, and the four catalog toggles (write HTML, copy to secondary location, watch directory, remember window size and position) (SET-04)
   4. User's settings save as they're changed with no explicit save step, and window size/position persistence continues to work exactly as it did pre-milestone, controlled by this same toggle (SET-05, COMPAT-05)
 
-**Plans**: 1/5 plans executed (5 waves)
+**Plans**: 2/5 plans executed (5 waves)
 Plans:
 **Wave 1**
 
@@ -243,7 +243,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 26-02-PLAN.md — Theme section: 11 theme cards, plus the catalog rail-position row (wave 2)
+- [x] 26-02-PLAN.md — Theme section: 11 theme cards, plus the catalog rail-position row (wave 2)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -319,6 +319,6 @@ Plans:
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
 | 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
-| 26. Settings | v3.0.0 | 1/5 | In Progress|  |
+| 26. Settings | v3.0.0 | 2/5 | In Progress|  |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |
 | 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |
