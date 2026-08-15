@@ -117,6 +117,36 @@ func TestSetWindowPersistence_Persists(t *testing.T) {
 	}
 }
 
+// TestSetWindowPersistence_Idempotent verifies flipping the remember-window
+// toggle to the value it already holds writes byte-identical config.json
+// content -- same shape as TestSetDensity_Idempotent, pinned here because
+// plan 26-05's must_haves calls out COMPAT-05 idempotency by name: a toggle
+// re-set to its current value must not append history or otherwise perturb
+// the on-disk file.
+func TestSetWindowPersistence_Idempotent(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetWindowPersistence(true); err != nil {
+		t.Fatalf("first SetWindowPersistence(true) error: %v", err)
+	}
+	first, err := os.ReadFile(m.configPath)
+	if err != nil {
+		t.Fatalf("ReadFile after first SetWindowPersistence: %v", err)
+	}
+
+	if err := m.SetWindowPersistence(true); err != nil {
+		t.Fatalf("second SetWindowPersistence(true) error: %v", err)
+	}
+	second, err := os.ReadFile(m.configPath)
+	if err != nil {
+		t.Fatalf("ReadFile after second SetWindowPersistence: %v", err)
+	}
+
+	if string(first) != string(second) {
+		t.Errorf("on-disk config not byte-identical after idempotent SetWindowPersistence:\nfirst:  %s\nsecond: %s", first, second)
+	}
+}
+
 // TestGetWindowPersistence_Default verifies a fresh config has persistence enabled.
 func TestGetWindowPersistence_Default(t *testing.T) {
 	m := newTestManager(t)
