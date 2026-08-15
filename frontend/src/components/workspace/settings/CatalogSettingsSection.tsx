@@ -133,7 +133,7 @@ function CatalogSettingsSection() {
         <ToggleRow
           checked={state.settings.watchDirectory}
           label="Watch catalog directory for changes"
-          note="refresh the rail automatically"
+          note="applies once file watching ships"
           noteMono={false}
           disabled={false}
           onToggle={() => {
