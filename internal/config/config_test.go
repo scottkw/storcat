@@ -237,6 +237,64 @@ func TestSetDensity_Idempotent(t *testing.T) {
 	}
 }
 
+// TestSetRailSide verifies SetRailSide updates the in-memory config.
+func TestSetRailSide(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetRailSide("Right"); err != nil {
+		t.Fatalf("SetRailSide(\"Right\") error: %v", err)
+	}
+
+	if got := m.Get().RailSide; got != "Right" {
+		t.Errorf("Get().RailSide = %q, want %q", got, "Right")
+	}
+}
+
+// TestSetRailSide_Persists verifies SetRailSide writes synchronously to
+// disk -- a second Manager loaded from the same path reports the same
+// value.
+func TestSetRailSide_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetRailSide("Right"); err != nil {
+		t.Fatalf("SetRailSide(\"Right\") error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().RailSide; got != "Right" {
+		t.Errorf("after reload: RailSide = %q, want %q", got, "Right")
+	}
+}
+
+// TestDefaultConfig_RailSide verifies DefaultConfig's RailSide default.
+func TestDefaultConfig_RailSide(t *testing.T) {
+	cfg := DefaultConfig()
+
+	if cfg.RailSide != "Left" {
+		t.Errorf("DefaultConfig().RailSide = %q, want %q", cfg.RailSide, "Left")
+	}
+}
+
+// TestSetRailSide_DoesNotTouchSidebarPosition pins that RailSide and
+// SidebarPosition never alias -- they are unrelated concepts
+// (26-RESEARCH.md Pitfall 2).
+func TestSetRailSide_DoesNotTouchSidebarPosition(t *testing.T) {
+	m := newTestManager(t)
+	want := DefaultConfig().SidebarPosition
+
+	if err := m.SetRailSide("Right"); err != nil {
+		t.Fatalf("SetRailSide(\"Right\") error: %v", err)
+	}
+
+	if got := m.Get().SidebarPosition; got != want {
+		t.Errorf("Get().SidebarPosition = %q, want unchanged %q", got, want)
+	}
+}
+
 // TestManager_ConcurrentSetters interleaves SetDensity, SetSettingsMigrated
 // and Get() across goroutines and asserts no error is returned. Run under
 // -race (SET-05 concurrency edge) -- this is the reason Manager gained a
