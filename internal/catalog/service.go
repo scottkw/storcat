@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"html"
-	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -602,22 +601,21 @@ func (s *Service) countDirectories(catalog *models.CatalogItem) int {
 	return count
 }
 
-// copyFile copies a file from src to dst
-// copyFile copies a file from src to dst, returning the real number of
-// bytes copied (io.Copy's own count) so the caller can report the copy's
-// actual on-disk size rather than re-deriving it from the source file.
+// copyFile copies a file from src to dst, returning the number of bytes
+// copied. Routed through WriteFileAtomic (temp file in dst's own directory,
+// then os.Rename) rather than os.Create+io.Copy: os.Create truncates dst the
+// instant it's called, so a crash or I/O error partway through the copy
+// would leave a truncated file at dst -- destroying a previously-good
+// secondary copy if one already existed. The source files this copies
+// (catalog JSON/HTML) are already held in memory once per write elsewhere in
+// this same write path, so reading src fully here is not a new I/O pattern.
 func (s *Service) copyFile(src, dst string) (int64, error) {
-	sourceFile, err := os.Open(src)
+	data, err := os.ReadFile(src)
 	if err != nil {
 		return 0, err
 	}
-	defer sourceFile.Close()
-
-	destFile, err := os.Create(dst)
-	if err != nil {
+	if err := WriteFileAtomic(dst, data, 0644); err != nil {
 		return 0, err
 	}
-	defer destFile.Close()
-
-	return io.Copy(destFile, sourceFile)
+	return int64(len(data)), nil
 }

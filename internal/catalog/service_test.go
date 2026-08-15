@@ -770,3 +770,82 @@ func TestWritePartialCatalog_Marker(t *testing.T) {
 		t.Errorf("root node must not carry the marker keys, got %+v", decoded)
 	}
 }
+
+// TestCopyFile_CopiesContent verifies copyFile produces a destination with
+// byte-identical content and returns the correct copied-byte count.
+// Addresses CR-01.
+func TestCopyFile_CopiesContent(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	src := filepath.Join(dir, "src.json")
+	want := []byte(`{"hello":"world"}`)
+	if err := os.WriteFile(src, want, 0644); err != nil {
+		t.Fatalf("write src: %v", err)
+	}
+
+	dst := filepath.Join(dir, "dst.json")
+	n, err := s.copyFile(src, dst)
+	if err != nil {
+		t.Fatalf("copyFile failed: %v", err)
+	}
+	if n != int64(len(want)) {
+		t.Errorf("copyFile returned %d bytes, want %d", n, len(want))
+	}
+
+	got, err := os.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("read dst: %v", err)
+	}
+	if string(got) != string(want) {
+		t.Errorf("dst content = %q, want %q", got, want)
+	}
+}
+
+// TestCopyFile_PreservesExistingDestinationOnFailure is the CR-01
+// regression test: copyFile must never truncate an existing, good
+// destination file before a copy is known to succeed. With the old
+// os.Create+io.Copy implementation, os.Create truncated dst immediately --
+// so a write failure (here: an unwritable destination directory) would
+// leave dst empty, destroying a previously-good secondary copy. Routed
+// through WriteFileAtomic, a failed write must leave the original dst
+// content completely untouched.
+func TestCopyFile_PreservesExistingDestinationOnFailure(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	src := filepath.Join(dir, "src.json")
+	if err := os.WriteFile(src, []byte("new data"), 0644); err != nil {
+		t.Fatalf("write src: %v", err)
+	}
+
+	dstDir := filepath.Join(dir, "dst-dir")
+	if err := os.Mkdir(dstDir, 0755); err != nil {
+		t.Fatalf("mkdir dstDir: %v", err)
+	}
+	dst := filepath.Join(dstDir, "dst.json")
+	previousGood := []byte("PREVIOUSLY GOOD DATA")
+	if err := os.WriteFile(dst, previousGood, 0644); err != nil {
+		t.Fatalf("seed dst: %v", err)
+	}
+
+	// Make dstDir read-only so WriteFileAtomic's os.CreateTemp (and thus the
+	// whole copy) fails before ever touching the existing dst file.
+	if err := os.Chmod(dstDir, 0555); err != nil {
+		t.Fatalf("chmod dstDir read-only: %v", err)
+	}
+	defer os.Chmod(dstDir, 0755) // restore so t.TempDir() cleanup can remove it
+
+	if _, err := s.copyFile(src, dst); err == nil {
+		t.Fatal("expected copyFile to fail against a read-only destination directory")
+	}
+
+	os.Chmod(dstDir, 0755)
+	got, err := os.ReadFile(dst)
+	if err != nil {
+		t.Fatalf("read dst after failed copy: %v", err)
+	}
+	if string(got) != string(previousGood) {
+		t.Errorf("dst content changed after failed copy: got %q, want untouched %q", got, previousGood)
+	}
+}
