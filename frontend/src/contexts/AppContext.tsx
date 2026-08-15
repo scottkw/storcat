@@ -46,9 +46,19 @@ export interface AppState {
   createFolderPickerIntent: boolean;
   // The config-backed settings slice not already covered by density/
   // railSide/catalogDir above. Initialised to DEFAULT_APP_SETTINGS and
-  // replaced wholesale by SETTINGS_HYDRATED once WorkspaceShell's mount
-  // effect resolves the real config (settingsStore.hydrateSettings).
+  // field-merged by SETTINGS_HYDRATED once WorkspaceShell's mount effect
+  // resolves the real config (settingsStore.hydrateSettings) -- see
+  // touchedSettings below for which fields that merge is allowed to touch.
   settings: AppSettings;
+  // WR-B: keys explicitly written via SET_SETTINGS (a real user action),
+  // tracked so SETTINGS_HYDRATED can skip them rather than inferring
+  // "untouched" from value-equals-default. The equals-default heuristic
+  // alone misfires when a user deliberately re-sets a field back to its
+  // default value during the hydration race window -- that write looked
+  // identical to "never touched" and a stale in-flight hydration result
+  // could silently revert it. Never cleared -- SETTINGS_HYDRATED fires
+  // once per launch, so nothing depends on this set shrinking again.
+  touchedSettings: Set<keyof AppSettings>;
 }
 
 type AppAction =
@@ -118,6 +128,7 @@ const initialState: AppState = {
   scan: { status: 'idle' },
   createFolderPickerIntent: false,
   settings: DEFAULT_APP_SETTINGS,
+  touchedSettings: new Set(),
 };
 
 // Extracts the in-progress/terminal title from whichever ScanState variant
@@ -388,13 +399,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       // getConfig() round trip is in flight from mount, so a user can
       // dispatch SET_SETTINGS (toggling a row in the Settings dialog,
       // already persisted via its own wailsAPI call) before this resolves.
-      // Only fold in a hydrated field if it's still sitting at the
-      // untouched initial-state default -- the same "don't clobber a
-      // value the user already changed" guard CreateSlideOver's own
-      // re-seed effect uses for root/writeHTML/copyToSecondary.
+      // Only fold in a hydrated field if SET_SETTINGS has never touched it
+      // (WR-B) -- an equals-default check alone misfires when the user's
+      // own write happens to land back on the default value.
       const merged = { ...state.settings };
       (Object.keys(action.payload) as (keyof AppSettings)[]).forEach((key) => {
-        if (state.settings[key] === DEFAULT_APP_SETTINGS[key]) {
+        if (!state.touchedSettings.has(key)) {
           merged[key] = action.payload[key] as never;
         }
       });
@@ -402,15 +412,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'SET_SETTINGS': {
       // Returns the identical state object when every key in the payload
-      // already holds the incoming value -- the same bail-out convention
-      // SET_CREATE_OPEN/SET_CATALOG_DIR use above, so a field committed
-      // with its own current value (e.g. a toggle re-set to what it
-      // already was) triggers no re-render.
-      const unchanged = (Object.keys(action.payload) as (keyof AppSettings)[]).every(
-        (key) => state.settings[key] === action.payload[key]
-      );
-      if (unchanged) return state;
-      return { ...state, settings: { ...state.settings, ...action.payload } };
+      // already holds the incoming value AND is already recorded touched --
+      // the same bail-out convention SET_CREATE_OPEN/SET_CATALOG_DIR use
+      // above, so a genuine repeat dispatch triggers no re-render. A value
+      // that happens to be unchanged but not yet touched (the user's first
+      // write landing back on the current/default value, WR-B) still needs
+      // to record the touch so SETTINGS_HYDRATED can't later clobber it.
+      const keys = Object.keys(action.payload) as (keyof AppSettings)[];
+      const alreadyTouched = keys.every((key) => state.touchedSettings.has(key));
+      const unchanged = keys.every((key) => state.settings[key] === action.payload[key]);
+      if (unchanged && alreadyTouched) return state;
+      const touchedSettings = alreadyTouched
+        ? state.touchedSettings
+        : new Set([...state.touchedSettings, ...keys]);
+      return { ...state, settings: { ...state.settings, ...action.payload }, touchedSettings };
     }
     default:
       return state;
