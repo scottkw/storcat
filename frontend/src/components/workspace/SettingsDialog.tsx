@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
-import { setDensitySetting } from '../../settingsStore';
+import { setDensitySetting, setThemeSetting } from '../../settingsStore';
 import { wailsAPI } from '../../services/wailsAPI';
+import { readPersistedPrefs } from '../../themeTokens';
 import SegmentedControl from './settings/SegmentedControl';
+import ThemeGrid from './settings/ThemeGrid';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -41,6 +43,18 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
     };
   }, [isOpen]);
 
+  // The active theme id must track a theme changed by any other path (the
+  // dev switcher, for instance) while the dialog is open, not just the
+  // value read at mount -- re-read on every 'themeChange' event.
+  const [activeThemeId, setActiveThemeId] = useState<string>(() => readPersistedPrefs().theme.id);
+  useEffect(() => {
+    if (!isOpen) return;
+    setActiveThemeId(readPersistedPrefs().theme.id);
+    const handleThemeChange = () => setActiveThemeId(readPersistedPrefs().theme.id);
+    window.addEventListener('themeChange', handleThemeChange);
+    return () => window.removeEventListener('themeChange', handleThemeChange);
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
   const statusText = version
@@ -68,6 +82,11 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
         </div>
 
         <div className="ws-settings-body">
+          <div className="ws-settings-section">
+            <div className="ws-settings-section-label">Theme</div>
+            <ThemeGrid activeThemeId={activeThemeId} onSelect={setThemeSetting} />
+          </div>
+
           <div className="ws-settings-section">
             <div className="ws-settings-section-label">Layout</div>
             <div className="ws-settings-row">

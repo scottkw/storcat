@@ -13,12 +13,26 @@
 // Every later setter this phase adds (theme, rail side, catalog directory,
 // filename root, the four toggles) copies this exact two-write shape.
 
-import { Density, DENSITY_KEY, safeSetItem } from './themeTokens';
+import { Density, DENSITY_KEY, THEME_KEY, safeSetItem } from './themeTokens';
 import { wailsAPI } from './services/wailsAPI';
+import { Theme } from './themes';
 
 export { DENSITY_KEY };
 
 export function setDensitySetting(density: Density): void {
   safeSetItem(DENSITY_KEY, density);
   void wailsAPI.setDensity(density);
+}
+
+// Dispatches the existing 'themeChange' CustomEvent rather than calling
+// applyTokens() directly -- App.tsx's listener is the one existing apply
+// path (also used by DevStateSwitcher.tsx) and this deliberately does not
+// become a second one (26-CONTEXT.md Open Question 1 resolution). Note:
+// App.tsx's listener writes THEME_KEY a second time -- that duplicate write
+// is harmless and left alone rather than restructuring App.tsx, which plan
+// 26-04 owns.
+export function setThemeSetting(theme: Theme): void {
+  safeSetItem(THEME_KEY, theme.id);
+  void wailsAPI.setTheme(theme.id);
+  window.dispatchEvent(new CustomEvent('themeChange', { detail: { theme } }));
 }
