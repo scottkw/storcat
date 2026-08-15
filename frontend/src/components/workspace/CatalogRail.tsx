@@ -50,6 +50,26 @@ function CatalogRail() {
     loadCatalogsForDirectory(result.path);
   };
 
+  // While a scan is running (foreground or backgrounded), every create
+  // entry point is disabled -- this is RAIL-06/25-UI-SPEC's resolution to
+  // the deliberately out-of-scope multi-scan queue: the status-bar segment
+  // is the one live path back into the running scan, rather than a second
+  // click silently doing nothing or opening a confused second form.
+  const isScanningNow = state.scan.status === 'counting' || state.scan.status === 'scanning';
+  const disabledTitle = 'A scan is already running — open it from the status bar.';
+
+  // Every entry point opens at the form step (25-UI-SPEC.md Entry Points),
+  // never at a stale terminal state left over from a prior session (a
+  // 'done'/'error' scan the user dismissed via Escape/scrim rather than its
+  // own action buttons) -- 'idle' needs no reset, it's already the form.
+  function openCreatePanel() {
+    if (isScanningNow) return;
+    if (state.scan.status === 'done' || state.scan.status === 'error') {
+      dispatch({ type: 'SCAN_RESET' });
+    }
+    dispatch({ type: 'SET_CREATE_OPEN', payload: true });
+  }
+
   // Case-insensitive substring match against title + filename together,
   // preserving the array's existing order -- no re-sort, no ranking.
   const filteredCatalogs = useMemo(() => {
@@ -93,8 +113,10 @@ function CatalogRail() {
           {/* RAIL-06: opens the create slide-over. */}
           <button
             type="button"
-            className="ws-new-pill"
-            onClick={() => dispatch({ type: 'SET_CREATE_OPEN', payload: true })}
+            className={`ws-new-pill${isScanningNow ? ' ws-entry-disabled' : ''}`}
+            onClick={openCreatePanel}
+            aria-disabled={isScanningNow || undefined}
+            title={isScanningNow ? disabledTitle : undefined}
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -104,7 +126,7 @@ function CatalogRail() {
               border: 'none',
               borderRadius: 6,
               padding: '3px 8px',
-              cursor: 'pointer',
+              cursor: isScanningNow ? 'not-allowed' : 'pointer',
             }}
           >
             <svg
@@ -200,9 +222,26 @@ function CatalogRail() {
             <span style={{ fontSize: 11.5, lineHeight: 1.5, color: 'var(--dm)' }}>
               This folder has no .json catalogs. Point StorCat somewhere else, or catalog a volume to create the first one.
             </span>
-            <span style={{ fontSize: 12, fontWeight: 600, color: 'var(--ac)' }}>
+            <button
+              type="button"
+              className={isScanningNow ? 'ws-entry-disabled' : undefined}
+              onClick={openCreatePanel}
+              aria-disabled={isScanningNow || undefined}
+              title={isScanningNow ? disabledTitle : undefined}
+              style={{
+                alignSelf: 'flex-start',
+                background: 'transparent',
+                border: 'none',
+                padding: 0,
+                font: 'inherit',
+                fontSize: 12,
+                fontWeight: 600,
+                color: isScanningNow ? undefined : 'var(--ac)',
+                cursor: isScanningNow ? 'not-allowed' : 'pointer',
+              }}
+            >
               Catalog a volume →
-            </span>
+            </button>
           </div>
         ) : showZeroMatch ? (
           <div style={{ padding: '16px 10px', textAlign: 'center' }}>

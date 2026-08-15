@@ -147,6 +147,33 @@ function TreePane() {
     dispatch({ type: 'SET_SELECTED', payload: node.path });
   };
 
+  // While a scan is running (foreground or backgrounded), both empty-state
+  // entry points are disabled -- the status-bar segment is the one live
+  // path back into it (RAIL-06/25-UI-SPEC's resolution to the deliberately
+  // out-of-scope multi-scan queue).
+  const isScanningNow = state.scan.status === 'counting' || state.scan.status === 'scanning';
+  const disabledTitle = 'A scan is already running — open it from the status bar.';
+
+  // Every entry point opens at the form step, never a stale terminal state
+  // (25-UI-SPEC.md Entry Points) -- mirrors CatalogRail's identical helper.
+  function openCreatePanel() {
+    if (isScanningNow) return;
+    if (state.scan.status === 'done' || state.scan.status === 'error') {
+      dispatch({ type: 'SCAN_RESET' });
+    }
+    dispatch({ type: 'SET_CREATE_OPEN', payload: true });
+  }
+
+  // The secondary button's label promises a folder dialog specifically,
+  // not the generic volume-card list -- setting the intent flag before
+  // opening is what lands it there directly (CreateSlideOver consumes and
+  // clears the flag on open).
+  function openCreatePanelAtFolderPicker() {
+    if (isScanningNow) return;
+    dispatch({ type: 'SET_CREATE_FOLDER_PICKER_INTENT', payload: true });
+    openCreatePanel();
+  }
+
   const selectedCatalog = state.catalogs.find((catalog) => catalog.path === state.currentCatalogId);
 
   // A catalog can arrive broken by either route: the rail listing already
@@ -212,31 +239,39 @@ function TreePane() {
             <div style={{ display: 'flex', gap: 10 }}>
               <button
                 type="button"
+                className={isScanningNow ? 'ws-entry-disabled' : undefined}
+                onClick={openCreatePanel}
+                aria-disabled={isScanningNow || undefined}
+                title={isScanningNow ? disabledTitle : undefined}
                 style={{
                   height: 32,
                   padding: '0 15px',
                   borderRadius: 8,
-                  background: 'var(--ac)',
-                  color: 'var(--onac)',
+                  background: isScanningNow ? 'var(--ch)' : 'var(--ac)',
+                  color: isScanningNow ? undefined : 'var(--onac)',
                   border: 'none',
                   fontSize: 12.5,
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: isScanningNow ? 'not-allowed' : 'pointer',
                 }}
               >
                 Catalog a volume
               </button>
               <button
                 type="button"
+                className={isScanningNow ? 'ws-entry-disabled' : undefined}
+                onClick={openCreatePanelAtFolderPicker}
+                aria-disabled={isScanningNow || undefined}
+                title={isScanningNow ? disabledTitle : undefined}
                 style={{
                   height: 32,
                   padding: '0 15px',
                   borderRadius: 8,
                   background: 'transparent',
-                  color: 'var(--tx)',
+                  color: isScanningNow ? undefined : 'var(--tx)',
                   border: '1px solid var(--l)',
                   fontSize: 12.5,
-                  cursor: 'pointer',
+                  cursor: isScanningNow ? 'not-allowed' : 'pointer',
                 }}
               >
                 Choose catalog folder…

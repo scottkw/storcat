@@ -148,6 +148,23 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     return unsubscribe;
   }, [dispatch]);
 
+  // Consumes the folder-picker intent set by the tree pane's secondary
+  // entry point (TreePane.tsx): when the panel opens with the flag set,
+  // invoke the folder dialog once and clear the flag immediately -- before
+  // the dialog even resolves, so a re-render (or a later close/reopen)
+  // never re-triggers it. Lands the user directly on the picker that entry
+  // point's label promises, rather than the generic volume-card list.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (!state.createFolderPickerIntent) return;
+    dispatch({ type: 'SET_CREATE_FOLDER_PICKER_INTENT', payload: false });
+    wailsAPI.selectDirectory().then((result) => {
+      if (result.success && result.path) {
+        setSelectedSource({ kind: 'folder', path: result.path });
+      }
+    });
+  }, [isOpen, state.createFolderPickerIntent, dispatch]);
+
   // The single close handler every close trigger routes through (CRT-01,
   // CRT-09). During the scanning state a "cancel-the-scan" request cancels
   // the underlying context before the exit runs; "leave-it-running" (Run in

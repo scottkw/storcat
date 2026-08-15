@@ -36,6 +36,13 @@ export interface AppState {
   // The create flow's scan state machine, lifted for the same reason --
   // survives the slide-over's own mount/unmount across a close/reopen.
   scan: ScanState;
+  // Additive (25-07) rather than a change to SET_CREATE_OPEN's payload, so
+  // no call site written in an earlier plan needs editing. Set by the tree
+  // pane's "Choose catalog folder…" entry point; CreateSlideOver reads it
+  // once on open, invokes the folder dialog, and clears it -- landing that
+  // one entry point directly on the picker its label promises rather than
+  // the generic volume-card list.
+  createFolderPickerIntent: boolean;
 }
 
 type AppAction =
@@ -57,6 +64,7 @@ type AppAction =
   | { type: 'SET_PENDING_REVEAL'; payload: string | null }
   | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } }
   | { type: 'SET_CREATE_OPEN'; payload: boolean }
+  | { type: 'SET_CREATE_FOLDER_PICKER_INTENT'; payload: boolean }
   | { type: 'SCAN_STARTED'; payload: { title: string } }
   | { type: 'SCAN_PROGRESS'; payload: ScanProgress }
   // sourcePath: the failed scan's source, needed for ErrorBody's sub-line
@@ -97,6 +105,7 @@ const initialState: AppState = {
   pendingReveal: null,
   createOpen: false,
   scan: { status: 'idle' },
+  createFolderPickerIntent: false,
 };
 
 // Extracts the in-progress/terminal title from whichever ScanState variant
@@ -239,6 +248,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       // idempotency) -- React's reducer bail-out skips the re-render.
       if (state.createOpen === action.payload) return state;
       return { ...state, createOpen: action.payload };
+    case 'SET_CREATE_FOLDER_PICKER_INTENT':
+      if (state.createFolderPickerIntent === action.payload) return state;
+      return { ...state, createFolderPickerIntent: action.payload };
     case 'SCAN_STARTED':
       return {
         ...state,

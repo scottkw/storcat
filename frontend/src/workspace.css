@@ -94,6 +94,25 @@
   color: var(--onac);
 }
 
+/* 25-07: shared disabled-entry-point styling -- applied to all four create
+ * entry points while a scan is running (foreground or backgrounded). Text
+ * dims to the faint text color (never an opacity change), not a native
+ * `disabled` attribute -- aria-disabled + this class keeps the element
+ * focusable and its title tooltip working, which a native disabled
+ * attribute would suppress in some browsers. !important on ws-new-pill's
+ * own hover override is what keeps a hover from re-brightening a disabled
+ * pill regardless of source order. */
+.ws-entry-disabled,
+.ws-entry-disabled:hover {
+  color: var(--fn) !important;
+  cursor: not-allowed !important;
+}
+
+.ws-new-pill.ws-entry-disabled,
+.ws-new-pill.ws-entry-disabled:hover {
+  background: var(--acs) !important;
+}
+
 /* Rail row (RAIL-01/02/03/04). border-left is reserved at 2px transparent on
  * every row -- selecting a row only swaps its color, so the accent border
  * never shifts a row's content (the same "never remove from the DOM, only
