@@ -189,7 +189,7 @@ Plans:
   4. User sees a distinct error state when the volume goes away mid-scan (showing where it stopped and the read errors encountered), can write a partial catalog, retry the scan, or cancel from that state, and closing the window mid-scan cancels the walk and writes nothing (CRT-10, CRT-11, CRT-13)
   5. User sees a done state listing every file written with its size and can open the new catalog in the workspace or catalog another volume; catalogs this flow writes are byte-for-byte the same JSON shape v2.3.0 wrote; and all six CLI subcommands keep behaving exactly as before, with `internal/catalog` still usable from the CLI without a Wails runtime context (CRT-12, COMPAT-02, COMPAT-03, COMPAT-04)
 
-**Plans**: 6/7 plans executed (7 waves)
+**Plans**: 7/7 plans executed (7 waves)
 Plans:
 
 **Wave 1**
@@ -218,7 +218,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6)*
 
-- [ ] 25-07-PLAN.md — Error state with partial-write/retry/close, done state in both flavours, four entry points, phase verification matrix (wave 7)
+- [x] 25-07-PLAN.md — Error state with partial-write/retry/close, done state in both flavours, four entry points, phase verification matrix (wave 7)
 
 **UI hint**: yes
 **Research flag**: RESOLVED — the dedicated research pass ran (`25-RESEARCH.md`, confidence HIGH). Both flagged unknowns are answered: forced close and user cancel write nothing because the tree is complete in memory before any write is attempted, and the unreadable-subtree marker is two `omitempty` fields on `CatalogItem` (exact shape gated by a `checkpoint:decision` in 25-02, since it is a one-way on-disk format door). Research also surfaced a third, unflagged finding: `CreateCatalog` conflates the scanned source with the output directory, so the new context-aware method needs a genuinely separate `outputDir` parameter with the CLI wrapper defaulting it to today's behavior.
@@ -297,7 +297,7 @@ Plans:
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
 | 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
-| 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 6/7 | In Progress|  |
+| 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | In Progress|  |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |
 | 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |

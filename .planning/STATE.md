@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 25
 current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
-status: executing
-stopped_at: Completed 25-06-PLAN.md
-last_updated: "2026-08-15T01:46:45.022Z"
+status: verifying
+stopped_at: Completed 25-07-PLAN.md (phase 25 complete, ready for verification)
+last_updated: "2026-08-15T02:42:58.522Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 25
-  completed_plans: 24
-  percent: 43
+  completed_plans: 25
+  percent: 57
 ---
 
 # Project State
@@ -30,12 +30,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-14 — Plan 25-01 (create slide-over tracer) complete
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 96%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -85,6 +85,7 @@ Progress: [██████████] 96%
 | Phase 25 P04 | 4min | 3 tasks | 15 files |
 | Phase 25 P05 | 18min | 3 tasks | 8 files |
 | Phase 25 P06 | 35min | 3 tasks | 6 files |
+| Phase 25 P07 | 47min | 3 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -148,6 +149,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 25-05: wailsAPI.startScan's opts gained totalBytesHint (deviation, file not in task's listed set) -- required to thread the selected volume's known total into the StartScan binding
 - [Phase ?]: CreateSlideOver's scan:progress subscription changed from isOpen-gated to always-on (it is already permanently mounted), the minimal fix needed for CRT-08's background handoff to keep the status bar live while the panel is closed
 - [Phase ?]: handleCloseRequest keys cancellation on an explicit CloseReason argument ('cancel-the-scan' vs 'leave-it-running'), never inferred from trigger identity or state alone, so Run in background can never accidentally cancel
+- [Phase ?]: Fixed a real classification gap: the scan root's own initial os.Stat failure now correctly classifies as source-loss under HaltOnSourceLoss (was silently falling through as a generic error, misclassified by the frontend as a cancellation)
+- [Phase ?]: Added real per-output-file byte sizes (CreateCatalogResult.JsonSize/HtmlSize/CopyJsonSize/CopyHtmlSize) so the done state's written-file rows show honest sizes instead of staying undefined
+- [Phase ?]: All four create entry points reset a stale done/error scan state before opening, landing on the form step per 25-UI-SPEC's Entry Points contract, rather than reopening into whatever state.scan happened to hold
 
 ### Key Research Findings
 
@@ -189,8 +193,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T01:46:45.007Z
-Stopped at: Completed 25-06-PLAN.md
+Last session: 2026-08-15T02:42:58.506Z
+Stopped at: Completed 25-07-PLAN.md (phase 25 complete, ready for verification)
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 
