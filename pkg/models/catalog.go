@@ -90,12 +90,26 @@ type FlatCatalog struct {
 	TotalBytes int64      `json:"totalBytes"`
 }
 
-// CreateCatalogResult holds the output paths and statistics from a CreateCatalog call
+// CreateCatalogResult holds the output paths and statistics from a CreateCatalog call.
+//
+// The *Size fields are each output file's own real on-disk byte count (the
+// exact length of the bytes written, or copied, to that path) -- distinct
+// from TotalSize, which is the scanned tree's total content size, not any
+// one output file's size. Added for the done state's written-files list
+// (25-07, CRT-12: "every file actually written, with its size"), which
+// would otherwise have no honest per-row size to render. JsonSize has no
+// omitempty, matching JsonPath's own always-present convention; the other
+// three are omitempty, matching their path counterparts, since they are
+// only set when that output was actually produced.
 type CreateCatalogResult struct {
 	JsonPath     string `json:"jsonPath"`
+	JsonSize     int64  `json:"jsonSize"`
 	HtmlPath     string `json:"htmlPath"`
+	HtmlSize     int64  `json:"htmlSize,omitempty"`
 	FileCount    int    `json:"fileCount"`
 	TotalSize    int64  `json:"totalSize"`
 	CopyJsonPath string `json:"copyJsonPath,omitempty"`
+	CopyJsonSize int64  `json:"copyJsonSize,omitempty"`
 	CopyHtmlPath string `json:"copyHtmlPath,omitempty"`
+	CopyHtmlSize int64  `json:"copyHtmlSize,omitempty"`
 }

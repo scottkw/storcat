@@ -154,6 +154,42 @@ func (s *Service) CreateCatalogWithContext(ctx context.Context, title, sourcePat
 			}
 			return nil, srcErr
 		}
+		// traverseDirectory's top-of-function os.Stat/os.ReadDir failure has
+		// no parent loop to run it through recordReadError+classify() the
+		// way every deeper (child) failure already does when THIS call is
+		// itself the recursive callee -- for the outermost call (the scan
+		// root), CreateCatalogWithContext is that missing parent. Without
+		// this check, the scan root vanishing before a single child was
+		// ever read (25-UI-SPEC.md E6's "instant, total disconnect, zero
+		// prior read errors" case -- and the common case for a genuinely
+		// ejected volume) would silently fall through as a generic
+		// traversal error instead of the source-loss classification CRT-10
+		// requires (Rule 1 bug, found live-verifying 25-07's error state).
+		if ctx.Err() == nil && st.classify() {
+			return nil, &SourceUnavailableError{
+				SourcePath: sourcePath,
+				Partial: &PartialScan{
+					// A nil Tree would marshal to a bare JSON "null", not a
+					// valid catalog -- constructed as the same marked-
+					// unreadable empty-directory shape the child-level path
+					// already uses (service.go's recordReadError/classify
+					// branch), so a partial write from this state still
+					// produces a valid, honest catalog whose root records
+					// that nothing could be read.
+					Tree: &models.CatalogItem{
+						Type:       "directory",
+						Name:       "./",
+						Size:       0,
+						Contents:   []*models.CatalogItem{},
+						Unreadable: true,
+						ReadError:  err.Error(),
+					},
+					FilesSeen:  st.filesSeen,
+					BytesSeen:  st.bytesSeen,
+					ReadErrors: st.readErrorEntries,
+				},
+			}
+		}
 		return nil, fmt.Errorf("failed to traverse directory: %w", err)
 	}
 
@@ -175,37 +211,45 @@ func (s *Service) CreateCatalogWithContext(ctx context.Context, title, sourcePat
 // and retry flows reuse.
 func (s *Service) WriteCatalogFrom(tree *models.CatalogItem, title, outputDir, outputRoot, copyToDirectory string, opts Options) (*models.CreateCatalogResult, error) {
 	jsonPath := filepath.Join(outputDir, outputRoot+".json")
-	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+	jsonSize, err := s.writeJSONFile(tree, jsonPath)
+	if err != nil {
 		return nil, fmt.Errorf("failed to write JSON: %w", err)
 	}
 
 	result := &models.CreateCatalogResult{
 		JsonPath:  jsonPath,
+		JsonSize:  jsonSize,
 		FileCount: s.countFiles(tree),
 		TotalSize: tree.Size,
 	}
 
 	if opts.WriteHTML {
 		htmlPath := filepath.Join(outputDir, outputRoot+".html")
-		if err := s.writeHTMLFile(tree, title, htmlPath); err != nil {
+		htmlSize, err := s.writeHTMLFile(tree, title, htmlPath)
+		if err != nil {
 			return nil, fmt.Errorf("failed to write HTML: %w", err)
 		}
 		result.HtmlPath = htmlPath
+		result.HtmlSize = htmlSize
 	}
 
 	if copyToDirectory != "" {
 		copyJSONPath := filepath.Join(copyToDirectory, outputRoot+".json")
-		if err := s.copyFile(jsonPath, copyJSONPath); err != nil {
+		copyJSONSize, err := s.copyFile(jsonPath, copyJSONPath)
+		if err != nil {
 			return nil, fmt.Errorf("failed to copy JSON: %w", err)
 		}
 		result.CopyJsonPath = copyJSONPath
+		result.CopyJsonSize = copyJSONSize
 
 		if opts.WriteHTML {
 			copyHTMLPath := filepath.Join(copyToDirectory, outputRoot+".html")
-			if err := s.copyFile(result.HtmlPath, copyHTMLPath); err != nil {
+			copyHTMLSize, err := s.copyFile(result.HtmlPath, copyHTMLPath)
+			if err != nil {
 				return nil, fmt.Errorf("failed to copy HTML: %w", err)
 			}
 			result.CopyHtmlPath = copyHTMLPath
+			result.CopyHtmlSize = copyHTMLSize
 		}
 	}
 
@@ -373,17 +417,26 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 // writeJSONFile writes catalog in bare object format (no indentation),
 // routed through WriteFileAtomic so a crash mid-write can never leave a
 // truncated .json at path.
-func (s *Service) writeJSONFile(catalog *models.CatalogItem, path string) error {
+// writeJSONFile returns the real byte length of the JSON actually written --
+// the exact size of jsonBytes, which is also what lands on disk since
+// WriteFileAtomic writes that same slice verbatim. A failed write returns 0
+// alongside its error rather than a size for bytes that never landed.
+func (s *Service) writeJSONFile(catalog *models.CatalogItem, path string) (int64, error) {
 	jsonBytes, err := json.Marshal(catalog)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	return WriteFileAtomic(path, jsonBytes, 0644)
+	if err := WriteFileAtomic(path, jsonBytes, 0644); err != nil {
+		return 0, err
+	}
+	return int64(len(jsonBytes)), nil
 }
 
-// writeHTMLFile generates the HTML catalog with exact tree formatting
-func (s *Service) writeHTMLFile(catalog *models.CatalogItem, title, path string) error {
+// writeHTMLFile generates the HTML catalog with exact tree formatting,
+// returning the real byte length written (same failed-write-returns-0
+// convention as writeJSONFile).
+func (s *Service) writeHTMLFile(catalog *models.CatalogItem, title, path string) (int64, error) {
 	treeStructure := s.generateTreeStructure(catalog, true, "")
 
 	fileCount := s.countFiles(catalog)
@@ -438,7 +491,11 @@ func (s *Service) writeHTMLFile(catalog *models.CatalogItem, title, path string)
 </body>
 </html>`, html.EscapeString(title), html.EscapeString(title), treeStructure, totalSize, dirCount, fileCount)
 
-	return WriteFileAtomic(path, []byte(htmlContent), 0644)
+	htmlBytes := []byte(htmlContent)
+	if err := WriteFileAtomic(path, htmlBytes, 0644); err != nil {
+		return 0, err
+	}
+	return int64(len(htmlBytes)), nil
 }
 
 // generateTreeStructure creates the tree visual representation
@@ -546,19 +603,21 @@ func (s *Service) countDirectories(catalog *models.CatalogItem) int {
 }
 
 // copyFile copies a file from src to dst
-func (s *Service) copyFile(src, dst string) error {
+// copyFile copies a file from src to dst, returning the real number of
+// bytes copied (io.Copy's own count) so the caller can report the copy's
+// actual on-disk size rather than re-deriving it from the source file.
+func (s *Service) copyFile(src, dst string) (int64, error) {
 	sourceFile, err := os.Open(src)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer sourceFile.Close()
 
 	destFile, err := os.Create(dst)
 	if err != nil {
-		return err
+		return 0, err
 	}
 	defer destFile.Close()
 
-	_, err = io.Copy(destFile, sourceFile)
-	return err
+	return io.Copy(destFile, sourceFile)
 }

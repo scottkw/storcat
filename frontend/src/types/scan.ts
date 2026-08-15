@@ -78,9 +78,14 @@ export type ScanState =
       startedAt: number;
       // currentPath/log are the scanning body's WALKING line and its
       // capped newest-first log (25-UI-SPEC E5) -- both real, live values
-      // from the running walk, present in both sub-states.
+      // from the running walk, present in both sub-states. readErrors is
+      // tracked here too (added 25-07) so a source-loss failure that hits
+      // during the counting sub-state -- before a total is ever known --
+      // still carries a real count into the error state, instead of the
+      // reducer silently computing then discarding it every progress tick.
       currentPath: string;
       log: string[];
+      readErrors: number;
     }
   | {
       status: 'scanning';
@@ -93,7 +98,22 @@ export type ScanState =
       currentPath: string;
       log: string[];
     }
-  | { status: 'error'; title: string; message: string }
+  | {
+      status: 'error';
+      title: string;
+      message: string;
+      // Everything ErrorBody (plan 25-07) renders about where the scan
+      // stopped, snapshotted from the live scan state at the instant
+      // SCAN_FAILED fires -- the Go rejection itself carries only a message
+      // string (classifyScanFailure's SOURCE_LOSS_MARKER substring check),
+      // never structured stop-point data.
+      sourcePath: string;
+      filesSeen: number;
+      // null when the failure happened during the counting sub-state (no
+      // total was ever known yet) -- never a fabricated percentage.
+      stopPercent: number | null;
+      readErrors: number;
+    }
   | {
       status: 'done';
       title: string;
@@ -103,6 +123,12 @@ export type ScanState =
       totalSize: number;
       durationMs: number;
       partial: boolean;
+      // The percentage the scan had reached when it stopped, carried
+      // through only for the partial flavour's doneLine ("stopped at
+      // {pct}%" swaps in for the meaningless-on-a-partial duration). null
+      // when the stop happened before any total was known; unused and left
+      // undefined for a complete (non-partial) scan.
+      stopPercent?: number | null;
     };
 
 // SOURCE_LOSS_MARKER is the substring contract between the two sides of the

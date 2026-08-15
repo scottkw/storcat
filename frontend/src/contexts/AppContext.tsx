@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Density, RailSide, readPersistedPrefs } from '../themeTokens';
 import { models } from '../../wailsjs/go/models';
 import { ScanProgress, ScanResultFile, ScanState } from '../types/scan';
+import { scanPercent } from '../lib/scanFormat';
 
 // Types
 
@@ -58,7 +59,11 @@ type AppAction =
   | { type: 'SET_CREATE_OPEN'; payload: boolean }
   | { type: 'SCAN_STARTED'; payload: { title: string } }
   | { type: 'SCAN_PROGRESS'; payload: ScanProgress }
-  | { type: 'SCAN_FAILED'; payload: { message: string } }
+  // sourcePath: the failed scan's source, needed for ErrorBody's sub-line
+  // (plan 25-07) -- CreateSlideOver knows it locally (the selected source),
+  // but AppContext's own scan state has never tracked it, so it travels on
+  // this action's payload rather than being re-derived in the reducer.
+  | { type: 'SCAN_FAILED'; payload: { message: string; sourcePath: string } }
   | {
       type: 'SCAN_DONE';
       payload: {
@@ -69,6 +74,7 @@ type AppAction =
         totalSize: number;
         durationMs: number;
         partial: boolean;
+        stopPercent?: number | null;
       };
     }
   | { type: 'SCAN_RESET' };
@@ -243,6 +249,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           startedAt: Date.now(),
           currentPath: '',
           log: [],
+          readErrors: 0,
         },
       };
     case 'SCAN_PROGRESS': {
@@ -259,8 +266,12 @@ function appReducer(state: AppState, action: AppAction): AppState {
       const filesSeen = Math.max(prev.filesSeen, incoming.filesSeen);
       const prevBytesSeen = prev.status === 'scanning' ? prev.bytesSeen : 0;
       const bytesSeen = Math.max(prevBytesSeen, incoming.bytesSeen);
-      const prevReadErrors = prev.status === 'scanning' ? prev.readErrors : 0;
-      const readErrors = Math.max(prevReadErrors, incoming.readErrors);
+      // Both variants track readErrors now (added 25-07) -- unlike
+      // bytesSeen, which is genuinely meaningless before a total is known,
+      // a read-error count is real and worth keeping even during the
+      // counting sub-state, since a scan that fails before ever resolving a
+      // total still needs an accurate count for the error state.
+      const readErrors = Math.max(prev.readErrors, incoming.readErrors);
       // The WALKING line always shows the newest known path; an event
       // carrying no path (never expected, but harmless if it happened)
       // leaves it unchanged rather than blanking it. A new path is pushed
@@ -291,14 +302,39 @@ function appReducer(state: AppState, action: AppAction): AppState {
 
       return {
         ...state,
-        scan: { status: 'counting', title: prev.title, filesSeen, startedAt: prev.startedAt, currentPath, log },
+        scan: {
+          status: 'counting',
+          title: prev.title,
+          filesSeen,
+          startedAt: prev.startedAt,
+          currentPath,
+          log,
+          readErrors,
+        },
       };
     }
-    case 'SCAN_FAILED':
+    case 'SCAN_FAILED': {
+      // Snapshotted from whatever the scan state held the instant it
+      // failed -- 'idle'/'done' have neither field, and TypeScript's
+      // narrowing needs the explicit status checks below (not just `in`)
+      // since only 'counting'/'scanning' carry filesSeen/readErrors here.
+      const prev = state.scan;
+      const filesSeen = prev.status === 'counting' || prev.status === 'scanning' ? prev.filesSeen : 0;
+      const readErrors = prev.status === 'counting' || prev.status === 'scanning' ? prev.readErrors : 0;
+      const stopPercent = prev.status === 'scanning' ? scanPercent(prev.bytesSeen, prev.totalBytes) : null;
       return {
         ...state,
-        scan: { status: 'error', title: scanTitleOf(state.scan), message: action.payload.message },
+        scan: {
+          status: 'error',
+          title: scanTitleOf(state.scan),
+          message: action.payload.message,
+          sourcePath: action.payload.sourcePath,
+          filesSeen,
+          stopPercent,
+          readErrors,
+        },
       };
+    }
     case 'SCAN_DONE':
       return {
         ...state,
@@ -311,6 +347,7 @@ function appReducer(state: AppState, action: AppAction): AppState {
           totalSize: action.payload.totalSize,
           durationMs: action.payload.durationMs,
           partial: action.payload.partial,
+          stopPercent: action.payload.stopPercent,
         },
       };
     case 'SCAN_RESET':

@@ -12,6 +12,7 @@ import VolumePicker from './create/VolumePicker';
 import CreateForm from './create/CreateForm';
 import OptionsToggles, { SECONDARY_DIR_STORAGE_KEY, type OptionsToggleValues } from './create/OptionsToggles';
 import ScanningBody from './create/ScanningBody';
+import ErrorBody from './create/ErrorBody';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -79,6 +80,13 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   const [secondaryDir, setSecondaryDir] = useState(() => safeGetItem(SECONDARY_DIR_STORAGE_KEY) ?? '');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  // Guards "Write partial catalog" the same way submittingRef guards
+  // Create: the ref is what actually stops a second click's async body from
+  // proceeding (state updates aren't visible synchronously); the `writing`
+  // state is what visibly disables the button so a second click can't even
+  // be issued in the first place (CRT-11 idempotency, T-25-13).
+  const [writingPartial, setWritingPartial] = useState(false);
+  const writingPartialRef = useRef(false);
 
   // useModalBehavior gets the real isOpen, never the closing-inclusive
   // render condition below -- its scroll-unlock and focus-restore must fire
@@ -163,7 +171,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
       // mid-walk) transitions to the error member, which plan 25-07 renders.
       const failure = classifyScanFailure(outcome.error);
       if (failure.kind === 'sourceLoss') {
-        dispatch({ type: 'SCAN_FAILED', payload: { message: failure.message } });
+        dispatch({ type: 'SCAN_FAILED', payload: { message: failure.message, sourcePath } });
       } else {
         dispatch({ type: 'SCAN_RESET' });
       }
@@ -186,6 +194,58 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
         totalSize: result.totalSize,
         durationMs: 0,
         partial: false,
+      },
+    });
+  }
+
+  // The error state's primary action (CRT-11): writes the tree retained
+  // from the source loss through the shared write path, exactly once. The
+  // synchronous ref guard is what actually stops a second call's async body
+  // from proceeding before this component re-renders; setWritingPartial is
+  // what visibly disables the button (see the CreateSlideOver-level state
+  // declaration above for why both exist).
+  async function handleWritePartial() {
+    if (writingPartialRef.current) return;
+    if (scan.status !== 'error') return;
+
+    writingPartialRef.current = true;
+    setWritingPartial(true);
+
+    const failedScan = scan;
+    const outcome = await wailsAPI.writePartialCatalog();
+
+    writingPartialRef.current = false;
+    setWritingPartial(false);
+
+    if (!outcome.success) {
+      // The write failed after all (e.g. nothing was actually retained --
+      // a stale panel reopened after a new scan already started elsewhere).
+      // The error state is left exactly as it was; nothing here fabricates
+      // a done state on a failure the binding itself reported.
+      console.error('writePartialCatalog failed:', outcome.error);
+      return;
+    }
+
+    const result = outcome.result;
+    dispatch({
+      type: 'SCAN_DONE',
+      payload: {
+        title: failedScan.title,
+        jsonPath: result.jsonPath,
+        files: result.htmlPath
+          ? [
+              { path: result.jsonPath, size: result.jsonSize },
+              { path: result.htmlPath, size: result.htmlSize },
+            ]
+          : [{ path: result.jsonPath, size: result.jsonSize }],
+        fileCount: result.fileCount,
+        totalSize: result.totalSize,
+        // A partial write's duration is meaningless (the walk that
+        // produced this tree never finished) -- stopPercent is what
+        // DoneBody's partial flavour renders in its place.
+        durationMs: 0,
+        partial: true,
+        stopPercent: failedScan.stopPercent,
       },
     });
   }
@@ -229,12 +289,16 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
   const isScanning = scan.status === 'counting' || scan.status === 'scanning';
   const isDone = scan.status === 'done';
-  const isForm = !isScanning && !isDone;
+  const isError = scan.status === 'error';
+  const isForm = !isScanning && !isDone && !isError;
 
-  const headerTitle = isDone ? 'Catalog written' : isScanning ? 'Cataloguing volume' : 'New catalog';
-  const headerStep = isDone ? 'done' : isScanning ? 'step 2 of 2' : 'step 1 of 2';
+  const headerTitle = isDone ? 'Catalog written' : isError ? 'Scan interrupted' : isScanning ? 'Cataloguing volume' : 'New catalog';
+  const headerStep = isDone ? 'done' : isError ? 'failed' : isScanning ? 'step 2 of 2' : 'step 1 of 2';
 
-  const canCreate = !submitting && (scan.status === 'idle' || scan.status === 'error') && !!selectedSource && !!state.catalogDir;
+  // The error state's own Retry action reuses handleCreate directly (with
+  // scan.status === 'error') rather than a bespoke restart path -- this
+  // button only ever renders while isForm, i.e. scan.status === 'idle'.
+  const canCreate = !submitting && scan.status === 'idle' && !!selectedSource && !!state.catalogDir;
 
   // The rail's already-loaded listing for the configured catalog directory
   // -- the cheapest correct source for the WILL WRITE preview's "already
@@ -276,7 +340,6 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
         {isForm && (
           <div className="ws-create-body">
-            {scan.status === 'error' && <div className="ws-create-error-banner">{scan.message}</div>}
             <VolumePicker selected={selectedSource} onSelect={setSelectedSource} />
             <CreateForm
               source={selectedSource}
@@ -307,6 +370,16 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
         {(scan.status === 'counting' || scan.status === 'scanning') && (
           <ScanningBody scan={scan} onRunInBackground={() => handleCloseRequest('leave-it-running')} />
+        )}
+
+        {isError && scan.status === 'error' && (
+          <ErrorBody
+            scan={scan}
+            writingPartial={writingPartial}
+            onWritePartial={handleWritePartial}
+            onRetry={handleCreate}
+            onCloseWithoutWriting={() => handleCloseRequest('cancel-the-scan')}
+          />
         )}
 
         {isDone && scan.status === 'done' && (

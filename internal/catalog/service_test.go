@@ -32,7 +32,7 @@ func TestWriteJSONFile_BareObject(t *testing.T) {
 	}
 
 	jsonPath := filepath.Join(tmpDir, "test.json")
-	if err := s.writeJSONFile(catalog, jsonPath); err != nil {
+	if _, err := s.writeJSONFile(catalog, jsonPath); err != nil {
 		t.Fatalf("writeJSONFile failed: %v", err)
 	}
 
@@ -383,7 +383,7 @@ func TestCreateCatalog_JSONShapeUnchanged(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	jsonPath := filepath.Join(tmpDir, "test.json")
-	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+	if _, err := s.writeJSONFile(tree, jsonPath); err != nil {
 		t.Fatalf("writeJSONFile failed: %v", err)
 	}
 
@@ -610,6 +610,64 @@ func TestCreateCatalogWithContext_SourceLossWritesNothing(t *testing.T) {
 	}
 }
 
+// TestCreateCatalogWithContext_RootVanishesBeforeAnyProgress verifies the
+// "instant, total disconnect" case (25-UI-SPEC.md E6's zero-one-many
+// resolution): the scan root is already gone before the walk's very first
+// os.Stat call ever succeeds -- no child was ever read, so onProgress never
+// fires. This is the scan-root's own top-of-function stat failure, which has
+// no parent loop to run it through recordReadError/classify() the way a
+// child's failure already does; CreateCatalogWithContext must apply that
+// classification itself (found live-verifying 25-07's error state -- prior
+// to this fix, this case fell through as a generic "failed to traverse
+// directory" error instead of *SourceUnavailableError).
+func TestCreateCatalogWithContext_RootVanishesBeforeAnyProgress(t *testing.T) {
+	s := NewService()
+	parent := t.TempDir()
+	sourceDir := filepath.Join(parent, "gone-before-scan-starts")
+	outputDir := t.TempDir()
+
+	// Never created -- the walk's first os.Stat(sourceDir) fails immediately,
+	// with zero prior progress and zero prior read errors.
+	_, err := s.CreateCatalogWithContext(
+		context.Background(), "Test", sourceDir, outputDir, "out", "",
+		Options{WriteHTML: true, HaltOnSourceLoss: true}, nil,
+	)
+
+	var srcErr *SourceUnavailableError
+	if !errors.As(err, &srcErr) {
+		t.Fatalf("expected an error matching *SourceUnavailableError, got %v", err)
+	}
+	if srcErr.SourcePath != sourceDir {
+		t.Errorf("SourcePath = %q, want %q", srcErr.SourcePath, sourceDir)
+	}
+	if srcErr.Partial == nil {
+		t.Fatal("expected a populated PartialScan on the returned error")
+	}
+	if srcErr.Partial.FilesSeen != 0 {
+		t.Errorf("Partial.FilesSeen = %d, want 0", srcErr.Partial.FilesSeen)
+	}
+	if len(srcErr.Partial.ReadErrors) != 0 {
+		t.Errorf("Partial.ReadErrors = %+v, want empty", srcErr.Partial.ReadErrors)
+	}
+	if srcErr.Partial.Tree == nil {
+		t.Fatal("expected a non-nil Tree -- a nil Tree would marshal to JSON null, not a valid catalog")
+	}
+	if !srcErr.Partial.Tree.Unreadable {
+		t.Error("expected the root node to carry the Unreadable marker")
+	}
+	if srcErr.Partial.Tree.ReadError == "" {
+		t.Error("expected a non-empty ReadError reason on the root node")
+	}
+
+	entries, err := os.ReadDir(outputDir)
+	if err != nil {
+		t.Fatalf("read outputDir: %v", err)
+	}
+	if len(entries) != 0 {
+		t.Errorf("expected outputDir to remain empty, got %+v", entries)
+	}
+}
+
 // TestCreateCatalog_WrapperDoesNotHaltOnSourceLoss verifies that the CLI
 // wrapper leaves HaltOnSourceLoss false, so a single-entry failure -- even
 // one that would classify as terminal if halting were enabled -- reproduces
@@ -631,6 +689,27 @@ func TestCreateCatalog_WrapperDoesNotHaltOnSourceLoss(t *testing.T) {
 	}
 	if result.FileCount != 1 {
 		t.Errorf("FileCount = %d, want 1 (unreadable entry silently skipped)", result.FileCount)
+	}
+}
+
+// TestCreateCatalog_WrapperRootVanishReturnsPlainError verifies COMPAT-03
+// for the root-vanish classification added alongside 25-07's error state: a
+// nonexistent source path through the CLI wrapper (HaltOnSourceLoss always
+// false) returns v2.3.0's exact plain error, never *SourceUnavailableError
+// -- st.classify() itself short-circuits on !HaltOnSourceLoss, so this new
+// classification is unreachable from the CLI path by construction.
+func TestCreateCatalog_WrapperRootVanishReturnsPlainError(t *testing.T) {
+	s := NewService()
+	parent := t.TempDir()
+	sourceDir := filepath.Join(parent, "does-not-exist")
+
+	_, err := s.CreateCatalog("Test", sourceDir, "out", "", nil)
+	if err == nil {
+		t.Fatal("expected an error for a nonexistent source directory")
+	}
+	var srcErr *SourceUnavailableError
+	if errors.As(err, &srcErr) {
+		t.Fatalf("CLI wrapper must never classify as source-loss, got %v", err)
 	}
 }
 
@@ -658,7 +737,7 @@ func TestWritePartialCatalog_Marker(t *testing.T) {
 
 	tmpDir := t.TempDir()
 	jsonPath := filepath.Join(tmpDir, "test.json")
-	if err := s.writeJSONFile(tree, jsonPath); err != nil {
+	if _, err := s.writeJSONFile(tree, jsonPath); err != nil {
 		t.Fatalf("writeJSONFile failed: %v", err)
 	}
 

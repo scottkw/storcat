@@ -126,11 +126,15 @@ export namespace models {
 	}
 	export class CreateCatalogResult {
 	    jsonPath: string;
+	    jsonSize: number;
 	    htmlPath: string;
+	    htmlSize?: number;
 	    fileCount: number;
 	    totalSize: number;
 	    copyJsonPath?: string;
+	    copyJsonSize?: number;
 	    copyHtmlPath?: string;
+	    copyHtmlSize?: number;
 	
 	    static createFrom(source: any = {}) {
 	        return new CreateCatalogResult(source);
@@ -139,11 +143,15 @@ export namespace models {
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.jsonPath = source["jsonPath"];
+	        this.jsonSize = source["jsonSize"];
 	        this.htmlPath = source["htmlPath"];
+	        this.htmlSize = source["htmlSize"];
 	        this.fileCount = source["fileCount"];
 	        this.totalSize = source["totalSize"];
 	        this.copyJsonPath = source["copyJsonPath"];
+	        this.copyJsonSize = source["copyJsonSize"];
 	        this.copyHtmlPath = source["copyHtmlPath"];
+	        this.copyHtmlSize = source["copyHtmlSize"];
 	    }
 	}
 	export class FlatNode {

@@ -972,6 +972,129 @@
   color: var(--dm);
 }
 
+/* 25-07: shared body wrapper for the error and done states (25-UI-SPEC.md's
+ * Error/Done State Contracts: "flex:1; padding:22px 18px; ... gap:20px") --
+ * distinct from .ws-create-body (18px/16px, the form step's own spacing). */
+.ws-create-state-body {
+  flex: 1;
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+/* Round 30px state badge -- deliberately a different shape from the 22px
+ * square inline diagnostic badge 23-UI-SPEC.md used for the unreadable-
+ * catalog panel: this one is a state-defining hero icon, not an inline
+ * label. Error/done modifiers only change color; shape/size are shared. */
+.ws-create-badge {
+  flex: none;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+}
+
+.ws-create-badge-error {
+  color: #e5534b;
+  background: rgba(229, 83, 75, .16);
+}
+
+.ws-create-badge-done {
+  color: var(--ac);
+  background: var(--acs);
+}
+
+.ws-create-error-row,
+.ws-create-done-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ws-create-error-col,
+.ws-create-done-col {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.ws-create-error-headline {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.ws-create-error-subline {
+  font-size: 11.5px;
+  color: var(--dm);
+  word-break: break-all;
+}
+
+.ws-create-errlog {
+  background: var(--ch);
+  border-radius: 9px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ws-create-errlog-line {
+  font-size: 11px;
+  color: #e5534b;
+  word-break: break-all;
+}
+
+.ws-create-errlog-summary {
+  font-size: 11px;
+  color: var(--dm);
+  word-break: break-all;
+}
+
+.ws-create-explain {
+  font-size: 12.5px;
+  color: var(--dm);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* Shared error/done actions row -- pinned to the bottom of the state body
+ * (there is no separate .ws-create-footer for these two states, unlike the
+ * form step). */
+.ws-create-actions {
+  margin-top: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ws-create-done-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* The done state's partial-flavour tag -- the exact warning-tag styling
+ * already declared for the volume card's "read errors" status (.ws-create-
+ * tag-warn), reused verbatim (no new color) but named for this context. */
+.ws-create-tag-partial {
+  color: #f0b429;
+  background: rgba(240, 180, 41, .14);
+}
+
+.ws-create-file-size {
+  flex: none;
+  font-size: 11.5px;
+  color: var(--dm);
+  margin-left: auto;
+}
+
 .ws-create-file-list {
   display: flex;
   flex-direction: column;
