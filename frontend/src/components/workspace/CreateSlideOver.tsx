@@ -4,11 +4,13 @@ import { wailsAPI } from '../../services/wailsAPI';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
 import { formatBytes } from '../../lib/format';
 import { scanPercent, slugifyRoot } from '../../lib/scanFormat';
+import { safeGetItem } from '../../themeTokens';
 import { EventsOn } from '../../../wailsjs/runtime/runtime';
 import type { ScanProgress, ScanSource } from '../../types/scan';
 import { sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
 import VolumePicker from './create/VolumePicker';
 import CreateForm from './create/CreateForm';
+import OptionsToggles, { SECONDARY_DIR_STORAGE_KEY, type OptionsToggleValues } from './create/OptionsToggles';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -65,6 +67,15 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   const [selectedSource, setSelectedSource] = useState<ScanSource | null>(null);
   const [title, setTitle] = useState('');
   const [root, setRoot] = useState('');
+  const [options, setOptions] = useState<OptionsToggleValues>({
+    writeHTML: true,
+    copyToSecondary: false,
+    includeHidden: false,
+  });
+  // Read once at mount, same persisted key OptionsToggles writes to -- both
+  // start from the same value, and OptionsToggles reports every change back
+  // through onSecondaryDirChange so this copy never drifts from its own.
+  const [secondaryDir, setSecondaryDir] = useState(() => safeGetItem(SECONDARY_DIR_STORAGE_KEY) ?? '');
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
 
@@ -112,9 +123,9 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     dispatch({ type: 'SCAN_STARTED', payload: { title: resolvedTitle } });
 
     const outcome = await wailsAPI.startScan(resolvedTitle, sourcePath, state.catalogDir, resolvedRoot, {
-      writeHTML: true,
-      includeHidden: false,
-      copyToDirectory: '',
+      writeHTML: options.writeHTML,
+      includeHidden: options.includeHidden,
+      copyToDirectory: options.copyToSecondary ? secondaryDir : '',
       totalBytesHint,
     });
 
@@ -161,9 +172,13 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
   // Wires ⌘↵ to the same handler the Create button uses (CRT-06) --
   // handleCreate's own guards make a second activation while a scan is
-  // running a no-op regardless of which path triggered it.
+  // running a no-op regardless of which path triggered it. The listener is
+  // only registered while the panel is open AND the form step is active
+  // (idle/error) -- inlined rather than reading the later `isForm` const,
+  // which is declared after this effect in render order.
   useEffect(() => {
     if (!isOpen) return;
+    if (scan.status !== 'idle' && scan.status !== 'error') return;
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
@@ -192,6 +207,13 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   // -- the cheapest correct source for the WILL WRITE preview's "already
   // exists" qualifier, per this plan's explicit no-new-binding instruction.
   const existingCatalogFilenames = new Set(state.catalogs.map((catalog) => catalog.filename));
+
+  // Shared with CreateForm's own (identically-derived) preview value and
+  // with the write-HTML toggle's dynamic `{root}.html` note -- both must
+  // read the same resolved root a scan would actually use.
+  const sourceDisplayName = selectedSource ? sourceDisplayNameOf(selectedSource) : '';
+  const effectiveRoot = root.trim() || (sourceDisplayName && slugifyRoot(sourceDisplayName)) || 'catalog';
+  const activeSecondaryDir = options.copyToSecondary ? secondaryDir : '';
 
   const pct = scan.status === 'scanning' ? scanPercent(scan.bytesSeen, scan.totalBytes) : null;
 
@@ -228,9 +250,17 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
                 root={root}
                 onRootChange={setRoot}
                 catalogDir={state.catalogDir ?? ''}
-                writeHTML
-                secondaryDir=""
+                writeHTML={options.writeHTML}
+                secondaryDir={activeSecondaryDir}
                 existingCatalogFilenames={existingCatalogFilenames}
+              />
+              <OptionsToggles
+                values={options}
+                onValuesChange={setOptions}
+                secondaryDir={secondaryDir}
+                onSecondaryDirChange={setSecondaryDir}
+                disabled={isScanning}
+                effectiveRoot={effectiveRoot}
               />
               {!state.catalogDir && (
                 <div className="ws-create-error-banner">

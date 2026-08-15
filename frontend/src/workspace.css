@@ -1006,6 +1006,80 @@
   color: var(--dm);
 }
 
+.ws-create-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ws-create-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  min-width: 0;
+}
+
+.ws-create-toggle-row-disabled {
+  cursor: not-allowed;
+  opacity: .5;
+}
+
+.ws-create-toggle-track {
+  flex: none;
+  width: 30px;
+  height: 17px;
+  border-radius: 9px;
+  background: var(--ch);
+  padding: 2px;
+  display: flex;
+  align-items: center;
+}
+
+.ws-create-toggle-track-on {
+  background: var(--ac);
+  justify-content: flex-end;
+}
+
+.ws-create-toggle-knob {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: var(--fn);
+}
+
+.ws-create-toggle-track-on .ws-create-toggle-knob {
+  background: var(--onac);
+}
+
+.ws-create-toggle-text {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ws-create-toggle-label {
+  font-size: 12.5px;
+  color: var(--tx);
+}
+
+.ws-create-toggle-note {
+  font-size: 11px;
+  color: var(--fn);
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ws-create-note-path {
+  direction: rtl;
+  text-align: left;
+  unicode-bidi: plaintext;
+  cursor: pointer;
+}
+
 /* IBM Plex Sans/Mono @font-face declarations are vendored in plan 22-02
  * (wave 2), alongside the woff2 asset files themselves. Until then the
  * font-family references above fall through to the next stack entry. */
