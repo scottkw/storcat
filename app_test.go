@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -385,6 +386,7 @@ func TestStartScan_ClearsRetainedPartialOnNewScan(t *testing.T) {
 	app.lastPartial = &catalog.PartialScan{Tree: &models.CatalogItem{Type: "directory", Name: "./"}}
 	app.lastPartialResult = &models.CreateCatalogResult{JsonPath: "/tmp/stale.json"}
 	app.lastScanReq = &lastScanRequest{title: "Stale"}
+	startGen := app.retainedGen
 	app.scanMu.Unlock()
 
 	if _, err := app.StartScan("Test", sourceDir, outputDir, "out", ScanOptions{WriteHTML: true}); err != nil {
@@ -392,7 +394,7 @@ func TestStartScan_ClearsRetainedPartialOnNewScan(t *testing.T) {
 	}
 
 	app.scanMu.Lock()
-	partial, result, req := app.lastPartial, app.lastPartialResult, app.lastScanReq
+	partial, result, req, gen := app.lastPartial, app.lastPartialResult, app.lastScanReq, app.retainedGen
 	app.scanMu.Unlock()
 	if partial != nil {
 		t.Errorf("expected lastPartial cleared, got %+v", partial)
@@ -402,6 +404,12 @@ func TestStartScan_ClearsRetainedPartialOnNewScan(t *testing.T) {
 	}
 	if req != nil {
 		t.Errorf("expected lastScanReq cleared, got %+v", req)
+	}
+	// CR-02: retainedGen must advance so an in-flight WritePartialCatalog
+	// call started against the stale tree above can detect, on completion,
+	// that this StartScan has since superseded it.
+	if gen == startGen {
+		t.Errorf("expected retainedGen to advance past %d after StartScan, got %d", startGen, gen)
 	}
 }
 
@@ -530,6 +538,60 @@ func TestWritePartialCatalog_MarkerSurvivesToDisk(t *testing.T) {
 	}
 	if dirNode["readError"] != "stat ./gone: no such file or directory" {
 		t.Errorf("expected the marked node to carry its readError, got %+v", dirNode)
+	}
+}
+
+// TestWritePartialCatalog_ConcurrentCallsWriteOnce is the CR-02 regression
+// test: several goroutines calling WritePartialCatalog at once must never
+// both perform the actual filesystem write. writeMu fully serializes the
+// method, so regardless of scheduling order exactly one goroutine performs
+// the write and every other goroutine, once unblocked, must observe the
+// now-cached lastPartialResult and return the identical pointer -- this is
+// a deterministic guarantee of the mutex, not a timing-dependent race.
+// Before the fix (scanMu released before the unguarded write), this
+// assertion is flaky-but-frequently-failing under `-race`; with the fix it
+// always passes.
+func TestWritePartialCatalog_ConcurrentCallsWriteOnce(t *testing.T) {
+	app := &App{catalogService: catalog.NewService()}
+	outputDir := t.TempDir()
+	tree := &models.CatalogItem{
+		Type: "directory",
+		Name: "./",
+		Size: 2,
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./a.txt", Size: 2},
+		},
+	}
+	app.lastPartial = &catalog.PartialScan{Tree: tree}
+	app.lastScanReq = &lastScanRequest{
+		title:      "Test",
+		outputDir:  outputDir,
+		outputRoot: "partial",
+		opts:       catalog.Options{WriteHTML: true},
+	}
+
+	const n = 8
+	results := make([]*models.CreateCatalogResult, n)
+	errs := make([]error, n)
+	var wg sync.WaitGroup
+	wg.Add(n)
+	for i := 0; i < n; i++ {
+		go func(i int) {
+			defer wg.Done()
+			results[i], errs[i] = app.WritePartialCatalog()
+		}(i)
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("call %d: WritePartialCatalog failed: %v", i, err)
+		}
+	}
+	for i := 1; i < n; i++ {
+		if results[i] != results[0] {
+			t.Errorf("call %d returned a different result pointer than call 0 -- indicates a duplicate write occurred", i)
+		}
 	}
 }
 

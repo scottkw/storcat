@@ -45,6 +45,24 @@ type App struct {
 	lastPartial       *catalog.PartialScan
 	lastPartialResult *models.CreateCatalogResult
 	lastScanReq       *lastScanRequest
+
+	// retainedGen counts every time StartScan clears the retained-partial
+	// fields above. WritePartialCatalog reads it before releasing scanMu for
+	// the (slow, unguarded) filesystem write, then compares it again after
+	// the write completes: a mismatch means a newer StartScan superseded the
+	// tree this call was writing while the write was in flight, so the
+	// result must not be cached/recorded over the newer retained state
+	// (CR-02).
+	retainedGen int
+
+	// writeMu serializes WritePartialCatalog's whole check-decide-write-record
+	// sequence across concurrent invocations of that one binding, so two
+	// overlapping calls can never both perform the actual filesystem write --
+	// the second blocks until the first releases, then re-checks
+	// lastPartialResult (now set) and returns the cached result instead of
+	// writing again. It is a separate lock from scanMu so StartScan/CancelScan
+	// are never blocked behind an in-flight partial write.
+	writeMu sync.Mutex
 }
 
 // lastScanRequest captures the parameters a source-loss scan was started
@@ -297,6 +315,10 @@ func (a *App) startScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 	a.lastPartial = nil
 	a.lastPartialResult = nil
 	a.lastScanReq = nil
+	// Bump the generation counter so an in-flight WritePartialCatalog call
+	// (started against the previous retained tree, if any) can detect on
+	// completion that this StartScan has since superseded it (CR-02).
+	a.retainedGen++
 	a.scanMu.Unlock()
 
 	defer func() {
@@ -412,7 +434,21 @@ func (a *App) waitForScanStop(d time.Duration) bool {
 // this is what makes a second click a true no-op rather than a duplicate
 // write or a second rename (T-25-13). Never re-walks anything -- the tree
 // is exactly what the interrupted scan already produced.
+//
+// writeMu serializes the whole check-decide-write-record sequence across
+// concurrent calls to this method (CR-02): the actual filesystem write
+// still happens with scanMu released (it can be slow, and must not block
+// StartScan/CancelScan), but a second overlapping call blocks on writeMu
+// until the first finishes, then sees the now-cached lastPartialResult and
+// returns it instead of writing a second time. retainedGen additionally
+// guards against a StartScan racing in during the write: if a new scan has
+// superseded the retained tree by the time this write completes, the result
+// is still returned to this caller (their write genuinely happened) but is
+// not cached over -- and does not clobber -- the newer retained state.
 func (a *App) WritePartialCatalog() (*models.CreateCatalogResult, error) {
+	a.writeMu.Lock()
+	defer a.writeMu.Unlock()
+
 	a.scanMu.Lock()
 	if a.lastPartialResult != nil {
 		result := a.lastPartialResult
@@ -425,6 +461,7 @@ func (a *App) WritePartialCatalog() (*models.CreateCatalogResult, error) {
 	}
 	partial := a.lastPartial
 	req := a.lastScanReq
+	gen := a.retainedGen
 	a.scanMu.Unlock()
 
 	result, err := a.catalogService.WriteCatalogFrom(
@@ -435,10 +472,17 @@ func (a *App) WritePartialCatalog() (*models.CreateCatalogResult, error) {
 	}
 
 	a.scanMu.Lock()
+	defer a.scanMu.Unlock()
+	if gen != a.retainedGen {
+		// A newer StartScan cleared/replaced the retained state while this
+		// write was in flight -- the write to disk still succeeded and is
+		// returned to this caller, but must not overwrite the newer
+		// retained tree's bookkeeping.
+		return result, nil
+	}
 	a.lastPartialResult = result
 	a.lastPartial = nil
 	a.lastScanReq = nil
-	a.scanMu.Unlock()
 
 	return result, nil
 }
