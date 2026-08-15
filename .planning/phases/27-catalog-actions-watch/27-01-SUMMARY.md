@@ -191,6 +191,10 @@ All 8 steps passed with real, recorded evidence -- no step was skipped or reason
 - The four seams this tracer proves (`osutil.ContainsPath` in front of a path-taking binding, `WriteFileAtomic` as the one write primitive, the regenerated Wails bridge, and the `wailsAPI` wrapper shape) are all live and verified for plans `27-02` through `27-06` (duplicate, trash, menu, dialogs, watcher) to build on.
 - `WriteFileAtomic` still has no `fsync` -- that hardening and its SIGKILL-mid-write verification are explicitly owned by plan `27-02`, per the threat register (T-27-06) and `.planning/WINDOWS.md` #6.
 
+## Self-Check: PASSED
+
+All 10 created/modified files verified present on disk; all 3 commits (`f6b7912e`, `bcae9b0c`, `83ffb851`) verified present in `git log`.
+
 ---
 *Phase: 27-catalog-actions-watch*
 *Completed: 2026-08-15*
