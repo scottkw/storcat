@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import Toolbar from './Toolbar';
 import CatalogRail from './CatalogRail';
 import TreePane from './TreePane';
@@ -81,21 +81,47 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
     if (state.createOpen) setPaletteOpen(false);
   }, [state.createOpen]);
 
-  // Global ⌘,/Ctrl+, listener -- mirrors the ⌘K listener above exactly:
-  // preventDefault unconditionally, functional state update so a second
-  // press while already open is a no-op. Task 2 adds the overlay-coexistence
-  // rules (no-op during a foreground scan, closing the palette/create
-  // slide-over first); this task only needs the open path to work.
+  // The single named function all three SET-01 entry points (this file's
+  // ⌘,/Ctrl+, listener below, Toolbar's gear onClick, Toolbar's theme-chip
+  // onClick) route through, so there is exactly one open path. Toolbar
+  // entry points 2 and 3 are already unreachable by mouse while the palette
+  // or create slide-over is open -- those scrims are position: absolute;
+  // inset: 0 and cover the whole toolbar -- so only the keyboard path below
+  // needs the explicit no-op-during-scan rule (26-UI-SPEC.md).
+  //
+  // Calling this while Settings is already open is a harmless no-op: every
+  // state update below (setPaletteOpen(false), SET_CREATE_OPEN false,
+  // setSettingsOpen(true)) is already a no-op against the current state, so
+  // React bails out with no re-render.
+  const openSettings = useCallback(() => {
+    // A backgrounded scan is unaffected -- it keeps running in Go regardless
+    // of UI mount state. Only a *foreground* scan (the slide-over actively
+    // showing progress) blocks Settings from opening.
+    if (state.scan.status === 'counting' || state.scan.status === 'scanning') return;
+    setPaletteOpen(false);
+    dispatch({ type: 'SET_CREATE_OPEN', payload: false });
+    setSettingsOpen(true);
+  }, [state.scan.status, dispatch]);
+
+  // Global ⌘,/Ctrl+, listener -- mirrors the ⌘K listener above: preventDefault
+  // unconditionally, fires regardless of which element has focus.
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === ',') {
         event.preventDefault();
-        setSettingsOpen((open) => (open ? open : true));
+        openSettings();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, []);
+  }, [openSettings]);
+
+  // Reverse direction of the mutual-exclusion contract above: opening the
+  // palette or the create slide-over closes Settings, so exactly one
+  // overlay ever owns the screen.
+  useEffect(() => {
+    if (paletteOpen || state.createOpen) setSettingsOpen(false);
+  }, [paletteOpen, state.createOpen]);
 
   return (
     <div className="ws-root" data-rail-side={state.railSide}>
@@ -107,6 +133,7 @@ function WorkspaceShell({ themeName }: WorkspaceShellProps) {
           dispatch({ type: 'SET_DETAIL_OVERLAY', payload: !state.detailOverlay })
         }
         onOpenSearch={() => setPaletteOpen(true)}
+        onOpenSettings={openSettings}
       />
       <div className="ws-grid">
         <CatalogRail />

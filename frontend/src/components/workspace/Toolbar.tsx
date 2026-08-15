@@ -8,9 +8,17 @@ export interface ToolbarProps {
   detailsOpen: boolean;
   onToggleDetails: () => void;
   onOpenSearch: () => void;
+  onOpenSettings: () => void;
 }
 
-function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails, onOpenSearch }: ToolbarProps) {
+function Toolbar({
+  themeName,
+  showDetailsChip,
+  detailsOpen,
+  onToggleDetails,
+  onOpenSearch,
+  onOpenSettings,
+}: ToolbarProps) {
   // useLayoutEffect (not useEffect) so this fires before the browser paints,
   // closing React's own commit-to-paint gap. Environment() itself is still
   // async, so this narrows but does not eliminate the one-frame window.
@@ -136,6 +144,8 @@ function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails, onO
         <button
           type="button"
           className="no-drag ws-chip"
+          aria-label="Open settings"
+          onClick={onOpenSettings}
           style={{
             fontSize: 11.5,
             color: 'var(--dm)',
@@ -154,6 +164,7 @@ function Toolbar({ themeName, showDetailsChip, detailsOpen, onToggleDetails, onO
           type="button"
           className="no-drag"
           aria-label="Settings"
+          onClick={onOpenSettings}
           style={{
             background: 'transparent',
             border: 'none',

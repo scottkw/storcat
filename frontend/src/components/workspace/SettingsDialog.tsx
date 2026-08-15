@@ -1,6 +1,8 @@
+import { useEffect, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { useModalBehavior } from '../../hooks/useModalBehavior';
 import { setDensitySetting } from '../../settingsStore';
+import { wailsAPI } from '../../services/wailsAPI';
 import SegmentedControl from './settings/SegmentedControl';
 
 export interface SettingsDialogProps {
@@ -22,7 +24,28 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
   // back to the panel's first focusable element.
   const { containerRef } = useModalBehavior({ isOpen, onClose });
 
+  // Read once on open, into local state -- never hardcoded. This is the
+  // footer status line's first consumer of the existing getVersion wrapper.
+  // Until the call resolves, the sentence renders without the numeric
+  // fragment rather than a placeholder or spinner (project's no-spinners
+  // rule; this line is informational copy, not a control).
+  const [version, setVersion] = useState<string | null>(null);
+  useEffect(() => {
+    if (!isOpen) return;
+    let cancelled = false;
+    wailsAPI.getVersion().then((result) => {
+      if (!cancelled && result.success) setVersion(result.version);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const statusText = version
+    ? `StorCat ${version} · settings save as you change them`
+    : `StorCat · settings save as you change them`;
 
   return (
     <div className="ws-settings-scrim" onClick={onClose}>
@@ -69,7 +92,7 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
         </div>
 
         <div className="ws-settings-footer">
-          <span className="ws-settings-status mono" />
+          <span className="ws-settings-status mono">{statusText}</span>
           <button type="button" className="ws-settings-close-btn" onClick={onClose}>
             Close settings
           </button>
