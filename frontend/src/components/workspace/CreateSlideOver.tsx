@@ -5,7 +5,9 @@ import { useModalBehavior } from '../../hooks/useModalBehavior';
 import { formatBytes } from '../../lib/format';
 import { scanPercent } from '../../lib/scanFormat';
 import { EventsOn } from '../../../wailsjs/runtime/runtime';
-import type { ScanProgress } from '../../types/scan';
+import type { ScanProgress, ScanSource } from '../../types/scan';
+import { sourceDisplayNameOf, sourcePathOf } from '../../types/scan';
+import VolumePicker from './create/VolumePicker';
 
 export interface CreateSlideOverProps {
   isOpen: boolean;
@@ -13,12 +15,6 @@ export interface CreateSlideOverProps {
 }
 
 const EXIT_DURATION_MS = 260;
-
-function basename(path: string): string {
-  const trimmed = path.replace(/[\\/]+$/, '');
-  const idx = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
-  return idx >= 0 ? trimmed.slice(idx + 1) : trimmed;
-}
 
 function slugify(name: string): string {
   const slug = name
@@ -73,7 +69,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     };
   }, [isOpen]);
 
-  const [sourcePath, setSourcePath] = useState('');
+  const [selectedSource, setSelectedSource] = useState<ScanSource | null>(null);
   const [title, setTitle] = useState('');
   const [root, setRoot] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -100,12 +96,6 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     return unsubscribe;
   }, [isOpen, dispatch]);
 
-  async function handleChooseFolder() {
-    const result = await wailsAPI.selectDirectory();
-    if (!result.success || !result.path) return;
-    setSourcePath(result.path);
-  }
-
   async function handleCreate() {
     // The ref guard (not the `submitting` state) is what actually makes a
     // double-click/double-⌘↵ start exactly one scan -- state updates are
@@ -113,13 +103,15 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     // this component re-renders (CRT-06 idempotency/concurrency).
     if (submittingRef.current) return;
     if (scan.status !== 'idle' && scan.status !== 'error') return;
-    if (!sourcePath || !state.catalogDir) return;
+    if (!selectedSource || !state.catalogDir) return;
 
     submittingRef.current = true;
     setSubmitting(true);
 
-    const resolvedTitle = title.trim() || basename(sourcePath);
-    const resolvedRoot = root.trim() || slugify(basename(sourcePath));
+    const sourcePath = sourcePathOf(selectedSource);
+    const displayName = sourceDisplayNameOf(selectedSource);
+    const resolvedTitle = title.trim() || displayName;
+    const resolvedRoot = root.trim() || slugify(displayName);
 
     dispatch({ type: 'SCAN_STARTED', payload: { title: resolvedTitle } });
 
@@ -184,7 +176,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, sourcePath, title, root, scan.status, state.catalogDir]);
+  }, [isOpen, selectedSource, title, root, scan.status, state.catalogDir]);
 
   // The panel keeps rendering for the full 260ms exit animation after a
   // close request, not just until isOpen flips false.
@@ -197,7 +189,9 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   const headerTitle = isDone ? 'Catalog written' : isScanning ? 'Cataloguing volume' : 'New catalog';
   const headerStep = isDone ? 'done' : isScanning ? 'step 2 of 2' : 'step 1 of 2';
 
-  const canCreate = !submitting && (scan.status === 'idle' || scan.status === 'error') && !!sourcePath && !!state.catalogDir;
+  const canCreate = !submitting && (scan.status === 'idle' || scan.status === 'error') && !!selectedSource && !!state.catalogDir;
+
+  const sourceDisplayName = selectedSource ? sourceDisplayNameOf(selectedSource) : '';
 
   const pct = scan.status === 'scanning' ? scanPercent(scan.bytesSeen, scan.totalBytes) : null;
 
@@ -226,19 +220,14 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
           {isForm && (
             <>
               {scan.status === 'error' && <div className="ws-create-error-banner">{scan.message}</div>}
-              <div className="ws-create-field">
-                <label className="ws-create-label">Source folder</label>
-                <button type="button" className="ws-create-choose-folder" onClick={handleChooseFolder}>
-                  {sourcePath || 'Choose a folder…'}
-                </button>
-              </div>
+              <VolumePicker selected={selectedSource} onSelect={setSelectedSource} />
               <div className="ws-create-field">
                 <label className="ws-create-label">Catalog title</label>
                 <input
                   className="ws-create-input"
                   value={title}
                   onChange={(event) => setTitle(event.target.value)}
-                  placeholder={sourcePath ? basename(sourcePath) : 'Untitled catalog'}
+                  placeholder={sourceDisplayName || 'Untitled catalog'}
                 />
               </div>
               <div className="ws-create-field">
@@ -248,7 +237,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
                     className="ws-create-input mono"
                     value={root}
                     onChange={(event) => setRoot(event.target.value)}
-                    placeholder={sourcePath ? slugify(basename(sourcePath)) : 'catalog'}
+                    placeholder={sourceDisplayName ? slugify(sourceDisplayName) : 'catalog'}
                   />
                   <span className="ws-create-suffix mono">.json / .html</span>
                 </div>

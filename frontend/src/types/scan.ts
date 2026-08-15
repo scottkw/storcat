@@ -1,3 +1,36 @@
+import { volumes } from '../../wailsjs/go/models';
+
+/**
+ * The two ways a user can choose what to catalog (CRT-02/CRT-03): a
+ * detected volume (from ListVolumes, carrying its own known size) or an
+ * arbitrary folder chosen through the native picker (no volume-level probe
+ * exists for a plain folder). Lifted here rather than kept as separate
+ * fields so VolumePicker, CreateForm and CreateSlideOver all derive the
+ * scan's source path and title/root placeholders from one shape.
+ */
+export type ScanSource = { kind: 'volume'; volume: volumes.Volume } | { kind: 'folder'; path: string };
+
+/**
+ * The final path element, tolerant of both `/` and `\` separators -- a
+ * volume's mountPath or a chosen folder's path can reach the renderer with
+ * either, depending on platform.
+ */
+export function basename(path: string): string {
+  const trimmed = path.replace(/[\\/]+$/, '');
+  const idx = Math.max(trimmed.lastIndexOf('/'), trimmed.lastIndexOf('\\'));
+  return idx >= 0 ? trimmed.slice(idx + 1) : trimmed;
+}
+
+/** The path StartScan should walk for a given source. */
+export function sourcePathOf(source: ScanSource): string {
+  return source.kind === 'volume' ? source.volume.mountPath : source.path;
+}
+
+/** The source's display name -- a volume's own name, or a folder's basename. */
+export function sourceDisplayNameOf(source: ScanSource): string {
+  return source.kind === 'volume' ? source.volume.name : basename(source.path);
+}
+
 /**
  * ScanProgress mirrors app.go's ScanProgress struct field-for-field (json
  * tags path/filesSeen/bytesSeen/readErrors/totalBytes) -- it is the event
