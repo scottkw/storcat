@@ -7,6 +7,7 @@ import { Environment } from '../../../wailsjs/runtime/runtime';
 import { models } from '../../../wailsjs/go/models';
 import Menu, { MenuItemSpec } from './Menu';
 import RenameDialog from './RenameDialog';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 export interface DetailsPanelProps {
   variant?: 'pane' | 'drawer';
@@ -36,12 +37,9 @@ function MetaRows({ rows }: { rows: MetaRow[] }) {
   );
 }
 
-// Renders the ⋯ trigger, the anchored menu it opens (ACT-01), and the
-// rename dialog one of its items opens (ACT-02). Duplicate and Delete are
-// wired in plan 27-05, which owns the delete dialog -- for now each closes
-// the menu and reports an explicit "not yet connected" message through
-// onError rather than rendering disabled/greyed items or silently no-oping,
-// either of which would misrepresent the menu's state to the user.
+// Renders the ⋯ trigger, the anchored menu it opens (ACT-01), the rename
+// dialog (ACT-02), the immediate duplicate action (ACT-03), and the delete
+// confirmation dialog (ACT-04/ACT-05) -- every item does its real work.
 function CatalogActions({
   catalog,
   catalogDir,
@@ -55,6 +53,26 @@ function CatalogActions({
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+
+  // No busy state and no disabled item while this runs -- a fast local file
+  // copy, this app has no spinners, and 27-UI-SPEC.md's E1 table marks the
+  // menu's loading consideration not applicable.
+  async function duplicateCatalogAction() {
+    // catalogDir is required for the Go side's containment check -- fail
+    // closed here rather than sending an empty directory the backend would
+    // just reject anyway, the same guard Footer's two actions already use.
+    if (!catalogDir) {
+      onError('No catalog directory configured.');
+      return;
+    }
+    const result = await wailsAPI.duplicateCatalog(catalog.path, catalogDir);
+    if (!result.success) {
+      onError(result.error);
+      return;
+    }
+    onError(null);
+  }
 
   const items: MenuItemSpec[] = [
     {
@@ -70,7 +88,7 @@ function CatalogActions({
       label: 'Duplicate catalog',
       onSelect: () => {
         setMenuOpen(false);
-        onError('Duplicate catalog is not yet connected.');
+        duplicateCatalogAction();
       },
     },
     {
@@ -80,7 +98,7 @@ function CatalogActions({
       dividerBefore: true,
       onSelect: () => {
         setMenuOpen(false);
-        onError('Delete catalog is not yet connected.');
+        setDeleteOpen(true);
       },
     },
   ];
@@ -122,8 +140,7 @@ function CatalogActions({
           onClose={() => setMenuOpen(false)}
           items={items}
         />}
-      <RenameDialog
-        isOpen={renameOpen}
+      <RenameDialog isOpen={renameOpen}
         onClose={() => setRenameOpen(false)}
         catalog={catalog}
         catalogDir={catalogDir}
@@ -135,6 +152,22 @@ function CatalogActions({
             type: 'SET_CATALOGS',
             payload: state.catalogs.map((c) => (c.path === catalog.path ? { ...c, title: newTitle } : c)),
           });
+        }}
+      />
+      <DeleteConfirmDialog isOpen={deleteOpen}
+        onClose={() => setDeleteOpen(false)}
+        catalog={catalog}
+        catalogDir={catalogDir}
+        onDeleted={() => {
+          // If the deleted catalog was the current selection, fall back to
+          // the details panel's existing "nothing selected" placeholder --
+          // no new empty state. The rail re-list arrives through the
+          // catalogs:changed-driven refresh 27-06/27-07 wire up, not a
+          // bespoke second refresh call here (27-CONTEXT.md's one locked
+          // refresh path).
+          if (catalog.path === state.currentCatalogId) {
+            dispatch({ type: 'CLEAR_CURRENT_CATALOG' });
+          }
         }}
       />
     </>

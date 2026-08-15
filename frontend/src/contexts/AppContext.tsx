@@ -77,6 +77,13 @@ type AppAction =
   | { type: 'SET_EXPANDED'; payload: Record<string, boolean> }
   | { type: 'MERGE_EXPANDED'; payload: string[] }
   | { type: 'SET_SELECTED'; payload: string | null }
+  // Added by 27-05 -- no existing action clears currentCatalogId without
+  // also selecting/loading something else, and DeleteConfirmDialog's
+  // onDeleted needs exactly that: clear currentCatalogId and selected so
+  // DetailsPanel (and TreePane's own currentCatalogId guard) both fall
+  // back to their existing "nothing selected" placeholders, no new empty
+  // state needed.
+  | { type: 'CLEAR_CURRENT_CATALOG' }
   | { type: 'SET_PENDING_REVEAL'; payload: string | null }
   | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } }
   | { type: 'SET_CREATE_OPEN'; payload: boolean }
@@ -252,6 +259,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
     }
     case 'SET_SELECTED':
       return { ...state, selected: action.payload };
+    case 'CLEAR_CURRENT_CATALOG':
+      if (state.currentCatalogId === null) return state;
+      return { ...state, currentCatalogId: null, selected: null };
     case 'SET_PENDING_REVEAL':
       return { ...state, pendingReveal: action.payload };
     case 'REVEAL_HIT': {
