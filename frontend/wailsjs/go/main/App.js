@@ -6,6 +6,10 @@ export function BrowseCatalogs(arg1) {
   return window['go']['main']['App']['BrowseCatalogs'](arg1);
 }
 
+export function CancelScan() {
+  return window['go']['main']['App']['CancelScan']();
+}
+
 export function CreateCatalog(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateCatalog'](arg1, arg2, arg3, arg4);
 }
@@ -80,4 +84,8 @@ export function SetWindowSize(arg1, arg2) {
 
 export function StartScan(arg1, arg2, arg3, arg4, arg5) {
   return window['go']['main']['App']['StartScan'](arg1, arg2, arg3, arg4, arg5);
+}
+
+export function WritePartialCatalog() {
+  return window['go']['main']['App']['WritePartialCatalog']();
 }

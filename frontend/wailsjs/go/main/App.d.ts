@@ -6,6 +6,8 @@ import {main} from '../models';
 
 export function BrowseCatalogs(arg1:string):Promise<Array<models.CatalogMetadata>>;
 
+export function CancelScan():Promise<void>;
+
 export function CreateCatalog(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.CreateCatalogResult>;
 
 export function GetCatalogHtmlPath(arg1:string):Promise<string>;
@@ -43,3 +45,5 @@ export function SetWindowPosition(arg1:number,arg2:number):Promise<void>;
 export function SetWindowSize(arg1:number,arg2:number):Promise<void>;
 
 export function StartScan(arg1:string,arg2:string,arg3:string,arg4:string,arg5:main.ScanOptions):Promise<models.CreateCatalogResult>;
+
+export function WritePartialCatalog():Promise<models.CreateCatalogResult>;

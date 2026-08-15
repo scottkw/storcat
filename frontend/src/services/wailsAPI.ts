@@ -18,6 +18,8 @@ import {
   SetWindowPersistence,
   GetVersion,
   StartScan,
+  CancelScan,
+  WritePartialCatalog,
 } from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
 
@@ -75,6 +77,30 @@ export const wailsAPI = {
   ) => {
     try {
       const result = await StartScan(title, sourcePath, outputDir, outputRoot, opts as main.ScanOptions);
+      return { success: true as const, result };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Cancels the in-flight scan, if any -- a no-op server-side when nothing
+  // is running, so this call is always safe to fire from the panel's
+  // cancel button without first checking scan state.
+  cancelScan: async () => {
+    try {
+      await CancelScan();
+      return { success: true as const };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Writes the tree retained from a source-loss scan through the shared
+  // write path. Idempotent server-side: a second call returns the first
+  // call's cached result without touching the filesystem again.
+  writePartialCatalog: async () => {
+    try {
+      const result = await WritePartialCatalog();
       return { success: true as const, result };
     } catch (error: any) {
       return wailsError(error);

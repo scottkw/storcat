@@ -64,3 +64,37 @@ export type ScanState =
       durationMs: number;
       partial: boolean;
     };
+
+// SOURCE_LOSS_MARKER is the substring contract between the two sides of the
+// bridge: app.go's catalog.SourceUnavailableError.Error() always reads
+// "source unavailable: <path>" (internal/catalog/errors.go). A cancellation
+// error carries no such substring (it propagates context.Canceled, wrapped
+// or bare). If a future change ever edits the Go error text, this is the
+// one place on the frontend that needs updating to match.
+const SOURCE_LOSS_MARKER = 'source unavailable';
+
+/**
+ * ScanFailure discriminates the only two ways StartScan's promise can
+ * reject once a scan is actually running: the user (or a window close)
+ * cancelled it, or the scan root itself became unreachable mid-walk
+ * (CRT-10). A cancellation must produce no error UI at all -- the panel
+ * simply closes; only a source loss routes to the error body (plan 25-07)
+ * offering a partial-catalog write (plan 25-07 also wires cancelScan into
+ * the scanning body, plan 25-06).
+ */
+export type ScanFailure =
+  | { kind: 'cancelled'; message: string }
+  | { kind: 'sourceLoss'; message: string };
+
+/**
+ * classifyScanFailure inspects a StartScan rejection's message (already
+ * unwrapped by wailsAPI's extractErrorMessage) and returns which of the two
+ * ScanFailure kinds it represents. Pure -- no I/O, safe to call from a
+ * reducer.
+ */
+export function classifyScanFailure(message: string): ScanFailure {
+  if (message.includes(SOURCE_LOSS_MARKER)) {
+    return { kind: 'sourceLoss', message };
+  }
+  return { kind: 'cancelled', message };
+}
