@@ -11,7 +11,7 @@ export function CancelScan():Promise<void>;
 
 export function CreateCatalog(arg1:string,arg2:string,arg3:string,arg4:string):Promise<models.CreateCatalogResult>;
 
-export function GetCatalogHtmlPath(arg1:string):Promise<string>;
+export function GetCatalogHtmlPath(arg1:string,arg2:string):Promise<string>;
 
 export function GetConfig():Promise<config.Config>;
 
@@ -25,7 +25,7 @@ export function LoadCatalog(arg1:string):Promise<models.CatalogItem>;
 
 export function LoadCatalogFlat(arg1:string):Promise<models.FlatCatalog>;
 
-export function OpenExternal(arg1:string):Promise<void>;
+export function OpenExternal(arg1:string,arg2:string):Promise<void>;
 
 export function ReadHtmlFile(arg1:string):Promise<string>;
 

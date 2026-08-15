@@ -118,9 +118,20 @@ function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; cata
     if (openBusy) return;
     setOpenBusy(true);
     setError(null);
-    const htmlPathResult = await wailsAPI.getCatalogHtmlPath(catalog.path);
+    // catalogDir is required for the Go side's containment check (FU-23-A) --
+    // fail closed here rather than sending an empty directory the backend
+    // would just reject anyway. Same guard handleReveal already has.
+    if (!catalogDir) {
+      setError('No catalog directory configured.');
+      setOpenBusy(false);
+      return;
+    }
+    const htmlPathResult = await wailsAPI.getCatalogHtmlPath(catalog.path, catalogDir);
     if (htmlPathResult.success) {
-      await wailsAPI.openExternal(htmlPathResult.htmlPath);
+      const openResult = await wailsAPI.openExternal(htmlPathResult.htmlPath, catalogDir);
+      if (!openResult.success) {
+        setError(openResult.error);
+      }
     } else {
       setError(htmlPathResult.error);
     }

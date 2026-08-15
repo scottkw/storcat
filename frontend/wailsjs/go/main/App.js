@@ -14,8 +14,8 @@ export function CreateCatalog(arg1, arg2, arg3, arg4) {
   return window['go']['main']['App']['CreateCatalog'](arg1, arg2, arg3, arg4);
 }
 
-export function GetCatalogHtmlPath(arg1) {
-  return window['go']['main']['App']['GetCatalogHtmlPath'](arg1);
+export function GetCatalogHtmlPath(arg1, arg2) {
+  return window['go']['main']['App']['GetCatalogHtmlPath'](arg1, arg2);
 }
 
 export function GetConfig() {
@@ -42,8 +42,8 @@ export function LoadCatalogFlat(arg1) {
   return window['go']['main']['App']['LoadCatalogFlat'](arg1);
 }
 
-export function OpenExternal(arg1) {
-  return window['go']['main']['App']['OpenExternal'](arg1);
+export function OpenExternal(arg1, arg2) {
+  return window['go']['main']['App']['OpenExternal'](arg1, arg2);
 }
 
 export function ReadHtmlFile(arg1) {

@@ -293,10 +293,14 @@ export const wailsAPI = {
     }
   },
 
-  // File operations
-  getCatalogHtmlPath: async (catalogPath: string) => {
+  // File operations. catalogDir is the frontend's currently configured
+  // catalog directory -- threaded through so the Go side can reject any
+  // path that does not resolve inside it (FU-23-A: both bindings are
+  // callable from any renderer JS, not only these call sites), exactly as
+  // revealInFileManager already does below.
+  getCatalogHtmlPath: async (catalogPath: string, catalogDir: string) => {
     try {
-      const htmlPath = await GetCatalogHtmlPath(catalogPath);
+      const htmlPath = await GetCatalogHtmlPath(catalogPath, catalogDir);
       return { success: true as const, htmlPath };
     } catch (error: any) {
       return wailsError(error);
@@ -312,10 +316,10 @@ export const wailsAPI = {
     }
   },
 
-  openExternal: async (url: string) => {
+  openExternal: async (url: string, catalogDir: string) => {
     try {
-      await OpenExternal(url);
-      return { success: true };
+      await OpenExternal(url, catalogDir);
+      return { success: true as const };
     } catch (error: any) {
       return wailsError(error);
     }
