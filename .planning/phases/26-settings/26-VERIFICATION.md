@@ -1,10 +1,15 @@
 ---
 phase: 26-settings
 verified: 2026-08-15T14:30:00Z
-status: human_needed
+status: passed
 score: 6/6 must-haves verified
 behavior_unverified: 3
-overrides_applied: 0
+overrides_applied: 1
+human_verification_deferred: true
+human_verification_deferral:
+  decided_by: user
+  decided_at: 2026-08-15
+  decision: "Accepted the automated evidence (6/6 must-haves verified, code review clean after 3 passes, full suite green) and advanced the autonomous run to Phase 27. The four items below were NOT validated by a human — they remain open and tracked in 26-UAT.md, plus .planning/WINDOWS.md #7 for the RailSide no-flash gap. None indicates missing or broken functionality; each is a residual verification-METHOD gap (a native OS dialog and a real quit/relaunch that this project's no-host-OS-GUI-automation rule forbids automating, and a scan that never stayed slow enough to observe). Run /gsd-verify-work 26 to close them."
 human_verification:
   - test: "Create-slide-over foreground-scan guard on ⌘, (T-26-03 DoS mitigation)"
     expected: "While the create slide-over is actively `counting`/`scanning` a foreground scan, pressing ⌘, must be a complete no-op — Settings does not open, and the scan continues undisturbed."
