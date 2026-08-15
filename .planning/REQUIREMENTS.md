@@ -85,7 +85,7 @@
 ### Actions — catalog management
 
 - [ ] **ACT-01**: User can open a catalog actions menu from the `⋯` button in the details panel
-- [ ] **ACT-02**: User can rename a catalog's title, which rewrites the `.html` `<title>` and leaves filenames unchanged
+- [x] **ACT-02**: User can rename a catalog's title, which rewrites the `.html` `<title>` and leaves filenames unchanged
 - [ ] **ACT-03**: User can duplicate a catalog, copying the `.json` and any `.html` with a suffixed filename root
 - [ ] **ACT-04**: User can delete a catalog to the OS Trash after a confirmation that names both file paths, with an option to also delete the matching `.html`
 - [ ] **ACT-05**: A failed trash operation surfaces as an error and never silently falls back to permanent deletion
@@ -202,7 +202,7 @@ Deferred — acknowledged but not in this roadmap.
 | SET-04 | Phase 26 | Complete |
 | SET-05 | Phase 26 | Complete |
 | ACT-01 | Phase 27 | Pending |
-| ACT-02 | Phase 27 | Pending |
+| ACT-02 | Phase 27 | Complete |
 | ACT-03 | Phase 27 | Pending |
 | ACT-04 | Phase 27 | Pending |
 | ACT-05 | Phase 27 | Pending |

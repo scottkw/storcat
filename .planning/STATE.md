@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 27
 current_phase_name: Catalog Actions + Watch
 status: executing
-stopped_at: Phase 27 UI-SPEC approved
-last_updated: "2026-08-15T17:24:32.085Z"
+stopped_at: Completed 27-01-PLAN.md (rename tracer, live-verified)
+last_updated: "2026-08-15T17:37:02.814Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 30
+  completed_plans: 31
   percent: 71
 ---
 
@@ -24,18 +24,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-13)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 26 — Settings
+**Current focus:** Phase 27 — Catalog Actions + Watch
 
 ## Current Position
 
-Phase: 27 — Catalog Actions + Watch
-Plan: Not started
+Phase: 27 (Catalog Actions + Watch) — EXECUTING
+Plan: 2 of 7
 Status: Ready to execute
-Last activity: 2026-08-15 — Phase 26 complete, transitioned to Phase 27
+Last activity: 2026-08-15 — Phase 27 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 100%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
@@ -93,6 +93,7 @@ Progress: [██████████] 100%
 | Phase 26 P03 | 19min | 3 tasks | 15 files |
 | Phase 26 P04 | ~25min | 3 tasks | 12 files |
 | Phase 26 P05 | 27min | 3 tasks | 13 files |
+| Phase 27 P01 | 40min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -172,6 +173,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 26-05: WindowPersistenceEnabled remains the sole window-persistence field -- COMPAT-05's toggle drives it directly via the pre-existing SetWindowPersistence binding, pinned by grep-based acceptance criteria
 - [Phase ?]: 26-05: Added TestSetWindowPersistence_Idempotent (Rule 2) to close a must_have truth COMPAT-05 idempotency the plan's literal task list didn't explicitly enumerate a test for
 - [Phase ?]: 26-05: COMPAT-05's both-direction persistence proof used window.runtime.WindowSetSize/SetPosition/Quit plus a real wails dev process restart -- not a reasoning-only claim
+- [Phase ?]: 27-01: setRootStringField appends a not-yet-present title key at the end of the root object's key list (per the plan's literal spec), not at the struct's declared field position -- struct order only governs a fresh json.Marshal
+- [Phase ?]: 27-01: BrowseCatalogs restructured to one read of filePath shared by the parse-error check and the JSON title probe; JSON-sourced titles are never html.UnescapeString'd, only HTML-sourced ones
 
 ### Key Research Findings
 
@@ -217,9 +220,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T16:32:58.837Z
-Stopped at: Phase 27 UI-SPEC approved
-Resume file: .planning/phases/27-catalog-actions-watch/27-UI-SPEC.md
+Last session: 2026-08-15T17:37:02.803Z
+Stopped at: Completed 27-01-PLAN.md (rename tracer, live-verified)
+Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
 **Worktree isolation: intentionally OFF.** `workflow.use_worktrees` is `false`, which is the correct and working configuration — Phases 22 and 23 were both built this way. Executors run sequentially on the main working tree. Do not "fix" this by setting it to `true`: Claude Code's harness forks agent worktrees from `origin/HEAD`, not local HEAD, and local `main` runs ~100 commits ahead of `origin/main` during a milestone, so every executor would land in a checkout predating all of v3.0.0 and halt on a base mismatch. The only reason to turn it on is speed (parallel executors within a wave), and it requires pushing `main` first.
