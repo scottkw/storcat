@@ -73,3 +73,24 @@ None — all four in-scope findings were fixed.
 _Fixed: 2026-08-14_
 _Fixer: Claude (gsd-code-fixer)_
 _Iteration: 1_
+
+---
+
+## Live verification of CR-02 (orchestrator, post-fix)
+
+The fixer flagged CR-02's clobber-avoidance half as `"fixed: requires human verification"` because `wails dev` was down during the fix pass. The dev server was restarted and the outstanding checks were run against the real runtime at `:34115`.
+
+**Freshness probe first** (the lesson from Phase 24's stale-binary incident — `curl` liveness is not binding freshness): `Object.keys(window.go.main.App)` confirmed `StartScan`, `CancelScan`, `WritePartialCatalog` and `ListVolumes` all present before any assertion was recorded.
+
+| Check | Observed | Verdict |
+|---|---|---|
+| Three concurrent `WritePartialCatalog()` calls with no partial retained | all three `rejected: "no partial scan retained to write"` — identical, serialized, none threw an unhandled error, no file produced | serializing lock holds |
+| Clean scan of a 6-file fixture | `{fileCount: 6, totalSize: 12, jsonPath: <outputDir>/cr02probe.json, jsonSize: 535}` — written into the **output directory, not the scanned source** | passes, and independently re-confirms RESEARCH finding #1 (distinct `outputDir`) end-to-end |
+| `WritePartialCatalog()` immediately after a clean scan | `rejected: "no partial scan retained to write"` | retention is correctly cleared by a fresh `StartScan`; a stale write cannot resurrect a completed scan's tree |
+| Two concurrent `WritePartialCatalog()` after a real scan | both `rejected` | no double-write path reachable |
+
+`htmlPath` came back empty because the probe passed empty `ScanOptions` — correct GUI behavior (the GUI supplies explicit options) and an incidental confirmation that the GUI/CLI option split works: only the CLI wrapper forces `WriteHTML: true`.
+
+**Not covered by this pass:** staging a genuine mid-walk source loss to retain a real partial tree, then racing a write against a retry. That needs a real removable volume disappearing mid-scan and remains a manual-only verification in `25-VALIDATION.md`. The generation-counter guard is unit-tested (`app_test.go`, 8-goroutine deterministic test) but its user-reachable sequence is not live-proven — recorded here rather than claimed.
+
+No host-OS GUI automation was used; every assertion above was made by calling bindings directly in the live webview.
