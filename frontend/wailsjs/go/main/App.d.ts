@@ -39,6 +39,8 @@ export function SelectDirectory():Promise<string>;
 
 export function SetCatalogDirectory(arg1:string):Promise<void>;
 
+export function SetCopyToSecondary(arg1:boolean):Promise<void>;
+
 export function SetDefaultFilenameRoot(arg1:string):Promise<void>;
 
 export function SetDensity(arg1:string):Promise<void>;
@@ -53,11 +55,15 @@ export function SetSidebarPosition(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
 
+export function SetWatchDirectory(arg1:boolean):Promise<void>;
+
 export function SetWindowPersistence(arg1:boolean):Promise<void>;
 
 export function SetWindowPosition(arg1:number,arg2:number):Promise<void>;
 
 export function SetWindowSize(arg1:number,arg2:number):Promise<void>;
+
+export function SetWriteHTML(arg1:boolean):Promise<void>;
 
 export function StartScan(arg1:string,arg2:string,arg3:string,arg4:string,arg5:main.ScanOptions):Promise<models.CreateCatalogResult>;
 

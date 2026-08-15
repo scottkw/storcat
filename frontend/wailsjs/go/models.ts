@@ -14,6 +14,9 @@ export namespace config {
 	    catalogDirectory: string;
 	    defaultFilenameRoot: string;
 	    secondaryDirectory: string;
+	    writeHtml: boolean;
+	    copyToSecondary: boolean;
+	    watchDirectory: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -34,6 +37,9 @@ export namespace config {
 	        this.catalogDirectory = source["catalogDirectory"];
 	        this.defaultFilenameRoot = source["defaultFilenameRoot"];
 	        this.secondaryDirectory = source["secondaryDirectory"];
+	        this.writeHtml = source["writeHtml"];
+	        this.copyToSecondary = source["copyToSecondary"];
+	        this.watchDirectory = source["watchDirectory"];
 	    }
 	}
 

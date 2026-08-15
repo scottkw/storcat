@@ -70,6 +70,10 @@ export function SetCatalogDirectory(arg1) {
   return window['go']['main']['App']['SetCatalogDirectory'](arg1);
 }
 
+export function SetCopyToSecondary(arg1) {
+  return window['go']['main']['App']['SetCopyToSecondary'](arg1);
+}
+
 export function SetDefaultFilenameRoot(arg1) {
   return window['go']['main']['App']['SetDefaultFilenameRoot'](arg1);
 }
@@ -98,6 +102,10 @@ export function SetTheme(arg1) {
   return window['go']['main']['App']['SetTheme'](arg1);
 }
 
+export function SetWatchDirectory(arg1) {
+  return window['go']['main']['App']['SetWatchDirectory'](arg1);
+}
+
 export function SetWindowPersistence(arg1) {
   return window['go']['main']['App']['SetWindowPersistence'](arg1);
 }
@@ -108,6 +116,10 @@ export function SetWindowPosition(arg1, arg2) {
 
 export function SetWindowSize(arg1, arg2) {
   return window['go']['main']['App']['SetWindowSize'](arg1, arg2);
+}
+
+export function SetWriteHTML(arg1) {
+  return window['go']['main']['App']['SetWriteHTML'](arg1);
 }
 
 export function StartScan(arg1, arg2, arg3, arg4, arg5) {

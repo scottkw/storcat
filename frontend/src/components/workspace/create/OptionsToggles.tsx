@@ -24,7 +24,7 @@ export interface OptionsTogglesProps {
   effectiveRoot: string;
 }
 
-interface ToggleRowProps {
+export interface ToggleRowProps {
   checked: boolean;
   label: string;
   note?: string;
@@ -32,12 +32,21 @@ interface ToggleRowProps {
   disabled: boolean;
   onToggle: () => void;
   onNoteClick?: (event: React.MouseEvent) => void;
+  // Whether the note renders in the mono font. Defaults to true so the
+  // three existing create-form call sites (literal filename/path values)
+  // render exactly as before with no prop passed. Settings' three static,
+  // descriptive-sentence notes pass false; its one path-valued note (copy
+  // to secondary, once set) leaves this at its default (26-UI-SPEC.md).
+  noteMono?: boolean;
 }
 
 // This project's first toggle-switch control -- plain markup and
 // create-prefixed styling, no package added. A row is always definitively
-// on or off; there is no unset/indeterminate visual state.
-function ToggleRow({ checked, label, note, noteClassName, disabled, onToggle, onNoteClick }: ToggleRowProps) {
+// on or off; there is no unset/indeterminate visual state. Shared between
+// the create form and Settings (26-UI-SPEC.md's resolution of the design
+// handoff's own internal toggle-geometry inconsistency): one component, one
+// geometry, everywhere -- not two visually-near-identical implementations.
+export function ToggleRow({ checked, label, note, noteClassName, disabled, onToggle, onNoteClick, noteMono = true }: ToggleRowProps) {
   return (
     <div
       className={`ws-create-toggle-row${disabled ? ' ws-create-toggle-row-disabled' : ''}`}
@@ -63,7 +72,7 @@ function ToggleRow({ checked, label, note, noteClassName, disabled, onToggle, on
         <span className="ws-create-toggle-label">{label}</span>
         {note !== undefined && (
           <span
-            className={`ws-create-toggle-note mono${noteClassName ? ` ${noteClassName}` : ''}`}
+            className={`ws-create-toggle-note${noteMono ? ' mono' : ''}${noteClassName ? ` ${noteClassName}` : ''}`}
             onClick={onNoteClick}
           >
             {note}

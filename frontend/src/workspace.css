@@ -1473,6 +1473,16 @@
   color: var(--dm);
 }
 
+/* The four Settings toggles (SET-04) -- every other toggle rule
+ * (.ws-create-toggle-row/-track/-track-on/-knob/-text/-label/-note,
+ * .ws-create-note-path) is reused verbatim from OptionsToggles' block
+ * above; this is the section's own row spacing only. */
+.ws-settings-toggle-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
 .ws-theme-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

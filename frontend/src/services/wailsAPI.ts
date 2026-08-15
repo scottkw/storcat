@@ -16,6 +16,9 @@ import {
   SetCatalogDirectory,
   SetDefaultFilenameRoot,
   SetSecondaryDirectory,
+  SetWriteHTML,
+  SetCopyToSecondary,
+  SetWatchDirectory,
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
@@ -287,6 +290,33 @@ export const wailsAPI = {
   setSecondaryDirectory: async (dir: string) => {
     try {
       await SetSecondaryDirectory(dir);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setWriteHTML: async (enabled: boolean) => {
+    try {
+      await SetWriteHTML(enabled);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setCopyToSecondary: async (enabled: boolean) => {
+    try {
+      await SetCopyToSecondary(enabled);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setWatchDirectory: async (enabled: boolean) => {
+    try {
+      await SetWatchDirectory(enabled);
       return { success: true };
     } catch (error: any) {
       return wailsError(error);

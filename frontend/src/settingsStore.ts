@@ -95,6 +95,21 @@ export function setSecondaryDirectorySetting(dir: string): void {
   void wailsAPI.setSecondaryDirectory(dir);
 }
 
+// Config-only, same reasoning as setDefaultFilenameRootSetting above --
+// nothing reads these three before first paint, so no boot cache is added
+// for them.
+export function setWriteHtmlSetting(enabled: boolean): void {
+  void wailsAPI.setWriteHTML(enabled);
+}
+
+export function setCopyToSecondarySetting(enabled: boolean): void {
+  void wailsAPI.setCopyToSecondary(enabled);
+}
+
+export function setWatchDirectorySetting(enabled: boolean): void {
+  void wailsAPI.setWatchDirectory(enabled);
+}
+
 export interface HydratedSettings {
   settings: AppSettings;
   catalogDirectory: string;
@@ -172,13 +187,12 @@ async function doHydrate(): Promise<HydratedSettings | null> {
 
   const settings: AppSettings = {
     defaultFilenameRoot: cfg.defaultFilenameRoot,
-    // writeHtml/copyToSecondary/watchDirectory have no Go config field yet
-    // (plan 26-05 adds them) -- DEFAULT_APP_SETTINGS' values stand in until
-    // then.
-    writeHtml: DEFAULT_APP_SETTINGS.writeHtml,
-    copyToSecondary: DEFAULT_APP_SETTINGS.copyToSecondary,
+    writeHtml: cfg.writeHtml,
+    copyToSecondary: cfg.copyToSecondary,
     secondaryDirectory: cfg.secondaryDirectory,
-    watchDirectory: DEFAULT_APP_SETTINGS.watchDirectory,
+    watchDirectory: cfg.watchDirectory,
+    // rememberWindow maps onto the pre-existing windowPersistenceEnabled
+    // field -- there is no separate "remember window" config field.
     rememberWindow: cfg.windowPersistenceEnabled,
   };
 

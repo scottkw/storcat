@@ -426,6 +426,110 @@ func TestSetSecondaryDirectory_Persists(t *testing.T) {
 	}
 }
 
+// TestSetWriteHTML verifies SetWriteHTML updates the in-memory config.
+func TestSetWriteHTML(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetWriteHTML(false); err != nil {
+		t.Fatalf("SetWriteHTML(false) error: %v", err)
+	}
+
+	if got := m.Get().WriteHTML; got != false {
+		t.Errorf("Get().WriteHTML = %v, want false", got)
+	}
+}
+
+// TestSetWriteHTML_Persists verifies SetWriteHTML writes synchronously to
+// disk -- a second Manager loaded from the same path reports the same
+// value.
+func TestSetWriteHTML_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetWriteHTML(false); err != nil {
+		t.Fatalf("SetWriteHTML(false) error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().WriteHTML; got != false {
+		t.Errorf("after reload: WriteHTML = %v, want false", got)
+	}
+}
+
+// TestSetWatchDirectory verifies SetWatchDirectory updates the in-memory
+// config.
+func TestSetWatchDirectory(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetWatchDirectory(true); err != nil {
+		t.Fatalf("SetWatchDirectory(true) error: %v", err)
+	}
+
+	if got := m.Get().WatchDirectory; got != true {
+		t.Errorf("Get().WatchDirectory = %v, want true", got)
+	}
+}
+
+// TestSetWatchDirectory_Persists verifies SetWatchDirectory writes
+// synchronously to disk -- a second Manager loaded from the same path
+// reports the same value.
+func TestSetWatchDirectory_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetWatchDirectory(true); err != nil {
+		t.Fatalf("SetWatchDirectory(true) error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().WatchDirectory; got != true {
+		t.Errorf("after reload: WatchDirectory = %v, want true", got)
+	}
+}
+
+// TestSetCopyToSecondary verifies SetCopyToSecondary updates the in-memory
+// config (exercised alongside the two above -- CopyToSecondary itself gets
+// its dedicated toggle-flow coverage in Task 2, but the field/setter pair
+// belongs to this task's struct edit).
+func TestSetCopyToSecondary(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetCopyToSecondary(true); err != nil {
+		t.Fatalf("SetCopyToSecondary(true) error: %v", err)
+	}
+
+	if got := m.Get().CopyToSecondary; got != true {
+		t.Errorf("Get().CopyToSecondary = %v, want true", got)
+	}
+}
+
+// TestDefaultConfig_ToggleDefaults pins DefaultConfig()'s four toggle-backed
+// fields in one place -- including WindowPersistenceEnabled, asserted here
+// to prove this plan did not disturb the pre-existing COMPAT-05 field while
+// adding its three neighbours.
+func TestDefaultConfig_ToggleDefaults(t *testing.T) {
+	cfg := DefaultConfig()
+
+	if cfg.WriteHTML != true {
+		t.Errorf("DefaultConfig().WriteHTML = %v, want true", cfg.WriteHTML)
+	}
+	if cfg.CopyToSecondary != false {
+		t.Errorf("DefaultConfig().CopyToSecondary = %v, want false", cfg.CopyToSecondary)
+	}
+	if cfg.WatchDirectory != false {
+		t.Errorf("DefaultConfig().WatchDirectory = %v, want false", cfg.WatchDirectory)
+	}
+	if cfg.WindowPersistenceEnabled != true {
+		t.Errorf("DefaultConfig().WindowPersistenceEnabled = %v, want true (unchanged by this plan)", cfg.WindowPersistenceEnabled)
+	}
+}
+
 // TestManager_ConcurrentSetters interleaves SetDensity, SetSettingsMigrated
 // and Get() across goroutines and asserts no error is returned. Run under
 // -race (SET-05 concurrency edge) -- this is the reason Manager gained a

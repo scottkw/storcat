@@ -34,6 +34,16 @@ type Config struct {
 	CatalogDirectory    string `json:"catalogDirectory"`
 	DefaultFilenameRoot string `json:"defaultFilenameRoot"`
 	SecondaryDirectory  string `json:"secondaryDirectory"`
+	// WriteHTML and CopyToSecondary are the create flow's default option
+	// values (SET-04) -- a Settings change here is what the create
+	// slide-over's own toggles open with next time.
+	WriteHTML       bool `json:"writeHtml"`
+	CopyToSecondary bool `json:"copyToSecondary"`
+	// WatchDirectory persists only, this phase (26). Phase 27's
+	// WATCH-01..03 own the real fsnotify watcher; until then this field has
+	// no reader beyond the Settings toggle itself, and no surface (status
+	// bar, rail badge, or copy) may imply that watching is active.
+	WatchDirectory bool `json:"watchDirectory"`
 }
 
 // DefaultConfig returns default application settings
@@ -52,6 +62,9 @@ func DefaultConfig() *Config {
 		CatalogDirectory:         "",
 		DefaultFilenameRoot:      "",
 		SecondaryDirectory:       "",
+		WriteHTML:                true,
+		CopyToSecondary:          false,
+		WatchDirectory:           false,
 	}
 }
 
@@ -270,5 +283,31 @@ func (m *Manager) SetSecondaryDirectory(dir string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.config.SecondaryDirectory = dir
+	return m.saveLocked()
+}
+
+// SetWriteHTML updates the create flow's write-HTML default.
+func (m *Manager) SetWriteHTML(enabled bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.WriteHTML = enabled
+	return m.saveLocked()
+}
+
+// SetCopyToSecondary updates the create flow's copy-to-secondary default.
+func (m *Manager) SetCopyToSecondary(enabled bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.CopyToSecondary = enabled
+	return m.saveLocked()
+}
+
+// SetWatchDirectory persists the watch-directory toggle's value. This phase
+// (26) only stores the value -- Phase 27's WATCH-01..03 own the actual
+// fsnotify watcher.
+func (m *Manager) SetWatchDirectory(enabled bool) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.WatchDirectory = enabled
 	return m.saveLocked()
 }

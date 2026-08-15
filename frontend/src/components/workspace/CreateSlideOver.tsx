@@ -105,7 +105,13 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   // the setting is empty this is a behavioural no-op and CreateForm's own
   // source-derived placeholder still applies (SET-04, CRT-04 adjacency).
   const [root, setRoot] = useState(() => state.settings.defaultFilenameRoot);
-  const [options, setOptions] = useState<OptionsToggleValues>(DEFAULT_OPTIONS);
+  // Seeded from the Settings-owned writeHTML default, same reasoning as
+  // `root` above -- a Settings change is what the next create attempt opens
+  // with (SET-04).
+  const [options, setOptions] = useState<OptionsToggleValues>(() => ({
+    ...DEFAULT_OPTIONS,
+    writeHTML: state.settings.writeHtml,
+  }));
   // Read once at mount, same persisted key OptionsToggles writes to -- both
   // start from the same value, and OptionsToggles reports every change back
   // through onSecondaryDirChange so this copy never drifts from its own.
@@ -154,6 +160,17 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     if (!isOpen) return;
     if (scan.status !== 'idle' && scan.status !== 'error') return;
     if (root === '') setRoot(state.settings.defaultFilenameRoot);
+    // Same re-seed need as `root` above, for options.writeHTML: the panel
+    // is always mounted, so its useState initializer can lose the race
+    // against WorkspaceShell's async settings hydration. Guarded on "still
+    // at the built-in module default" (this component's own DEFAULT_OPTIONS
+    // constant) rather than a blank-string sentinel, since a boolean has no
+    // natural "unset" value -- once the user has actually toggled it away
+    // from that default for this attempt, this never overwrites their
+    // choice, matching E4 partial's "must not retroactively rewrite it."
+    if (options.writeHTML === DEFAULT_OPTIONS.writeHTML && options.writeHTML !== state.settings.writeHtml) {
+      setOptions((prev) => ({ ...prev, writeHTML: state.settings.writeHtml }));
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
 
@@ -343,7 +360,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     setSelectedSource(null);
     setTitle('');
     setRoot(state.settings.defaultFilenameRoot);
-    setOptions(DEFAULT_OPTIONS);
+    setOptions({ ...DEFAULT_OPTIONS, writeHTML: state.settings.writeHtml });
     dispatch({ type: 'SCAN_RESET' });
   }
 

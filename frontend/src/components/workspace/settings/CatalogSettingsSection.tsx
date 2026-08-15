@@ -1,9 +1,11 @@
 import { useAppContext } from '../../../contexts/AppContext';
 import { wailsAPI } from '../../../services/wailsAPI';
-import { setCatalogDirectorySetting, setDefaultFilenameRootSetting } from '../../../settingsStore';
+import { setCatalogDirectorySetting, setDefaultFilenameRootSetting, setWriteHtmlSetting, setWatchDirectorySetting } from '../../../settingsStore';
+import { ToggleRow } from '../create/OptionsToggles';
 
-// The Catalogs section (SET-04): the catalog-directory row today, joined by
-// the default-filename-root row in plan 26-03 Task 2.
+// The Catalogs section (SET-04): the catalog-directory and
+// default-filename-root rows (plan 26-03), joined by the four locked-order
+// toggles (plan 26-05) -- all rendered through the one shared ToggleRow.
 function CatalogSettingsSection() {
   const { state, dispatch } = useAppContext();
 
@@ -61,6 +63,32 @@ function CatalogSettingsSection() {
           placeholder="catalog"
           value={state.settings.defaultFilenameRoot}
           onChange={handleRootChange}
+        />
+      </div>
+      <div className="ws-settings-toggle-list">
+        <ToggleRow
+          checked={state.settings.writeHtml}
+          label="Write HTML alongside JSON"
+          note="every catalog gets a matching .html"
+          noteMono={false}
+          disabled={false}
+          onToggle={() => {
+            const next = !state.settings.writeHtml;
+            dispatch({ type: 'SET_SETTINGS', payload: { writeHtml: next } });
+            setWriteHtmlSetting(next);
+          }}
+        />
+        <ToggleRow
+          checked={state.settings.watchDirectory}
+          label="Watch catalog directory for changes"
+          note="refresh the rail automatically"
+          noteMono={false}
+          disabled={false}
+          onToggle={() => {
+            const next = !state.settings.watchDirectory;
+            dispatch({ type: 'SET_SETTINGS', payload: { watchDirectory: next } });
+            setWatchDirectorySetting(next);
+          }}
         />
       </div>
     </div>

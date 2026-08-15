@@ -613,6 +613,31 @@ func (a *App) SetSecondaryDirectory(dir string) error {
 	return a.configManager.SetSecondaryDirectory(dir)
 }
 
+// SetWriteHTML saves the create flow's write-HTML default.
+func (a *App) SetWriteHTML(enabled bool) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetWriteHTML(enabled)
+}
+
+// SetCopyToSecondary saves the create flow's copy-to-secondary default.
+func (a *App) SetCopyToSecondary(enabled bool) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetCopyToSecondary(enabled)
+}
+
+// SetWatchDirectory persists the watch-directory toggle's value. This phase
+// (26) only stores the value -- the watcher itself is Phase 27.
+func (a *App) SetWatchDirectory(enabled bool) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetWatchDirectory(enabled)
+}
+
 // SetWindowSize saves the window size preference
 func (a *App) SetWindowSize(width, height int) error {
 	if a.configManager == nil {
