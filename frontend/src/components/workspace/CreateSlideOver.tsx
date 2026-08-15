@@ -184,6 +184,11 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     // batched and would not be visible to a second synchronous call before
     // this component re-renders (CRT-06 idempotency/concurrency).
     if (submittingRef.current) return;
+    // Defense in depth alongside ErrorBody's disabled={writingPartial} on
+    // "Retry scan" (WR-02): even if that disabled prop were somehow
+    // bypassed, this guard stops a retry from clearing the retained partial
+    // tree while "Write partial catalog" is still writing it (CR-02).
+    if (writingPartialRef.current) return;
     if (scan.status !== 'idle' && scan.status !== 'error') return;
     if (!selectedSource || !state.catalogDir) return;
 
@@ -319,25 +324,38 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     dispatch({ type: 'SCAN_RESET' });
   }
 
+  // handleCreate is a fresh closure every render (it reads options,
+  // secondaryDir, etc. from render-scope state) -- kept in a ref, updated on
+  // every render, so the keydown listener below always calls the *current*
+  // render's handleCreate no matter which deps the listener-registration
+  // effect actually re-runs on. Without this, toggling an option (which
+  // isn't in that effect's dep array) then pressing ⌘↵ would start a scan
+  // using the *previous* render's option values -- diverging from the WILL
+  // WRITE preview the user is looking at (WR-01).
+  const handleCreateRef = useRef(handleCreate);
+  handleCreateRef.current = handleCreate;
+
   // Wires ⌘↵ to the same handler the Create button uses (CRT-06) --
   // handleCreate's own guards make a second activation while a scan is
   // running a no-op regardless of which path triggered it. The listener is
   // only registered while the panel is open AND the form step is active
   // (idle/error) -- inlined rather than reading the later `isForm` const,
-  // which is declared after this effect in render order.
+  // which is declared after this effect in render order. Always calls
+  // handleCreateRef.current() (never handleCreate directly) so the deps
+  // below only need to control *when the listener is (de)registered*, not
+  // which closure it captures.
   useEffect(() => {
     if (!isOpen) return;
     if (scan.status !== 'idle' && scan.status !== 'error') return;
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key === 'Enter') {
         event.preventDefault();
-        handleCreate();
+        handleCreateRef.current();
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, selectedSource, title, root, scan.status, state.catalogDir]);
+  }, [isOpen, scan.status]);
 
   // The panel keeps rendering for the full 260ms exit animation after a
   // close request, not just until isOpen flips false.
