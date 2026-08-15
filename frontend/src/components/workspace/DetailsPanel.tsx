@@ -1,10 +1,12 @@
 import type { CSSProperties } from 'react';
-import { useLayoutEffect, useState } from 'react';
+import { useLayoutEffect, useRef, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { formatBytes, formatCount, formatDate } from '../../lib/format';
 import { wailsAPI } from '../../services/wailsAPI';
 import { Environment } from '../../../wailsjs/runtime/runtime';
 import { models } from '../../../wailsjs/go/models';
+import Menu, { MenuItemSpec } from './Menu';
+import RenameDialog from './RenameDialog';
 
 export interface DetailsPanelProps {
   variant?: 'pane' | 'drawer';
@@ -34,36 +36,108 @@ function MetaRows({ rows }: { rows: MetaRow[] }) {
   );
 }
 
-// Renders structurally in both populated states, matching the handoff's
-// header row -- but stays inert this phase: no handler, no menu. The
-// actions menu it will open is ACT-01 (Phase 27). Because it is icon-only
-// it carries an explicit accessible name now; menu-related ARIA attributes
-// are deliberately withheld -- there is no menu yet, and claiming one would
-// misinform assistive tech.
-function OverflowButton() {
+// Renders the ⋯ trigger, the anchored menu it opens (ACT-01), and the
+// rename dialog one of its items opens (ACT-02). Duplicate and Delete are
+// wired in plan 27-05, which owns the delete dialog -- for now each closes
+// the menu and reports an explicit "not yet connected" message through
+// onError rather than rendering disabled/greyed items or silently no-oping,
+// either of which would misrepresent the menu's state to the user.
+function CatalogActions({
+  catalog,
+  catalogDir,
+  onError,
+}: {
+  catalog: models.CatalogMetadata;
+  catalogDir: string | null;
+  onError: (message: string | null) => void;
+}) {
+  const { state, dispatch } = useAppContext();
+  const triggerRef = useRef<HTMLButtonElement | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+
+  const items: MenuItemSpec[] = [
+    {
+      id: 'rename',
+      label: 'Rename catalog…',
+      onSelect: () => {
+        setMenuOpen(false);
+        setRenameOpen(true);
+      },
+    },
+    {
+      id: 'duplicate',
+      label: 'Duplicate catalog',
+      onSelect: () => {
+        setMenuOpen(false);
+        onError('Duplicate catalog is not yet connected.');
+      },
+    },
+    {
+      id: 'delete',
+      label: 'Delete catalog…',
+      danger: true,
+      dividerBefore: true,
+      onSelect: () => {
+        setMenuOpen(false);
+        onError('Delete catalog is not yet connected.');
+      },
+    },
+  ];
+
   return (
-    <button
-      type="button"
-      className="ws-details-overflow"
-      aria-label="Catalog actions"
-      style={{
-        marginLeft: 'auto',
-        flex: 'none',
-        width: 22,
-        height: 22,
-        borderRadius: 6,
-        border: '1px solid var(--l)',
-        background: 'transparent',
-        color: 'var(--dm)',
-        fontSize: 13,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        cursor: 'pointer',
-      }}
-    >
-      <span aria-hidden="true">⋯</span>
-    </button>
+    <>
+      <button
+        ref={triggerRef}
+        type="button"
+        className="ws-details-overflow"
+        aria-label="Catalog actions"
+        aria-haspopup="menu"
+        aria-expanded={menuOpen}
+        aria-controls={menuOpen ? 'ws-catalog-actions-menu' : undefined}
+        style={{
+          marginLeft: 'auto',
+          flex: 'none',
+          width: 22,
+          height: 22,
+          borderRadius: 6,
+          border: '1px solid var(--l)',
+          background: 'transparent',
+          color: 'var(--dm)',
+          fontSize: 13,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+        }}
+        onClick={() => setMenuOpen((open) => !open)}
+      >
+        <span aria-hidden="true">⋯</span>
+      </button>
+      {menuOpen && <Menu
+          id="ws-catalog-actions-menu"
+          ariaLabel="Catalog actions"
+          isOpen
+          triggerRef={triggerRef}
+          onClose={() => setMenuOpen(false)}
+          items={items}
+        />}
+      <RenameDialog
+        isOpen={renameOpen}
+        onClose={() => setRenameOpen(false)}
+        catalog={catalog}
+        catalogDir={catalogDir}
+        onRenamed={(newTitle) => {
+          // Optimistic -- no wait for a rail re-list, consistent with this
+          // app's no-spinners rule. The rail row and the details panel both
+          // show the new title in the same frame the dialog closes.
+          dispatch({
+            type: 'SET_CATALOGS',
+            payload: state.catalogs.map((c) => (c.path === catalog.path ? { ...c, title: newTitle } : c)),
+          });
+        }}
+      />
+    </>
   );
 }
 
@@ -89,11 +163,25 @@ const buttonBase: CSSProperties = {
 // actions operate on the catalog's own file path regardless of whether a
 // node is also selected -- neither ever receives a free-form or
 // user-typed path.
-function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; catalogDir: string | null }) {
+//
+// error/onError are hoisted from DetailsPanel (27-04) rather than owned
+// locally -- 27-UI-SPEC.md puts a duplicate/delete failure in this same
+// error slot, so CatalogActions' menu-item placeholders and this footer's
+// two actions now share one error surface.
+function Footer({
+  catalog,
+  catalogDir,
+  error,
+  onError,
+}: {
+  catalog: models.CatalogMetadata;
+  catalogDir: string | null;
+  error: string | null;
+  onError: (message: string | null) => void;
+}) {
   const [platform, setPlatform] = useState<string | null>(null);
   const [openBusy, setOpenBusy] = useState(false);
   const [revealBusy, setRevealBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   // Same deferred-call-with-catch pattern Toolbar.tsx already established:
   // Environment() throws synchronously outside a real Wails webview, so
@@ -117,12 +205,12 @@ function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; cata
   async function handleOpenHtml() {
     if (openBusy) return;
     setOpenBusy(true);
-    setError(null);
+    onError(null);
     // catalogDir is required for the Go side's containment check (FU-23-A) --
-    // fail closed here rather than sending an empty directory the backend
+    // fail closed here rather than sending an empty directory the Go side
     // would just reject anyway. Same guard handleReveal already has.
     if (!catalogDir) {
-      setError('No catalog directory configured.');
+      onError('No catalog directory configured.');
       setOpenBusy(false);
       return;
     }
@@ -130,10 +218,10 @@ function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; cata
     if (htmlPathResult.success) {
       const openResult = await wailsAPI.openExternal(htmlPathResult.htmlPath, catalogDir);
       if (!openResult.success) {
-        setError(openResult.error);
+        onError(openResult.error);
       }
     } else {
-      setError(htmlPathResult.error);
+      onError(htmlPathResult.error);
     }
     setOpenBusy(false);
   }
@@ -141,18 +229,18 @@ function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; cata
   async function handleReveal() {
     if (revealBusy) return;
     setRevealBusy(true);
-    setError(null);
+    onError(null);
     // catalogDir is required for the Go side's containment check (WR-02) --
     // fail closed here rather than sending an empty directory the backend
     // would just reject anyway.
     if (!catalogDir) {
-      setError('No catalog directory configured.');
+      onError('No catalog directory configured.');
       setRevealBusy(false);
       return;
     }
     const result = await wailsAPI.revealInFileManager(catalog.path, catalogDir);
     if (!result.success) {
-      setError(result.error);
+      onError(result.error);
     }
     setRevealBusy(false);
   }
@@ -203,6 +291,11 @@ function Footer({ catalog, catalogDir }: { catalog: models.CatalogMetadata; cata
 
 function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
   const { state } = useAppContext();
+  // Hoisted so both CatalogActions' menu placeholders and Footer's two
+  // actions share one error slot (27-UI-SPEC.md) -- declared before the
+  // early returns below, alongside the pre-existing useAppContext() call,
+  // so no hook-order rule is broken.
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const catalog = state.catalogs.find((c) => c.path === state.currentCatalogId);
   const selectedNode =
@@ -263,7 +356,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
           >
             {isDirectory ? 'Selected folder' : 'Selected file'}
           </span>
-          <OverflowButton />
+          <CatalogActions catalog={catalog} catalogDir={state.catalogDir} onError={setActionError} />
         </div>
         <div className="pane-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -286,7 +379,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
           </div>
           <MetaRows rows={metaRows} />
         </div>
-        <Footer catalog={catalog} catalogDir={state.catalogDir} />
+        <Footer catalog={catalog} catalogDir={state.catalogDir} error={actionError} onError={setActionError} />
       </div>
     );
   }
@@ -320,7 +413,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
         <span style={{ fontSize: 12, fontWeight: 600, letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--dm)' }}>
           Catalog
         </span>
-        <OverflowButton />
+        <CatalogActions catalog={catalog} catalogDir={state.catalogDir} onError={setActionError} />
       </div>
       <div className="pane-scroll" style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
         <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
@@ -347,7 +440,7 @@ function DetailsPanel({ variant = 'pane' }: DetailsPanelProps) {
             backend surfaces. */}
         <MetaRows rows={metaRows} />
       </div>
-      <Footer catalog={catalog} catalogDir={state.catalogDir} />
+      <Footer catalog={catalog} catalogDir={state.catalogDir} error={actionError} onError={setActionError} />
     </div>
   );
 }
