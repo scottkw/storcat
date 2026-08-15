@@ -66,12 +66,24 @@ export function SelectDirectory() {
   return window['go']['main']['App']['SelectDirectory']();
 }
 
+export function SetCatalogDirectory(arg1) {
+  return window['go']['main']['App']['SetCatalogDirectory'](arg1);
+}
+
+export function SetDefaultFilenameRoot(arg1) {
+  return window['go']['main']['App']['SetDefaultFilenameRoot'](arg1);
+}
+
 export function SetDensity(arg1) {
   return window['go']['main']['App']['SetDensity'](arg1);
 }
 
 export function SetRailSide(arg1) {
   return window['go']['main']['App']['SetRailSide'](arg1);
+}
+
+export function SetSecondaryDirectory(arg1) {
+  return window['go']['main']['App']['SetSecondaryDirectory'](arg1);
 }
 
 export function SetSettingsMigrated(arg1) {

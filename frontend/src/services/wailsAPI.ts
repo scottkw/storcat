@@ -13,6 +13,7 @@ import {
   SetDensity,
   SetSettingsMigrated,
   SetRailSide,
+  SetCatalogDirectory,
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
@@ -257,6 +258,15 @@ export const wailsAPI = {
   setRailSide: async (side: string) => {
     try {
       await SetRailSide(side);
+      return { success: true };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  setCatalogDirectory: async (dir: string) => {
+    try {
+      await SetCatalogDirectory(dir);
       return { success: true };
     } catch (error: any) {
       return wailsError(error);

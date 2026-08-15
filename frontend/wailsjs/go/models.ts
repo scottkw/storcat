@@ -11,6 +11,9 @@ export namespace config {
 	    density: string;
 	    settingsMigrated: boolean;
 	    railSide: string;
+	    catalogDirectory: string;
+	    defaultFilenameRoot: string;
+	    secondaryDirectory: string;
 	
 	    static createFrom(source: any = {}) {
 	        return new Config(source);
@@ -28,6 +31,9 @@ export namespace config {
 	        this.density = source["density"];
 	        this.settingsMigrated = source["settingsMigrated"];
 	        this.railSide = source["railSide"];
+	        this.catalogDirectory = source["catalogDirectory"];
+	        this.defaultFilenameRoot = source["defaultFilenameRoot"];
+	        this.secondaryDirectory = source["secondaryDirectory"];
 	    }
 	}
 

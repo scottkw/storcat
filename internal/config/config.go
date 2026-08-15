@@ -20,12 +20,20 @@ type Config struct {
 	WindowX                  int    `json:"windowX"`
 	WindowY                  int    `json:"windowY"`
 	WindowPersistenceEnabled bool   `json:"windowPersistenceEnabled"`
-	Density                  string `json:"density"`         // "Compact" or "Comfortable"
+	Density                  string `json:"density"`          // "Compact" or "Comfortable"
 	SettingsMigrated         bool   `json:"settingsMigrated"` // set once legacy localStorage settings keys have been folded into this config
 	// RailSide is the catalog rail's side ("Left" or "Right") -- a genuinely
 	// new field, not a rename or repurpose of the orphaned SidebarPosition
 	// above (26-CONTEXT.md's discretion resolution).
 	RailSide string `json:"railSide"`
+	// CatalogDirectory, DefaultFilenameRoot and SecondaryDirectory are the
+	// Catalogs section's config-backed settings (SET-04) -- the rail's
+	// directory chip, the create form's filename-root seed, and the
+	// create-form's secondary-copy destination all read/write these fields
+	// (via settingsStore.ts) instead of a private localStorage copy each.
+	CatalogDirectory    string `json:"catalogDirectory"`
+	DefaultFilenameRoot string `json:"defaultFilenameRoot"`
+	SecondaryDirectory  string `json:"secondaryDirectory"`
 }
 
 // DefaultConfig returns default application settings
@@ -41,6 +49,9 @@ func DefaultConfig() *Config {
 		Density:                  "Comfortable",
 		SettingsMigrated:         false,
 		RailSide:                 "Left",
+		CatalogDirectory:         "",
+		DefaultFilenameRoot:      "",
+		SecondaryDirectory:       "",
 	}
 }
 
@@ -230,5 +241,34 @@ func (m *Manager) SetRailSide(side string) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.config.RailSide = side
+	return m.saveLocked()
+}
+
+// SetCatalogDirectory updates the configured catalog directory -- the same
+// value the rail's directory chip and the Settings Catalogs section both
+// read and write (SET-04).
+func (m *Manager) SetCatalogDirectory(dir string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.CatalogDirectory = dir
+	return m.saveLocked()
+}
+
+// SetDefaultFilenameRoot updates the default filename root pre-filled into
+// every new catalog's create form. An empty string is a valid value (SET-04
+// edge case), not an error.
+func (m *Manager) SetDefaultFilenameRoot(root string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.DefaultFilenameRoot = root
+	return m.saveLocked()
+}
+
+// SetSecondaryDirectory updates the create form's secondary-copy
+// destination.
+func (m *Manager) SetSecondaryDirectory(dir string) error {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.config.SecondaryDirectory = dir
 	return m.saveLocked()
 }

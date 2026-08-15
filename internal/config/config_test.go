@@ -295,6 +295,51 @@ func TestSetRailSide_DoesNotTouchSidebarPosition(t *testing.T) {
 	}
 }
 
+// TestSetCatalogDirectory verifies SetCatalogDirectory updates the
+// in-memory config.
+func TestSetCatalogDirectory(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetCatalogDirectory("/Volumes/Data"); err != nil {
+		t.Fatalf("SetCatalogDirectory(\"/Volumes/Data\") error: %v", err)
+	}
+
+	if got := m.Get().CatalogDirectory; got != "/Volumes/Data" {
+		t.Errorf("Get().CatalogDirectory = %q, want %q", got, "/Volumes/Data")
+	}
+}
+
+// TestSetCatalogDirectory_Persists verifies SetCatalogDirectory writes
+// synchronously to disk -- a second Manager loaded from the same path
+// reports the same value.
+func TestSetCatalogDirectory_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetCatalogDirectory("/Volumes/Data"); err != nil {
+		t.Fatalf("SetCatalogDirectory(\"/Volumes/Data\") error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().CatalogDirectory; got != "/Volumes/Data" {
+		t.Errorf("after reload: CatalogDirectory = %q, want %q", got, "/Volumes/Data")
+	}
+}
+
+// TestDefaultConfig_CatalogDirectoryEmpty verifies a fresh install has no
+// catalog directory configured -- the state the empty-state chip copy
+// covers.
+func TestDefaultConfig_CatalogDirectoryEmpty(t *testing.T) {
+	cfg := DefaultConfig()
+
+	if cfg.CatalogDirectory != "" {
+		t.Errorf("DefaultConfig().CatalogDirectory = %q, want empty", cfg.CatalogDirectory)
+	}
+}
+
 // TestManager_ConcurrentSetters interleaves SetDensity, SetSettingsMigrated
 // and Get() across goroutines and asserts no error is returned. Run under
 // -race (SET-05 concurrency edge) -- this is the reason Manager gained a

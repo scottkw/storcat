@@ -2,9 +2,8 @@ import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'rea
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { formatBytes, formatCount } from '../../lib/format';
-import { safeGetItem, safeSetItem } from '../../themeTokens';
-
-const CATALOG_DIR_STORAGE_KEY = 'storcat-catalog-directory';
+import { safeGetItem } from '../../themeTokens';
+import { CATALOG_DIR_KEY, setCatalogDirectorySetting } from '../../settingsStore';
 
 function CatalogRail() {
   const { state, dispatch } = useAppContext();
@@ -31,23 +30,34 @@ function CatalogRail() {
     [dispatch]
   );
 
-  // On mount, read the persisted catalog directory (if any) and load its
-  // catalogs once. No persisted directory -> do not call the listing binding
-  // at all; the empty-library state below covers that case (STATE-01).
+  // On mount, read the persisted catalog directory (if any) and dispatch it
+  // -- it no longer calls loadCatalogsForDirectory directly. No persisted
+  // directory -> dispatch nothing; the empty-library state below covers
+  // that case (STATE-01).
   useEffect(() => {
-    const persistedDir = safeGetItem(CATALOG_DIR_STORAGE_KEY);
+    const persistedDir = safeGetItem(CATALOG_DIR_KEY);
     if (!persistedDir) return;
     dispatch({ type: 'SET_CATALOG_DIR', payload: persistedDir });
-    loadCatalogsForDirectory(persistedDir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // The listing follows the shared state, not only the mount -- this is
+  // what makes a directory change originating in Settings refresh the rail
+  // with no duplicated listing call. The reducer's SET_CATALOG_DIR guard
+  // (AppContext.tsx) is what stops this effect firing twice for the same
+  // value (e.g. the mount effect's dispatch above and a same-value Settings
+  // change never both trigger a listing).
+  useEffect(() => {
+    if (!state.catalogDir) return;
+    loadCatalogsForDirectory(state.catalogDir);
+  }, [state.catalogDir, loadCatalogsForDirectory]);
 
   const handleChooseDirectory = async () => {
     const result = await wailsAPI.selectDirectory();
     if (!result.success || !result.path) return;
-    safeSetItem(CATALOG_DIR_STORAGE_KEY, result.path);
+    if (result.path === state.catalogDir) return;
+    setCatalogDirectorySetting(result.path);
     dispatch({ type: 'SET_CATALOG_DIR', payload: result.path });
-    loadCatalogsForDirectory(result.path);
   };
 
   // While a scan is running (foreground or backgrounded), every create

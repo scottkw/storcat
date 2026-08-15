@@ -37,9 +37,15 @@ export function SearchIndexed(arg1:string,arg2:string):Promise<models.SearchInde
 
 export function SelectDirectory():Promise<string>;
 
+export function SetCatalogDirectory(arg1:string):Promise<void>;
+
+export function SetDefaultFilenameRoot(arg1:string):Promise<void>;
+
 export function SetDensity(arg1:string):Promise<void>;
 
 export function SetRailSide(arg1:string):Promise<void>;
+
+export function SetSecondaryDirectory(arg1:string):Promise<void>;
 
 export function SetSettingsMigrated(arg1:boolean):Promise<void>;
 

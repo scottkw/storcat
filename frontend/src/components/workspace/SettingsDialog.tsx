@@ -6,6 +6,7 @@ import { wailsAPI } from '../../services/wailsAPI';
 import { readPersistedPrefs } from '../../themeTokens';
 import SegmentedControl from './settings/SegmentedControl';
 import ThemeGrid from './settings/ThemeGrid';
+import CatalogSettingsSection from './settings/CatalogSettingsSection';
 
 export interface SettingsDialogProps {
   isOpen: boolean;
@@ -128,6 +129,8 @@ function SettingsDialog({ isOpen, onClose }: SettingsDialogProps) {
               </div>
             </div>
           </div>
+
+          <CatalogSettingsSection />
         </div>
 
         <div className="ws-settings-footer">

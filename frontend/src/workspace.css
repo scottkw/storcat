@@ -1570,6 +1570,51 @@
   padding: 4px 14px;
 }
 
+/* The Catalogs section's value column (directory chip + Change… link) --
+   26-UI-SPEC's "Catalogs Section (SET-04)" row shape. */
+.ws-settings-value-col {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: none;
+  min-width: 0;
+}
+
+/* Reuses .ws-dir-chip's visual contract (the rail's own directory chip) --
+   not a new chip style. */
+.ws-settings-dir-chip {
+  font-size: 11.5px;
+  color: var(--dm);
+  background: var(--ch);
+  border: 1px solid var(--l);
+  border-radius: 7px;
+  padding: 5px 9px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 260px;
+  cursor: pointer;
+}
+
+.ws-settings-change-link {
+  font-size: 12px;
+  color: var(--ac);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.ws-settings-root-input {
+  height: 30px;
+  width: 150px;
+  border-radius: 7px;
+  background: var(--p2);
+  border: 1px solid var(--l);
+  padding: 0 10px;
+  font-size: 12.5px;
+  color: var(--tx);
+}
+
 .ws-settings-footer {
   height: 56px;
   flex: none;

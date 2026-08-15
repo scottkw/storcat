@@ -41,3 +41,13 @@ export function setRailSideSetting(side: RailSide): void {
   safeSetItem(RAIL_SIDE_KEY, side);
   void wailsAPI.setRailSide(side);
 }
+
+// The one home for the catalog-directory storage-key literal -- CatalogRail
+// and CatalogSettingsSection both import it from here rather than each
+// declaring their own copy.
+export const CATALOG_DIR_KEY = 'storcat-catalog-directory';
+
+export function setCatalogDirectorySetting(dir: string): void {
+  safeSetItem(CATALOG_DIR_KEY, dir);
+  void wailsAPI.setCatalogDirectory(dir);
+}

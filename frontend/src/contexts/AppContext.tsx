@@ -131,6 +131,13 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'SET_DETAIL_OVERLAY':
       return { ...state, detailOverlay: action.payload };
     case 'SET_CATALOG_DIR':
+      // Re-selecting the already-configured directory is a true no-op --
+      // the same state object is returned (React's reducer bail-out skips
+      // the re-render), so choosing the same directory from Settings or the
+      // rail can never blow away currentCatalogId/tree/expanded/selected
+      // below (SET-04 adjacency), from any call site, mirroring
+      // SET_CREATE_OPEN's identical bail-out above.
+      if (state.catalogDir === action.payload) return state;
       // Changing directories clears the current catalog, returns the tree to
       // idle, and empties expansion/selection in the same case -- without
       // this a directory change can leave the tree showing a catalog that is

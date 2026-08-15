@@ -587,6 +587,32 @@ func (a *App) SetRailSide(side string) error {
 	return a.configManager.SetRailSide(side)
 }
 
+// SetCatalogDirectory saves the configured catalog directory -- the same
+// value the rail's directory chip and Settings' Catalogs section share.
+func (a *App) SetCatalogDirectory(dir string) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetCatalogDirectory(dir)
+}
+
+// SetDefaultFilenameRoot saves the default filename root pre-filled into
+// every new catalog's create form. An empty string is a valid value.
+func (a *App) SetDefaultFilenameRoot(root string) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetDefaultFilenameRoot(root)
+}
+
+// SetSecondaryDirectory saves the create form's secondary-copy destination.
+func (a *App) SetSecondaryDirectory(dir string) error {
+	if a.configManager == nil {
+		return nil
+	}
+	return a.configManager.SetSecondaryDirectory(dir)
+}
+
 // SetWindowSize saves the window size preference
 func (a *App) SetWindowSize(width, height int) error {
 	if a.configManager == nil {
