@@ -126,3 +126,41 @@ Every gap the research pass identified is created by the task that needs it, ins
 - [x] `nyquist_compliant: true` set in frontmatter
 
 **Approval:** per-task map and manual-only table populated with observed results by 25-07-T3, executing this document's own Sampling Rate contract in full: `status` is left `draft` per this file's own lifecycle comment (flipped to `validated` only by `/gsd-validate-phase` §6, not by plan execution) -- this sign-off block is about verification coverage completeness, which is now full.
+
+
+---
+
+## Validation Audit 2026-08-15
+
+| Metric | Count |
+|--------|-------|
+| Requirements audited | 16 |
+| COVERED (automated Go tests) | 8 — CRT-02, CRT-05, CRT-07, CRT-09, CRT-10, CRT-11, COMPAT-02, COMPAT-03 |
+| Manual-only (structural, TEST-01 deferred) | 8 — CRT-01, CRT-03, CRT-04, CRT-06, CRT-08, CRT-12, CRT-13, COMPAT-04* |
+| Gaps found | 0 fillable |
+| Resolved | 0 (both Wave 0 items already landed; `internal/volumes` gained its own test file in 25-04) |
+| Escalated | 0 |
+
+\* COMPAT-04 is verified by a static dependency assertion (`go list -deps ./internal/catalog/... | grep wailsapp` → empty) rather than a Go test, which is the appropriate shape for an import-graph invariant. Note the guard must grep for **`wailsapp`**, not `-i wails` — the latter false-positives on this project's own module name `storcat-wails`, a trap the phase verifier caught.
+
+**Auditor not spawned.** Every fillable gap was already closed during execution: Wave 0's two items landed in 25-01/25-02, and `internal/volumes` gained `volumes_test.go` in 25-04. The eight remaining requirements are frontend surfaces with no automatable path, because **TEST-01 (Vitest + Testing Library) is an explicitly deferred milestone item** recorded in STATE.md's Deferred Items table. Closing them automatically would mean installing that framework — scope creep against a locked deferral, and a decision belonging to whoever retires TEST-01. `nyquist_compliant` stays `false` **by design, not omission**: marking it true would misrepresent automated coverage the project has deliberately chosen not to have yet.
+
+### Automated coverage actually delivered
+
+| Req | Tests |
+|-----|-------|
+| CRT-02 | `TestList_ExcludesBootVolumeSymlink`, `TestSkipMountEntry`, `TestVolumeNameFromMountPath`, `TestList_ReturnsEmptySliceNotErrorWhenNoMounts`, `TestProbeReadable_UnreadableDirectory` |
+| CRT-05 | `TestCreateCatalogWithContext_IncludeHidden`, `TestCopyFile_CopiesContent`, `TestCopyFile_PreservesExistingDestinationOnFailure` |
+| CRT-07 | `TestCreateCatalogWithContext_ProgressCounters`, `TestMeasureTree_CountsFilesAndBytes`, `_RespectsIncludeHidden`, `_HonoursCancellation`, `_TolerantOfUnreadableEntries` |
+| CRT-09 | `TestCreateCatalogWithContext_CancelWritesNothing` |
+| CRT-10 | `TestTraverseDirectory_SingleEntryErrorSkipsAndContinues`, `TestTraverseDirectory_TerminalSourceLossStopsWalk`, `TestCreateCatalogWithContext_RootVanishesBeforeAnyProgress`, `_SourceLossWritesNothing` |
+| CRT-11 | `TestWritePartialCatalog_Marker`, `TestWritePartialCatalog_ConcurrentCallsWriteOnce` (8-goroutine, `-race`) |
+| COMPAT-02 | `TestCreateCatalog_JSONShapeUnchanged`, `TestWriteJSONFile_BareObject` |
+| COMPAT-03 | `TestCreateCatalog_WrapperWritesHTML`, `_WrapperDoesNotHaltOnSourceLoss`, `_WrapperWritesIntoScannedDirectory`, `_WrapperRootVanishReturnsPlainError` |
+| (crash-safety primitive) | `TestWriteFileAtomic_CreatesFileWithContent`, `_LeavesNoTempResidue`, `_RemovesTempOnFailure`, `_TempIsCreatedInDestinationDirectory` |
+
+### Manual-only, with the live evidence recorded
+
+All verified at `wails dev` `:34115` against real `/Volumes` and real large scans (never Vite `:5173`, which exposes no `window.go`): the 340ms/260ms animation and five close paths; volume cards with live size/status including two genuinely unreadable `d--x--x--x` mounts; title/root independence; the derived WILL WRITE preview; all three toggles; both scanning sub-states with the counting→percentage transition and monotonic, spinner-free progress; cancel writing nothing; background handoff with an agreeing status-bar percentage and click-to-reopen into the live scanning state; the error state's three actions; both done flavors; four entry points resetting to the form; a real ⌘↵-triggered scan through to done; and CRT-13's force-quit-mid-scan, closed live in wave 7 via `window.runtime.Quit()`.
+
+**Still genuinely unverified, logged rather than claimed** — `.planning/WINDOWS.md` #4 (Windows `GetDiskFreeSpaceEx`), #5 (Linux `/proc/mounts`), #6 (atomic write surviving a `SIGKILL` — timing a kill inside a few-millisecond write window is not reliably schedulable here). Staging a real mid-walk source loss on removable media also remains manual-only.
