@@ -153,7 +153,7 @@ export function computeTokens(theme: Theme, density: Density): Record<string, st
 /**
  * Single successor to App.tsx's former applyTheme(): writes the 14 extended
  * tokens + 5 density vars, and keeps writing the 16 legacy ThemeColors
- * properties so index.css's antd overrides (CatalogModal) keep working.
+ * properties so index.css's antd overrides keep working.
  */
 export function applyTokens(theme: Theme, density: Density): void {
   const root = document.documentElement;

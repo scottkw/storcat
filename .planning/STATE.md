@@ -177,10 +177,12 @@ Research complete — see `.planning/research/SUMMARY.md`, `ARCHITECTURE.md`, `P
 
 ### Pending Todos
 
-**Carried security obligations for Phase 26** (from `23-SECURITY.md` — must not be re-accepted a third time):
+**Security obligations discharged in Phase 26 plan 04** (carried through Phases 22-25, no longer open):
 
-- **T-22-05 — `CatalogModal` unsanitized `srcDoc`.** Accepted in Phases 22 and 23 *only* because no dispatcher of `openCatalogModal` exists. The plumbing beneath it is now live (`window.electronAPI` shim routes to real Go), so only the missing dispatcher stands between attacker-influenceable catalog HTML and an unsanitized `srcDoc`. Phase 26 must sanitize `htmlContent` or delete `CatalogModal.tsx` — not re-affirm the acceptance.
-- **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` / `SearchIndexed` containment.** All three are Wails-exposed and callable from any renderer JS but lack the containment/symlink/regular-file gate that `RevealInFileManager` got in review finding WR-02. Mechanical fix: thread `catalogDir` through each and reuse `internal/osutil`'s existing `containsPath` helper. **`App.SearchIndexed` was added to this sweep's target list by Phase 24** (threat T-24-01, recorded in all five 24-*-PLAN.md threat registers and confirmed by `24-SECURITY.md`) — it takes an arbitrary directory with the same parameter surface as its siblings, so it must not be missed when this sweep runs.
+- **T-22-05 — `CatalogModal` unsanitized `srcDoc`. DISCHARGED (deleted).** Reachability re-confirmed at execution time (grep of `frontend/src` for `dispatchEvent` found only `themeChange`, same as at discuss time), then `frontend/src/components/CatalogModal.tsx` and its `App.tsx` wiring (imports, state, listener, close handler, element) were removed outright rather than sanitized. The surviving "Open HTML catalog" path in `DetailsPanel.tsx` was proven live before and after the deletion.
+- **FU-23-A — `GetCatalogHtmlPath` / `OpenExternal` containment. DISCHARGED.** Both bindings now thread `catalogDir` through and reuse `internal/osutil.ContainsPath` (via the new `osutil.ResolveContainedFileURL` for `OpenExternal`), exactly the treatment `RevealInFileManager` received in Phase 23's WR-02 finding. **`SearchIndexed` is correctly OFF this list** — Phase 25's security audit verified it takes no renderer-supplied path reaching a filesystem write and received its own containment at introduction, so carrying it forward here would have been a redundant item, not a real gap.
+
+`.planning/WINDOWS.md` entry 3 (Phase 25 CRT-13 force-quit-mid-scan) is already `status: fixed` (`resolved_at: 2026-08-15T02:39:39.103Z`) — the item `26-CONTEXT.md` queued for this phase needs no further action.
 
 **Open platform-gated items** (tracked in `.planning/WINDOWS.md`, sweep before v3.0.0 ships):
 
