@@ -137,6 +137,26 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
   const scan = state.scan;
 
+  // CreateSlideOver is always mounted (see this component's own top
+  // comment), so the `root` useState initializer above runs at the very
+  // first render -- before WorkspaceShell's hydrateSettings() effect (plan
+  // 26-03 Task 3) has resolved the async config round-trip. A one-time
+  // initializer therefore always loses that race and never actually
+  // arrives pre-filled. Re-seeding here, on every isOpen transition into
+  // the form step, is what makes "Pre-filled for every new catalog"
+  // (SET-04) true in practice. Only fires when root is still at its blank
+  // starting value, so it never clobbers a root the user already typed for
+  // this attempt -- and per E4 partial, a setting changed while the panel
+  // is already open must not retroactively rewrite it, which is why
+  // state.settings.defaultFilenameRoot is read but deliberately not listed
+  // as a dependency below.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (scan.status !== 'idle' && scan.status !== 'error') return;
+    if (root === '') setRoot(state.settings.defaultFilenameRoot);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen]);
+
   // Always subscribed, never gated on isOpen -- CreateSlideOver is always
   // mounted by WorkspaceShell (see this component's own top comment), so a
   // scan sent to the background via "Run in background" (CRT-08) keeps
