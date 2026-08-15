@@ -722,8 +722,13 @@ func (a *App) ReadHtmlFile(filePath string) (string, error) {
 	return string(content), nil
 }
 
-// GetCatalogHtmlPath returns the HTML file path for a catalog
-func (a *App) GetCatalogHtmlPath(catalogPath string) (string, error) {
+// GetCatalogHtmlPath returns the HTML file path for a catalog. catalogDir
+// is the frontend's currently configured catalog directory; this binding
+// is reachable from any renderer JS, so a path resolving outside it is
+// rejected before the (unresolved) html path is ever returned -- the same
+// containment treatment RevealInFileManager received in Phase 23's WR-02
+// finding. Discharges FU-23-A for this binding.
+func (a *App) GetCatalogHtmlPath(catalogPath string, catalogDir string) (string, error) {
 	var htmlPath string
 	if filepath.Ext(catalogPath) == ".json" {
 		htmlPath = catalogPath[:len(catalogPath)-5] + ".html"
@@ -736,12 +741,40 @@ func (a *App) GetCatalogHtmlPath(catalogPath string) (string, error) {
 		}
 		return "", fmt.Errorf("cannot access HTML file: %w", err)
 	}
+
+	if catalogDir == "" {
+		return "", fmt.Errorf("get html path %s: no catalog directory configured", htmlPath)
+	}
+	resolved, err := filepath.EvalSymlinks(htmlPath)
+	if err != nil {
+		return "", fmt.Errorf("get html path %s: %w", htmlPath, err)
+	}
+	ok, err := osutil.ContainsPath(catalogDir, resolved)
+	if err != nil {
+		return "", fmt.Errorf("get html path %s: resolve catalog directory: %w", htmlPath, err)
+	}
+	if !ok {
+		return "", fmt.Errorf("get html path %s: outside configured catalog directory", htmlPath)
+	}
+
 	return htmlPath, nil
 }
 
-// OpenExternal opens a URL or file in the system's default application
-func (a *App) OpenExternal(url string) {
-	runtime.BrowserOpenURL(a.ctx, url)
+// OpenExternal opens a file in the system's default application. rawURL
+// must be a file:// URL or an absolute filesystem path resolving to a
+// regular .json/.html file inside catalogDir -- osutil.ResolveContainedFileURL
+// validates and canonicalizes it before anything is opened, and the
+// canonical resolved URL (not the caller's rawURL) is what gets passed to
+// the runtime. Discharges FU-23-A for this binding: it now also returns an
+// error, since silently doing nothing on rejection would be invisible to
+// the caller.
+func (a *App) OpenExternal(rawURL string, catalogDir string) error {
+	resolvedURL, err := osutil.ResolveContainedFileURL(rawURL, catalogDir)
+	if err != nil {
+		return err
+	}
+	runtime.BrowserOpenURL(a.ctx, resolvedURL)
+	return nil
 }
 
 // RevealInFileManager asks the operating system to reveal path -- a
