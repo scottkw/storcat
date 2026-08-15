@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 26
 current_phase_name: Settings
 status: executing
-stopped_at: Completed 26-03-PLAN.md
-last_updated: "2026-08-15T14:21:55.184Z"
+stopped_at: Completed 26-04-PLAN.md
+last_updated: "2026-08-15T14:34:26.468Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 28
+  completed_plans: 29
   percent: 57
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 26 (Settings) — EXECUTING
-Plan: 4 of 5
+Plan: 5 of 5
 Status: Ready to execute
 Last activity: 2026-08-15 — Phase 26 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [█████████░] 93%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -90,6 +90,7 @@ Progress: [█████████░] 93%
 | Phase 26 P01 | 25min | 2 tasks | 14 files |
 | Phase 26 P02 | 8min | 2 tasks | 11 files |
 | Phase 26 P03 | 19min | 3 tasks | 15 files |
+| Phase 26 P04 | ~25min | 3 tasks | 12 files |
 
 ## Accumulated Context
 
@@ -164,6 +165,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 26-02: Skipped full OS quit-and-relaunch for RailSide persistence proof to avoid disrupting shared wails dev process plans 26-03..05 depend on; substituted TestSetRailSide_Persists + on-disk config.json readback, logged WINDOWS.md entry #7
 - [Phase ?]: 26-03: CreateSlideOver's always-mounted root useState initializer raced hydration/Settings edits -- fixed with an isOpen-keyed re-seed effect that only fires on a still-blank field
 - [Phase ?]: 26-03: Editing config.json on disk while wails dev is running is a no-op against the live in-memory config.Manager singleton -- live migration testing must reset state through the real Set* bindings instead
+- [Phase ?]: 26-04: OpenExternal restricted to file:// URLs and bare absolute paths inside catalogDir via osutil.ResolveContainedFileURL, reusing ContainsPath/allowedRevealExtensions -- no second containment implementation
+- [Phase ?]: 26-04: Reachability of openCatalogModal re-confirmed by grep immediately before deleting CatalogModal.tsx, discharging T-22-05 by removal rather than sanitization
 
 ### Key Research Findings
 
@@ -209,8 +212,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T14:21:55.167Z
-Stopped at: Completed 26-03-PLAN.md
+Last session: 2026-08-15T14:34:26.452Z
+Stopped at: Completed 26-04-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
