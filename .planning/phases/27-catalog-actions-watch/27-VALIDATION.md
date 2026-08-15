@@ -1,0 +1,102 @@
+---
+phase: 27
+slug: catalog-actions-watch
+# status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
+status: draft
+nyquist_compliant: false
+wave_0_complete: false
+created: 2026-08-15
+---
+
+# Phase 27 — Validation Strategy
+
+> Per-phase validation contract for feedback sampling during execution.
+> Seeded by plan-phase from `27-RESEARCH.md`'s `## Validation Architecture`. The Per-Task
+> Verification Map is filled in once PLAN.md task IDs exist.
+
+---
+
+## Test Infrastructure
+
+| Property | Value |
+|----------|-------|
+| **Framework** | Go stdlib `testing`, table-driven, `*_test.go` beside source. Frontend: **none by design** — TEST-01 (Vitest + Testing Library) is an explicitly deferred milestone item; do not add one. |
+| **Config file** | none — plain `go test ./...` |
+| **Quick run command** | `go test ./internal/catalog/... ./internal/osutil/... ./internal/watch/... ./internal/search/... ./pkg/models/... -race -count=1` |
+| **Full suite command** | `go build ./... && go test ./... -race -count=1 && (cd frontend && npx tsc --noEmit && npm run build)` |
+| **Estimated runtime** | ~90–120 seconds (the SIGKILL subprocess test adds wall-clock over Phase 26's baseline) |
+
+---
+
+## Sampling Rate
+
+- **After every task commit:** the quick run command above, scoped to touched packages
+- **After every plan wave:** full suite command, plus a live dev-browser pass against `:34115`
+- **Before `/gsd-verify-work`:** full suite green plus the manual-only checks below
+- **Max feedback latency:** ~120 seconds
+
+**Dev-server note:** browser verification runs against `wails dev` on **`:34115`**. Vite's `:5173` exposes no `window.go`, so every binding-dependent assertion passes vacuously there. `curl` liveness proves the server is up, not that bindings are fresh — verify `Object.keys(window.go.main.App)` includes the new/changed methods before recording any evidence.
+
+**No host-OS GUI automation.** Do not drive native dialogs or the desktop via osascript / System Events / keystroke injection (STATE.md records a prior-phase incident). Where a check genuinely requires it, record it as a manual item rather than faking the evidence.
+
+---
+
+## Per-Task Verification Map
+
+| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
+|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
+| *(filled in once PLAN.md task IDs exist)* | — | — | — | — | — | — | — | — | ⬜ pending |
+
+### Requirement → verification approach (from RESEARCH.md)
+
+| Req ID | Behavior | Test Type | Automated Command |
+|--------|----------|-----------|-------------------|
+| ACT-01 | Menu opens/closes, arrow-key nav, Escape, click-outside, focus restore to `⋯` | manual (live dev-browser) | dev-browser against `:34115` |
+| ACT-02 | Rename writes the JSON title, rewrites **both** HTML title occurrences (`<title>` and `<h1>`), handles the no-`.html` case, round-trips `&`/special characters | unit | `go test ./internal/catalog/... -run TestRenameCatalog -v` |
+| ACT-02 | `BrowseCatalogs` title-read fix (`html.UnescapeString`) | unit | `go test ./internal/search/... -run TestBrowseCatalogs_UnescapesTitle -v` |
+| ACT-03 | Duplicate suffixes `-copy` / `-copy-2` / `-copy-3` across collisions; title inherited verbatim | unit | `go test ./internal/catalog/... -run TestDuplicateCatalog -v` |
+| ACT-04, ACT-05 | Trash never falls back to permanent delete on error; every path containment-gated | unit (trash call behind a small interface — CI must not touch a real OS Trash) | `go test ./internal/osutil/... -run TestTrash -v` |
+| ACT-09 | `WriteFileAtomic` calls `File.Sync()` before close+rename | unit | `go test ./internal/catalog/... -run TestWriteFileAtomic_Syncs -v` |
+| ACT-09 | A real SIGKILL mid-write leaves the destination uncorrupted | integration (subprocess) | `go test ./internal/catalog/... -run TestWriteFileAtomic_SurvivesKill -v -timeout 60s` |
+| WATCH-01 | Status bar shows the watching segment when the setting and directory are both set | manual (live dev-browser) | live verification |
+| WATCH-02 | External add/remove/modify triggers a debounced `catalogs:changed` → rail refresh | unit (fake event source for the debounce) + manual live | `go test ./internal/watch/... -v` |
+| WATCH-03 | `SetWatchDirectory(false)` and app quit both genuinely `Close()` the watcher | unit | `go test ./internal/watch/... -run TestWatcher_Close -v` |
+
+---
+
+## Wave 0 Requirements
+
+- [ ] `internal/catalog/rename_test.go` — ACT-02, including the two-HTML-occurrence case and special-character round-trip
+- [ ] `internal/catalog/duplicate_test.go` — ACT-03 collision sequence
+- [ ] `internal/osutil/trash_test.go` — ACT-04/ACT-05, with the trash call behind a small interface so CI never touches a real OS Trash
+- [ ] `internal/watch/watcher_test.go` — WATCH-02/WATCH-03. Test the debounce logic in isolation against a fake event source; reserve real `fsnotify` behavior for live verification (fsnotify against a real filesystem is unreliable in CI sandboxes)
+- [ ] `internal/catalog/atomicwrite_sigkill_test.go` + a standalone helper binary — ACT-09's crash-safety claim with an actual kill. **This closes `WINDOWS.md` #6**, which currently records the guarantee as unit-tested only
+- [ ] `internal/search/service_test.go` gains a title-unescape case — grep at plan time to confirm whether that file already exists
+- [ ] No new frontend test file — none needed, consistent with TEST-01's deferral and every prior phase's precedent
+
+---
+
+## Manual-Only Verifications
+
+| Behavior | Requirement | Why Manual | Test Instructions |
+|----------|-------------|------------|-------------------|
+| Actions menu: open from `⋯`, arrow-key nav, Escape, click-outside, focus returns to the trigger | ACT-01 | No frontend test framework (TEST-01 deferred) | `wails dev` on `:34115`; dev-browser: open the menu from a selected catalog, walk items with arrows, close each way, assert focus lands back on `⋯` |
+| Rename round-trip through the UI with a special-character title | ACT-02 | End-to-end across dialog → binding → disk → rail re-read | Rename a catalog to `Tom & Jerry <2024>`; confirm the rail, details panel, and the written `.html` all show it correctly and none shows `&amp;` |
+| Delete confirmation names both real paths; HTML checkbox present-and-checked when an `.html` exists, absent when it does not | ACT-04 | Visual/copy correctness | Open delete on a catalog with an `.html`, then on one without; compare both dialogs |
+| A failed Trash surfaces the real error with no permanent-delete affordance | ACT-05 | Requires inducing a genuine trash failure | Make the target undeletable (e.g. permissions), attempt delete, confirm the error text and that no "delete permanently" path exists anywhere in the state |
+| "● watching `<dir>`" appears when enabled and disappears when disabled | WATCH-01 | Visual | Toggle the Settings watch switch; observe the status bar |
+| Rail updates when catalogs change outside the app | WATCH-02 | Requires real external filesystem activity | With watching on, add / remove / modify a `.json` in the catalog directory from a terminal; confirm the rail reflects each within ~1s |
+| Watcher is genuinely released on toggle-off and on quit | WATCH-03 | Release is not observable from the UI alone | Toggle off, then confirm via the unit test plus (optionally) `lsof` that no watch handle remains |
+
+---
+
+## Validation Sign-Off
+
+- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
+- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
+- [ ] Wave 0 covers all MISSING references
+- [ ] No watch-mode flags
+- [ ] Feedback latency < 120s
+- [ ] `nyquist_compliant: true` set in frontmatter
+
+**Approval:** pending
