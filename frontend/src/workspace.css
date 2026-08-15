@@ -18,6 +18,18 @@
   --ac: #0d8f9c;
   --onac: #ffffff;
 
+  /* Destructive status color (Phase 27) -- theme-independent, fixed across
+   * all 11 themes, formalizing the literal hex 22-UI-SPEC.md already
+   * reserved two phases ago (see the three pre-existing uses of it below)
+   * rather than introducing a new value. --ondanger is a fixed white, not a
+   * computed lum()-based choice like --onac, because this hex sits in a
+   * narrow luminance band where white text clears contrast reliably in
+   * every context this phase uses it -- unlike --ac, which spans Gruvbox
+   * orange to GitHub blue and genuinely needs the per-theme luminance
+   * check. */
+  --danger: #e5534b;
+  --ondanger: #ffffff;
+
   /* Comfortable density defaults -- applyTokens() overrides per density. */
   --rh: 34px;
   --rp: 10px 10px;
@@ -27,6 +39,13 @@
 
   /* Overlay stacking scale (SHELL-09) -- no component may hardcode a raw z-index. */
   --z-details-drawer: 100;
+  /* Catalog-actions menu (Phase 27) -- position: fixed, so it escapes the
+   * details panel's own overflow-y: auto scroll region and is never
+   * contained by the narrow-tier drawer's stacking context; must out-rank
+   * the drawer explicitly. It never competes with a real modal (palette,
+   * create slide-over, Settings) for stacking, because the details panel
+   * that anchors it is unreachable while any of those is open. */
+  --z-menu: 150;
   --z-overlay: 200;
   --z-dialog: 300;
 
@@ -1652,4 +1671,303 @@
   font-weight: 600;
   border: none;
   cursor: pointer;
+}
+
+/* ===========================================================================
+ * Phase 27 -- Catalog Actions + Watch
+ *
+ * This plan (27-04) is the sole owner of workspace.css for the whole phase.
+ * Every class the menu, both dialogs, and the status-bar watching segment
+ * need is declared below in one pass -- later plans (27-05, 27-07) add only
+ * TSX and never reopen this file.
+ * ========================================================================= */
+
+/* -- Catalog actions menu (ACT-01) ----------------------------------------
+ * Anchored popover, position: fixed (top/right set inline from the
+ * trigger's own getBoundingClientRect -- required, not `absolute`, because
+ * the details panel's .pane-scroll region has overflow-y: auto and would
+ * otherwise clip/scroll the menu away from its anchor). */
+
+.ws-menu {
+  position: fixed;
+  z-index: var(--z-menu);
+  min-width: 160px;
+  width: max-content;
+  padding: 6px 0;
+  border-radius: 9px;
+  background: var(--p);
+  border: 1px solid var(--l);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, .5);
+}
+
+.ws-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ws-menu-item:hover,
+.ws-menu-item:focus-visible {
+  background: var(--hov);
+}
+
+.ws-menu-item-danger {
+  color: var(--danger);
+}
+
+/* Reuses the exact tint literal already declared for the scan-error badge
+ * (.ws-create-badge-error above) -- not a second copy of the value. */
+.ws-menu-item-danger:hover,
+.ws-menu-item-danger:focus-visible {
+  background: rgba(229, 83, 75, .16);
+}
+
+.ws-menu-divider {
+  height: 1px;
+  background: var(--l);
+  margin: 4px 0;
+  border: none;
+}
+
+/* -- Shared dialog shell (rename + delete-confirmation) --------------------
+ * One 440px centred-dialog shell backs both this phase's dialogs -- no
+ * second near-duplicate 440px panel implementation. Own keyframe per this
+ * project's one-keyframe-per-surface convention (25-UI-SPEC.md), even
+ * though the fade values match Settings'/the palette's. */
+
+@keyframes ws-dialog-scrim-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ws-dialog-scrim {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 6, 9, .62);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-dialog);
+  animation: ws-dialog-scrim-in 100ms ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ws-dialog-scrim {
+    animation: none;
+  }
+}
+
+.ws-dialog-panel {
+  width: 440px;
+  max-width: 100vw;
+  border-radius: 12px;
+  background: var(--p);
+  border: 1px solid var(--l);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, .6);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.ws-dialog-header {
+  height: 50px;
+  flex: none;
+  border-bottom: 1px solid var(--l);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.ws-dialog-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tx);
+}
+
+.ws-dialog-close-x {
+  margin-left: auto;
+  font-size: 16px;
+  color: var(--dm);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+}
+
+.ws-dialog-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.ws-dialog-footer {
+  height: 56px;
+  flex: none;
+  background: var(--p2);
+  border-top: 1px solid var(--l);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 0 16px;
+}
+
+.ws-dialog-btn {
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  background: transparent;
+  border: 1px solid var(--l);
+  color: var(--tx);
+}
+
+.ws-dialog-btn-primary {
+  background: var(--ac);
+  color: var(--onac);
+  border: none;
+}
+
+.ws-dialog-btn-danger {
+  background: var(--danger);
+  color: var(--ondanger);
+  border: none;
+}
+
+/* This app has no spinners -- the busy treatment is opacity plus disabled,
+ * exactly as DetailsPanel.tsx's Footer already does for its own async
+ * actions. */
+.ws-dialog-btn:disabled {
+  opacity: 0.7;
+  cursor: default;
+}
+
+.ws-dialog-error {
+  font-size: 12px;
+  color: var(--danger);
+  line-height: 1.5;
+}
+
+/* -- Rename dialog body (ACT-02) ------------------------------------------- */
+
+.ws-dialog-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx);
+}
+
+/* Deliberately no `mono` family -- a catalog title is display prose, not a
+ * path/filename/size/count/timestamp, so 22-UI-SPEC.md's mono rule does not
+ * apply to it. Contrast the neighbouring Settings "Default filename root"
+ * field (.ws-settings-root-input above), which genuinely becomes part of a
+ * filename and is mono for that reason -- the difference is deliberate. */
+.ws-rename-input {
+  height: 30px;
+  border-radius: 7px;
+  background: var(--p2);
+  border: 1px solid var(--l);
+  padding: 0 10px;
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--tx);
+  width: 100%;
+}
+
+/* -- Delete-confirmation dialog body (ACT-04/ACT-05, consumed by 27-05) ---- */
+
+.ws-delete-lead {
+  font-size: 11.5px;
+  color: var(--tx);
+  line-height: 1.5;
+}
+
+.ws-delete-path-label {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--dm);
+}
+
+/* A destructive confirmation's one job is letting the user verify exactly
+ * what is about to be removed -- deliberately NO overflow: hidden,
+ * text-overflow: ellipsis or white-space: nowrap here. Truncating the
+ * evidence would undermine the confirmation. Do not "tidy this up" to
+ * ellipsize it. */
+.ws-delete-path-box {
+  background: var(--ch);
+  border: 1px solid var(--l);
+  border-radius: 9px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.ws-delete-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.ws-delete-check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--tx);
+  cursor: pointer;
+}
+
+/* accent-color is progressive enhancement -- an older WebKitGTK falls back
+ * to the browser's native checkbox rendering, a cosmetic-only degradation. */
+.ws-delete-check input[type="checkbox"] {
+  accent-color: var(--ac);
+}
+
+/* -- Status-bar watching segment (WATCH-01, consumed by 27-07) ------------- */
+
+/* Wrapper that keeps .ws-status's justify-content: space-between working
+ * with exactly two top-level children once the watching segment joins the
+ * scan segment. 16px is the gap .ws-status-left already uses. */
+.ws-status-right {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* Color is var(--fn), a deliberate divergence from .ws-status-scan's
+ * var(--ac): scan is an active, urgent, clickable task, watching is passive
+ * background chrome -- giving both the accent would make two structurally
+ * different kinds of status compete for the same visual weight. */
+.ws-status-watching {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--fn);
+  min-width: 0;
+}
+
+/* Reuses .ws-status-scan-name's exact value rather than a new number. */
+.ws-status-watching-dir {
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
