@@ -4,15 +4,15 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 26
 current_phase_name: Settings
-status: planning
+status: executing
 stopped_at: Phase 25 fully closed (all gates). Phase 26 discussed + UI-SPEC approved; next step is research -> plan -> execute.
-last_updated: "2026-08-15T03:54:28.295Z"
+last_updated: "2026-08-15T13:30:27.704Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 25 closed: verification 16/16, code review 2 critical + 2 warning all fixed, security SECURED 24/24, UI review 22/24, validation validated (partial). Phase 26 discussed, UI-SPEC approved 6/6."
 progress:
   total_phases: 7
   completed_phases: 4
-  total_plans: 25
+  total_plans: 30
   completed_plans: 25
   percent: 57
 ---
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 26 — Settings
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-08-14 — Phase 25 complete, transitioned to Phase 26
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
@@ -182,6 +182,8 @@ active. Two phases (25, 28) are pre-flagged as needing their own research pass b
 
 - 25-01: An unintended side effect was caused on the user's live desktop during live verification -- a stray osascript/System Events keystroke (attempting to target the StorCat app window, which did not reliably come to accessibility focus) landed in a Raycast Settings/Store window instead and appears to have installed a 'GIF Search' Raycast extension. Not requested. User should check Raycast's installed extensions and remove it if unwanted. All further OS-level UI automation was stopped immediately once noticed.
 
+- **Decision-coverage gate override (Phase 26, USER-approved 2026-08-15).** `check.decision-coverage-plan` returns `could-not-parse` on this project's CONTEXT.md format — discuss-phase here writes prose bullets under topic subheadings, not the `- **D-NN:** text` bullets the gate's parser requires, so it can name zero decisions rather than any uncovered one. It is a parser/format mismatch, not evidence of a dropped decision: the gsd-plan-checker's independent source audit confirmed every 26-CONTEXT.md decision (persistence, both carried security obligations, the `SearchIndexed` exclusion, dialog/theme/segmented decisions, the version bump, all discretion items) is carried into a plan. User elected to proceed and record the override. **Same override applies to phases 27 and 28 in this autonomous run.** verify-phase may re-surface this.
+
 ## Deferred Items
 
 Items acknowledged and carried forward from previous milestone close:
@@ -211,10 +213,12 @@ Resume command: `/gsd-autonomous --from 26`
 - **FU-23-A — thread `catalogDir` through `GetCatalogHtmlPath` and restrict `OpenExternal` to `file://` paths contained in the catalog directory**, reusing `internal/osutil`'s `containsPath` exactly as `RevealInFileManager` did in Phase 23. **`SearchIndexed` comes OFF the sweep list** — Phase 25's security audit verified it takes no renderer-supplied path reaching a filesystem write and got its own containment at introduction. Correct the target list rather than carrying a redundant item.
 
 **Also queued for Phase 26:**
+
 - Mark `.planning/WINDOWS.md` **entry #3 fixed** — Phase 25 wave 7 closed CRT-13's force-quit-mid-scan live via `window.runtime.Quit()`. Entries #1, #2, #4, #5, #6 remain genuinely open for the pre-ship sweep.
 - Migrate six `localStorage` keys into the Go config as the single source of truth: `storcat-theme-id`, `storcat-density`, `storcat-rail-side`, `storcat-catalog-directory`, `storcat-secondary-directory` (plus `storcat-dev-switcher`, which is dev-only and can stay). Phase 22 explicitly deferred this ("theme stays local pending Phase 26's Settings-owned theme state").
 
 **Standing operational constraints for executors (learned the hard way this session):**
+
 - **No host-OS GUI automation** — no `osascript`, System Events, `cliclick`, or synthetic keystrokes. An executor drove a native macOS folder dialog this way and delivered a keystroke to an unverified focused window. When CDP cannot reach a native dialog, call the binding directly in the live webview (`window.go.main.App.<Binding>(...)`) — the same code path a real click takes — or record it manual-only.
 - **`curl` liveness is not binding freshness.** A `wails dev` server can answer `curl -sf` 200 while running a binary that predates a just-landed binding. Probe `Object.keys(window.go.main.App)` before recording any binding-dependent evidence.
 - **Verify against `:34115` only.** Vite's `:5173` serves the same frontend but exposes no `window.go`, so binding assertions pass vacuously there.

@@ -400,18 +400,21 @@ async function handleReveal() {
 
 **If this table is empty:** N/A — see rows above. Every other factual claim in this document was verified this session via direct `Read`/`Bash grep` against the live source tree, not training-data recall.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should theme become `AppContext` reducer state, or stay as `App.tsx`-local state + `themeChange` CustomEvent?**
+All three were resolved before planning; resolutions are locked in `26-CONTEXT.md` and carried into the plans.
+
+1. **RESOLVED** — **Should theme become `AppContext` reducer state, or stay as `App.tsx`-local state + `themeChange` CustomEvent?**
+   - **Resolution:** reuse the existing `themeChange` CustomEvent (the researcher's own recommendation). Recorded under `26-CONTEXT.md` → Claude's Discretion; implemented in plan 26-02.
    - What we know: Density/rail-side are already reducer state (`SET_DENSITY`/`SET_RAIL_SIDE`); theme is not — it lives in `App.tsx`'s local `useState`, applied via a `themeChange` window CustomEvent that `DevStateSwitcher.tsx`'s own comment says "the future Settings surface will use."
    - What's unclear: Whether "will use" means "dispatch the same event" (minimal change, matches the Alternatives Considered table above) or whether Settings should be the trigger to finally lift theme into the reducer (bigger change, touches `App.tsx` and `DevStateSwitcher.tsx`).
    - Recommendation: Reuse the existing `themeChange` event (minimal, matches CONTEXT.md's "Theme applies immediately on click ... same code path themeTokens.ts already exposes" language) unless the planner has a specific reason to do the larger refactor. Not blocking — either satisfies SET-02.
 
-2. **Footer version string: hardcode "3.0.0" or call `GetVersion()` (currently returns "2.3.0")?**
-   - See Pitfall 4 in full. Not resolved by this research — genuinely underspecified between CONTEXT.md and the current build-time version value.
+2. **RESOLVED** — **Footer version string: hardcode "3.0.0" or call `GetVersion()` (currently returns "2.3.0")?**
+   - See Pitfall 4 for the full framing. **Resolution (USER decision, 2026-08-15):** bump `wails.json`'s `productVersion` `2.3.0` → `3.0.0` and render the footer from the existing `GetVersion()` binding — one source of truth, no hand-updated string per release. Accepted side effect: build artifacts stamp `3.0.0` from this phase onward, ahead of the v3.0.0 release. Locked in `26-CONTEXT.md` → The Settings surface; implemented in plan 26-01 Task 2.
 
-3. **Does `SidebarPosition`/`SetSidebarPosition` get removed, left alone, or documented as intentionally-orphaned in this phase?**
-   - See Pitfall 2. Low-stakes either way, but should be a stated decision rather than an accidental omission.
+3. **RESOLVED** — **Does `SidebarPosition`/`SetSidebarPosition` get removed, left alone, or documented as intentionally-orphaned in this phase?**
+   - See Pitfall 2. **Resolution:** left in place, untouched and unrepurposed, noted as an intentionally-orphaned v1 leftover distinct from the new `railSide` field. Deleting a persisted config field is not this phase's job. Recorded under `26-CONTEXT.md` → Claude's Discretion.
 
 ## Environment Availability
 
