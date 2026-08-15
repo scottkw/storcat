@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 25
 current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
 status: executing
-stopped_at: Completed 25-05-PLAN.md
-last_updated: "2026-08-15T01:13:27.926Z"
+stopped_at: Completed 25-06-PLAN.md
+last_updated: "2026-08-15T01:46:45.022Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 23
+  completed_plans: 24
   percent: 43
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-08-14 — Plan 25-01 (create slide-over tracer) complete
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [█████████░] 92%
+Progress: [██████████] 96%
 
 ## Performance Metrics
 
@@ -84,6 +84,7 @@ Progress: [█████████░] 92%
 | Phase 25 P03 | 3min | 3 tasks | 6 files |
 | Phase 25 P04 | 4min | 3 tasks | 15 files |
 | Phase 25 P05 | 18min | 3 tasks | 8 files |
+| Phase 25 P06 | 35min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -145,6 +146,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 25-04: WINDOWS.md ledger entries landed as #4 (Windows disk-space/drive-letter) and #5 (Linux enumeration heuristic, first non-Windows entry), not the plan's anticipated #3/#4 -- entry #3 was already taken by 25-03's CRT-13 gap
 - [Phase ?]: 25-05: Placeholder-only default application (native HTML input placeholder) satisfies CRT-04's field-independence contract with no separate touched-flag state
 - [Phase ?]: 25-05: wailsAPI.startScan's opts gained totalBytesHint (deviation, file not in task's listed set) -- required to thread the selected volume's known total into the StartScan binding
+- [Phase ?]: CreateSlideOver's scan:progress subscription changed from isOpen-gated to always-on (it is already permanently mounted), the minimal fix needed for CRT-08's background handoff to keep the status bar live while the panel is closed
+- [Phase ?]: handleCloseRequest keys cancellation on an explicit CloseReason argument ('cancel-the-scan' vs 'leave-it-running'), never inferred from trigger identity or state alone, so Run in background can never accidentally cancel
 
 ### Key Research Findings
 
@@ -186,8 +189,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T01:13:27.911Z
-Stopped at: Completed 25-05-PLAN.md
+Last session: 2026-08-15T01:46:45.007Z
+Stopped at: Completed 25-06-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 

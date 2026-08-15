@@ -67,7 +67,7 @@
 - [x] **CRT-05**: User can toggle write-HTML-alongside-JSON, copy-to-secondary-location, and include-hidden-files
 - [x] **CRT-06**: User can start the scan with the Create button or ⌘↵
 - [x] **CRT-07**: User sees live scan progress — percentage, files seen, bytes, estimated time remaining, the current walking path, and a newest-first log
-- [ ] **CRT-08**: User can hand a running scan to the status bar with "Run in background" and see `● scanning <name> · N%` there
+- [x] **CRT-08**: User can hand a running scan to the status bar with "Run in background" and see `● scanning <name> · N%` there
 - [x] **CRT-09**: User can cancel a scan and the underlying walk actually stops
 - [x] **CRT-10**: User sees a distinct error state when the volume goes away mid-scan, showing where it stopped and the read errors encountered
 - [x] **CRT-11**: User can write a partial catalog from the error state, retry the scan, or cancel
@@ -190,7 +190,7 @@ Deferred — acknowledged but not in this roadmap.
 | CRT-05 | Phase 25 | Complete |
 | CRT-06 | Phase 25 | Complete |
 | CRT-07 | Phase 25 | Complete |
-| CRT-08 | Phase 25 | Pending |
+| CRT-08 | Phase 25 | Complete |
 | CRT-09 | Phase 25 | Complete |
 | CRT-10 | Phase 25 | Complete |
 | CRT-11 | Phase 25 | Complete |
