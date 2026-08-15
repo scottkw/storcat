@@ -86,9 +86,9 @@
 
 - [ ] **ACT-01**: User can open a catalog actions menu from the `⋯` button in the details panel
 - [x] **ACT-02**: User can rename a catalog's title, which rewrites the `.html` `<title>` and leaves filenames unchanged
-- [ ] **ACT-03**: User can duplicate a catalog, copying the `.json` and any `.html` with a suffixed filename root
-- [ ] **ACT-04**: User can delete a catalog to the OS Trash after a confirmation that names both file paths, with an option to also delete the matching `.html`
-- [ ] **ACT-05**: A failed trash operation surfaces as an error and never silently falls back to permanent deletion
+- [x] **ACT-03**: User can duplicate a catalog, copying the `.json` and any `.html` with a suffixed filename root
+- [x] **ACT-04**: User can delete a catalog to the OS Trash after a confirmation that names both file paths, with an option to also delete the matching `.html`
+- [x] **ACT-05**: A failed trash operation surfaces as an error and never silently falls back to permanent deletion
 - [ ] **ACT-06**: User can re-scan a catalog's source volume and see a diff of added, removed, changed, and unchanged entries with counts
 - [ ] **ACT-07**: User can resolve a diff by overwriting the catalog, keeping both, or discarding
 - [ ] **ACT-08**: Re-scan always asks the user to select the source volume rather than guessing which media the catalog came from
@@ -203,9 +203,9 @@ Deferred — acknowledged but not in this roadmap.
 | SET-05 | Phase 26 | Complete |
 | ACT-01 | Phase 27 | Pending |
 | ACT-02 | Phase 27 | Complete |
-| ACT-03 | Phase 27 | Pending |
-| ACT-04 | Phase 27 | Pending |
-| ACT-05 | Phase 27 | Pending |
+| ACT-03 | Phase 27 | Complete |
+| ACT-04 | Phase 27 | Complete |
+| ACT-05 | Phase 27 | Complete |
 | ACT-06 | Phase 28 | Pending |
 | ACT-07 | Phase 28 | Pending |
 | ACT-08 | Phase 28 | Pending |
