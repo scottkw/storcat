@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -24,12 +25,39 @@ type App struct {
 	searchService  *search.Service
 	configManager  *config.Manager
 
-	// scanMu guards activeScanCancel and scanDone -- the product is
-	// one-scan-at-a-time by design, so a single mutex-guarded field is the
-	// simplest correct implementation (no scan-id-keyed map needed).
+	// scanMu guards activeScanCancel, scanDone, and the retained-partial
+	// fields below -- the product is one-scan-at-a-time by design, so a
+	// single mutex-guarded field is the simplest correct implementation (no
+	// scan-id-keyed map needed).
 	scanMu           sync.Mutex
 	activeScanCancel context.CancelFunc
 	scanDone         chan struct{}
+
+	// lastPartial, lastPartialResult and lastScanReq retain a source-loss
+	// scan's walked tree and the parameters needed to write it, so
+	// WritePartialCatalog can produce the catalog the user chooses to
+	// salvage without re-walking anything. All three are guarded by scanMu,
+	// same as the cancel handle above -- read and write both only under it.
+	// A fresh StartScan clears all three before running, so a stale tree
+	// from a previous failure can never be written under a new scan's name
+	// (T-25-12).
+	lastPartial       *catalog.PartialScan
+	lastPartialResult *models.CreateCatalogResult
+	lastScanReq       *lastScanRequest
+}
+
+// lastScanRequest captures the parameters a source-loss scan was started
+// with, so WritePartialCatalog can replay the shared write path
+// (WriteCatalogFrom) without re-walking anything. sourcePath is retained
+// alongside the write-path parameters for completeness even though only
+// outputDir/outputRoot/copyToDirectory/opts are read by the write itself.
+type lastScanRequest struct {
+	title           string
+	sourcePath      string
+	outputDir       string
+	outputRoot      string
+	copyToDirectory string
+	opts            catalog.Options
 }
 
 // ScanOptions is the StartScan binding's option parameter: the create-flow
@@ -157,6 +185,19 @@ func sourceTotalBytes(sourcePath string) int64 {
 // a concurrent call is rejected without disturbing the running scan's
 // cancel handle.
 func (a *App) StartScan(title, sourcePath, outputDir, outputRoot string, opts ScanOptions) (*models.CreateCatalogResult, error) {
+	return a.startScan(title, sourcePath, outputDir, outputRoot, opts, nil)
+}
+
+// startScan is StartScan's real implementation, parameterized on an
+// optional testHook invoked (before the throttled progress report) on
+// every walk node. It exists so app_test.go can deterministically
+// reproduce a mid-walk source loss -- removing the scan root when a known
+// node is reported, exactly the technique internal/catalog/service_test.go
+// already uses at the service layer -- without needing a live Wails
+// runtime context, which a.throttledProgress's EventsEmit call requires
+// and would otherwise log.Fatal on an invalid one. testHook is always nil
+// from the real Wails-bound StartScan above.
+func (a *App) startScan(title, sourcePath, outputDir, outputRoot string, opts ScanOptions, testHook catalog.ProgressCallback) (*models.CreateCatalogResult, error) {
 	absSource, err := filepath.Abs(sourcePath)
 	if err != nil {
 		return nil, err
@@ -220,6 +261,12 @@ func (a *App) StartScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 	ctx, cancel := context.WithCancel(context.Background())
 	a.activeScanCancel = cancel
 	a.scanDone = make(chan struct{})
+	// Clear any previously retained partial scan -- a stale tree from an
+	// earlier failure must never be written under this new scan's name
+	// (T-25-12), asserted by TestStartScan_ClearsRetainedPartialOnNewScan.
+	a.lastPartial = nil
+	a.lastPartialResult = nil
+	a.lastScanReq = nil
 	a.scanMu.Unlock()
 
 	defer func() {
@@ -230,12 +277,105 @@ func (a *App) StartScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 		cancel()
 	}()
 
-	catOpts := catalog.Options{WriteHTML: opts.WriteHTML, IncludeHidden: opts.IncludeHidden}
+	// HaltOnSourceLoss is always true here: the GUI wants the
+	// volume-vanished distinction (CRT-10/CRT-11) surfaced as a distinct,
+	// salvageable error state. The CLI wrapper (CreateCatalog, in
+	// internal/catalog/service.go) deliberately never sets this, preserving
+	// v2.3.0's skip-and-continue behavior exactly.
+	catOpts := catalog.Options{WriteHTML: opts.WriteHTML, IncludeHidden: opts.IncludeHidden, HaltOnSourceLoss: true}
 	totalBytes := sourceTotalBytes(absSource)
 
-	return a.catalogService.CreateCatalogWithContext(
-		ctx, title, absSource, absOutput, outputRoot, copyToDirectory, catOpts, a.throttledProgress(totalBytes),
+	progress := a.throttledProgress(totalBytes)
+	onProgress := func(u catalog.ProgressUpdate) {
+		if testHook != nil {
+			testHook(u)
+		}
+		progress(u)
+	}
+
+	result, err := a.catalogService.CreateCatalogWithContext(
+		ctx, title, absSource, absOutput, outputRoot, copyToDirectory, catOpts, onProgress,
 	)
+	if err != nil {
+		// A source loss retains its partial tree plus the parameters
+		// needed to write it later; a cancellation (or any other failure)
+		// retains nothing and returns as-is.
+		var srcErr *catalog.SourceUnavailableError
+		if errors.As(err, &srcErr) && srcErr.Partial != nil {
+			a.scanMu.Lock()
+			a.lastPartial = srcErr.Partial
+			a.lastScanReq = &lastScanRequest{
+				title:           title,
+				sourcePath:      absSource,
+				outputDir:       absOutput,
+				outputRoot:      outputRoot,
+				copyToDirectory: copyToDirectory,
+				opts:            catOpts,
+			}
+			a.scanMu.Unlock()
+		}
+		return nil, err
+	}
+	return result, nil
+}
+
+// CancelScan cancels the in-flight scan, if any -- a cancel with no scan
+// running is a no-op, not an error. The handle is a single field rather
+// than a map keyed by scan id, because the product is one-scan-at-a-time by
+// explicit requirement; a map would be over-built for it.
+//
+// Accepted limitation: cancellation cannot interrupt a syscall the walk is
+// already blocked inside. The standard library gives os.ReadDir/os.Stat no
+// context-awareness, so a device that is disconnecting (rather than already
+// gone) can leave one syscall uninterruptible for as long as the OS takes
+// to notice. Every syscall that has not yet started is cancelled promptly
+// -- traverseDirectory checks ctx.Err() at the top of every call -- and
+// wrapping each syscall in its own goroutine-plus-timeout would add real
+// complexity for a rare, cosmetic worst case.
+func (a *App) CancelScan() {
+	a.scanMu.Lock()
+	defer a.scanMu.Unlock()
+	if a.activeScanCancel != nil {
+		a.activeScanCancel()
+	}
+}
+
+// WritePartialCatalog writes the most recently retained partial scan tree
+// (from a source-loss error) using the request parameters captured when
+// that scan started. Idempotent: once a write succeeds, the cached result
+// is returned on every later call without touching the filesystem again --
+// this is what makes a second click a true no-op rather than a duplicate
+// write or a second rename (T-25-13). Never re-walks anything -- the tree
+// is exactly what the interrupted scan already produced.
+func (a *App) WritePartialCatalog() (*models.CreateCatalogResult, error) {
+	a.scanMu.Lock()
+	if a.lastPartialResult != nil {
+		result := a.lastPartialResult
+		a.scanMu.Unlock()
+		return result, nil
+	}
+	if a.lastPartial == nil || a.lastScanReq == nil {
+		a.scanMu.Unlock()
+		return nil, fmt.Errorf("no partial scan retained to write")
+	}
+	partial := a.lastPartial
+	req := a.lastScanReq
+	a.scanMu.Unlock()
+
+	result, err := a.catalogService.WriteCatalogFrom(
+		partial.Tree, req.title, req.outputDir, req.outputRoot, req.copyToDirectory, req.opts,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	a.scanMu.Lock()
+	a.lastPartialResult = result
+	a.lastPartial = nil
+	a.lastScanReq = nil
+	a.scanMu.Unlock()
+
+	return result, nil
 }
 
 // SearchCatalogs searches across catalog files for a term
