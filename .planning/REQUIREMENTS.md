@@ -76,11 +76,11 @@
 
 ### Settings
 
-- [ ] **SET-01**: User can open Settings with ⌘, , the gear, or the theme chip
+- [x] **SET-01**: User can open Settings with ⌘, , the gear, or the theme chip
 - [ ] **SET-02**: User can pick a theme from 11 cards, each showing a 4-swatch strip and a light/dark tag
-- [ ] **SET-03**: User can set row density and catalog rail position from segmented controls
+- [x] **SET-03**: User can set row density and catalog rail position from segmented controls
 - [ ] **SET-04**: User can set the catalog directory, a default filename root, and the four catalog toggles (write HTML, copy to secondary, watch directory, remember window size and position)
-- [ ] **SET-05**: User's settings save as they are changed, with no explicit save step
+- [x] **SET-05**: User's settings save as they are changed, with no explicit save step
 
 ### Actions — catalog management
 
@@ -196,11 +196,11 @@ Deferred — acknowledged but not in this roadmap.
 | CRT-11 | Phase 25 | Complete |
 | CRT-12 | Phase 25 | Complete |
 | CRT-13 | Phase 25 | Complete |
-| SET-01 | Phase 26 | Pending |
+| SET-01 | Phase 26 | Complete |
 | SET-02 | Phase 26 | Pending |
-| SET-03 | Phase 26 | Pending |
+| SET-03 | Phase 26 | Complete |
 | SET-04 | Phase 26 | Pending |
-| SET-05 | Phase 26 | Pending |
+| SET-05 | Phase 26 | Complete |
 | ACT-01 | Phase 27 | Pending |
 | ACT-02 | Phase 27 | Pending |
 | ACT-03 | Phase 27 | Pending |

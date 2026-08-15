@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 26
 current_phase_name: Settings
 status: executing
-stopped_at: Phase 25 fully closed (all gates). Phase 26 discussed + UI-SPEC approved; next step is research -> plan -> execute.
-last_updated: "2026-08-15T13:30:27.704Z"
-last_activity: 2026-08-14
-last_activity_desc: "Phase 25 closed: verification 16/16, code review 2 critical + 2 warning all fixed, security SECURED 24/24, UI review 22/24, validation validated (partial). Phase 26 discussed, UI-SPEC approved 6/6."
+stopped_at: Completed 26-01-PLAN.md
+last_updated: "2026-08-15T13:46:02.572Z"
+last_activity: 2026-08-15
+last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 4
   total_plans: 30
-  completed_plans: 25
+  completed_plans: 26
   percent: 57
 ---
 
@@ -24,18 +24,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-13)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 24 — Cmd-K Command Palette
+**Current focus:** Phase 26 — Settings
 
 ## Current Position
 
-Phase: 26 — Settings
-Plan: Not started
+Phase: 26 (Settings) — EXECUTING
+Plan: 2 of 5
 Status: Ready to execute
-Last activity: 2026-08-14 — Phase 25 complete, transitioned to Phase 26
+Last activity: 2026-08-15 — Phase 26 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 100%
+Progress: [█████████░] 87%
 
 ## Performance Metrics
 
@@ -87,6 +87,7 @@ Progress: [██████████] 100%
 | Phase 25 P05 | 18min | 3 tasks | 8 files |
 | Phase 25 P06 | 35min | 3 tasks | 6 files |
 | Phase 25 P07 | 47min | 3 tasks | 14 files |
+| Phase 26 P01 | 25min | 2 tasks | 14 files |
 
 ## Accumulated Context
 
@@ -153,6 +154,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: Fixed a real classification gap: the scan root's own initial os.Stat failure now correctly classifies as source-loss under HaltOnSourceLoss (was silently falling through as a generic error, misclassified by the frontend as a cancellation)
 - [Phase ?]: Added real per-output-file byte sizes (CreateCatalogResult.JsonSize/HtmlSize/CopyJsonSize/CopyHtmlSize) so the done state's written-file rows show honest sizes instead of staying undefined
 - [Phase ?]: All four create entry points reset a stale done/error scan state before opening, landing on the form step per 25-UI-SPEC's Entry Points contract, rather than reopening into whatever state.scan happened to hold
+- [Phase ?]: 26-01: Get() returns a copy, not the live pointer -- required for concurrent Set* race-freedom
+- [Phase ?]: 26-01: Proceeded past the tracer's interactive human-verify checkpoint after full live dev-browser proof, given config.json's mode:yolo and this project's established precedent (22-07, 24-02) of self-verifying live rather than deferring to a checkpoint
+- [Phase ?]: 26-01: Restarted wails dev mid-plan so the wails.json version bump (compile-time go:embed) was actually live before recording evidence
 
 ### Key Research Findings
 
@@ -196,8 +200,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T02:42:58.506Z
-Stopped at: Phase 25 fully closed. Phase 26 has CONTEXT.md + UI-SPEC.md committed and approved; research/plan/execute not yet started.
+Last session: 2026-08-15T13:46:02.555Z
+Stopped at: Completed 26-01-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
