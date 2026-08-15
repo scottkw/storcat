@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 27
 current_phase_name: Catalog Actions + Watch
 status: executing
-stopped_at: Completed 27-01-PLAN.md (rename tracer, live-verified)
-last_updated: "2026-08-15T17:37:02.814Z"
+stopped_at: Completed 27-02-PLAN.md (WriteFileAtomic fsync hardening + real SIGKILL proof)
+last_updated: "2026-08-15T17:44:57.796Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 31
+  completed_plans: 32
   percent: 71
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 27 (Catalog Actions + Watch) — EXECUTING
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-15 — Phase 27 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [████████░░] 84%
+Progress: [█████████░] 86%
 
 ## Performance Metrics
 
@@ -94,6 +94,7 @@ Progress: [████████░░] 84%
 | Phase 26 P04 | ~25min | 3 tasks | 12 files |
 | Phase 26 P05 | 27min | 3 tasks | 13 files |
 | Phase 27 P01 | 40min | 3 tasks | 10 files |
+| Phase 27 P02 | 5min | 2 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -175,6 +176,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 26-05: COMPAT-05's both-direction persistence proof used window.runtime.WindowSetSize/SetPosition/Quit plus a real wails dev process restart -- not a reasoning-only claim
 - [Phase ?]: 27-01: setRootStringField appends a not-yet-present title key at the end of the root object's key list (per the plan's literal spec), not at the struct's declared field position -- struct order only governs a fresh json.Marshal
 - [Phase ?]: 27-01: BrowseCatalogs restructured to one read of filePath shared by the parse-error check and the JSON title probe; JSON-sourced titles are never html.UnescapeString'd, only HTML-sourced ones
+- [Phase ?]: 27-02: Added parent-directory fsync (syncDir) after os.Rename, logging (not discarding) its failure -- recorded_decision id=parent-directory-fsync
+- [Phase ?]: 27-02: Real subprocess SIGKILL harness (testdata/killtarget helper + marker-file sync) proved WriteFileAtomic crash-safety across 42+ real kill iterations, all landing mid-write -- .planning/WINDOWS.md #6 is dischargeable on this evidence (closed by plan 27-07)
 
 ### Key Research Findings
 
@@ -220,8 +223,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T17:37:02.803Z
-Stopped at: Completed 27-01-PLAN.md (rename tracer, live-verified)
+Last session: 2026-08-15T17:44:57.785Z
+Stopped at: Completed 27-02-PLAN.md (WriteFileAtomic fsync hardening + real SIGKILL proof)
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 

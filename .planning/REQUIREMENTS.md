@@ -92,7 +92,7 @@
 - [ ] **ACT-06**: User can re-scan a catalog's source volume and see a diff of added, removed, changed, and unchanged entries with counts
 - [ ] **ACT-07**: User can resolve a diff by overwriting the catalog, keeping both, or discarding
 - [ ] **ACT-08**: Re-scan always asks the user to select the source volume rather than guessing which media the catalog came from
-- [ ] **ACT-09**: No catalog write can corrupt an existing catalog file if the app crashes mid-write
+- [x] **ACT-09**: No catalog write can corrupt an existing catalog file if the app crashes mid-write
 
 ### Watch — directory monitoring
 
@@ -209,7 +209,7 @@ Deferred — acknowledged but not in this roadmap.
 | ACT-06 | Phase 28 | Pending |
 | ACT-07 | Phase 28 | Pending |
 | ACT-08 | Phase 28 | Pending |
-| ACT-09 | Phase 27 | Pending |
+| ACT-09 | Phase 27 | Complete |
 | WATCH-01 | Phase 27 | Pending |
 | WATCH-02 | Phase 27 | Pending |
 | WATCH-03 | Phase 27 | Pending |
