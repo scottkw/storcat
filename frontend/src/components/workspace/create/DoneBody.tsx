@@ -102,7 +102,7 @@ function DoneBody({ scan, onOpenInWorkspace, onCatalogAnother }: DoneBodyProps) 
         </button>
         {/* Outlined secondary -- does NOT close the panel: resets the form
             and returns to the form step in the same still-open panel. */}
-        <button type="button" className="ws-create-btn-outline" onClick={onCatalogAnother}>
+        <button type="button" className="ws-create-btn-outline ws-create-btn-outline-34" onClick={onCatalogAnother}>
           Catalog another volume
         </button>
       </div>

@@ -101,7 +101,7 @@ function ErrorBody({ scan, writingPartial, onWritePartial, onRetry, onCloseWitho
             retrying while a partial write is still in flight would clear
             the retained tree that write is reading from, racing the write
             for the state it records on completion. */}
-        <button type="button" className="ws-create-btn-outline" disabled={writingPartial} onClick={onRetry}>
+        <button type="button" className="ws-create-btn-outline ws-create-btn-outline-34" disabled={writingPartial} onClick={onRetry}>
           Retry scan
         </button>
         {/* Text tertiary: names the consequence, not the gesture -- a user

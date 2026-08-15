@@ -975,6 +975,17 @@
   border-color: var(--ac);
 }
 
+/* The base .ws-create-btn-outline height is 32px because that is what the
+ * handoff specifies for "Run in background" -- 25-UI-SPEC.md line 42 calls
+ * that out as deliberate ("intentionally 2px shorter than the 34px primary
+ * buttons ... not a rounding error"), so it must not be normalised away.
+ * The error/done secondary buttons ("Retry scan", "Catalog another volume")
+ * are specified at 34px instead, to sit level with the 34px primary button
+ * beside them in the same actions row. */
+.ws-create-btn-outline-34 {
+  height: 34px;
+}
+
 .ws-create-scan-footer-note {
   font-size: 12px;
   color: var(--fn);
