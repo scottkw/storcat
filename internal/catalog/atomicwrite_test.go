@@ -1,9 +1,12 @@
 package catalog
 
 import (
+	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -77,6 +80,146 @@ func TestWriteFileAtomic_RemovesTempOnFailure(t *testing.T) {
 		if strings.HasPrefix(e.Name(), "storcat-") {
 			t.Errorf("temp file residue left behind: %s", e.Name())
 		}
+	}
+}
+
+// TestWriteFileAtomic_SyncsBeforeRename verifies that after a successful
+// write the destination contains exactly the requested bytes and holds the
+// requested perm. The Sync() call itself is proven structurally by the
+// acceptance grep plus the kill test in atomicwrite_sigkill_test.go -- a
+// unit test cannot observe a flush directly.
+func TestWriteFileAtomic_SyncsBeforeRename(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.txt")
+	want := []byte("synced content")
+
+	if err := WriteFileAtomic(path, want, 0640); err != nil {
+		t.Fatalf("WriteFileAtomic failed: %v", err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read destination: %v", err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("content = %q, want %q", got, want)
+	}
+
+	info, err := os.Stat(path)
+	if err != nil {
+		t.Fatalf("stat destination: %v", err)
+	}
+	if info.Mode().Perm() != 0640 {
+		t.Errorf("perm = %v, want %v", info.Mode().Perm(), os.FileMode(0640))
+	}
+}
+
+// TestWriteFileAtomic_ReplacesExistingFileWholesale verifies that an
+// existing destination with different, longer prior content ends up
+// byte-identical to the new payload with no trailing remnant of the old
+// content.
+func TestWriteFileAtomic_ReplacesExistingFileWholesale(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.txt")
+
+	oldContent := []byte("this is the much longer original content that must not survive")
+	if err := WriteFileAtomic(path, oldContent, 0644); err != nil {
+		t.Fatalf("seed write failed: %v", err)
+	}
+
+	newContent := []byte("short")
+	if err := WriteFileAtomic(path, newContent, 0644); err != nil {
+		t.Fatalf("replace write failed: %v", err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read destination: %v", err)
+	}
+	if !bytes.Equal(got, newContent) {
+		t.Errorf("content = %q, want %q (no remnant of old content)", got, newContent)
+	}
+}
+
+// TestWriteFileAtomic_DirSyncFailureIsNotFatal exercises the unexported
+// syncDir helper directly against a nonexistent directory path (proving its
+// error return), then asserts a full WriteFileAtomic on a normal directory
+// still succeeds -- a directory-sync failure must never fail the write or
+// remove the destination.
+func TestWriteFileAtomic_DirSyncFailureIsNotFatal(t *testing.T) {
+	nonexistent := filepath.Join(t.TempDir(), "does-not-exist")
+	if err := syncDir(nonexistent); err == nil {
+		t.Error("expected syncDir to return an error for a nonexistent directory")
+	}
+
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.txt")
+	want := []byte("dir sync is best-effort")
+	if err := WriteFileAtomic(path, want, 0644); err != nil {
+		t.Fatalf("WriteFileAtomic failed: %v", err)
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read destination: %v", err)
+	}
+	if !bytes.Equal(got, want) {
+		t.Errorf("content = %q, want %q", got, want)
+	}
+}
+
+// TestWriteFileAtomic_ConcurrentWritersLeaveNoResidue launches 8 goroutines
+// writing distinct payloads to the same destination path. After they all
+// return, the destination's content must equal exactly one of the 8
+// payloads in full, and no storcat-*.tmp residue may remain.
+func TestWriteFileAtomic_ConcurrentWritersLeaveNoResidue(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "out.txt")
+
+	const n = 8
+	payloads := make([][]byte, n)
+	for i := 0; i < n; i++ {
+		payloads[i] = []byte(fmt.Sprintf("payload-%d", i))
+	}
+
+	var wg sync.WaitGroup
+	errs := make([]error, n)
+	for i := 0; i < n; i++ {
+		wg.Add(1)
+		go func(i int) {
+			defer wg.Done()
+			errs[i] = WriteFileAtomic(path, payloads[i], 0644)
+		}(i)
+	}
+	wg.Wait()
+
+	for i, err := range errs {
+		if err != nil {
+			t.Fatalf("writer %d failed: %v", i, err)
+		}
+	}
+
+	got, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatalf("read destination: %v", err)
+	}
+	matched := false
+	for _, p := range payloads {
+		if bytes.Equal(got, p) {
+			matched = true
+			break
+		}
+	}
+	if !matched {
+		t.Errorf("destination content %q does not match any of the 8 payloads in full", got)
+	}
+
+	residue, err := filepath.Glob(filepath.Join(dir, "storcat-*.tmp"))
+	if err != nil {
+		t.Fatalf("glob: %v", err)
+	}
+	if len(residue) != 0 {
+		t.Errorf("expected no storcat-*.tmp residue, got %v", residue)
 	}
 }
 
