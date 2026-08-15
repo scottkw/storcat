@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 25
 current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
 status: executing
-stopped_at: Completed 25-02-PLAN.md
-last_updated: "2026-08-15T00:11:25.362Z"
+stopped_at: Completed 25-03-PLAN.md
+last_updated: "2026-08-15T00:34:36.899Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 20
+  completed_plans: 21
   percent: 43
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
-Plan: 3 of 7
+Plan: 4 of 7
 Status: Ready to execute
 Last activity: 2026-08-14 — Plan 25-01 (create slide-over tracer) complete
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [████████░░] 80%
+Progress: [████████░░] 84%
 
 ## Performance Metrics
 
@@ -81,6 +81,7 @@ Progress: [████████░░] 80%
 | Phase 24 P05 | 35min | 3 tasks | 4 files |
 | Phase 25 P01 | 26min | 3 tasks | 21 files |
 | Phase 25 P02 | 16min | 2 tasks | 9 files |
+| Phase 25 P03 | 3min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -133,6 +134,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 25-01: ScanResultFile.size is optional and left unset -- CreateCatalogResult has no per-output-file byte count, and using totalSize (the scanned tree's sum) would misrepresent an individual file's own size
 - [Phase ?]: 25-02: Marker shape resolved to option-a (two flat omitempty scalars: Unreadable bool, ReadError string) at the plan's blocking checkpoint -- a USER decision, not Claude's discretion; option-b (nested object) and option-c (bare presence-implies-unreadable string) rejected
 - [Phase ?]: 25-02: Errors propagate as *SourceUnavailableError with Partial populated once by the outermost CreateCatalogWithContext, not rebuilt at every recursion level; marker fields set only on the origin node where classify() first returns true
+- [Phase ?]: 25-03: startScan (unexported core, optional progress test-hook) split from the Wails-bound StartScan so app_test.go can deterministically reproduce a mid-walk source loss headlessly -- a.throttledProgress's real path needs a live Wails runtime context that would log.Fatal on a fake one
+- [Phase ?]: 25-03: CancelScan delegates to the new cancelActiveScan() helper (added in Task 2) instead of keeping Task 1's standalone body -- avoids two copies of the same cancel-and-report logic
+- [Phase ?]: 25-03: CRT-13 force-quit-mid-scan live verification not performed -- wails dev was not running at task start and the executor was instructed not to start a long-lived dev server; recorded as an open manual item, not asserted as proven
 
 ### Key Research Findings
 
@@ -174,8 +178,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T00:11:25.277Z
-Stopped at: Completed 25-02-PLAN.md
+Last session: 2026-08-15T00:34:36.877Z
+Stopped at: Completed 25-03-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 

@@ -72,7 +72,7 @@
 - [x] **CRT-10**: User sees a distinct error state when the volume goes away mid-scan, showing where it stopped and the read errors encountered
 - [x] **CRT-11**: User can write a partial catalog from the error state, retry the scan, or cancel
 - [x] **CRT-12**: User sees a done state listing every file written with its size, and can open the new catalog in the workspace or catalog another volume
-- [ ] **CRT-13**: Closing the window mid-scan cancels the walk and writes nothing
+- [x] **CRT-13**: Closing the window mid-scan cancels the walk and writes nothing
 
 ### Settings
 
@@ -195,7 +195,7 @@ Deferred — acknowledged but not in this roadmap.
 | CRT-10 | Phase 25 | Complete |
 | CRT-11 | Phase 25 | Complete |
 | CRT-12 | Phase 25 | Complete |
-| CRT-13 | Phase 25 | Pending |
+| CRT-13 | Phase 25 | Complete |
 | SET-01 | Phase 26 | Pending |
 | SET-02 | Phase 26 | Pending |
 | SET-03 | Phase 26 | Pending |
