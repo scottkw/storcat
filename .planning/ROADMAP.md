@@ -271,7 +271,7 @@ Plans:
   3. No catalog write — create, rename, duplicate, or delete — can corrupt an existing catalog file if the app crashes mid-write (ACT-09)
   4. User sees "● watching `<catalog directory>`" in the status bar when watching is enabled, sees the rail update when catalogs are added, removed, or modified outside the app, and can turn watching off in Settings with the underlying watcher released (WATCH-01, WATCH-02, WATCH-03)
 
-**Plans**: 5/7 plans executed (4 waves)
+**Plans**: 6/7 plans executed (4 waves)
 Plans:
 
 **Wave 1**
@@ -287,7 +287,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 27-05-PLAN.md — Delete-confirmation dialog with its error sub-state, plus the duplicate and delete menu wiring (wave 3)
-- [ ] 27-06-PLAN.md — Watch backend: `internal/watch`, the `app.go` lifecycle, and the `main.go` `OnShutdown` hook (wave 3)
+- [x] 27-06-PLAN.md — Watch backend: `internal/watch`, the `app.go` lifecycle, and the `main.go` `OnShutdown` hook (wave 3)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -342,5 +342,5 @@ Plans:
 | 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
 | 26. Settings | v3.0.0 | 5/5 | Complete    | 2026-08-15 |
-| 27. Catalog Actions + Watch | v3.0.0 | 5/7 | In Progress|  |
+| 27. Catalog Actions + Watch | v3.0.0 | 6/7 | In Progress|  |
 | 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |

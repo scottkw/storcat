@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 27
 current_phase_name: Catalog Actions + Watch
 status: executing
-stopped_at: Completed 27-05-PLAN.md
-last_updated: "2026-08-15T23:13:00.558Z"
+stopped_at: Completed 27-06-PLAN.md
+last_updated: "2026-08-15T23:25:09.481Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
   completed_phases: 5
   total_plans: 37
-  completed_plans: 35
+  completed_plans: 36
   percent: 71
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 27 (Catalog Actions + Watch) — EXECUTING
-Plan: 6 of 7
+Plan: 7 of 7
 Status: Ready to execute
 Last activity: 2026-08-15 — Phase 27 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 95%
+Progress: [██████████] 97%
 
 ## Performance Metrics
 
@@ -98,6 +98,7 @@ Progress: [██████████] 95%
 | Phase 27 P03 | 6min | 3 tasks | 10 files |
 | Phase 27 P04 | ~20min | 3 tasks | 5 files |
 | Phase 27 P05 | 35min | 2 tasks | 3 files |
+| Phase 27 P06 | 12min | 2 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -188,6 +189,10 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 27-04: Duplicate and Delete menu items report an explicit 'not yet connected' message via onError rather than being disabled or silently no-oping -- 27-05 replaces both handlers in the same DetailsPanel.tsx file
 - [Phase ?]: 27-05: Added CLEAR_CURRENT_CATALOG reducer action (clears currentCatalogId/selected only) since no existing AppContext action cleared it without also selecting/loading something
 - [Phase ?]: 27-05: chmod-based directory-permission test did not reproduce a real Trash failure on macOS (wastebasket routes through Finder/osascript); chflags uchg on the target file reliably did
+- [Phase ?]: 27-06: OnShutdown: app.shutdown added to main.go per recorded_decision id=shutdown-hook -- beforeClose can return true to prevent close (already does for an active scan) so it is not a reliable unconditional cleanup hook; beforeClose itself untouched
+- [Phase ?]: 27-06: shutdown() closes the watcher directly rather than routing through applyWatchState -- applyWatchState's job is start-or-restart against current config, wrong behavior on quit; a.applyWatchState() call count is 3 (startup, SetWatchDirectory, SetCatalogDirectory)
+- [Phase ?]: 27-06: SetWatchDirectory/SetCatalogDirectory persist through configManager first, then call applyWatchState() -- reversing the order would start/restart the watcher against stale config
+- [Phase ?]: 27-06: A watcher that fails to start degrades silently (no watching:started/watching:failed event) per 27-UI-SPEC E4's optimistic status-bar indicator resolution and 27-RESEARCH Pitfall 9's scope-creep warning
 
 ### Key Research Findings
 
@@ -233,8 +238,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T23:13:00.532Z
-Stopped at: Completed 27-05-PLAN.md
+Last session: 2026-08-15T23:25:09.464Z
+Stopped at: Completed 27-06-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
