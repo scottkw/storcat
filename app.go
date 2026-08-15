@@ -788,6 +788,44 @@ func (a *App) GetCatalogHtmlPath(catalogPath string, catalogDir string) (string,
 	return htmlPath, nil
 }
 
+// RenameCatalog sets a catalog's title -- written to the JSON root's
+// "title" key and, when a sibling .html exists, patched into both HTML
+// title sites. catalogDir is the frontend's currently configured catalog
+// directory; this binding is reachable from any renderer JS, so
+// jsonPath is resolved (filepath.Abs then filepath.EvalSymlinks) and
+// checked against catalogDir via osutil.ContainsPath before anything is
+// read or written -- the same containment treatment GetCatalogHtmlPath,
+// OpenExternal and RevealInFileManager already carry. Discharges T-27-02.
+func (a *App) RenameCatalog(jsonPath string, catalogDir string, newTitle string) error {
+	if catalogDir == "" {
+		return fmt.Errorf("rename %s: no catalog directory configured", jsonPath)
+	}
+
+	abs, err := filepath.Abs(jsonPath)
+	if err != nil {
+		return fmt.Errorf("rename %s: %w", jsonPath, err)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return fmt.Errorf("rename %s: %w", jsonPath, err)
+	}
+	ok, err := osutil.ContainsPath(catalogDir, resolved)
+	if err != nil {
+		return fmt.Errorf("rename %s: resolve catalog directory: %w", jsonPath, err)
+	}
+	if !ok {
+		return fmt.Errorf("rename %s: outside configured catalog directory", jsonPath)
+	}
+	if filepath.Ext(resolved) != ".json" {
+		return fmt.Errorf("rename %s: not a catalog JSON file", jsonPath)
+	}
+
+	if err := catalog.RenameCatalog(resolved, newTitle); err != nil {
+		return fmt.Errorf("rename %s: %w", jsonPath, err)
+	}
+	return nil
+}
+
 // OpenExternal opens a file in the system's default application. rawURL
 // must be a file:// URL or an absolute filesystem path resolving to a
 // regular .json/.html file inside catalogDir -- osutil.ResolveContainedFileURL

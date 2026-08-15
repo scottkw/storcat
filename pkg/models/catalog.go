@@ -2,6 +2,18 @@ package models
 
 // CatalogItem represents a file or directory in the catalog.
 //
+// Title is set ONLY on a catalog's root node, and only once a user has
+// renamed that catalog (ACT-02, Phase 27) -- it is absent (omitempty) for
+// every catalog nobody has ever renamed, so COMPAT-02's byte-for-byte
+// v2.3.0 shape is preserved unchanged for the overwhelming majority of
+// catalogs. Before this field existed a catalog's title lived only in its
+// generated .html <title>; Title is now the authoritative source and the
+// HTML title is a fallback for catalogs written before this field existed
+// (internal/search/service.go's BrowseCatalogs). Its struct position
+// (immediately after Name) is unobservable while it is absent -- Go's
+// encoding/json marshals struct fields in declaration order, and an absent
+// omitempty field contributes no bytes either way.
+//
 // Unreadable and ReadError appear ONLY on a partial catalog written after a
 // scan-root loss (CRT-10/CRT-11) -- they mark the single directory node
 // where the loss was first detected. Both are absent-when-zero, so a
@@ -14,6 +26,7 @@ package models
 type CatalogItem struct {
 	Type     string         `json:"type"`
 	Name     string         `json:"name"`
+	Title    string         `json:"title,omitempty"`
 	Size     int64          `json:"size"`
 	Contents []*CatalogItem `json:"contents"`
 	// Unreadable is true only on the directory node where a scan-root loss

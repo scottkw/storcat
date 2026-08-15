@@ -73,6 +73,7 @@ export namespace models {
 	export class CatalogItem {
 	    type: string;
 	    name: string;
+	    title?: string;
 	    size: number;
 	    contents: CatalogItem[];
 	    unreadable?: boolean;
@@ -86,6 +87,7 @@ export namespace models {
 	        if ('string' === typeof source) source = JSON.parse(source);
 	        this.type = source["type"];
 	        this.name = source["name"];
+	        this.title = source["title"];
 	        this.size = source["size"];
 	        this.contents = this.convertValues(source["contents"], CatalogItem);
 	        this.unreadable = source["unreadable"];

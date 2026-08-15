@@ -22,6 +22,7 @@ import {
   SelectDirectory,
   ReadHtmlFile,
   GetCatalogHtmlPath,
+  RenameCatalog,
   OpenExternal,
   GetWindowPersistence,
   SetWindowPersistence,
@@ -332,6 +333,19 @@ export const wailsAPI = {
     try {
       const htmlPath = await GetCatalogHtmlPath(catalogPath, catalogDir);
       return { success: true as const, htmlPath };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // catalogDir is the frontend's currently configured catalog directory --
+  // threaded through so the Go side can reject any path that does not
+  // resolve inside it (T-27-02), exactly as getCatalogHtmlPath already does
+  // above.
+  renameCatalog: async (jsonPath: string, catalogDir: string, newTitle: string) => {
+    try {
+      await RenameCatalog(jsonPath, catalogDir, newTitle);
+      return { success: true as const };
     } catch (error: any) {
       return wailsError(error);
     }
