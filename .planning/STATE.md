@@ -5,10 +5,10 @@ milestone_name: Workspace Redesign
 current_phase: 26
 current_phase_name: Settings
 status: planning
-stopped_at: Completed 25-07-PLAN.md (phase 25 complete, ready for verification)
+stopped_at: Phase 25 fully closed (all gates). Phase 26 discussed + UI-SPEC approved; next step is research -> plan -> execute.
 last_updated: "2026-08-15T03:54:28.295Z"
 last_activity: 2026-08-14
-last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
+last_activity_desc: "Phase 25 closed: verification 16/16, code review 2 critical + 2 warning all fixed, security SECURED 24/24, UI review 22/24, validation validated (partial). Phase 26 discussed, UI-SPEC approved 6/6."
 progress:
   total_phases: 7
   completed_phases: 4
@@ -195,8 +195,28 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-08-15T02:42:58.506Z
-Stopped at: Completed 25-07-PLAN.md (phase 25 complete, ready for verification)
+Stopped at: Phase 25 fully closed. Phase 26 has CONTEXT.md + UI-SPEC.md committed and approved; research/plan/execute not yet started.
 Resume file: None
-Resume command: `/gsd-autonomous --from 24`
+Resume command: `/gsd-autonomous --from 26`
 
 **Worktree isolation: intentionally OFF.** `workflow.use_worktrees` is `false`, which is the correct and working configuration — Phases 22 and 23 were both built this way. Executors run sequentially on the main working tree. Do not "fix" this by setting it to `true`: Claude Code's harness forks agent worktrees from `origin/HEAD`, not local HEAD, and local `main` runs ~100 commits ahead of `origin/main` during a milestone, so every executor would land in a checkout predating all of v3.0.0 and halt on a base mismatch. The only reason to turn it on is speed (parallel executors within a wave), and it requires pushing `main` first.
+
+## Phase 26 handoff (written 2026-08-15)
+
+`26-CONTEXT.md` and `26-UI-SPEC.md` are committed and approved (UI checker: 6/6 PASS, no FLAGs — the first phase to pass all six cleanly). Research, planning and execution have **not** started.
+
+**Phase 26 discharges two security obligations that have now been deferred through Phases 22, 23, 24 and 25.** The Pending Todos section above says they must not be re-accepted again; `26-CONTEXT.md` locks *how*:
+
+- **T-22-05 — DELETE `frontend/src/components/CatalogModal.tsx` and its `App.tsx` wiring**, rather than sanitizing. Verified during discuss: the only `dispatchEvent` in the entire frontend is `themeChange`, so nothing dispatches `openCatalogModal` — the listener at `App.tsx:37` is registered but unreachable. The component still calls the legacy `window.electronAPI` shim and antd's `message` (antd was removed this milestone). `DetailsPanel.tsx:121-123` already provides the real "Open HTML catalog" path. Deleting removes the threat instead of mitigating it; sanitizing would mean hand-rolling HTML sanitization, since no new dependency is permitted.
+- **FU-23-A — thread `catalogDir` through `GetCatalogHtmlPath` and restrict `OpenExternal` to `file://` paths contained in the catalog directory**, reusing `internal/osutil`'s `containsPath` exactly as `RevealInFileManager` did in Phase 23. **`SearchIndexed` comes OFF the sweep list** — Phase 25's security audit verified it takes no renderer-supplied path reaching a filesystem write and got its own containment at introduction. Correct the target list rather than carrying a redundant item.
+
+**Also queued for Phase 26:**
+- Mark `.planning/WINDOWS.md` **entry #3 fixed** — Phase 25 wave 7 closed CRT-13's force-quit-mid-scan live via `window.runtime.Quit()`. Entries #1, #2, #4, #5, #6 remain genuinely open for the pre-ship sweep.
+- Migrate six `localStorage` keys into the Go config as the single source of truth: `storcat-theme-id`, `storcat-density`, `storcat-rail-side`, `storcat-catalog-directory`, `storcat-secondary-directory` (plus `storcat-dev-switcher`, which is dev-only and can stay). Phase 22 explicitly deferred this ("theme stays local pending Phase 26's Settings-owned theme state").
+
+**Standing operational constraints for executors (learned the hard way this session):**
+- **No host-OS GUI automation** — no `osascript`, System Events, `cliclick`, or synthetic keystrokes. An executor drove a native macOS folder dialog this way and delivered a keystroke to an unverified focused window. When CDP cannot reach a native dialog, call the binding directly in the live webview (`window.go.main.App.<Binding>(...)`) — the same code path a real click takes — or record it manual-only.
+- **`curl` liveness is not binding freshness.** A `wails dev` server can answer `curl -sf` 200 while running a binary that predates a just-landed binding. Probe `Object.keys(window.go.main.App)` before recording any binding-dependent evidence.
+- **Verify against `:34115` only.** Vite's `:5173` serves the same frontend but exposes no `window.go`, so binding assertions pass vacuously there.
+- **`wails dev` is currently NOT running** — it exited when Phase 25 tested force-quit. Restart it before live verification.
+- **No frontend test framework** (TEST-01 explicitly deferred). Frontend proof is `tsc --noEmit` + `vite build` + live dev-browser.
