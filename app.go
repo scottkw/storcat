@@ -672,6 +672,9 @@ func (a *App) SetWindowPosition(x, y int) error {
 
 // domReady is called after the frontend DOM is ready
 func (a *App) domReady(ctx context.Context) {
+	if a.configManager == nil {
+		return
+	}
 	cfg := a.configManager.Get()
 	if cfg == nil || !cfg.WindowPersistenceEnabled {
 		return
