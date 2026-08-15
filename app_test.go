@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"storcat-wails/internal/catalog"
 	"storcat-wails/pkg/models"
@@ -524,5 +525,77 @@ func TestWritePartialCatalog_MarkerSurvivesToDisk(t *testing.T) {
 	}
 	if dirNode["readError"] != "stat ./gone: no such file or directory" {
 		t.Errorf("expected the marked node to carry its readError, got %+v", dirNode)
+	}
+}
+
+// TestCancelActiveScan_ReportsWhetherAScanWasRunning verifies that, with a
+// scan handle stored, cancelActiveScan cancels it and reports true; called
+// again with the handle already cleared, it reports false.
+func TestCancelActiveScan_ReportsWhetherAScanWasRunning(t *testing.T) {
+	app := &App{}
+	_, cancel := context.WithCancel(context.Background())
+	app.scanMu.Lock()
+	app.activeScanCancel = cancel
+	app.scanMu.Unlock()
+
+	if !app.cancelActiveScan() {
+		t.Fatal("expected cancelActiveScan to report true with a scan running")
+	}
+
+	// The handle is left for the owning goroutine's own deferred cleanup to
+	// clear -- simulate that happening, then confirm the second call
+	// reports false, which is what stops beforeClose from recursing
+	// forever.
+	app.scanMu.Lock()
+	app.activeScanCancel = nil
+	app.scanMu.Unlock()
+
+	if app.cancelActiveScan() {
+		t.Error("expected cancelActiveScan to report false once the handle is cleared")
+	}
+}
+
+// TestWaitForScanStop_ReturnsWhenChannelCloses verifies that closing the
+// scan-done channel releases the bounded wait before its deadline.
+func TestWaitForScanStop_ReturnsWhenChannelCloses(t *testing.T) {
+	app := &App{}
+	done := make(chan struct{})
+	app.scanMu.Lock()
+	app.scanDone = done
+	app.scanMu.Unlock()
+
+	go func() {
+		time.Sleep(10 * time.Millisecond)
+		close(done)
+	}()
+
+	if !app.waitForScanStop(2 * time.Second) {
+		t.Fatal("expected waitForScanStop to return true once the channel closed")
+	}
+}
+
+// TestWaitForScanStop_ReturnsOnDeadline verifies that, with the channel
+// never closed, the bounded wait returns after its deadline rather than
+// blocking forever.
+func TestWaitForScanStop_ReturnsOnDeadline(t *testing.T) {
+	app := &App{}
+	app.scanMu.Lock()
+	app.scanDone = make(chan struct{}) // never closed
+	app.scanMu.Unlock()
+
+	if app.waitForScanStop(20 * time.Millisecond) {
+		t.Error("expected waitForScanStop to return false on deadline")
+	}
+}
+
+// TestBeforeCloseDecision_AllowsCloseWhenIdle verifies that, with no scan
+// running, the existing window-persistence save still runs (a nil
+// configManager takes the same early-return path it always has) and the
+// close is allowed.
+func TestBeforeCloseDecision_AllowsCloseWhenIdle(t *testing.T) {
+	app := &App{}
+
+	if got := app.beforeClose(context.Background()); got != false {
+		t.Errorf("beforeClose() = %v, want false (allow close) when idle", got)
 	}
 }

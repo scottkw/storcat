@@ -333,10 +333,41 @@ func (a *App) startScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 // wrapping each syscall in its own goroutine-plus-timeout would add real
 // complexity for a rare, cosmetic worst case.
 func (a *App) CancelScan() {
+	a.cancelActiveScan()
+}
+
+// cancelActiveScan cancels the in-flight scan, if any, and reports whether
+// one was running. Shared by CancelScan (the renderer-facing binding) and
+// beforeClose's scan branch. The handle itself is left for the owning
+// goroutine's own deferred cleanup to clear -- never nilled here -- so a
+// second call after the scan has actually stopped reports false; this is
+// what stops beforeClose from re-entering forever on the re-requested quit.
+func (a *App) cancelActiveScan() bool {
 	a.scanMu.Lock()
 	defer a.scanMu.Unlock()
-	if a.activeScanCancel != nil {
-		a.activeScanCancel()
+	if a.activeScanCancel == nil {
+		return false
+	}
+	a.activeScanCancel()
+	return true
+}
+
+// waitForScanStop blocks up to d for the current scan's scanDone channel to
+// close, reporting whether the scan actually finished within that deadline.
+// The channel reference is read under the mutex, then waited on outside
+// it, so a concurrent StartScan/cleanup is never blocked behind this call.
+func (a *App) waitForScanStop(d time.Duration) bool {
+	a.scanMu.Lock()
+	done := a.scanDone
+	a.scanMu.Unlock()
+	if done == nil {
+		return true
+	}
+	select {
+	case <-done:
+		return true
+	case <-time.After(d):
+		return false
 	}
 }
 
@@ -500,6 +531,30 @@ func (a *App) domReady(ctx context.Context) {
 
 // beforeClose is called before the application closes
 func (a *App) beforeClose(ctx context.Context) bool {
+	// Intercepted at the very first opportunity -- before the
+	// configuration-manager nil check and the window-persistence save below
+	// -- so a close request during an active scan cancels the walk and lets
+	// it stop before the process actually exits (CRT-13). Non-recursion on
+	// the re-requested quit is guaranteed by the handle already being
+	// cleared by the scan goroutine's own deferred cleanup on the second
+	// pass, not by a separate flag: cancelActiveScan then reports false and
+	// this branch is skipped entirely.
+	//
+	// This exact cancel-then-wait-then-requery sequence is synthesised from
+	// individually verified Wails primitives (OnBeforeClose's prevent-bool
+	// return, runtime.Quit) rather than found documented end-to-end
+	// anywhere -- it carries an explicit live-verification obligation
+	// (force-quit mid-scan, this task's manual step and 25-VALIDATION.md's
+	// own manual-only entry), not a claim this test suite can make on its
+	// own (25-RESEARCH.md Assumption A2).
+	if a.cancelActiveScan() {
+		go func() {
+			a.waitForScanStop(3 * time.Second)
+			runtime.Quit(ctx)
+		}()
+		return true // prevent this close; the re-requested quit re-enters this hook
+	}
+
 	if a.configManager == nil {
 		return false
 	}
