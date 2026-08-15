@@ -89,6 +89,24 @@ leaves filenames unchanged).
   constraint: `internal/catalog` must stay usable from the CLI with no Wails runtime attached. A new watcher
   package must not emit directly.
 
+### Post-research resolutions (2026-08-15, from 27-RESEARCH.md)
+- **Rename rewrites BOTH the `<title>` tag and the `<h1>` heading.** Research found the generated HTML carries
+  the title in two places (`internal/catalog/service.go:451,474,491`), not the one ACT-02's wording names.
+  Patching only `<title>` would leave the page's visible heading disagreeing with its own tab title. Both get
+  the same `html.EscapeString` treatment the generator already applies.
+- **Every Trash-bound path goes through `osutil.ContainsPath` before reaching `wastebasket`.** Research read
+  all four of the library's platform backends: `Trash()` never falls back to permanent deletion anywhere
+  (so ACT-05 is satisfied by the library itself, not only by our error handling), and it silently no-ops on
+  an already-missing path (so the UI-SPEC's retry button needs no "what already succeeded" bookkeeping). But
+  its macOS backend shells out to `osascript` with a hand-built AppleScript string that escapes only literal
+  `"` before interpolation — weaker than this codebase's own convention of passing every path as its own
+  `exec.Command` argv element. The containment gate is the mitigation, applied for the same reason
+  `RevealInFileManager` and `OpenExternal` have it.
+- **The new JSON `title` field is `omitempty`** — preserves byte-parity for catalogs that have no title
+  override, which COMPAT-02 depends on.
+- **`DuplicateCatalog` inherits the source title verbatim.** Only the filename root gets the `-copy` suffix;
+  ACT-03 speaks to the filename, not the title, and a user who wants a different title can rename after.
+
 ### Claude's Discretion
 - Menu item ordering, labels, and icons within the actions menu.
 - The exact JSON `title` field name and its position in the struct.
@@ -96,6 +114,9 @@ leaves filenames unchanged).
   constant or configurable.
 - Whether the destructive color token is a new theme token per-theme or a single derived value.
 - Package layout for the watcher (`internal/watch` vs. a file beside an existing package).
+- Whether `WriteFileAtomic` also fsyncs the parent directory after `os.Rename` (research rates this MEDIUM
+  confidence and platform-divergent — Linux/macOS support it, Windows does not the same way). Decide it
+  explicitly in the plan and record the choice; do not silently include or omit it.
 
 </decisions>
 
