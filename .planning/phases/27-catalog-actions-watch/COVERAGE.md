@@ -1,0 +1,3 @@
+No external API integration: this phase adds two local Go libraries (`Bios-Marcel/wastebasket/v2` for OS Trash, `fsnotify/fsnotify` for directory watching) and touches only the local filesystem plus the app's own in-process Wails bindings — there is no network service, SDK, REST/GraphQL/gRPC endpoint, OAuth flow, or webhook anywhere in scope.
+
+Detector result at plan time: `{"detected":false,"signals":[]}` (run against the ROADMAP Phase 27 section). This declaration is recorded anyway so the seal-time re-run over the finished PLAN bodies — which contain unavoidable words like "binding", "wiring", and the `wailsAPI.ts` filename — cannot be mistaken for an undecided external-API surface.

@@ -45,7 +45,24 @@ created: 2026-08-15
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| *(filled in once PLAN.md task IDs exist)* | — | — | — | — | — | — | — | — | ⬜ pending |
+| 27-01 T1 | 27-01 | 1 | ACT-02 | T-27-02, T-27-03, T-27-10 | Containment gate before any read/write; `html.EscapeString` at both HTML title sites; root-object rebuild preserves the v1 array envelope | unit (tdd) | `go test ./internal/catalog/... -run TestRenameCatalog -race -count=1` | ❌ Wave 0 — created by this task | ⬜ pending |
+| 27-01 T2 | 27-01 | 1 | ACT-02 | T-27-03 | `html.UnescapeString` on the HTML read path only, never on the JSON-sourced title | unit (tdd) | `go test ./internal/search/... -run TestBrowseCatalogs -race -count=1` | ✅ extends `internal/search/service_test.go` | ⬜ pending |
+| 27-01 T3 | 27-01 | 1 | ACT-02 | T-27-02 | Live rejection of an out-of-directory path | manual (dev-browser, `:34115`) | live binding round trip | n/a — TEST-01 deferred | ⬜ pending |
+| 27-02 T1 | 27-02 | 1 | ACT-09 | T-27-06, T-27-11 | `tmp.Sync()` before close; best-effort parent-directory `Sync()` that never fails the write | unit (tdd) | `go test ./internal/catalog/... -run TestWriteFileAtomic -race -count=1` | ✅ extends `internal/catalog/atomicwrite_test.go` | ⬜ pending |
+| 27-02 T2 | 27-02 | 1 | ACT-09 | T-27-06, T-27-12, T-27-13 | Real external SIGKILL mid-write leaves the pre-existing catalog byte-identical | integration (subprocess) | `go test ./internal/catalog/... -run TestWriteFileAtomic_SurvivesKill -count=1 -timeout 120s` | ❌ Wave 0 — created by this task | ⬜ pending |
+| 27-03 T1 | 27-03 | 2 | ACT-03 | T-27-14, T-27-06 | Suffix candidate free only when both extensions absent; every write via `WriteFileAtomic` | unit (tdd) | `go test ./internal/catalog/... -run TestDuplicateCatalog -race -count=1` | ❌ Wave 0 — created by this task | ⬜ pending |
+| 27-03 T2 | 27-03 | 2 | ACT-04, ACT-05 | T-27-01, T-27-09, T-27-SC | Containment + extension + regular-file gate before the trash seam; no local removal call | unit (tdd, seam-mocked — never a real OS Trash) | `go test ./internal/osutil/... -run TestTrashPaths -race -count=1` | ❌ Wave 0 — created by this task | ⬜ pending |
+| 27-03 T3 | 27-03 | 2 | ACT-03, ACT-04, ACT-05 | T-27-02, T-27-18 | Bindings gate on `ContainsPath`; the `.html` companion is derived in Go, never accepted from the renderer | build + typecheck | `go build ./... && go vet ./... && cd frontend && npx tsc --noEmit` | n/a | ⬜ pending |
+| 27-04 T1 | 27-04 | 2 | ACT-01, ACT-02 | — | Danger tokens declared once; delete path boxes structurally cannot ellipsize | selector presence check | the `node -e` selector assertion in the plan's `<verify>` | n/a | ⬜ pending |
+| 27-04 T2 | 27-04 | 2 | ACT-01 | T-27-15, T-27-16 | One focus-trap implementation only; no leaked pointer listener; ARIA emitted only when the menu is real | typecheck + build + grep gates | `cd frontend && npx tsc --noEmit && npm run build` | n/a — TEST-01 deferred | ⬜ pending |
+| 27-04 T3 | 27-04 | 2 | ACT-01, ACT-02 | T-27-03, T-27-17 | Fail-closed on a null `catalogDir`; titles rendered as JSX text children only | typecheck + build + live | `cd frontend && npx tsc --noEmit && npm run build` + dev-browser | n/a — TEST-01 deferred | ⬜ pending |
+| 27-05 T1 | 27-05 | 3 | ACT-04, ACT-05 | T-27-19, T-27-09 | No permanence vocabulary anywhere in the component; paths never truncated | typecheck + build + grep gates | `cd frontend && npx tsc --noEmit && npm run build` | n/a — TEST-01 deferred | ⬜ pending |
+| 27-05 T2 | 27-05 | 3 | ACT-03, ACT-04 | T-27-01, T-27-18, T-27-20 | Paths always originate from the `BrowseCatalogs` listing; double-submit guarded | typecheck + build + live | `cd frontend && npx tsc --noEmit && npm run build` + dev-browser | n/a — TEST-01 deferred | ⬜ pending |
+| 27-06 T1 | 27-06 | 3 | WATCH-02, WATCH-03 | T-27-04, T-27-05, T-27-21, T-27-22, T-27-SC | Errors channel drained in the same select; `Close()` once-guarded; no Wails import | unit (tdd, fake source + real temp dir) | `go test ./internal/watch/... -race -count=1 -timeout 60s` | ❌ Wave 0 — created by this task | ⬜ pending |
+| 27-06 T2 | 27-06 | 3 | WATCH-02, WATCH-03 | T-27-05, T-27-22 | `app.go` is the sole `runtime.EventsEmit` caller; emit guarded by `a.ctx == nil`; release on every quit path | build + repo-wide grep + live | `go build ./... && go vet ./... && go test ./... -race -count=1` | n/a | ⬜ pending |
+| 27-07 T1 | 27-07 | 4 | WATCH-01, WATCH-02 | T-27-23, T-27-24, T-27-25 | Unsubscribe returned from the effect; no second rail read path | typecheck + build + grep gates | `cd frontend && npx tsc --noEmit && npm run build` | n/a — TEST-01 deferred | ⬜ pending |
+| 27-07 T2 | 27-07 | 4 | WATCH-01, WATCH-02, WATCH-03 | T-27-26 | No ledger entry claims coverage that was not exercised | ledger consistency script | the `node -e` ledger assertion in the plan's `<verify>` | ✅ `.planning/WINDOWS.md` | ⬜ pending |
+| 27-07 T3 | 27-07 | 4 | all 9 | all | The full 28-row phase matrix, live | manual (dev-browser, `:34115`) | live verification | n/a — TEST-01 deferred | ⬜ pending |
 
 ### Requirement → verification approach (from RESEARCH.md)
 
@@ -71,7 +88,7 @@ created: 2026-08-15
 - [ ] `internal/osutil/trash_test.go` — ACT-04/ACT-05, with the trash call behind a small interface so CI never touches a real OS Trash
 - [ ] `internal/watch/watcher_test.go` — WATCH-02/WATCH-03. Test the debounce logic in isolation against a fake event source; reserve real `fsnotify` behavior for live verification (fsnotify against a real filesystem is unreliable in CI sandboxes)
 - [ ] `internal/catalog/atomicwrite_sigkill_test.go` + a standalone helper binary — ACT-09's crash-safety claim with an actual kill. **This closes `WINDOWS.md` #6**, which currently records the guarantee as unit-tested only
-- [ ] `internal/search/service_test.go` gains a title-unescape case — grep at plan time to confirm whether that file already exists
+- [x] `internal/search/service_test.go` gains a title-unescape case — **confirmed at plan time: the file already exists**, so plan `27-01` Task 2 extends it rather than creating it
 - [ ] No new frontend test file — none needed, consistent with TEST-01's deferral and every prior phase's precedent
 
 ---
