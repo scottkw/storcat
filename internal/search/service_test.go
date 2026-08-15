@@ -397,6 +397,174 @@ func TestLoadCatalog_ToleratesMarkerFields(t *testing.T) {
 	}
 }
 
+// TestBrowseCatalogs_TitlePrecedence pins the three-tier title chain: JSON
+// root "title" wins outright over a sibling .html's <title>, which in turn
+// wins over the filename-derived fallback used when neither is present.
+func TestBrowseCatalogs_TitlePrecedence(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	// (a) JSON title present AND a sibling .html with a different title:
+	// the JSON title wins.
+	if err := os.WriteFile(filepath.Join(dir, "a.json"),
+		[]byte(`{"type":"directory","name":"./","title":"JSON Wins","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("write a.json: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "a.html"),
+		[]byte(`<html><head><title>HTML Loses</title></head></html>`), 0644); err != nil {
+		t.Fatalf("write a.html: %v", err)
+	}
+
+	// (b) No JSON title, sibling .html present: the HTML title wins.
+	if err := os.WriteFile(filepath.Join(dir, "b.json"),
+		[]byte(`{"type":"directory","name":"./","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("write b.json: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "b.html"),
+		[]byte(`<html><head><title>HTML Wins</title></head></html>`), 0644); err != nil {
+		t.Fatalf("write b.html: %v", err)
+	}
+
+	// (c) No JSON title, no .html: the filename minus .json wins.
+	if err := os.WriteFile(filepath.Join(dir, "c.json"),
+		[]byte(`{"type":"directory","name":"./","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("write c.json: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 3 {
+		t.Fatalf("expected 3 catalog results, got %d", len(results))
+	}
+
+	byName := map[string]string{}
+	for _, r := range results {
+		byName[r.Name] = r.Title
+	}
+
+	if got := byName["a.json"]; got != "JSON Wins" {
+		t.Errorf("a.json title = %q, want %q", got, "JSON Wins")
+	}
+	if got := byName["b.json"]; got != "HTML Wins" {
+		t.Errorf("b.json title = %q, want %q", got, "HTML Wins")
+	}
+	if got := byName["c.json"]; got != "c" {
+		t.Errorf("c.json title = %q, want %q", got, "c")
+	}
+}
+
+// TestBrowseCatalogs_UnescapesHTMLTitle proves the read-side escaping bug
+// is fixed: an .html <title> containing HTML entities must round-trip back
+// to their literal characters, not display the escaped form.
+func TestBrowseCatalogs_UnescapesHTMLTitle(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "photos.json"),
+		[]byte(`{"type":"directory","name":"./","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("write json: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "photos.html"),
+		[]byte(`<html><head><title>Tom &amp; Jerry &lt;2024&gt;</title></head></html>`), 0644); err != nil {
+		t.Fatalf("write html: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	want := "Tom & Jerry <2024>"
+	if results[0].Title != want {
+		t.Errorf("Title = %q, want %q", results[0].Title, want)
+	}
+}
+
+// TestBrowseCatalogs_JSONTitleIsNotUnescaped proves a JSON-sourced title is
+// returned verbatim -- the JSON field holds the user's literal string, so
+// unescaping it would corrupt a title that genuinely contains that text.
+func TestBrowseCatalogs_JSONTitleIsNotUnescaped(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "photos.json"),
+		[]byte(`{"type":"directory","name":"./","title":"A &amp; B","size":0,"contents":[]}`), 0644); err != nil {
+		t.Fatalf("write json: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	want := "A &amp; B"
+	if results[0].Title != want {
+		t.Errorf("Title = %q, want %q (verbatim, not unescaped)", results[0].Title, want)
+	}
+}
+
+// TestBrowseCatalogs_ArrayWrappedTitle proves a v1 array-wrapped catalog
+// whose element 0 carries a root "title" resolves to that title.
+func TestBrowseCatalogs_ArrayWrappedTitle(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	content := []byte(`[{"type":"directory","name":"root","title":"Array Title","size":100,"contents":[]},` +
+		`{"type":"report","directories":1,"files":0}]`)
+	if err := os.WriteFile(filepath.Join(dir, "array.json"), content, 0644); err != nil {
+		t.Fatalf("write json: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if results[0].Title != "Array Title" {
+		t.Errorf("Title = %q, want %q", results[0].Title, "Array Title")
+	}
+}
+
+// TestBrowseCatalogs_UnparseableJSONSkipsTitleProbe proves the title probe
+// never masks or replaces the existing parse diagnostic STATE-02 depends
+// on -- an invalid catalog still returns a populated ParseError and falls
+// back to the HTML-or-filename title.
+func TestBrowseCatalogs_UnparseableJSONSkipsTitleProbe(t *testing.T) {
+	s := NewService()
+	dir := t.TempDir()
+
+	if err := os.WriteFile(filepath.Join(dir, "broken.json"),
+		[]byte(`{not valid json at all`), 0644); err != nil {
+		t.Fatalf("write json: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "broken.html"),
+		[]byte(`<html><head><title>Fallback Title</title></head></html>`), 0644); err != nil {
+		t.Fatalf("write html: %v", err)
+	}
+
+	results, err := s.BrowseCatalogs(dir)
+	if err != nil {
+		t.Fatalf("BrowseCatalogs failed: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 catalog result, got %d", len(results))
+	}
+	if results[0].ParseError == "" {
+		t.Fatal("expected a non-empty ParseError for unparseable JSON")
+	}
+	if results[0].Title != "Fallback Title" {
+		t.Errorf("Title = %q, want %q (HTML fallback, since JSON title probe must be skipped)", results[0].Title, "Fallback Title")
+	}
+}
+
 // TestLoadCatalogFlat_ToleratesMarkerFields is LoadCatalog's flattening
 // sibling: same fixture, same tolerance requirement, plus a node-count
 // check against the equivalent marker-free tree.

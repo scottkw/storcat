@@ -3,6 +3,7 @@ package search
 import (
 	"encoding/json"
 	"fmt"
+	"html"
 	"os"
 	"path/filepath"
 	"strings"
@@ -58,6 +59,32 @@ func detectParseError(data []byte) string {
 		return fmt.Sprintf("byte %d: %s", syn.Offset, syn.Error())
 	}
 	return err.Error()
+}
+
+// extractJSONTitle probes data for a root "title" field, trying the
+// bare-object shape (v2) first and, on failure, the array-wrapped shape
+// (v1 bash script/`tree -J`, element 0 is the tree root). Any decode
+// failure -- including a shape that matches neither -- returns the empty
+// string; Go's decoder discards unmatched keys without allocating for
+// them, so this costs roughly one more lexical pass over bytes
+// BrowseCatalogs has already read and already scanned once via
+// detectParseError's json.Valid check.
+func extractJSONTitle(data []byte) string {
+	type titleProbe struct {
+		Title string `json:"title"`
+	}
+
+	var obj titleProbe
+	if err := json.Unmarshal(data, &obj); err == nil {
+		return obj.Title
+	}
+
+	var arr []titleProbe
+	if err := json.Unmarshal(data, &arr); err == nil && len(arr) > 0 {
+		return arr[0].Title
+	}
+
+	return ""
 }
 
 // SearchCatalogs searches all JSON catalogs in the specified directory for the search term
@@ -184,27 +211,7 @@ func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMeta
 		}
 
 		filePath := filepath.Join(catalogDirectory, entry.Name())
-
-		// Try to get title from HTML file first
 		htmlPath := strings.TrimSuffix(filePath, ".json") + ".html"
-		title := ""
-
-		// Check if HTML file exists and try to extract title
-		if htmlData, err := os.ReadFile(htmlPath); err == nil {
-			htmlContent := string(htmlData)
-			// Extract title from <title> tag
-			if startIdx := strings.Index(htmlContent, "<title>"); startIdx != -1 {
-				startIdx += 7 // len("<title>")
-				if endIdx := strings.Index(htmlContent[startIdx:], "</title>"); endIdx != -1 {
-					title = htmlContent[startIdx : startIdx+endIdx]
-				}
-			}
-		}
-
-		// If no title from HTML, fall back to filename without extension
-		if title == "" {
-			title = strings.TrimSuffix(entry.Name(), ".json")
-		}
 
 		// Get file info for modification time
 		info, err := entry.Info()
@@ -221,18 +228,45 @@ func (s *Service) BrowseCatalogs(catalogDirectory string) ([]*models.CatalogMeta
 			createdTime = info.ModTime()
 		}
 
-		// Check if HTML file exists (reuse htmlPath from above)
+		// Check if HTML file exists
 		_, htmlErr := os.Stat(htmlPath)
 		hasHtml := htmlErr == nil
 
-		// Parse status: a genuinely new read+scan cost -- BrowseCatalogs
-		// previously only stat'd this file. json.Valid's fast path keeps
+		// Parse status plus the title probe below share this one read of
+		// filePath. json.Valid's fast path (inside detectParseError) keeps
 		// the common (valid) case to one read plus one linear scan.
+		data, readErr := os.ReadFile(filePath)
 		var parseErr string
-		if data, readErr := os.ReadFile(filePath); readErr != nil {
+		if readErr != nil {
 			parseErr = readErr.Error()
 		} else {
 			parseErr = detectParseError(data)
+		}
+
+		// Title resolution, in order: (1) the JSON root's own "title" field
+		// -- checked only when the document parsed cleanly, and reused from
+		// the bytes already read above, no second read of filePath; (2) the
+		// sibling .html's <title>, unescaped -- the write side already
+		// escapes via html.EscapeString, so a title containing "&" must be
+		// unescaped back to its literal form here, not left as "&amp;";
+		// (3) the filename minus ".json".
+		title := ""
+		if parseErr == "" {
+			title = extractJSONTitle(data)
+		}
+		if title == "" {
+			if htmlData, err := os.ReadFile(htmlPath); err == nil {
+				htmlContent := string(htmlData)
+				if startIdx := strings.Index(htmlContent, "<title>"); startIdx != -1 {
+					startIdx += 7 // len("<title>")
+					if endIdx := strings.Index(htmlContent[startIdx:], "</title>"); endIdx != -1 {
+						title = html.UnescapeString(htmlContent[startIdx : startIdx+endIdx])
+					}
+				}
+			}
+		}
+		if title == "" {
+			title = strings.TrimSuffix(entry.Name(), ".json")
 		}
 
 		// Counts: cache-backed, never computed inline here. A miss leaves
