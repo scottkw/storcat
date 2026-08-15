@@ -75,7 +75,7 @@ No new sizes or weights outside `22-UI-SPEC.md`'s declared scale. This phase com
 | 11.5px `--dm` | Row-density/rail-position row notes ("How tight the tree and lists pack" / "Details panel takes the other side"); default-filename-root note ("Pre-filled for every new catalog"); all four toggle notes |
 | 11.5px mono `--dm` | Catalog-directory chip text |
 
-**Toggle-note font-family divergence from Phase 25's own toggles — intentional, not an inconsistency:** `25-UI-SPEC.md`'s create-form toggle notes are mono (`{root}.html`, a literal filename fragment). This phase's four Settings toggle notes are **Sans, not mono** ("every catalog gets a matching .html", "refresh the rail automatically" — descriptive sentences, not literal values), matching the demo's own markup (line 582 declares no `font-family` override, inheriting the Sans body font) — except the second toggle's note, which becomes a real path once set (see Copywriting Contract), and **that** value renders mono, consistent with every other path/filename value in this app.
+**Toggle-note font-family divergence from Phase 25's own toggles — intentional, not an inconsistency:** `25-UI-SPEC.md`'s create-form toggle notes are mono (`{root}.html`, a literal filename fragment). This phase's four Settings toggle notes are **Sans, not mono** ("every catalog gets a matching .html", "applies once file watching ships" — descriptive sentences, not literal values), matching the demo's own markup (line 582 declares no `font-family` override, inheriting the Sans body font) — except the second toggle's note, which becomes a real path once set (see Copywriting Contract), and **that** value renders mono, consistent with every other path/filename value in this app.
 
 ---
 
@@ -183,7 +183,7 @@ Section label "Catalogs" (same 11px/600/0.05em style).
 |---|---|---|---|
 | Write HTML | "Write HTML alongside JSON" | "every catalog gets a matching .html" (static) | **on** |
 | Copy to secondary | "Copy catalogs to a secondary location" | "Choose a folder when enabled" (unset) → the real path, mono (set) — same bootstrap-on-first-enable pattern `25-UI-SPEC.md`'s create-form secondary toggle already established | **off** |
-| Watch directory | "Watch catalog directory for changes" | "refresh the rail automatically" (static) | **off** — the watcher itself is Phase 27; this phase persists the toggle value only, per `26-CONTEXT.md`'s explicit scope boundary |
+| Watch directory | "Watch catalog directory for changes" | "applies once file watching ships" (static) | **off** — the watcher itself is Phase 27; this phase persists the toggle value only, per `26-CONTEXT.md`'s explicit scope boundary |
 | Remember window | "Remember window size & position" | "restore on launch" (static) | **on** — wired to the existing `windowPersistence` config field (COMPAT-05), not a new one |
 
 Each row reuses the shared `ToggleRow` component (see Color section's correction) with the `25-UI-SPEC.md` geometry: `30×17px` track (`--ac` fill / `var(--onac)` knob when on, `--ch` fill / `var(--fn)` knob when off), `13px` knob. Row layout: `display: flex; align-items: center; gap: 12px; cursor: pointer`, label+note column `flex: 1`, track `flex: none`.
@@ -220,7 +220,9 @@ Each row reuses the shared `ToggleRow` component (see Color section's correction
 | Filename root label/note | "Default filename root" / "Pre-filled for every new catalog" |
 | Filename root placeholder | "catalog" |
 | Toggle labels | "Write HTML alongside JSON" / "Copy catalogs to a secondary location" / "Watch catalog directory for changes" / "Remember window size & position" — verbatim from the handoff |
-| Toggle notes (static) | "every catalog gets a matching .html" / "refresh the rail automatically" / "restore on launch" |
+| Toggle notes (static) | "every catalog gets a matching .html" / "applies once file watching ships" / "restore on launch" |
+
+> **Copy amendment (2026-08-15, post-implementation).** The watch-directory note was originally locked as *"refresh the rail automatically"*. Phase 26's code review raised it as WR-02: nothing watches anything yet — the watcher is Phase 27 — so that copy asserted behavior the build does not have. It shipped as **"applies once file watching ships"**, and this contract is amended to match rather than leaving the spec describing UI that does not exist.
 | Toggle note (copy-to-secondary, unset) | "Choose a folder when enabled" — reused verbatim from `25-UI-SPEC.md`'s create-form toggle |
 | Footer status line | "StorCat 3.0.0 · settings save as you change them" — verbatim, load-bearing (see Persistence Contract) |
 | Footer close button | **"Close settings"** — deliberate divergence from the handoff's literal "Done"; see Dialog Shell section for why the bare word is rejected here |
@@ -232,7 +234,9 @@ Each row reuses the shared `ToggleRow` component (see Color section's correction
 
 Generated per `ui-consideration-probe.cjs` over 5 declared surfaces (dialog shell + entry points, theme grid, segmented controls, catalog-directory + filename-root fields, four toggles), resolved in autonomous mode per `26-CONTEXT.md`'s "Smart discuss (autonomous)" mode.
 
-**Applicable: 27 — resolved 27 (24 explicit, 3 backstop), unresolved 0.**
+**Applicable: 26 — resolved 26 (24 explicit, 2 backstop), unresolved 0.**
+
+> **Count correction (2026-08-15, UI review).** This header originally read *"Applicable: 27 — resolved 27 (24 explicit, 3 backstop)"*, which did not sum against the five tables below — they yield 24 explicit + 2 backstop = 26. All 26 locatable rows were lifted into plan `must_haves` with their tier preserved; the phantom third backstop row was surfaced as a flagged planner assumption rather than fabricated to make the header true. Header corrected to the tables' actual content.
 
 ### E1 — Dialog shell & entry points (modal / nav)
 
