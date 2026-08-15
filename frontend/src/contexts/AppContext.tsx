@@ -383,8 +383,23 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     case 'SCAN_RESET':
       return { ...state, scan: { status: 'idle' } };
-    case 'SETTINGS_HYDRATED':
-      return { ...state, settings: action.payload };
+    case 'SETTINGS_HYDRATED': {
+      // Field-aware merge, not a wholesale replace: hydrateSettings()'s
+      // getConfig() round trip is in flight from mount, so a user can
+      // dispatch SET_SETTINGS (toggling a row in the Settings dialog,
+      // already persisted via its own wailsAPI call) before this resolves.
+      // Only fold in a hydrated field if it's still sitting at the
+      // untouched initial-state default -- the same "don't clobber a
+      // value the user already changed" guard CreateSlideOver's own
+      // re-seed effect uses for root/writeHTML/copyToSecondary.
+      const merged = { ...state.settings };
+      (Object.keys(action.payload) as (keyof AppSettings)[]).forEach((key) => {
+        if (state.settings[key] === DEFAULT_APP_SETTINGS[key]) {
+          merged[key] = action.payload[key] as never;
+        }
+      });
+      return { ...state, settings: merged };
+    }
     case 'SET_SETTINGS': {
       // Returns the identical state object when every key in the payload
       // already holds the incoming value -- the same bail-out convention
