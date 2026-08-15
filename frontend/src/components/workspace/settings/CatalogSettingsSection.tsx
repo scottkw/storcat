@@ -1,6 +1,13 @@
 import { useAppContext } from '../../../contexts/AppContext';
 import { wailsAPI } from '../../../services/wailsAPI';
-import { setCatalogDirectorySetting, setDefaultFilenameRootSetting, setWriteHtmlSetting, setWatchDirectorySetting } from '../../../settingsStore';
+import {
+  setCatalogDirectorySetting,
+  setDefaultFilenameRootSetting,
+  setWriteHtmlSetting,
+  setCopyToSecondarySetting,
+  setSecondaryDirectorySetting,
+  setWatchDirectorySetting,
+} from '../../../settingsStore';
 import { ToggleRow } from '../create/OptionsToggles';
 
 // The Catalogs section (SET-04): the catalog-directory and
@@ -30,6 +37,40 @@ function CatalogSettingsSection() {
     const stripped = event.target.value.replace(/\s/g, '');
     dispatch({ type: 'SET_SETTINGS', payload: { defaultFilenameRoot: stripped } });
     setDefaultFilenameRootSetting(stripped);
+  }
+
+  // Reproduces OptionsToggles.handleToggleSecondary exactly -- both surfaces
+  // read and write the same stored secondary-directory value (SET-04).
+  // Turning the toggle off never clears the stored path (the same
+  // idempotency rule CRT-05 established for the create form's own toggle).
+  async function handleToggleCopyToSecondary() {
+    if (state.settings.copyToSecondary) {
+      dispatch({ type: 'SET_SETTINGS', payload: { copyToSecondary: false } });
+      setCopyToSecondarySetting(false);
+      return;
+    }
+    if (state.settings.secondaryDirectory) {
+      // A path is already persisted -- reuse it with no dialog.
+      dispatch({ type: 'SET_SETTINGS', payload: { copyToSecondary: true } });
+      setCopyToSecondarySetting(true);
+      return;
+    }
+    const result = await wailsAPI.selectDirectory();
+    if (!result.success || !result.path) return; // cancelled -- a declined choice, not an error
+    setSecondaryDirectorySetting(result.path);
+    dispatch({ type: 'SET_SETTINGS', payload: { secondaryDirectory: result.path, copyToSecondary: true } });
+    setCopyToSecondarySetting(true);
+  }
+
+  // Mirrors handleEditSecondaryPath -- re-pick the folder when its note
+  // (already showing a stored path) is clicked.
+  async function handleEditSecondaryPath(event: React.MouseEvent) {
+    event.stopPropagation();
+    if (!state.settings.secondaryDirectory) return;
+    const result = await wailsAPI.selectDirectory();
+    if (!result.success || !result.path) return;
+    setSecondaryDirectorySetting(result.path);
+    dispatch({ type: 'SET_SETTINGS', payload: { secondaryDirectory: result.path } });
   }
 
   return (
@@ -77,6 +118,16 @@ function CatalogSettingsSection() {
             dispatch({ type: 'SET_SETTINGS', payload: { writeHtml: next } });
             setWriteHtmlSetting(next);
           }}
+        />
+        <ToggleRow
+          checked={state.settings.copyToSecondary}
+          label="Copy catalogs to a secondary location"
+          note={state.settings.secondaryDirectory || 'Choose a folder when enabled'}
+          noteClassName="ws-create-note-path"
+          noteMono={!!state.settings.secondaryDirectory}
+          disabled={false}
+          onToggle={handleToggleCopyToSecondary}
+          onNoteClick={state.settings.secondaryDirectory ? handleEditSecondaryPath : undefined}
         />
         <ToggleRow
           checked={state.settings.watchDirectory}

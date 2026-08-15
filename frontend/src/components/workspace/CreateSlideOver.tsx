@@ -105,12 +105,15 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   // the setting is empty this is a behavioural no-op and CreateForm's own
   // source-derived placeholder still applies (SET-04, CRT-04 adjacency).
   const [root, setRoot] = useState(() => state.settings.defaultFilenameRoot);
-  // Seeded from the Settings-owned writeHTML default, same reasoning as
-  // `root` above -- a Settings change is what the next create attempt opens
-  // with (SET-04).
+  // Seeded from the Settings-owned writeHTML/copyToSecondary defaults, same
+  // reasoning as `root` above -- a Settings change is what the next create
+  // attempt opens with (SET-04). secondaryDir (below) already resolves the
+  // shared stored path independently, so copyToSecondary here only needs
+  // the boolean.
   const [options, setOptions] = useState<OptionsToggleValues>(() => ({
     ...DEFAULT_OPTIONS,
     writeHTML: state.settings.writeHtml,
+    copyToSecondary: state.settings.copyToSecondary,
   }));
   // Read once at mount, same persisted key OptionsToggles writes to -- both
   // start from the same value, and OptionsToggles reports every change back
@@ -170,6 +173,12 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     // choice, matching E4 partial's "must not retroactively rewrite it."
     if (options.writeHTML === DEFAULT_OPTIONS.writeHTML && options.writeHTML !== state.settings.writeHtml) {
       setOptions((prev) => ({ ...prev, writeHTML: state.settings.writeHtml }));
+    }
+    if (
+      options.copyToSecondary === DEFAULT_OPTIONS.copyToSecondary &&
+      options.copyToSecondary !== state.settings.copyToSecondary
+    ) {
+      setOptions((prev) => ({ ...prev, copyToSecondary: state.settings.copyToSecondary }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen]);
@@ -360,7 +369,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
     setSelectedSource(null);
     setTitle('');
     setRoot(state.settings.defaultFilenameRoot);
-    setOptions({ ...DEFAULT_OPTIONS, writeHTML: state.settings.writeHtml });
+    setOptions({ ...DEFAULT_OPTIONS, writeHTML: state.settings.writeHtml, copyToSecondary: state.settings.copyToSecondary });
     dispatch({ type: 'SCAN_RESET' });
   }
 
