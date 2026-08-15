@@ -504,14 +504,22 @@ useEffect(() => {
 
 **If this table is empty:** N/A — see rows above.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Does the exact JSON `title` field position/name matter for COMPAT-02 (byte-for-byte JSON shape parity with v2.3.0)?**
+Both were resolved before planning; the resolutions are locked in `27-CONTEXT.md`'s "Post-research
+resolutions" block and implemented in plans 27-01 and 27-03.
+
+1. **RESOLVED** — resolution: **`omitempty`** (the researcher's own recommendation), preserving byte-parity
+   for catalogs with no title override, which COMPAT-02 depends on. Implemented in plan 27-01.
+   **Does the exact JSON `title` field position/name matter for COMPAT-02 (byte-for-byte JSON shape parity with v2.3.0)?**
    - What we know: `pkg/models/catalog.go`'s `CatalogItem` struct (read this session) already has a precedent for additive, `omitempty` fields (`Unreadable`, `ReadError`) that don't disturb the byte-for-byte guarantee for catalogs that don't use them — the doc comment states *"No reader in this repository rejects unrecognized JSON keys, so these two keys are silently ignored by every catalog reader that doesn't yet know about them."*
    - What's unclear: Whether `title` should be `omitempty` (so a catalog with no explicit rename stays byte-identical to today's output) or always-present (simpler mental model, matches `JsonPath`'s own non-`omitempty` convention noted in `CreateCatalogResult`). `27-CONTEXT.md` leaves the field name/position to Claude's discretion but doesn't address `omitempty`.
    - Recommendation: `omitempty`, consistent with `Unreadable`/`ReadError`'s existing precedent for "this key only appears when the feature that needs it was actually used" — a freshly-created catalog (never renamed) should stay byte-for-byte identical to v2.3.0's output, preserving COMPAT-02.
 
-2. **Should `DuplicateCatalog`'s new JSON also get a fresh `title` set to something like "`<original> copy`", or should it inherit the original title verbatim?**
+2. **RESOLVED** — resolution: **inherit the source title verbatim** (the researcher's own recommendation).
+   Only the filename root gets the `-copy` suffix; ACT-03 speaks to the filename, not the title, and a user
+   who wants a different title can rename afterwards. Implemented in plan 27-03.
+   **Should `DuplicateCatalog`'s new JSON also get a fresh `title` set to something like "`<original> copy`", or should it inherit the original title verbatim?**
    - What we know: ACT-03 only specifies the *filename* gets suffixed (`-copy`, `-copy-2`); it says nothing about the title.
    - What's unclear: If title inherits verbatim, the rail will show two catalogs with the identical displayed title but different filenames — which is arguably correct (a duplicate genuinely is an identical copy) but could confuse a user scanning the rail.
    - Recommendation: Inherit the title verbatim (true duplicate semantics) — this matches the "duplicate" mental model better than inventing new copy-suffixed title text the user didn't ask for, and keeps this phase's scope minimal. Flag as Claude's Discretion for the plan to confirm.
