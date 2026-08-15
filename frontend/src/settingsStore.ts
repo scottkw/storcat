@@ -110,6 +110,15 @@ export function setWatchDirectorySetting(enabled: boolean): void {
   void wailsAPI.setWatchDirectory(enabled);
 }
 
+// COMPAT-05: drives the pre-existing windowPersistenceEnabled config field
+// via the pre-existing SetWindowPersistence binding -- this is its first
+// call site, not a new field or a new binding. Continuity guarantee: the
+// on-disk effect of flipping this toggle must be exactly the effect the
+// pre-milestone preferences toggle already produced.
+export function setRememberWindowSetting(enabled: boolean): void {
+  void wailsAPI.setWindowPersistence(enabled);
+}
+
 export interface HydratedSettings {
   settings: AppSettings;
   catalogDirectory: string;

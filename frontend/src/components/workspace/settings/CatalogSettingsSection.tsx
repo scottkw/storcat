@@ -7,6 +7,7 @@ import {
   setCopyToSecondarySetting,
   setSecondaryDirectorySetting,
   setWatchDirectorySetting,
+  setRememberWindowSetting,
 } from '../../../settingsStore';
 import { ToggleRow } from '../create/OptionsToggles';
 
@@ -139,6 +140,18 @@ function CatalogSettingsSection() {
             const next = !state.settings.watchDirectory;
             dispatch({ type: 'SET_SETTINGS', payload: { watchDirectory: next } });
             setWatchDirectorySetting(next);
+          }}
+        />
+        <ToggleRow
+          checked={state.settings.rememberWindow}
+          label="Remember window size & position"
+          note="restore on launch"
+          noteMono={false}
+          disabled={false}
+          onToggle={() => {
+            const next = !state.settings.rememberWindow;
+            dispatch({ type: 'SET_SETTINGS', payload: { rememberWindow: next } });
+            setRememberWindowSetting(next);
           }}
         />
       </div>
