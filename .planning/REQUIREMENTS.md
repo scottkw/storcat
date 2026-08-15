@@ -61,7 +61,7 @@
 ### Create — the catalog creation flow
 
 - [x] **CRT-01**: User can open a 560px right slide-over to create a catalog, which animates in over 340ms and out over 260ms without unmounting early
-- [ ] **CRT-02**: User sees detected mounted volumes as selectable cards with name, mount path, size, and a `mounted` or `read errors` status
+- [x] **CRT-02**: User sees detected mounted volumes as selectable cards with name, mount path, size, and a `mounted` or `read errors` status
 - [x] **CRT-03**: User can choose any folder instead of a detected volume
 - [ ] **CRT-04**: User can set a catalog title and a filename root, and sees a live "WILL WRITE" preview of the files that will be produced
 - [ ] **CRT-05**: User can toggle write-HTML-alongside-JSON, copy-to-secondary-location, and include-hidden-files
@@ -184,7 +184,7 @@ Deferred — acknowledged but not in this roadmap.
 | PLT-06 | Phase 24 | Complete |
 | PLT-07 | Phase 24 | Complete |
 | CRT-01 | Phase 25 | Complete |
-| CRT-02 | Phase 25 | Pending |
+| CRT-02 | Phase 25 | Complete |
 | CRT-03 | Phase 25 | Complete |
 | CRT-04 | Phase 25 | Pending |
 | CRT-05 | Phase 25 | Pending |
