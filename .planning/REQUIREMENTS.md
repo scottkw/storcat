@@ -68,9 +68,9 @@
 - [x] **CRT-06**: User can start the scan with the Create button or ⌘↵
 - [x] **CRT-07**: User sees live scan progress — percentage, files seen, bytes, estimated time remaining, the current walking path, and a newest-first log
 - [ ] **CRT-08**: User can hand a running scan to the status bar with "Run in background" and see `● scanning <name> · N%` there
-- [ ] **CRT-09**: User can cancel a scan and the underlying walk actually stops
-- [ ] **CRT-10**: User sees a distinct error state when the volume goes away mid-scan, showing where it stopped and the read errors encountered
-- [ ] **CRT-11**: User can write a partial catalog from the error state, retry the scan, or cancel
+- [x] **CRT-09**: User can cancel a scan and the underlying walk actually stops
+- [x] **CRT-10**: User sees a distinct error state when the volume goes away mid-scan, showing where it stopped and the read errors encountered
+- [x] **CRT-11**: User can write a partial catalog from the error state, retry the scan, or cancel
 - [x] **CRT-12**: User sees a done state listing every file written with its size, and can open the new catalog in the workspace or catalog another volume
 - [ ] **CRT-13**: Closing the window mid-scan cancels the walk and writes nothing
 
@@ -191,9 +191,9 @@ Deferred — acknowledged but not in this roadmap.
 | CRT-06 | Phase 25 | Complete |
 | CRT-07 | Phase 25 | Complete |
 | CRT-08 | Phase 25 | Pending |
-| CRT-09 | Phase 25 | Pending |
-| CRT-10 | Phase 25 | Pending |
-| CRT-11 | Phase 25 | Pending |
+| CRT-09 | Phase 25 | Complete |
+| CRT-10 | Phase 25 | Complete |
+| CRT-11 | Phase 25 | Complete |
 | CRT-12 | Phase 25 | Complete |
 | CRT-13 | Phase 25 | Pending |
 | SET-01 | Phase 26 | Pending |

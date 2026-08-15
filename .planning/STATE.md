@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 25
 current_phase_name: Create Slide-over + Progress/Cancellation/Partial-Catalog
 status: executing
-stopped_at: Completed 25-01-PLAN.md
-last_updated: "2026-08-14T20:07:16.640Z"
+stopped_at: Completed 25-02-PLAN.md
+last_updated: "2026-08-15T00:11:25.362Z"
 last_activity: 2026-08-14
 last_activity_desc: "Phase 23 closed: verification passed 17/17, code review 5/5 fixed, security SECURED 26/26, UI review 23/24, validation reconciled"
 progress:
   total_phases: 7
   completed_phases: 3
   total_plans: 25
-  completed_plans: 19
+  completed_plans: 20
   percent: 43
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 25 — Create Slide-over + Progress/Cancellation/Partial-Catalog
-Plan: 2 of 7
+Plan: 3 of 7
 Status: Ready to execute
 Last activity: 2026-08-14 — Plan 25-01 (create slide-over tracer) complete
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [████████░░] 76%
+Progress: [████████░░] 80%
 
 ## Performance Metrics
 
@@ -80,6 +80,7 @@ Progress: [████████░░] 76%
 | Phase 24 P04 | ~50min | 3 tasks | 4 files |
 | Phase 24 P05 | 35min | 3 tasks | 4 files |
 | Phase 25 P01 | 26min | 3 tasks | 21 files |
+| Phase 25 P02 | 16min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -130,6 +131,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 25-01: StartScan resolves outputDir/copyToDirectory via filepath.EvalSymlinks before containment-checking -- macOS's /var -> /private/var symlink otherwise produces a false escape rejection for every legitimately-nested write
 - [Phase ?]: 25-01: CreateSlideOver's animated-exit closing flag uses a single useLayoutEffect keyed on isOpen, not the render-time setState pattern -- the latter breaks under React 18 StrictMode's development double-invoke, closing the panel with no visible exit animation
 - [Phase ?]: 25-01: ScanResultFile.size is optional and left unset -- CreateCatalogResult has no per-output-file byte count, and using totalSize (the scanned tree's sum) would misrepresent an individual file's own size
+- [Phase ?]: 25-02: Marker shape resolved to option-a (two flat omitempty scalars: Unreadable bool, ReadError string) at the plan's blocking checkpoint -- a USER decision, not Claude's discretion; option-b (nested object) and option-c (bare presence-implies-unreadable string) rejected
+- [Phase ?]: 25-02: Errors propagate as *SourceUnavailableError with Partial populated once by the outermost CreateCatalogWithContext, not rebuilt at every recursion level; marker fields set only on the origin node where classify() first returns true
 
 ### Key Research Findings
 
@@ -171,8 +174,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-14T20:07:16.631Z
-Stopped at: Completed 25-01-PLAN.md
+Last session: 2026-08-15T00:11:25.277Z
+Stopped at: Completed 25-02-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 24`
 

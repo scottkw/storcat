@@ -189,7 +189,7 @@ Plans:
   4. User sees a distinct error state when the volume goes away mid-scan (showing where it stopped and the read errors encountered), can write a partial catalog, retry the scan, or cancel from that state, and closing the window mid-scan cancels the walk and writes nothing (CRT-10, CRT-11, CRT-13)
   5. User sees a done state listing every file written with its size and can open the new catalog in the workspace or catalog another volume; catalogs this flow writes are byte-for-byte the same JSON shape v2.3.0 wrote; and all six CLI subcommands keep behaving exactly as before, with `internal/catalog` still usable from the CLI without a Wails runtime context (CRT-12, COMPAT-02, COMPAT-03, COMPAT-04)
 
-**Plans**: 1/7 plans executed (7 waves)
+**Plans**: 2/7 plans executed (7 waves)
 Plans:
 
 **Wave 1**
@@ -198,7 +198,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1)*
 
-- [ ] 25-02-PLAN.md — Atomic writes, read-error classification, and the on-disk unreadable-subtree marker (wave 2)
+- [x] 25-02-PLAN.md — Atomic writes, read-error classification, and the on-disk unreadable-subtree marker (wave 2)
 
 **Wave 3** *(blocked on Wave 2)*
 
@@ -297,7 +297,7 @@ Plans:
 | 22. Shell + Token Layer | v3.0.0 | 7/7 | Complete   | 2026-08-13 |
 | 23. Rail + Virtualized Tree | v3.0.0 | 6/6 | Complete   | 2026-08-13 |
 | 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
-| 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 1/7 | In Progress|  |
+| 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 2/7 | In Progress|  |
 | 26. Settings | v3.0.0 | 0/TBD | Not started | - |
 | 27. Catalog Actions + Watch | v3.0.0 | 0/TBD | Not started | - |
 | 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |
