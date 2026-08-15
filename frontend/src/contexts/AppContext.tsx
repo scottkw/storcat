@@ -3,6 +3,7 @@ import { Density, RailSide, readPersistedPrefs } from '../themeTokens';
 import { models } from '../../wailsjs/go/models';
 import { ScanProgress, ScanResultFile, ScanState } from '../types/scan';
 import { scanPercent } from '../lib/scanFormat';
+import { AppSettings, DEFAULT_APP_SETTINGS } from '../settingsStore';
 
 // Types
 
@@ -43,6 +44,11 @@ export interface AppState {
   // one entry point directly on the picker its label promises rather than
   // the generic volume-card list.
   createFolderPickerIntent: boolean;
+  // The config-backed settings slice not already covered by density/
+  // railSide/catalogDir above. Initialised to DEFAULT_APP_SETTINGS and
+  // replaced wholesale by SETTINGS_HYDRATED once WorkspaceShell's mount
+  // effect resolves the real config (settingsStore.hydrateSettings).
+  settings: AppSettings;
 }
 
 type AppAction =
@@ -85,7 +91,12 @@ type AppAction =
         stopPercent?: number | null;
       };
     }
-  | { type: 'SCAN_RESET' };
+  | { type: 'SCAN_RESET' }
+  // Replaces the whole settings slice -- fired once, at hydration.
+  | { type: 'SETTINGS_HYDRATED'; payload: AppSettings }
+  // Merges a partial update -- every Catalogs/Toggles row dispatches this
+  // alongside its own settingsStore setter call.
+  | { type: 'SET_SETTINGS'; payload: Partial<AppSettings> };
 
 // Seeded once at module scope so a relaunch restores the user's persisted
 // density/rail-side choices rather than hardcoded defaults. readPersistedPrefs
@@ -106,6 +117,7 @@ const initialState: AppState = {
   createOpen: false,
   scan: { status: 'idle' },
   createFolderPickerIntent: false,
+  settings: DEFAULT_APP_SETTINGS,
 };
 
 // Extracts the in-progress/terminal title from whichever ScanState variant
@@ -371,6 +383,20 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     case 'SCAN_RESET':
       return { ...state, scan: { status: 'idle' } };
+    case 'SETTINGS_HYDRATED':
+      return { ...state, settings: action.payload };
+    case 'SET_SETTINGS': {
+      // Returns the identical state object when every key in the payload
+      // already holds the incoming value -- the same bail-out convention
+      // SET_CREATE_OPEN/SET_CATALOG_DIR use above, so a field committed
+      // with its own current value (e.g. a toggle re-set to what it
+      // already was) triggers no re-render.
+      const unchanged = (Object.keys(action.payload) as (keyof AppSettings)[]).every(
+        (key) => state.settings[key] === action.payload[key]
+      );
+      if (unchanged) return state;
+      return { ...state, settings: { ...state.settings, ...action.payload } };
+    }
     default:
       return state;
   }

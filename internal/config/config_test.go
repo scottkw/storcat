@@ -340,6 +340,58 @@ func TestDefaultConfig_CatalogDirectoryEmpty(t *testing.T) {
 	}
 }
 
+// TestSetDefaultFilenameRoot verifies SetDefaultFilenameRoot updates the
+// in-memory config.
+func TestSetDefaultFilenameRoot(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetDefaultFilenameRoot("my-catalog"); err != nil {
+		t.Fatalf("SetDefaultFilenameRoot(\"my-catalog\") error: %v", err)
+	}
+
+	if got := m.Get().DefaultFilenameRoot; got != "my-catalog" {
+		t.Errorf("Get().DefaultFilenameRoot = %q, want %q", got, "my-catalog")
+	}
+}
+
+// TestSetDefaultFilenameRoot_Persists verifies SetDefaultFilenameRoot
+// writes synchronously to disk -- a second Manager loaded from the same
+// path reports the same value.
+func TestSetDefaultFilenameRoot_Persists(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetDefaultFilenameRoot("my-catalog"); err != nil {
+		t.Fatalf("SetDefaultFilenameRoot(\"my-catalog\") error: %v", err)
+	}
+
+	m2 := &Manager{configPath: m.configPath}
+	if err := m2.Load(); err != nil {
+		t.Fatalf("Load() error: %v", err)
+	}
+
+	if got := m2.Get().DefaultFilenameRoot; got != "my-catalog" {
+		t.Errorf("after reload: DefaultFilenameRoot = %q, want %q", got, "my-catalog")
+	}
+}
+
+// TestSetDefaultFilenameRoot_EmptyIsValid verifies setting "" returns nil
+// and reads back as "" -- an empty root is a legitimate stored value, not
+// an error and not a sentinel for "unset by mistake".
+func TestSetDefaultFilenameRoot_EmptyIsValid(t *testing.T) {
+	m := newTestManager(t)
+
+	if err := m.SetDefaultFilenameRoot("my-catalog"); err != nil {
+		t.Fatalf("SetDefaultFilenameRoot(\"my-catalog\") error: %v", err)
+	}
+	if err := m.SetDefaultFilenameRoot(""); err != nil {
+		t.Fatalf("SetDefaultFilenameRoot(\"\") error: %v", err)
+	}
+
+	if got := m.Get().DefaultFilenameRoot; got != "" {
+		t.Errorf("Get().DefaultFilenameRoot = %q, want empty", got)
+	}
+}
+
 // TestManager_ConcurrentSetters interleaves SetDensity, SetSettingsMigrated
 // and Get() across goroutines and asserts no error is returned. Run under
 // -race (SET-05 concurrency edge) -- this is the reason Manager gained a

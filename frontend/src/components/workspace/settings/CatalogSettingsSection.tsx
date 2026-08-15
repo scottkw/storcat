@@ -1,6 +1,6 @@
 import { useAppContext } from '../../../contexts/AppContext';
 import { wailsAPI } from '../../../services/wailsAPI';
-import { setCatalogDirectorySetting } from '../../../settingsStore';
+import { setCatalogDirectorySetting, setDefaultFilenameRootSetting } from '../../../settingsStore';
 
 // The Catalogs section (SET-04): the catalog-directory row today, joined by
 // the default-filename-root row in plan 26-03 Task 2.
@@ -18,6 +18,16 @@ function CatalogSettingsSection() {
     if (result.path === state.catalogDir) return;
     setCatalogDirectorySetting(result.path);
     dispatch({ type: 'SET_CATALOG_DIR', payload: result.path });
+  }
+
+  // Every keystroke commits immediately (SET-05, no save step) -- the
+  // whitespace strip mirrors the design demo's transform. No validation
+  // error, no disabled state, no max length: an empty value is valid and
+  // simply falls back to the create form's own source-derived placeholder.
+  function handleRootChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const stripped = event.target.value.replace(/\s/g, '');
+    dispatch({ type: 'SET_SETTINGS', payload: { defaultFilenameRoot: stripped } });
+    setDefaultFilenameRootSetting(stripped);
   }
 
   return (
@@ -40,6 +50,18 @@ function CatalogSettingsSection() {
             Change…
           </button>
         </div>
+      </div>
+      <div className="ws-settings-row">
+        <div className="ws-settings-row-text">
+          <span className="ws-settings-row-label">Default filename root</span>
+          <span className="ws-settings-row-note">Pre-filled for every new catalog</span>
+        </div>
+        <input
+          className="ws-settings-root-input mono"
+          placeholder="catalog"
+          value={state.settings.defaultFilenameRoot}
+          onChange={handleRootChange}
+        />
       </div>
     </div>
   );

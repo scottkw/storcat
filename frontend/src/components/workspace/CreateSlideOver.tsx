@@ -101,7 +101,10 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
 
   const [selectedSource, setSelectedSource] = useState<ScanSource | null>(null);
   const [title, setTitle] = useState('');
-  const [root, setRoot] = useState('');
+  // Seeded from the Settings-owned default, not the empty string -- when
+  // the setting is empty this is a behavioural no-op and CreateForm's own
+  // source-derived placeholder still applies (SET-04, CRT-04 adjacency).
+  const [root, setRoot] = useState(() => state.settings.defaultFilenameRoot);
   const [options, setOptions] = useState<OptionsToggleValues>(DEFAULT_OPTIONS);
   // Read once at mount, same persisted key OptionsToggles writes to -- both
   // start from the same value, and OptionsToggles reports every change back
@@ -319,7 +322,7 @@ function CreateSlideOver({ isOpen, onClose }: CreateSlideOverProps) {
   function handleCatalogAnother() {
     setSelectedSource(null);
     setTitle('');
-    setRoot('');
+    setRoot(state.settings.defaultFilenameRoot);
     setOptions(DEFAULT_OPTIONS);
     dispatch({ type: 'SCAN_RESET' });
   }

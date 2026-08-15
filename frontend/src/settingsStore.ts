@@ -51,3 +51,37 @@ export function setCatalogDirectorySetting(dir: string): void {
   safeSetItem(CATALOG_DIR_KEY, dir);
   void wailsAPI.setCatalogDirectory(dir);
 }
+
+// The complete AppSettings shape, defined once here rather than widened by
+// each later plan -- writeHtml/copyToSecondary/secondaryDirectory/
+// watchDirectory/rememberWindow are read by plan 26-05's toggles section;
+// rememberWindow maps onto the pre-existing windowPersistenceEnabled config
+// field, not a new one.
+export interface AppSettings {
+  defaultFilenameRoot: string;
+  writeHtml: boolean;
+  copyToSecondary: boolean;
+  secondaryDirectory: string;
+  watchDirectory: boolean;
+  rememberWindow: boolean;
+}
+
+// Matches Go's DefaultConfig() for every field that exists today.
+export const DEFAULT_APP_SETTINGS: AppSettings = {
+  defaultFilenameRoot: '',
+  writeHtml: true,
+  copyToSecondary: false,
+  secondaryDirectory: '',
+  watchDirectory: false,
+  rememberWindow: true,
+};
+
+// Deliberately config-only -- no localStorage cache. The cache exists
+// solely for the values initThemeTokens() and the rail read synchronously
+// before an async binding could answer (theme/density/rail side/catalog
+// directory); nothing reads the filename root pre-paint, so adding a sixth
+// cached key here would re-create the two-store problem this phase exists
+// to remove.
+export function setDefaultFilenameRootSetting(root: string): void {
+  void wailsAPI.setDefaultFilenameRoot(root);
+}
