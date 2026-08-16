@@ -2128,3 +2128,63 @@
   color: var(--danger);
   line-height: 1.5;
 }
+
+/* ---------------------------------------------------------------------
+ * Phase 28-03 -- Diff list (Task 1). A plain natively-scrolling <div>,
+ * deliberately not @tanstack/react-virtual/useVisibleRows -- see
+ * DiffList.tsx's own doc comment and 28-UI-SPEC.md's Diff List Contract.
+ * ------------------------------------------------------------------- */
+
+.ws-rescan-difflist {
+  max-height: 200px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-rescan-diffgroup {
+  display: flex;
+  flex-direction: column;
+}
+
+.ws-rescan-diffgroup-header {
+  height: 24px;
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--dm);
+}
+
+.ws-rescan-diffrow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--l2);
+}
+
+.ws-rescan-diffrow-mark {
+  width: 10px;
+  flex: none;
+  font-size: 12px;
+}
+
+.ws-rescan-diffrow-path {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+}
+
+.ws-rescan-diffrow-meta {
+  margin-left: auto;
+  flex: none;
+  white-space: nowrap;
+  font-size: 11px;
+  color: var(--dm);
+}

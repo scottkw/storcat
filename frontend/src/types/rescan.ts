@@ -32,7 +32,23 @@ export interface DiffResult {
   unreadable: number;
   unchanged: number;
   entries: DiffEntry[];
+  // oldEntryCount/lowSimilarity mirror pkg/models/catalog.go's DiffResult
+  // fields added in 28-02 -- oldEntryCount gates the similarity floor,
+  // lowSimilarity is the wrong-disc signal the diff step's warning banner
+  // reads (28-UI-SPEC.md's Similarity Warning Contract). Both are a signal
+  // only: nothing on the Go side blocks or refuses on lowSimilarity.
+  oldEntryCount: number;
+  lowSimilarity: boolean;
 }
+
+/**
+ * The four diff-list group keys, in the fixed display order the Diff List
+ * Contract locks (28-UI-SPEC.md): Added, Removed, Changed, Unreadable.
+ * 'unchanged' is deliberately excluded -- unchanged entries never appear in
+ * DiffResult.entries at all (count-only in the stat tile), so there is no
+ * group for them to render.
+ */
+export type DiffGroupKey = Exclude<DiffState, 'unchanged'>;
 
 /**
  * The three steps this tracer's RescanDialog drives: pick a source volume,
