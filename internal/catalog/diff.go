@@ -74,13 +74,13 @@ func ComputeDiff(old, new *models.CatalogItem) *models.DiffResult {
 	for path, newItem := range newFlat {
 		oldItem, existed := oldFlat[path]
 		switch {
-		case !existed:
-			entries = append(entries, models.DiffEntry{
-				Path: path, State: models.DiffAdded, Type: newItem.Type, NewSize: newItem.Size,
-			})
 		case newItem.Unreadable:
 			entries = append(entries, models.DiffEntry{
 				Path: path, State: models.DiffUnreadable, Type: newItem.Type, ReadError: newItem.ReadError,
+			})
+		case !existed:
+			entries = append(entries, models.DiffEntry{
+				Path: path, State: models.DiffAdded, Type: newItem.Type, NewSize: newItem.Size,
 			})
 		case oldItem.Type != newItem.Type:
 			// A different entity that happens to share a path -- not a

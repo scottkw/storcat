@@ -251,6 +251,57 @@ func TestDiff_UnreadableCarriesReadError(t *testing.T) {
 	}
 }
 
+// TestDiff_NewUnreadableEntryIsUnreadableNotAdded verifies CR-01: a path
+// that is BOTH new (absent from the old tree) AND marked Unreadable by the
+// walk must be categorized unreadable, never added -- the switch in
+// ComputeDiff must check newItem.Unreadable before the !existed branch, or
+// this brand-new-but-unreadable node silently reports as an "added, 0B"
+// entry with its ReadError dropped.
+func TestDiff_NewUnreadableEntryIsUnreadableNotAdded(t *testing.T) {
+	old := &models.CatalogItem{
+		Type: "directory", Name: "./",
+	}
+	newTree := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{
+				Type: "directory", Name: "./newlocked", Size: 0, Contents: []*models.CatalogItem{},
+				Unreadable: true, ReadError: "permission denied",
+			},
+		},
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	if result.Unreadable != 1 {
+		t.Errorf("Unreadable = %d, want 1", result.Unreadable)
+	}
+	if result.Added != 0 {
+		t.Errorf("Added = %d, want 0 -- a new-and-unreadable path must not be counted added", result.Added)
+	}
+
+	var entry *models.DiffEntry
+	for i := range result.Entries {
+		if result.Entries[i].Path == "./newlocked" {
+			entry = &result.Entries[i]
+		}
+	}
+	if entry == nil {
+		t.Fatal("expected a diff entry for ./newlocked")
+	}
+	if entry.State != models.DiffUnreadable {
+		t.Errorf("State = %v, want DiffUnreadable", entry.State)
+	}
+	if entry.ReadError != "permission denied" {
+		t.Errorf("ReadError = %q, want %q", entry.ReadError, "permission denied")
+	}
+
+	sum := result.Added + result.Removed + result.Changed + result.Unreadable + result.Unchanged
+	if sum != 1 {
+		t.Errorf("category sum = %d, want 1", sum)
+	}
+}
+
 // TestDiff_TypeChangeYieldsRemovedAndAdded verifies a path that is a file
 // in the old tree and a directory in the new tree (or vice versa) yields
 // TWO rows -- one removed, one added -- never a single changed row
