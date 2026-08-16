@@ -78,7 +78,22 @@ function Menu({ isOpen, onClose, triggerRef, items, id, ariaLabel }: MenuProps) 
       // useModalBehavior's restoreTarget.focus() is the only focus mutation
       // that happens. Without this, mousedown fires after this handler and
       // blurs focus to <body>, overwriting the restore that already ran.
-      event.preventDefault();
+      //
+      // WR-02 (27-REVIEW.md iteration 3): only suppress that default action
+      // when the outside click isn't itself headed for a focusable element.
+      // A blanket preventDefault() here reached every focusable element on
+      // the page, not just empty-area/backdrop clicks -- clicking straight
+      // from this menu onto another input or button closed the menu but
+      // silently ate that click's own focus, forcing a second click. Letting
+      // an outside click on e.g. a search input focus that input is correct;
+      // it's only a non-focusable-target click where restoreTarget.focus()
+      // needs to win the race against the browser's default.
+      const isFocusableTarget =
+        target instanceof HTMLElement &&
+        target.matches('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])');
+      if (!isFocusableTarget) {
+        event.preventDefault();
+      }
       onClose();
     };
     document.addEventListener('pointerdown', handlePointerDown);
