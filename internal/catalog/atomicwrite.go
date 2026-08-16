@@ -4,6 +4,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 )
 
 // WriteFileAtomic writes data to path via a temp file in path's own
@@ -84,12 +85,28 @@ func WriteFileAtomic(path string, data []byte, perm os.FileMode) error {
 	// exactly the durability hole this fsync exists to close, while
 	// every write still reports success -- permanently unobservable.
 	// This is deliberate log-and-continue, not a swallowed check.
+	//
+	// WR-02: syncDir is expected to fail on EVERY call on Windows (see its
+	// own doc comment -- no directory handle can be synced the way POSIX
+	// allows), so logging unconditionally here would emit a line for every
+	// catalog write, forever, on a fully supported platform, drowning out
+	// the one case this log exists to catch: an fsync that starts failing
+	// unexpectedly on a platform where it is normally expected to succeed.
+	// logDirSyncFailureOnce bounds the noise to a single line per process
+	// lifetime while keeping the failure observable -- log-and-continue,
+	// not silent discard, just no longer log-and-spam.
 	if dirErr := syncDir(filepath.Dir(path)); dirErr != nil {
-		log.Printf("WriteFileAtomic: parent-directory sync failed for %s: %v", filepath.Dir(path), dirErr)
+		logDirSyncFailureOnce.Do(func() {
+			log.Printf("WriteFileAtomic: parent-directory sync failed for %s: %v (further occurrences this run are not logged)", filepath.Dir(path), dirErr)
+		})
 	}
 
 	return nil
 }
+
+// logDirSyncFailureOnce bounds WriteFileAtomic's directory-sync failure log
+// to once per process lifetime -- see the call site's comment.
+var logDirSyncFailureOnce sync.Once
 
 // syncDir opens dir and calls Sync() on the resulting handle, so the
 // directory entry created by a preceding os.Rename is flushed to stable
