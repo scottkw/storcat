@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 28
 current_phase_name: Re-scan & Diff
 status: executing
-stopped_at: Phase 28 UI-SPEC approved
-last_updated: "2026-08-16T18:50:51.709Z"
+stopped_at: Completed 28-01-PLAN.md
+last_updated: "2026-08-16T19:23:42.456Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 43
-  completed_plans: 37
+  completed_plans: 38
   percent: 86
 ---
 
@@ -24,18 +24,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-08-13)
 
 **Core value:** Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search, with full feature parity and CLI scriptability.
-**Current focus:** Phase 27 — Catalog Actions + Watch
+**Current focus:** Phase 28 — Re-scan & Diff
 
 ## Current Position
 
-Phase: 28 — Re-scan & Diff
-Plan: Not started
+Phase: 28 (Re-scan & Diff) — EXECUTING
+Plan: 2 of 6
 Status: Ready to execute
-Last activity: 2026-08-16 — Phase 27 complete, transitioned to Phase 28
+Last activity: 2026-08-16 — Phase 28 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 100%
+Progress: [█████████░] 88%
 
 ## Performance Metrics
 
@@ -101,6 +101,7 @@ Progress: [██████████] 100%
 | Phase 27 P05 | 35min | 2 tasks | 3 files |
 | Phase 27 P06 | 12min | 2 tasks | 6 files |
 | Phase 27 P07 | 45min | 3 tasks | 4 files |
+| Phase 28 P01 | 55min | 2 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -198,6 +199,10 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: WINDOWS.md entry #6 (atomicwrite SIGKILL crash-safety) marked fixed on 27-02's real subprocess-kill evidence
 - [Phase ?]: Menu.tsx click-outside focus-restore found broken live (contradicts 27-04's claimed-passing coverage) -- recorded as WINDOWS.md entry 13, not fixed (out of 27-07 file scope)
 - [Phase ?]: Row 27 (real OS-quit watcher release) verified via the toggle-off path's lsof fd-count evidence instead of an actual app quit, to avoid risking the shared wails dev verification session
+- [Phase ?]: 28-01: Walk extraction is behavior-preserving by construction (verbatim move) -- service_test.go's byte-parity and source-loss tests pass unmodified, confirmed by an empty diff
+- [Phase ?]: 28-01: RescanCatalog never touches a.lastPartial/a.lastPartialResult/a.lastScanReq on any path -- given its own reviewable commit (Task 2) per 28-RESEARCH.md's flagged highest-risk regression
+- [Phase ?]: 28-01: Directories are diffed for existence only (added/removed/unchanged), never 'changed' -- avoids double-counting a directory's own mtime bump alongside its child's added/removed row
+- [Phase ?]: 28-01: RescanDialog's tracer-scope error handling returns to step 1 via re-dispatching RESCAN_OPENED and surfaces the message through DetailsPanel's existing error slot -- the full Retry/Close error step is explicitly plan 28-02+ scope
 
 ### Key Research Findings
 
@@ -243,9 +248,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-16T15:51:24.024Z
-Stopped at: Phase 28 UI-SPEC approved
-Resume file: .planning/phases/28-re-scan-diff/28-UI-SPEC.md
+Last session: 2026-08-16T19:23:42.438Z
+Stopped at: Completed 28-01-PLAN.md
+Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
 **Worktree isolation: intentionally OFF.** `workflow.use_worktrees` is `false`, which is the correct and working configuration — Phases 22 and 23 were both built this way. Executors run sequentially on the main working tree. Do not "fix" this by setting it to `true`: Claude Code's harness forks agent worktrees from `origin/HEAD`, not local HEAD, and local `main` runs ~100 commits ahead of `origin/main` during a milestone, so every executor would land in a checkout predating all of v3.0.0 and halt on a base mismatch. The only reason to turn it on is speed (parallel executors within a wave), and it requires pushing `main` first.

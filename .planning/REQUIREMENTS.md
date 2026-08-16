@@ -89,9 +89,9 @@
 - [x] **ACT-03**: User can duplicate a catalog, copying the `.json` and any `.html` with a suffixed filename root
 - [x] **ACT-04**: User can delete a catalog to the OS Trash after a confirmation that names both file paths, with an option to also delete the matching `.html`
 - [x] **ACT-05**: A failed trash operation surfaces as an error and never silently falls back to permanent deletion
-- [ ] **ACT-06**: User can re-scan a catalog's source volume and see a diff of added, removed, changed, and unchanged entries with counts
+- [x] **ACT-06**: User can re-scan a catalog's source volume and see a diff of added, removed, changed, and unchanged entries with counts
 - [ ] **ACT-07**: User can resolve a diff by overwriting the catalog, keeping both, or discarding
-- [ ] **ACT-08**: Re-scan always asks the user to select the source volume rather than guessing which media the catalog came from
+- [x] **ACT-08**: Re-scan always asks the user to select the source volume rather than guessing which media the catalog came from
 - [x] **ACT-09**: No catalog write can corrupt an existing catalog file if the app crashes mid-write
 
 ### Watch — directory monitoring
@@ -104,7 +104,7 @@
 
 - [x] **STATE-01**: User with no catalogs sees an empty-library state in both the rail and the tree pane, with "Catalog a volume" and "Choose catalog folder…" actions
 - [x] **STATE-02**: User selecting an unreadable catalog sees why it failed — the file, the byte offset, the reason, and the raw parse error
-- [ ] **STATE-03**: User can re-scan, open the `.html` instead, or remove an unreadable catalog from the library
+- [x] **STATE-03**: User can re-scan, open the `.html` instead, or remove an unreadable catalog from the library
 
 ### Compatibility — no regressions
 
@@ -206,16 +206,16 @@ Deferred — acknowledged but not in this roadmap.
 | ACT-03 | Phase 27 | Complete |
 | ACT-04 | Phase 27 | Complete |
 | ACT-05 | Phase 27 | Complete |
-| ACT-06 | Phase 28 | Pending |
+| ACT-06 | Phase 28 | Complete |
 | ACT-07 | Phase 28 | Pending |
-| ACT-08 | Phase 28 | Pending |
+| ACT-08 | Phase 28 | Complete |
 | ACT-09 | Phase 27 | Complete |
 | WATCH-01 | Phase 27 | Complete |
 | WATCH-02 | Phase 27 | Complete |
 | WATCH-03 | Phase 27 | Complete |
 | STATE-01 | Phase 23 | Complete |
 | STATE-02 | Phase 23 | Complete |
-| STATE-03 | Phase 28 | Pending |
+| STATE-03 | Phase 28 | Complete |
 | COMPAT-01 | Phase 23 | Complete |
 | COMPAT-02 | Phase 25 | Complete |
 | COMPAT-03 | Phase 25 | Complete |

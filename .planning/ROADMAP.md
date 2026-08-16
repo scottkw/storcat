@@ -308,10 +308,11 @@ Plans:
   3. User viewing an unreadable catalog can re-scan it, open its `.html` instead, or remove it from the library (STATE-03)
   4. The app builds, signs, notarizes, and releases on every existing CI platform target with the full milestone's changes included — confirming the frontend rewrite and the milestone's one new Go dependency (Bios-Marcel/wastebasket/v2) don't break any platform build (COMPAT-06)
 
-**Plans**: 6 plans
+**Plans**: 1/6 plans executed
 
 Plans:
-- [ ] 28-01-PLAN.md — Tracer: end-to-end re-scan → diff (Walk extraction, mtime capture, ComputeDiff, RescanCatalog binding, RescanDialog, footer entry point) + the retained-partial isolation
+
+- [x] 28-01-PLAN.md — Tracer: end-to-end re-scan → diff (Walk extraction, mtime capture, ComputeDiff, RescanCatalog binding, RescanDialog, footer entry point) + the retained-partial isolation
 - [ ] 28-02-PLAN.md — Unreadable as a genuine fourth diff state (MarkUnreadableOnSkip) + complete diff semantics (type-change rule, sum invariant, similarity signal)
 - [ ] 28-03-PLAN.md — Diff list, similarity warning, Variants A/B, error step, catalog-actions menu entry point
 - [ ] 28-04-PLAN.md — ACT-07 resolution: overwrite / keep both / discard, reusing WriteCatalogFrom and the shared -copy collision loop
@@ -352,4 +353,4 @@ Plans:
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
 | 26. Settings | v3.0.0 | 5/5 | Complete    | 2026-08-15 |
 | 27. Catalog Actions + Watch | v3.0.0 | 7/7 | Complete    | 2026-08-16 |
-| 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |
+| 28. Re-scan & Diff | v3.0.0 | 1/6 | In Progress|  |
