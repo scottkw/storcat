@@ -1,7 +1,11 @@
 package catalog
 
 import (
+	"context"
 	"fmt"
+	"os"
+	"path/filepath"
+	"runtime"
 	"testing"
 
 	"storcat-wails/pkg/models"
@@ -392,5 +396,57 @@ func TestDiff_LowSimilarityAboveThreshold(t *testing.T) {
 	// ratio 50/50 = 1.0, well above the 0.6 threshold.
 	if !result.LowSimilarity {
 		t.Error("LowSimilarity = false, want true -- entirely replaced catalog above the floor")
+	}
+}
+
+// TestComputeDiff_EndToEndWithRealUnreadableSubdirectory is the phase's own
+// end-to-end verification (28-02-PLAN.md's <verification>): a real
+// chmod 000 subdirectory, walked through the actual Service.Walk with
+// MarkUnreadableOnSkip set (re-scan's exact call shape), diffed against a
+// prior tree that had visibility into that subdirectory's contents --
+// confirming the whole pipeline (not just each half in isolation) reports
+// the locked path `unreadable` and reports zero `removed`.
+func TestComputeDiff_EndToEndWithRealUnreadableSubdirectory(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix-style permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("running as root bypasses permission bits")
+	}
+
+	dir := t.TempDir()
+	locked := filepath.Join(dir, "locked")
+	if err := os.Mkdir(locked, 0755); err != nil {
+		t.Fatalf("mkdir locked: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(locked, "secret.txt"), []byte("shh"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	s := NewService()
+	// oldTree: a prior scan that could still see inside locked.
+	oldTree, err := s.Walk(context.Background(), dir, Options{}, nil)
+	if err != nil {
+		t.Fatalf("Walk (old): %v", err)
+	}
+
+	if err := os.Chmod(locked, 0000); err != nil {
+		t.Fatalf("chmod locked: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(locked, 0755) })
+
+	// newTree: re-scan's exact call shape -- MarkUnreadableOnSkip true.
+	newTree, err := s.Walk(context.Background(), dir, Options{MarkUnreadableOnSkip: true}, nil)
+	if err != nil {
+		t.Fatalf("Walk (new): %v", err)
+	}
+
+	result := ComputeDiff(oldTree, newTree)
+
+	if result.Removed != 0 {
+		t.Errorf("Removed = %d, want 0", result.Removed)
+	}
+	if result.Unreadable != 1 {
+		t.Errorf("Unreadable = %d, want 1", result.Unreadable)
 	}
 }
