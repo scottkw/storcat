@@ -3,7 +3,7 @@ phase: 27-catalog-actions-watch
 verified: 2026-08-16T15:10:00Z
 status: human_needed
 score: 8/9 requirement-level truths verified
-behavior_unverified: 6 # WATCH-03's real-quit sub-claim + 5 backstop must_haves truths (concurrent-delete dedup x2, menu no-viewport-flip, delete busy-treatment reuse, catalogs:changed-vs-in-flight-fetch race)
+behavior_unverified: 5 # WATCH-03's real-quit sub-claim + 4 backstop must_haves truths. Item 6 (rail staleness with watching off) was NOT deferred -- it was FIXED after this report was written; see the amendment below.
 overrides_applied: 0
 re_verification: null # no prior VERIFICATION.md for this phase existed
 behavior_unverified_items:
@@ -108,8 +108,8 @@ Additionally, 5 must_haves truths across the 7 plans were explicitly declared `v
 | Rail rows after external filesystem change | `state.catalogs` | `catalogs:changed` event → `loadCatalogsForDirectory` → real `BrowseCatalogs` Wails call | Yes | ✓ FLOWING |
 | Rail row title after rename | `state.catalogs[i].title` | Optimistic `dispatch(SET_CATALOGS, ...)` in `DetailsPanel.tsx` using the dialog's own submitted value, matching what was just durably written to disk | Yes | ✓ FLOWING |
 | Status-bar watching segment | `state.catalogDir` | `AppContext` (resolved synchronously) | Yes | ✓ FLOWING |
-| Rail rows after an in-app Delete (watching off, the default) | `state.catalogs` | **No dispatch removes the row** — relies solely on `catalogs:changed`, which does not fire when watching is off | No | ⚠️ STATIC — see behavior_unverified_items and Human Verification |
-| Rail rows after an in-app Duplicate (watching off, the default) | `state.catalogs` | **No dispatch adds the row** — same gap | No | ⚠️ STATIC — see behavior_unverified_items and Human Verification |
+| Rail rows after an in-app Delete (watching off, the default) | `state.catalogs` | ✅ FIXED post-report — `REQUEST_RAIL_REFRESH` re-runs the same authoritative `browseCatalogs` listing | Yes | ✅ live-verified with watching OFF (see amendment) |
+| Rail rows after an in-app Duplicate (watching off, the default) | `state.catalogs` | ✅ FIXED post-report — same mechanism | Yes | ✅ live-verified with watching OFF (see amendment) |
 
 ### Behavioral Spot-Checks (run directly by me)
 
@@ -185,7 +185,27 @@ None. Scanned every file this phase created/modified for `TBD`/`FIXME`/`XXX`/`TO
 **Expected:** No torn/interleaved rail listing.
 **Why human:** Declared backstop — reasoned from reducer semantics, not proven mechanically (no frontend test framework).
 
-### 6. Rail freshness after in-app Delete/Duplicate with watching OFF (the shipped default) — product judgment requested
+### 6. Rail freshness after in-app Delete/Duplicate with watching OFF — ✅ RESOLVED, NOT DEFERRED
+
+> **Amendment (2026-08-16, post-verification).** This item was fixed rather than routed to the user as a product
+> decision. The verifier was right that it was a real defect: with watching off (the shipped default), a deleted
+> catalog stayed visible in the rail until the user navigated away, and the app was self-inconsistent because
+> Rename already refreshed while Delete and Duplicate did not.
+>
+> **Fix (commit `5c7e460a`):** a `railRefreshToken` counter in `AppContext`, bumped by `REQUEST_RAIL_REFRESH`
+> after a *successful* local delete or duplicate, added to the dependency array of `CatalogRail`'s existing
+> `catalogDir` effect. This re-runs the **same** `loadCatalogsForDirectory` → `browseCatalogs` listing the mount
+> path and the `catalogs:changed` handler already use — it does not introduce a second way to compute the rail's
+> contents (no array splicing, no optimistic removal, no per-file patching), so `27-CONTEXT.md`'s locked
+> "single refresh path" decision is honored, not broken. That decision forbade giving *watch events* a
+> disagreeing per-file-delta payload; re-running the authoritative listing after a local mutation is exactly
+> what it preserves.
+>
+> Live-verified via dev-browser against `wails dev` on `:34115` with watching explicitly OFF, using real
+> CDP-trusted clicks: delete and duplicate both update the rail immediately. Watching-ON was re-checked and
+> shows no torn listing and no duplicate rows from the redundant idempotent re-list.
+
+Original finding, retained for the record:
 
 **Test:** With Settings → watch directory OFF (the default), delete a catalog via the actions menu, then duplicate one.
 **Expected (per current implementation):** Neither action updates the rail — the deleted row stays listed, the duplicated row doesn't appear — until the user navigates away and back or an external watch event fires.
