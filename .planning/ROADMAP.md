@@ -308,9 +308,18 @@ Plans:
   3. User viewing an unreadable catalog can re-scan it, open its `.html` instead, or remove it from the library (STATE-03)
   4. The app builds, signs, notarizes, and releases on every existing CI platform target with the full milestone's changes included — confirming the frontend rewrite and the milestone's one new Go dependency (Bios-Marcel/wastebasket/v2) don't break any platform build (COMPAT-06)
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+Plans:
+- [ ] 28-01-PLAN.md — Tracer: end-to-end re-scan → diff (Walk extraction, mtime capture, ComputeDiff, RescanCatalog binding, RescanDialog, footer entry point) + the retained-partial isolation
+- [ ] 28-02-PLAN.md — Unreadable as a genuine fourth diff state (MarkUnreadableOnSkip) + complete diff semantics (type-change rule, sum invariant, similarity signal)
+- [ ] 28-03-PLAN.md — Diff list, similarity warning, Variants A/B, error step, catalog-actions menu entry point
+- [ ] 28-04-PLAN.md — ACT-07 resolution: overwrite / keep both / discard, reusing WriteCatalogFrom and the shared -copy collision loop
+- [ ] 28-05-PLAN.md — STATE-03 unreadable-catalog action trio (re-scan / open .html / remove from library)
+- [ ] 28-06-PLAN.md — COMPAT-06: a real pushed build.yml run as evidence + the WINDOWS.md ledger sweep
+
 **UI hint**: yes
-**Research flag**: This is the handoff's own "biggest backend piece" — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, to resolve the volume-relocation policy and finalize the on-disk "unreadable subtree" marker format from Phase 25.
+**Research flag**: This is the handoff's own "biggest backend piece" — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, to resolve the volume-relocation policy and finalize the on-disk "unreadable subtree" marker format from Phase 25. **Resolved** in `28-RESEARCH.md`: volume identity is never persisted (ACT-08), the Phase 25 on-disk marker format is final and unchanged, and the research surfaced that the locked fourth diff state was unimplementable without a new opt-in `MarkUnreadableOnSkip` walk option — planned as plan 28-02's own reviewable task.
 
 ## Progress
 
