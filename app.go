@@ -48,6 +48,23 @@ type App struct {
 	lastPartialResult *models.CreateCatalogResult
 	lastScanReq       *lastScanRequest
 
+	// lastRescanTree/lastRescanJSONPath retain a COMPLETED re-scan's walked
+	// tree and the original catalog's own on-disk path it was diffed
+	// against, so ResolveRescan can write the tree that was actually
+	// diffed rather than re-walking. Guarded by scanMu, same as the
+	// Create-only retained-partial fields above -- but kept strictly
+	// separate from them: this is a completed tree for a successful scan,
+	// never a partial, and must never become reachable through
+	// WritePartialCatalog. A fresh RescanCatalog clears both before
+	// walking (mirroring StartScan's own clear-before-scan discipline for
+	// lastPartial), and ResolveRescan clears both again on use, so a stale
+	// tree from an earlier re-scan attempt can never be resolved a second
+	// time or written against a catalog the user has since navigated away
+	// from -- ResolveRescan also re-checks lastRescanJSONPath matches its
+	// own validated target before writing, as a second, independent guard.
+	lastRescanTree     *models.CatalogItem
+	lastRescanJSONPath string
+
 	// retainedGen counts every time StartScan clears the retained-partial
 	// fields above. WritePartialCatalog reads it before releasing scanMu for
 	// the (slow, unguarded) filesystem write, then compares it again after
@@ -454,6 +471,13 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 	// aimed at the wrong output path. A future refactor that "restores
 	// symmetry with startScan" by adding this back must not: see
 	// TestRescan_DoesNotRetainPartialForWritePartialCatalog (app_test.go).
+	//
+	// The held re-scan tree/path (below) IS cleared here, mirroring
+	// startScan's own clear-before-scan discipline for lastPartial -- a
+	// stale tree from an earlier re-scan attempt (this catalog or another)
+	// must never be resolvable once a new re-scan has started.
+	a.lastRescanTree = nil
+	a.lastRescanJSONPath = ""
 	a.scanMu.Unlock()
 
 	defer func() {
@@ -498,7 +522,89 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 		}
 	}
 
-	return catalog.ComputeDiff(oldTree, newTree), nil
+	diff := catalog.ComputeDiff(oldTree, newTree)
+
+	// Hold the walked tree this diff was computed from, keyed by the
+	// original catalog's resolved path, so ResolveRescan can write the
+	// tree that was actually diffed instead of re-walking -- see the
+	// field's own doc comment on the App struct.
+	a.scanMu.Lock()
+	a.lastRescanTree = newTree
+	a.lastRescanJSONPath = resolvedJSON
+	a.scanMu.Unlock()
+
+	return diff, nil
+}
+
+// ResolveRescan writes the tree a just-completed re-scan diffed to disk,
+// per mode -- overwrite in place, or keep-both alongside the original via
+// the same "-copy"/"-copy-N" collision loop Duplicate already uses
+// (internal/catalog.WriteRescanResult). Discard has no Go call at all: the
+// dialog simply closes and nothing is written, so this binding only ever
+// accepts the two write modes and rejects anything else outright, INCLUDING
+// a literal "discard" value -- exposing a discard mode across the bridge
+// would create a write path for an action that writes nothing.
+//
+// jsonPath is re-derived and re-validated against catalogDir with the
+// identical filepath.Abs -> filepath.EvalSymlinks -> osutil.ContainsPath
+// sequence DeleteCatalog uses (T-28-11) -- never trusted from the
+// renderer's payload beyond that check. The tree actually written is the
+// one RescanCatalog already walked and diffed, held on a.lastRescanTree
+// under scanMu; a mismatch between that held path and this call's resolved
+// target (or no tree held at all) fails closed rather than walking again
+// or writing a stale tree to the wrong catalog.
+func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode catalog.ResolveMode) (*models.CreateCatalogResult, error) {
+	if mode != catalog.ResolveOverwrite && mode != catalog.ResolveKeepBoth {
+		return nil, fmt.Errorf("resolve re-scan %s: unsupported mode %q", jsonPath, mode)
+	}
+	if catalogDir == "" {
+		return nil, fmt.Errorf("resolve re-scan %s: no catalog directory configured", jsonPath)
+	}
+
+	abs, err := filepath.Abs(jsonPath)
+	if err != nil {
+		return nil, fmt.Errorf("resolve re-scan %s: %w", jsonPath, err)
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return nil, fmt.Errorf("resolve re-scan %s: %w", jsonPath, err)
+	}
+	ok, err := osutil.ContainsPath(catalogDir, resolved)
+	if err != nil {
+		return nil, fmt.Errorf("resolve re-scan %s: resolve catalog directory: %w", jsonPath, err)
+	}
+	if !ok {
+		return nil, fmt.Errorf("resolve re-scan %s: outside configured catalog directory", jsonPath)
+	}
+	if filepath.Ext(resolved) != ".json" {
+		return nil, fmt.Errorf("resolve re-scan %s: not a catalog JSON file", jsonPath)
+	}
+
+	a.scanMu.Lock()
+	if a.lastRescanTree == nil || a.lastRescanJSONPath != resolved {
+		a.scanMu.Unlock()
+		return nil, fmt.Errorf("resolve re-scan %s: no re-scanned tree held for this catalog -- re-scan again", jsonPath)
+	}
+	tree := a.lastRescanTree
+	a.lastRescanTree = nil
+	a.lastRescanJSONPath = ""
+	a.scanMu.Unlock()
+
+	// The title follows the ORIGINAL catalog's own title, so a
+	// previously-renamed catalog (ACT-02, Phase 27) keeps its title across
+	// a re-scan resolution -- falling back to the filename root when the
+	// original can't be loaded (e.g. the STATE-03 unreadable-original
+	// path) or was never given one.
+	title := strings.TrimSuffix(filepath.Base(resolved), ".json")
+	if old, loadErr := a.searchService.LoadCatalog(resolved); loadErr == nil && old.Title != "" {
+		title = old.Title
+	}
+
+	result, err := a.catalogService.WriteRescanResult(tree, title, resolved, mode, catalog.Options{})
+	if err != nil {
+		return nil, fmt.Errorf("resolve re-scan %s: %w", jsonPath, err)
+	}
+	return result, nil
 }
 
 // CancelScan cancels the in-flight scan, if any -- a cancel with no scan

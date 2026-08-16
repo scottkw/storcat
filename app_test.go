@@ -766,6 +766,106 @@ func TestRescan_DoesNotRetainPartialForWritePartialCatalog(t *testing.T) {
 	})
 }
 
+// TestResolveRescan_RejectsPathOutsideCatalogDir proves ResolveRescan
+// re-derives and re-validates its write target against the configured
+// catalog directory rather than trusting the renderer's jsonPath -- the
+// same containment sequence DeleteCatalog uses (T-28-11).
+func TestResolveRescan_RejectsPathOutsideCatalogDir(t *testing.T) {
+	catalogDir := t.TempDir()
+	outsideDir := t.TempDir()
+	configManager := config.NewDefaultManager()
+	_ = configManager.SetCatalogDirectory(catalogDir)
+	app := &App{
+		catalogService: catalog.NewService(),
+		searchService:  search.NewService(),
+		configManager:  configManager,
+	}
+
+	outsideJSON := filepath.Join(outsideDir, "escapee.json")
+	original := []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`)
+	if err := os.WriteFile(outsideJSON, original, 0644); err != nil {
+		t.Fatalf("seed outside catalog: %v", err)
+	}
+
+	// A tree held for this exact path -- proves the containment check runs
+	// (and rejects) BEFORE the held-tree match would otherwise let the
+	// write through.
+	app.scanMu.Lock()
+	resolvedOutside, err := filepath.EvalSymlinks(outsideJSON)
+	if err != nil {
+		app.scanMu.Unlock()
+		t.Fatalf("resolve symlinks: %v", err)
+	}
+	app.lastRescanTree = &models.CatalogItem{Type: "directory", Name: "./"}
+	app.lastRescanJSONPath = resolvedOutside
+	app.scanMu.Unlock()
+
+	_, err = app.ResolveRescan(outsideJSON, catalogDir, catalog.ResolveOverwrite)
+	if err == nil {
+		t.Fatal("expected an error for a jsonPath outside the configured catalog directory")
+	}
+
+	data, readErr := os.ReadFile(outsideJSON)
+	if readErr != nil {
+		t.Fatalf("read outside catalog after rejected resolve: %v", readErr)
+	}
+	if string(data) != string(original) {
+		t.Errorf("outside catalog content unexpectedly changed: got %s, want %s", data, original)
+	}
+}
+
+// TestResolveRescan_DiscardIsNotAWritePath proves ResolveRescan rejects any
+// mode other than the two write modes -- discard has no Go call at all, so
+// a caller sending "discard" (or anything else) must fail closed rather
+// than write.
+func TestResolveRescan_DiscardIsNotAWritePath(t *testing.T) {
+	catalogDir := t.TempDir()
+	configManager := config.NewDefaultManager()
+	_ = configManager.SetCatalogDirectory(catalogDir)
+	app := &App{
+		catalogService: catalog.NewService(),
+		searchService:  search.NewService(),
+		configManager:  configManager,
+	}
+
+	jsonPath := filepath.Join(catalogDir, "cat.json")
+	original := []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`)
+	if err := os.WriteFile(jsonPath, original, 0644); err != nil {
+		t.Fatalf("seed catalog: %v", err)
+	}
+
+	resolved, err := filepath.EvalSymlinks(jsonPath)
+	if err != nil {
+		t.Fatalf("resolve symlinks: %v", err)
+	}
+	app.scanMu.Lock()
+	app.lastRescanTree = &models.CatalogItem{Type: "directory", Name: "./", Contents: []*models.CatalogItem{{Type: "file", Name: "./new.txt", Size: 1}}}
+	app.lastRescanJSONPath = resolved
+	app.scanMu.Unlock()
+
+	_, err = app.ResolveRescan(jsonPath, catalogDir, catalog.ResolveMode("discard"))
+	if err == nil {
+		t.Fatal("expected an error for mode \"discard\"")
+	}
+
+	data, readErr := os.ReadFile(jsonPath)
+	if readErr != nil {
+		t.Fatalf("read catalog after rejected discard: %v", readErr)
+	}
+	if string(data) != string(original) {
+		t.Errorf("catalog was written to despite a rejected discard mode: got %s, want %s", data, original)
+	}
+
+	// The held tree must still be intact for a subsequent, valid call --
+	// a rejected mode must not consume it.
+	app.scanMu.Lock()
+	held := app.lastRescanTree
+	app.scanMu.Unlock()
+	if held == nil {
+		t.Error("held re-scan tree was cleared by a rejected discard call")
+	}
+}
+
 func TestCancelActiveScan_ReportsWhetherAScanWasRunning(t *testing.T) {
 	app := &App{}
 	_, cancel := context.WithCancel(context.Background())
