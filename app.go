@@ -466,8 +466,14 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 
 	// HaltOnSourceLoss mirrors startScan's own always-true setting -- the
 	// GUI wants the volume-vanished distinction surfaced, not silently
-	// skipped-and-continued.
-	catOpts := catalog.Options{HaltOnSourceLoss: true}
+	// skipped-and-continued. MarkUnreadableOnSkip is re-scan's own opt-in
+	// (the single one in the repository, see 28-RESEARCH.md's load-bearing
+	// gap): without it, a merely-unreadable subtree (root still reachable)
+	// is silently dropped, and the diff cannot tell that apart from
+	// removed -- risking an overwrite that destroys data that is only
+	// unreadable right now, not actually deleted. Create (CLI and GUI)
+	// never sets this -- do not "tidy" it away.
+	catOpts := catalog.Options{HaltOnSourceLoss: true, MarkUnreadableOnSkip: true}
 
 	// No totalBytesHint parameter exists on this binding's locked signature,
 	// so the denominator is always resolved via resolveScanTotal's
