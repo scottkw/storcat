@@ -1,8 +1,14 @@
 ---
 phase: 27-catalog-actions-watch
 verified: 2026-08-16T15:10:00Z
-status: human_needed
+status: passed
 score: 8/9 requirement-level truths verified
+overrides_applied: 1
+human_verification_deferred: true
+human_verification_deferral:
+  decided_by: user
+  decided_at: 2026-08-16
+  decision: "Accepted the automated evidence (8/9 truths verified with no orphaned requirements, code review all_fixed across 3 iterations plus a regression pass, security SECURED 26/26, regression gate clean, full suite green) and advanced the autonomous run to Phase 28. The 6 remaining items were NOT validated by a human -- they remain open and tracked in 27-UAT.md, plus .planning/WINDOWS.md 8-11 for the Windows/Linux platform gaps and 14 for the SIGKILL test-coupling gap. None indicates missing or broken functionality; each is a residual verification-METHOD gap (a real app quit that would have killed the shared wails dev session the other 27 matrix rows depended on, four truths the plans themselves declared verification: backstop, and platform behavior with no Windows or Linux machine available). The verifier's one substantive finding -- rail staleness after Delete/Duplicate with watching off -- was FIXED, not deferred (commit 5c7e460a). Run /gsd-verify-work 27 to close the rest."
 behavior_unverified: 5 # WATCH-03's real-quit sub-claim + 4 backstop must_haves truths. Item 6 (rail staleness with watching off) was NOT deferred -- it was FIXED after this report was written; see the amendment below.
 overrides_applied: 0
 re_verification: null # no prior VERIFICATION.md for this phase existed
