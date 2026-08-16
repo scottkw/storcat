@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 28
 current_phase_name: Re-scan & Diff
 status: executing
-stopped_at: Completed 28-04-PLAN.md
-last_updated: "2026-08-16T22:10:18.030Z"
+stopped_at: Completed 28-05-PLAN.md
+last_updated: "2026-08-16T22:26:41.832Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 43
-  completed_plans: 41
+  completed_plans: 42
   percent: 86
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 28 (Re-scan & Diff) — EXECUTING
-Plan: 5 of 6
+Plan: 6 of 6
 Status: Ready to execute
 Last activity: 2026-08-16 — Phase 28 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 95%
+Progress: [██████████] 98%
 
 ## Performance Metrics
 
@@ -105,6 +105,7 @@ Progress: [██████████] 95%
 | Phase 28 P02 | 15min | 3 tasks | 7 files |
 | Phase 28 P03 | 91min | 3 tasks | 6 files |
 | Phase 28 P04 | 45min | 2 tasks | 7 files |
+| Phase 28 P05 | 40min | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -212,6 +213,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 28-03: RescanDialog's error step derived from shared state.scan.status alone (no new RescanState.step value) -- a sourceLoss failure dispatches SCAN_FAILED instead of resetting to step 1, rendering ErrorBody under the existing 'scanning' step.
 - [Phase ?]: 28-04: ResolveRescan's mode param is a plain string, not catalog.ResolveMode -- Wails codegen limitation, same as DiffState (28-02/03); WriteRescanResult itself keeps the typed catalog.ResolveMode
 - [Phase ?]: 28-04: Keep both's label drops its filename preview entirely (was collision-checked-unsound) rather than resolving the real name live -- nextCopyRoot stays the sole naming authority, verified live post-fix on the -copy-2 collision case
+- [Phase ?]: 28-05: UnreadableCatalogPanel's action trio gated on catalog && (RescanDialog/DeleteConfirmDialog need a resolved CatalogMetadata, not partial data)
+- [Phase ?]: 28-05: handleOpenHtml duplicated as a second call site of getCatalogHtmlPath+openExternal rather than extracted -- DetailsPanel.tsx must stay unmodified, and two call sites don't yet justify a shared helper
 
 ### Key Research Findings
 
@@ -257,8 +260,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-16T22:10:18.012Z
-Stopped at: Completed 28-04-PLAN.md
+Last session: 2026-08-16T22:26:41.790Z
+Stopped at: Completed 28-05-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
