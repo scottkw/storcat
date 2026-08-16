@@ -35,7 +35,7 @@
 - [x] **RAIL-03**: User can select a catalog from the rail, which loads its tree and clears the previous selection
 - [x] **RAIL-04**: User sees a red status dot on the rail row of any catalog that failed to parse
 - [x] **RAIL-05**: User sees the current catalog directory as a chip in the rail header, and can change it
-- [ ] **RAIL-06**: User can open the create slide-over from the "＋ New" pill
+- [x] **RAIL-06**: User can open the create slide-over from the "＋ New" pill — wired in Phase 25 (`CatalogRail.tsx` `openCreatePanel` → `SET_CREATE_OPEN` → `CreateSlideOver`); traceability was stale, corrected at v3.0.0 audit
 
 ### Tree — the catalog browser
 
@@ -167,7 +167,7 @@ Deferred — acknowledged but not in this roadmap.
 | RAIL-03 | Phase 23 | Complete |
 | RAIL-04 | Phase 23 | Complete |
 | RAIL-05 | Phase 23 | Complete |
-| RAIL-06 | Phase 23 | Pending |
+| RAIL-06 | Phase 23 → completed Phase 25 | Complete |
 | TREE-01 | Phase 23 | Complete |
 | TREE-02 | Phase 23 | Complete |
 | TREE-03 | Phase 23 | Complete |
