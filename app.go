@@ -388,6 +388,103 @@ func (a *App) startScan(title, sourcePath, outputDir, outputRoot string, opts Sc
 	return result, nil
 }
 
+// RescanCatalog walks sourcePath directly via a.catalogService.Walk --
+// NEVER a.startScan, NEVER CreateCatalogWithContext -- and, when
+// oldTreeAvailable, diffs the freshly-walked tree against jsonPath's
+// already-on-disk catalog. There is no write here at all: this binding only
+// ever produces a *models.DiffResult for the frontend to render; a write
+// happens only once a resolution (Overwrite/Keep-both) is chosen, which is
+// plans 28-02/03/04's ResolveRescan binding.
+//
+// jsonPath is validated against the configured catalog directory with the
+// same filepath.Abs -> filepath.EvalSymlinks -> osutil.ContainsPath
+// sequence DeleteCatalog already uses (T-28-01), failing closed on an empty
+// catalogDir. sourcePath needs no equivalent containment check -- it
+// originates from VolumePicker's two trusted-provenance sources
+// (volumes.List() or the native folder picker), the same provenance
+// Create's own scan already accepts (T-28-02).
+//
+// Reuses the existing scanMu/activeScanCancel one-scan-at-a-time guard,
+// exactly as startScan does.
+func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) (*models.DiffResult, error) {
+	catalogDir := ""
+	if a.configManager != nil {
+		if cfg := a.configManager.Get(); cfg != nil {
+			catalogDir = cfg.CatalogDirectory
+		}
+	}
+	if catalogDir == "" {
+		return nil, fmt.Errorf("re-scan %s: no catalog directory configured", jsonPath)
+	}
+
+	absJSON, err := filepath.Abs(jsonPath)
+	if err != nil {
+		return nil, fmt.Errorf("re-scan %s: %w", jsonPath, err)
+	}
+	resolvedJSON, err := filepath.EvalSymlinks(absJSON)
+	if err != nil {
+		return nil, fmt.Errorf("re-scan %s: %w", jsonPath, err)
+	}
+	if ok, err := osutil.ContainsPath(catalogDir, resolvedJSON); err != nil {
+		return nil, fmt.Errorf("re-scan %s: resolve catalog directory: %w", jsonPath, err)
+	} else if !ok {
+		return nil, fmt.Errorf("re-scan %s: outside configured catalog directory", jsonPath)
+	}
+
+	absSource, err := filepath.Abs(sourcePath)
+	if err != nil {
+		return nil, err
+	}
+
+	a.scanMu.Lock()
+	if a.activeScanCancel != nil {
+		a.scanMu.Unlock()
+		return nil, fmt.Errorf("a scan is already running")
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	a.activeScanCancel = cancel
+	a.scanDone = make(chan struct{})
+	a.scanMu.Unlock()
+
+	defer func() {
+		a.scanMu.Lock()
+		close(a.scanDone)
+		a.activeScanCancel = nil
+		a.scanMu.Unlock()
+		cancel()
+	}()
+
+	// HaltOnSourceLoss mirrors startScan's own always-true setting -- the
+	// GUI wants the volume-vanished distinction surfaced, not silently
+	// skipped-and-continued.
+	catOpts := catalog.Options{HaltOnSourceLoss: true}
+
+	// No totalBytesHint parameter exists on this binding's locked signature,
+	// so the denominator is always resolved via resolveScanTotal's
+	// count-only pre-pass (hint 0) -- the same "unknown total" path Create's
+	// plain-folder source already takes.
+	totalBytes, err := a.resolveScanTotal(ctx, absSource, catOpts, 0, nil)
+	if err != nil {
+		return nil, err
+	}
+	onProgress := a.throttledProgress(totalBytes)
+
+	newTree, err := a.catalogService.Walk(ctx, absSource, catOpts, onProgress)
+	if err != nil {
+		return nil, err
+	}
+
+	var oldTree *models.CatalogItem
+	if oldTreeAvailable {
+		oldTree, err = a.searchService.LoadCatalog(resolvedJSON)
+		if err != nil {
+			return nil, fmt.Errorf("re-scan %s: load existing catalog: %w", jsonPath, err)
+		}
+	}
+
+	return catalog.ComputeDiff(oldTree, newTree), nil
+}
+
 // CancelScan cancels the in-flight scan, if any -- a cancel with no scan
 // running is a no-op, not an error. The handle is a single field rather
 // than a map keyed by scan id, because the product is one-scan-at-a-time by

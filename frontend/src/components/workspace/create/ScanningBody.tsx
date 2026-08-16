@@ -6,7 +6,12 @@ type ScanningScanState = Extract<ScanState, { status: 'counting' } | { status: '
 
 export interface ScanningBodyProps {
   scan: ScanningScanState;
-  onRunInBackground: () => void;
+  // Optional (28-01) -- when omitted, the "Run in background" button and
+  // its helper text simply don't render. Re-scan has nothing to background
+  // (28-UI-SPEC.md's Architecture & State: closing RescanDialog mid-scan
+  // always cancels), so its call site passes neither. CreateSlideOver's own
+  // call site is unchanged -- it still always passes this.
+  onRunInBackground?: () => void;
 }
 
 // UI-SPEC E5 overflow: the log box retains at most 9 newest-first lines
@@ -69,12 +74,14 @@ function ScanningBody({ scan, onRunInBackground }: ScanningBodyProps) {
         ))}
       </div>
 
-      <div className="ws-create-scan-footer">
-        <button type="button" className="ws-create-btn-outline" onClick={onRunInBackground}>
-          Run in background
-        </button>
-        <span className="ws-create-scan-footer-note">Progress also shows in the status bar.</span>
-      </div>
+      {onRunInBackground && (
+        <div className="ws-create-scan-footer">
+          <button type="button" className="ws-create-btn-outline" onClick={onRunInBackground}>
+            Run in background
+          </button>
+          <span className="ws-create-scan-footer-note">Progress also shows in the status bar.</span>
+        </div>
+      )}
     </div>
   );
 }

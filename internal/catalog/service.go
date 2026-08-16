@@ -130,72 +130,16 @@ func (s *Service) CreateCatalog(title, directoryPath, outputRoot string, copyToD
 // makes "a cancelled scan writes nothing" true. A future change must never
 // replace this with an incremental-write design that writes partial results
 // as the walk proceeds.
+//
+// This is now a two-line composition over Walk (the promoted, primary
+// tree-building operation) and WriteCatalogFrom -- the walk/error-
+// classification logic that used to live inline here was extracted
+// verbatim into Walk (walk.go) so re-scan can call it directly without ever
+// reaching this write path. See walk.go's doc comment for the byte-parity
+// guarantee this extraction must hold.
 func (s *Service) CreateCatalogWithContext(ctx context.Context, title, sourcePath, outputDir, outputRoot, copyToDirectory string, opts Options, onProgress ProgressCallback) (*models.CreateCatalogResult, error) {
-	st := &walkState{
-		scanRoot:   sourcePath,
-		opts:       opts,
-		onProgress: onProgress,
-	}
-
-	tree, err := s.traverseDirectory(ctx, sourcePath, sourcePath, st)
+	tree, err := s.Walk(ctx, sourcePath, opts, onProgress)
 	if err != nil {
-		// Three outcomes, distinguished before touching the write path: a
-		// cancelled context writes nothing; a source-loss error is returned
-		// with its populated partial scan attached and writes nothing;
-		// anything else is a genuine traversal failure.
-		var srcErr *SourceUnavailableError
-		if errors.As(err, &srcErr) {
-			srcErr.Partial = &PartialScan{
-				Tree:       tree,
-				FilesSeen:  st.filesSeen,
-				BytesSeen:  st.bytesSeen,
-				ReadErrors: st.readErrorEntries,
-			}
-			return nil, srcErr
-		}
-		// traverseDirectory's top-of-function os.Stat/os.ReadDir failure has
-		// no parent loop to run it through recordReadError+classify() the
-		// way every deeper (child) failure already does when THIS call is
-		// itself the recursive callee -- for the outermost call (the scan
-		// root), CreateCatalogWithContext is that missing parent. Without
-		// this check, the scan root vanishing before a single child was
-		// ever read (25-UI-SPEC.md E6's "instant, total disconnect, zero
-		// prior read errors" case -- and the common case for a genuinely
-		// ejected volume) would silently fall through as a generic
-		// traversal error instead of the source-loss classification CRT-10
-		// requires (Rule 1 bug, found live-verifying 25-07's error state).
-		if ctx.Err() == nil && st.classify() {
-			return nil, &SourceUnavailableError{
-				SourcePath: sourcePath,
-				Partial: &PartialScan{
-					// A nil Tree would marshal to a bare JSON "null", not a
-					// valid catalog -- constructed as the same marked-
-					// unreadable empty-directory shape the child-level path
-					// already uses (service.go's recordReadError/classify
-					// branch), so a partial write from this state still
-					// produces a valid, honest catalog whose root records
-					// that nothing could be read.
-					Tree: &models.CatalogItem{
-						Type:       "directory",
-						Name:       "./",
-						Size:       0,
-						Contents:   []*models.CatalogItem{},
-						Unreadable: true,
-						ReadError:  err.Error(),
-					},
-					FilesSeen:  st.filesSeen,
-					BytesSeen:  st.bytesSeen,
-					ReadErrors: st.readErrorEntries,
-				},
-			}
-		}
-		return nil, fmt.Errorf("failed to traverse directory: %w", err)
-	}
-
-	// Re-check cancellation after the walk completes and before any write is
-	// attempted -- traverseDirectory can return a non-error partial tree in
-	// some skip-and-continue paths, so this is the authoritative gate.
-	if err := ctx.Err(); err != nil {
 		return nil, err
 	}
 
@@ -288,9 +232,10 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 		st.bytesSeen += info.Size()
 		st.report(displayPath)
 		return &models.CatalogItem{
-			Type: "file",
-			Name: displayPath,
-			Size: info.Size(),
+			Type:    "file",
+			Name:    displayPath,
+			Size:    info.Size(),
+			ModTime: info.ModTime().Unix(),
 		}, nil
 	}
 
@@ -407,6 +352,7 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 			Name:     displayPath,
 			Size:     totalSize,
 			Contents: contents,
+			ModTime:  info.ModTime().Unix(),
 		}, nil
 	}
 

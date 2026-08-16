@@ -8,6 +8,7 @@ import { models } from '../../../wailsjs/go/models';
 import Menu, { MenuItemSpec } from './Menu';
 import RenameDialog from './RenameDialog';
 import DeleteConfirmDialog from './DeleteConfirmDialog';
+import RescanDialog from './rescan/RescanDialog';
 
 export interface DetailsPanelProps {
   variant?: 'pane' | 'drawer';
@@ -198,17 +199,17 @@ const buttonBase: CSSProperties = {
   cursor: 'pointer',
 };
 
-// Exactly two actions this phase (TREE-08) -- the handoff's third footer
-// action (the volume re-scan trigger) is omitted entirely, not rendered
-// inert, because its backend surface (Phase 28) does not exist here. Both
-// actions operate on the catalog's own file path regardless of whether a
-// node is also selected -- neither ever receives a free-form or
-// user-typed path.
+// Three actions as of Phase 28 (TREE-08 + ACT-06/ACT-08) -- "Re-scan
+// volume…" (28-01) fills the stub this component left for it since 27-04.
+// All three operate on the catalog's own file path regardless of whether a
+// node is also selected -- none ever receives a free-form or user-typed
+// path.
 //
 // error/onError are hoisted from DetailsPanel (27-04) rather than owned
 // locally -- 27-UI-SPEC.md puts a duplicate/delete failure in this same
 // error slot, so CatalogActions' menu-item placeholders and this footer's
-// two actions now share one error surface.
+// actions all share one error surface, including RescanDialog's own
+// failures.
 function Footer({
   catalog,
   catalogDir,
@@ -220,9 +221,15 @@ function Footer({
   error: string | null;
   onError: (message: string | null) => void;
 }) {
+  const { state } = useAppContext();
   const [platform, setPlatform] = useState<string | null>(null);
   const [openBusy, setOpenBusy] = useState(false);
   const [revealBusy, setRevealBusy] = useState(false);
+  // RescanDialog is conditionally mounted by this component (28-UI-SPEC.md's
+  // mount pattern), not always-mounted like CreateSlideOver/SettingsDialog
+  // -- rendered fresh on every open, no isOpen prop of its own.
+  const [rescanOpen, setRescanOpen] = useState(false);
+  const isScanningNow = state.scan.status === 'counting' || state.scan.status === 'scanning';
 
   // Same deferred-call-with-catch pattern Toolbar.tsx already established:
   // Environment() throws synchronously outside a real Wails webview, so
@@ -323,8 +330,32 @@ function Footer({
       >
         {revealButtonLabel(platform)}
       </button>
+      <button
+        type="button"
+        onClick={() => setRescanOpen(true)}
+        disabled={isScanningNow}
+        aria-disabled={isScanningNow}
+        title={isScanningNow ? 'A scan is already running — open it from the status bar.' : undefined}
+        style={{
+          ...buttonBase,
+          background: 'transparent',
+          border: '1px solid var(--l)',
+          color: 'var(--dm)',
+          opacity: isScanningNow ? 0.7 : 1,
+        }}
+      >
+        Re-scan volume…
+      </button>
       {error && (
         <span style={{ fontSize: 11, color: 'var(--danger)', lineHeight: 1.4 }}>{error}</span>
+      )}
+      {rescanOpen && (
+        <RescanDialog
+          catalog={catalog}
+          oldTreeAvailable
+          onError={onError}
+          onClose={() => setRescanOpen(false)}
+        />
       )}
     </div>
   );

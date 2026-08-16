@@ -62,6 +62,10 @@ export function RenameCatalog(arg1, arg2, arg3) {
   return window['go']['main']['App']['RenameCatalog'](arg1, arg2, arg3);
 }
 
+export function RescanCatalog(arg1, arg2, arg3) {
+  return window['go']['main']['App']['RescanCatalog'](arg1, arg2, arg3);
+}
+
 export function RevealInFileManager(arg1, arg2) {
   return window['go']['main']['App']['RevealInFileManager'](arg1, arg2);
 }

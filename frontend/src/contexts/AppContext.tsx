@@ -2,6 +2,7 @@ import React, { createContext, useContext, useReducer, ReactNode } from 'react';
 import { Density, RailSide, readPersistedPrefs } from '../themeTokens';
 import { models } from '../../wailsjs/go/models';
 import { ScanProgress, ScanResultFile, ScanState } from '../types/scan';
+import { DiffResult, RescanState } from '../types/rescan';
 import { scanPercent } from '../lib/scanFormat';
 import { AppSettings, DEFAULT_APP_SETTINGS } from '../settingsStore';
 
@@ -37,6 +38,14 @@ export interface AppState {
   // The create flow's scan state machine, lifted for the same reason --
   // survives the slide-over's own mount/unmount across a close/reopen.
   scan: ScanState;
+  // A NEW, SEPARATE slice from `scan` above (28-UI-SPEC.md's Architecture &
+  // State) -- re-scan's own step/diff outcome. null while no RescanDialog
+  // is open; unlike `scan`, RescanDialog is conditionally mounted by its
+  // parent (not always-on), so this only ever holds real content while one
+  // instance is open. Live progress during the scanning step still drives
+  // the shared `scan` slice above, via the same scan:progress event
+  // subscription CreateSlideOver already owns -- no second listener.
+  rescan: RescanState | null;
   // Additive (25-07) rather than a change to SET_CREATE_OPEN's payload, so
   // no call site written in an earlier plan needs editing. Set by the tree
   // pane's "Choose catalog folder…" entry point; CreateSlideOver reads it
@@ -121,6 +130,20 @@ type AppAction =
       };
     }
   | { type: 'SCAN_RESET' }
+  // Opens the re-scan dialog's tracked state -- dispatched once, by
+  // RescanDialog's own mount, alongside the parent's local isOpen flip.
+  | { type: 'RESCAN_OPENED'; payload: { catalog: models.CatalogMetadata; oldTreeAvailable: boolean } }
+  // Step 1 -> step 2 transition, once a source is picked and the walk
+  // actually starts (alongside the shared SCAN_STARTED dispatch).
+  | { type: 'RESCAN_STARTED'; payload: { sourcePath: string } }
+  // The terminal success transition (step 2 -> step 3): populates the diff
+  // AND, in the same update, resets `scan` back to idle so the shared
+  // progress slice never lingers in a stale terminal state for Create
+  // (28-UI-SPEC.md's Architecture & State).
+  | { type: 'RESCAN_DIFFED'; payload: { diff: DiffResult } }
+  // Every close path (Escape, x, scrim, "Discard scan and close") routes
+  // through this -- clears the slice back to null.
+  | { type: 'RESCAN_CLOSED' }
   // Replaces the whole settings slice -- fired once, at hydration.
   | { type: 'SETTINGS_HYDRATED'; payload: AppSettings }
   // Merges a partial update -- every Catalogs/Toggles row dispatches this
@@ -145,6 +168,7 @@ const initialState: AppState = {
   pendingReveal: null,
   createOpen: false,
   scan: { status: 'idle' },
+  rescan: null,
   createFolderPickerIntent: false,
   settings: DEFAULT_APP_SETTINGS,
   touchedSettings: new Set(),
@@ -419,6 +443,32 @@ function appReducer(state: AppState, action: AppAction): AppState {
       };
     case 'SCAN_RESET':
       return { ...state, scan: { status: 'idle' } };
+    case 'RESCAN_OPENED':
+      return {
+        ...state,
+        rescan: {
+          step: 'pick-volume',
+          catalog: action.payload.catalog,
+          sourcePath: null,
+          oldTreeAvailable: action.payload.oldTreeAvailable,
+          diff: null,
+        },
+      };
+    case 'RESCAN_STARTED':
+      if (!state.rescan) return state;
+      return { ...state, rescan: { ...state.rescan, step: 'scanning', sourcePath: action.payload.sourcePath } };
+    case 'RESCAN_DIFFED':
+      if (!state.rescan) return state;
+      return {
+        ...state,
+        rescan: { ...state.rescan, step: 'diff', diff: action.payload.diff },
+        // Resets the shared progress slice back to idle in the same
+        // transition -- see this slice's own doc comment above.
+        scan: { status: 'idle' },
+      };
+    case 'RESCAN_CLOSED':
+      if (state.rescan === null) return state;
+      return { ...state, rescan: null };
     case 'SETTINGS_HYDRATED': {
       // Field-aware merge, not a wholesale replace: hydrateSettings()'s
       // getConfig() round trip is in flight from mount, so a user can

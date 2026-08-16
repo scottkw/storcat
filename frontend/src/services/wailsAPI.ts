@@ -33,6 +33,7 @@ import {
   CancelScan,
   WritePartialCatalog,
   ListVolumes,
+  RescanCatalog,
 } from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
 
@@ -115,6 +116,20 @@ export const wailsAPI = {
     try {
       const result = await WritePartialCatalog();
       return { success: true as const, result };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Walks sourcePath directly (no write, ever) and, when oldTreeAvailable,
+  // diffs the result against jsonPath's already-on-disk catalog. Reuses the
+  // same scanMu one-scan-at-a-time guard as startScan -- progress arrives
+  // through the same shared scan:progress event CreateSlideOver's listener
+  // already forwards into state.scan, not a second subscription.
+  rescanCatalog: async (jsonPath: string, sourcePath: string, oldTreeAvailable: boolean) => {
+    try {
+      const diff = await RescanCatalog(jsonPath, sourcePath, oldTreeAvailable);
+      return { success: true as const, diff };
     } catch (error: any) {
       return wailsError(error);
     }
