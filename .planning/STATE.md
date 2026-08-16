@@ -4,15 +4,15 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 28
 current_phase_name: Re-scan & Diff
-status: planning
-stopped_at: Completed 27-07-PLAN.md -- Phase 27 (catalog-actions-watch) fully executed, ready for verification
-last_updated: "2026-08-16T15:21:43.754Z"
+status: executing
+stopped_at: Phase 28 UI-SPEC approved
+last_updated: "2026-08-16T18:50:51.709Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
   total_phases: 7
   completed_phases: 6
-  total_plans: 37
+  total_plans: 43
   completed_plans: 37
   percent: 86
 ---
@@ -30,7 +30,7 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 28 — Re-scan & Diff
 Plan: Not started
-Status: Ready to plan
+Status: Ready to execute
 Last activity: 2026-08-16 — Phase 27 complete, transitioned to Phase 28
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
@@ -243,9 +243,9 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-16T00:27:24.126Z
-Stopped at: Completed 27-07-PLAN.md -- Phase 27 (catalog-actions-watch) fully executed, ready for verification
-Resume file: None
+Last session: 2026-08-16T15:51:24.024Z
+Stopped at: Phase 28 UI-SPEC approved
+Resume file: .planning/phases/28-re-scan-diff/28-UI-SPEC.md
 Resume command: `/gsd-autonomous --from 26`
 
 **Worktree isolation: intentionally OFF.** `workflow.use_worktrees` is `false`, which is the correct and working configuration — Phases 22 and 23 were both built this way. Executors run sequentially on the main working tree. Do not "fix" this by setting it to `true`: Claude Code's harness forks agent worktrees from `origin/HEAD`, not local HEAD, and local `main` runs ~100 commits ahead of `origin/main` during a milestone, so every executor would land in a checkout predating all of v3.0.0 and halt on a base mismatch. The only reason to turn it on is speed (parallel executors within a wave), and it requires pushing `main` first.

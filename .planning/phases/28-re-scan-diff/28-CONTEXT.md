@@ -38,7 +38,16 @@ policy and the on-disk unreadable-subtree marker format from Phase 25. Both are 
   this", and collapsing the two would let an overwrite silently propose destroying catalog data that is merely
   unreadable at this moment. Phase 25's flat `Unreadable bool` / `ReadError string` scalars stay as they are —
   the format is confirmed final; what this phase adds is a diff-level state, not an on-disk format change.
-- **Directories are diffed, but a directory is `changed` only when its own entry changes** — never because a
+- **Directories are diffed for existence only — added and removed — and are NEVER reported as `changed`.**
+  *(USER decision 2026-08-16, resolving RESEARCH assumption A2, which the planner correctly refused to settle
+  on its own.)* The original wording was "changed only when its own entry changes", which the plans reasonably
+  read as comparing the directory's own mtime and size. But on most filesystems a directory's mtime updates
+  whenever an immediate child is added or removed — so a folder gaining one file would report as `changed`
+  alongside that file's own `added` row, which is exactly the double-counting this decision existed to prevent.
+  A directory has no content of its own: its changes ARE its children's, and those are already reported
+  individually. **Remove the directory-`changed` category rather than driving it from mtime.** The superseded
+  original wording follows for the record:
+- ~~**Directories are diffed, but a directory is `changed` only when its own entry changes**~~ — never because a
   descendant changed. Otherwise every ancestor of one edited file lights up and the counts stop meaning anything.
 
 ### Re-scan flow & volume selection
@@ -112,6 +121,13 @@ policy and the on-disk unreadable-subtree marker format from Phase 25. Both are 
   seconds over RFC3339: smaller on the wire, and it matches FAT32's 2-second granularity rather than inviting
   sub-second false positives. **An absent `ModTime` on an old catalog falls back to size-only comparison and is
   never treated as the epoch** -- otherwise every pre-Phase-28 catalog would diff as entirely changed.
+- **COMPAT-06 push route: a feature branch and a PR** *(USER decision 2026-08-16, answering plan 28-06's
+  `checkpoint:decision`)*. Push a branch and open a PR rather than pushing `main` or cutting a tag — it runs
+  `build.yml` on all three runners without touching `main`, keeps the whole milestone reviewable before it
+  lands, and avoids triggering `release-please.yml`. **Consequence to record honestly: this proves native
+  compilation and type-checking on three real runner OSes, and does NOT prove signing, notarization, or that
+  any produced binary executes.** Those live in `release.yml` behind a tag; the signing half stays an open
+  ledger item. Do not report a green `build.yml` as if it proved more than it did.
 - **COMPAT-06 requires a real push.** Research confirmed local `main` is ~100 commits ahead of `origin/main`
   and `build.yml` has never run against any of Phases 22-28. Reading the workflow YAML proves nothing. This is
   consistent with the locked Area-4 decision ("proven by a real pushed CI run of `build.yml`").
