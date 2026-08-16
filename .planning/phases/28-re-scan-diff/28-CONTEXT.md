@@ -88,6 +88,39 @@ policy and the on-disk unreadable-subtree marker format from Phase 25. Both are 
   Close what CI now genuinely proves, keep what truly needs Windows/Linux hardware, and leave the milestone with
   an honest ledger. COMPAT-06 sits directly upstream of that backlog.
 
+### Post-research resolutions (2026-08-16, from 28-RESEARCH.md)
+
+- **`traverseDirectory` gains an opt-in `MarkUnreadableOnSkip` option, and the re-scan walk sets it.** This is
+  load-bearing, not a refinement. Research found the locked "unreadable is a fourth state distinct from
+  removed" decision is currently **unimplementable**: the `Unreadable`/`ReadError` marker can only be set when
+  the scan *root* itself becomes unreachable, which aborts the entire walk and routes to the error step -- it
+  never reaches the diff. A single unreadable subdirectory with the root still readable is silently DROPPED by
+  the existing skip-and-continue branches (`service.go:318-320`, `:392-394`) with no marker at all. Diffed, that
+  is indistinguishable from "removed" -- so an overwrite would destroy catalog data that is merely unreadable
+  right now, which is the exact outcome the fourth state was locked to prevent. The option makes those existing
+  branches MARK the node instead of dropping it, without aborting the walk. **Opt-in, so the create flow's
+  behavior is unchanged.**
+- **Re-scan calls the new exported walk directly and must never route through `startScan`.** Research flagged a
+  real trap: Create's `a.lastPartial` / `a.lastScanReq` state backs its CRT-11 partial-write retention. Re-scan
+  must not populate that shared state at all -- its error step offers no partial-write option by design, and
+  leaking into it would let a failed re-scan corrupt Create's retained-partial contract.
+- **The walk/write split is an EXTRACTION, not a reimplementation.** `CreateCatalogWithContext`'s inline
+  walk+classification block (`service.go:134-200`) becomes an exported `Walk`; research traced every branch and
+  confirmed zero behavior change to Create. Do not write a parallel walker.
+- **mtime is captured as Unix seconds (`int64`), `omitempty`.** `os.FileInfo` is already in scope from the
+  `os.Stat` at the top of `traverseDirectory` -- zero extra syscalls, for both file and directory nodes. Unix
+  seconds over RFC3339: smaller on the wire, and it matches FAT32's 2-second granularity rather than inviting
+  sub-second false positives. **An absent `ModTime` on an old catalog falls back to size-only comparison and is
+  never treated as the epoch** -- otherwise every pre-Phase-28 catalog would diff as entirely changed.
+- **COMPAT-06 requires a real push.** Research confirmed local `main` is ~100 commits ahead of `origin/main`
+  and `build.yml` has never run against any of Phases 22-28. Reading the workflow YAML proves nothing. This is
+  consistent with the locked Area-4 decision ("proven by a real pushed CI run of `build.yml`").
+- **WINDOWS.md sweep disposition, per research:** only **#7** (RailSide OS quit-and-relaunch) is genuinely
+  closable this phase -- a cheap live check whose original blocker (protecting a shared `wails dev` session) no
+  longer applies. **#4/#5** get reinforced by native-runner CI compile evidence but NOT closed. The remaining 7
+  stay open pending Windows/Linux hardware this project has never had. Do not close an entry that CI does not
+  actually prove.
+
 ### Claude's Discretion
 - The mtime field's name, JSON tag, and time representation (RFC3339 string vs Unix seconds) — but it must be
   `omitempty` and must not disturb byte-parity for catalogs that lack it.
