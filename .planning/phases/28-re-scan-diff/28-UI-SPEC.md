@@ -194,6 +194,15 @@ This is the one place `ErrorBody`'s hardcoded copy needs to become a prop (`expl
 
 ## Step 3 — Diff & Resolve
 
+**Primary visual focal point: the stat-tile row.** This is the busiest and highest-stakes screen in the phase —
+five stat tiles, a scrollable diff list, a conditional warning banner, and three footer actions all compete for
+attention — so the hierarchy is stated rather than left to be inferred from geometry. The stat tiles sit
+directly under the header and answer the user's actual question ("what changed, and how much?") in one glance;
+everything below them is detail that supports the resolution decision. The resolution caption is the secondary
+anchor, and the footer actions are deliberately last in the reading order because they are the irreversible
+step. When the similarity warning is present it takes visual precedence over the tiles — it reframes what the
+tiles mean.
+
 Two content variants sharing one header/footer shell, selected by whether an old, parseable tree exists to compare against (`oldTreeAvailable`, set at the entry point — `true` from the catalog-actions menu / details-panel footer, `false` from `UnreadableCatalogPanel`).
 
 ### Variant A — Full diff (`oldTreeAvailable: true`)
@@ -312,7 +321,14 @@ Copy (dynamic): **"This looks like a different volume than the one this catalog 
 
 Generated per `ui-consideration-probe.cjs` over 5 declared surfaces (entry points, pick-volume step, scanning/error steps, diff-and-resolve step, similarity warning), resolved in autonomous mode per `28-CONTEXT.md`'s "Smart discuss (autonomous)" mode.
 
-**Applicable: 24 — resolved 24 (19 explicit, 5 backstop), unresolved 0.**
+**Applicable: 20 — resolved 20 (18 explicit, 2 backstop), unresolved 0.**
+
+> **Count correction (2026-08-16, UI checker gate).** This header first read *"Applicable: 24 — resolved 24
+> (19 explicit, 5 backstop)"*, which did not sum against the E1–E5 tables below. Recounting them row by row
+> gives 18 ✅ explicit + 2 🧪 backstop = **20** applicable across 39 total rows (19 not-applicable). The header
+> is corrected to the tables' actual content; no row was added, removed, or relabelled to reach it. Phase 26
+> shipped this same class of arithmetic mismatch and its UI review had to correct it after the fact — caught
+> at the gate this time.
 
 ### E1 — Entry points (nav / interactive-control)
 
