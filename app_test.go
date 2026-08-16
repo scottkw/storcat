@@ -800,7 +800,7 @@ func TestResolveRescan_RejectsPathOutsideCatalogDir(t *testing.T) {
 	app.lastRescanJSONPath = resolvedOutside
 	app.scanMu.Unlock()
 
-	_, err = app.ResolveRescan(outsideJSON, catalogDir, catalog.ResolveOverwrite)
+	_, err = app.ResolveRescan(outsideJSON, catalogDir, string(catalog.ResolveOverwrite))
 	if err == nil {
 		t.Fatal("expected an error for a jsonPath outside the configured catalog directory")
 	}
@@ -843,7 +843,7 @@ func TestResolveRescan_DiscardIsNotAWritePath(t *testing.T) {
 	app.lastRescanJSONPath = resolved
 	app.scanMu.Unlock()
 
-	_, err = app.ResolveRescan(jsonPath, catalogDir, catalog.ResolveMode("discard"))
+	_, err = app.ResolveRescan(jsonPath, catalogDir, "discard")
 	if err == nil {
 		t.Fatal("expected an error for mode \"discard\"")
 	}

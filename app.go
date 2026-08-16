@@ -553,8 +553,17 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 // under scanMu; a mismatch between that held path and this call's resolved
 // target (or no tree held at all) fails closed rather than walking again
 // or writing a stale tree to the wrong catalog.
-func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode catalog.ResolveMode) (*models.CreateCatalogResult, error) {
-	if mode != catalog.ResolveOverwrite && mode != catalog.ResolveKeepBoth {
+// mode is a plain string, not catalog.ResolveMode, deliberately: Wails'
+// codegen does not walk into internal/catalog to emit a TS type for a
+// defined string-const type referenced only as a parameter (the same
+// limitation 28-01/28-03 hit with DiffState) -- generating this binding
+// with catalog.ResolveMode as the parameter type produces a broken
+// `import {catalog} from '../models'` with no corresponding namespace,
+// failing tsc outright. The two accepted values are validated by exact
+// string match against catalog.ResolveOverwrite/ResolveKeepBoth below.
+func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode string) (*models.CreateCatalogResult, error) {
+	resolveMode := catalog.ResolveMode(mode)
+	if resolveMode != catalog.ResolveOverwrite && resolveMode != catalog.ResolveKeepBoth {
 		return nil, fmt.Errorf("resolve re-scan %s: unsupported mode %q", jsonPath, mode)
 	}
 	if catalogDir == "" {
@@ -600,7 +609,7 @@ func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode catalog.Res
 		title = old.Title
 	}
 
-	result, err := a.catalogService.WriteRescanResult(tree, title, resolved, mode, catalog.Options{})
+	result, err := a.catalogService.WriteRescanResult(tree, title, resolved, resolveMode, catalog.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("resolve re-scan %s: %w", jsonPath, err)
 	}
