@@ -113,7 +113,7 @@
 - [x] **COMPAT-03**: All six CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`) behave exactly as they did in v2.3.0
 - [x] **COMPAT-04**: `internal/catalog` remains usable from the CLI without a Wails runtime context
 - [x] **COMPAT-05**: Window size and position persistence continues to work, controlled by the Settings toggle
-- [ ] **COMPAT-06**: The app builds, signs, notarizes, and releases on all existing CI platform targets
+- [ ] **COMPAT-06**: The app builds, signs, notarizes, and releases on all existing CI platform targets — BUILD leg proven live (28-06: `build.yml` green on all three native runners, see `.planning/WINDOWS.md`); sign/notarize/release remain unproven and stay open pending a deliberately-cut release tag and CRED-04/CRED-05
 
 ## v2 Requirements
 
@@ -221,7 +221,7 @@ Deferred — acknowledged but not in this roadmap.
 | COMPAT-03 | Phase 25 | Complete |
 | COMPAT-04 | Phase 25 | Complete |
 | COMPAT-05 | Phase 26 | Complete |
-| COMPAT-06 | Phase 28 | Pending |
+| COMPAT-06 | Phase 28 | Partial — build proven, sign/notarize/release open |
 
 **Coverage:**
 

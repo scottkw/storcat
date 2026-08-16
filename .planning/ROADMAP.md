@@ -308,7 +308,7 @@ Plans:
   3. User viewing an unreadable catalog can re-scan it, open its `.html` instead, or remove it from the library (STATE-03)
   4. The app builds, signs, notarizes, and releases on every existing CI platform target with the full milestone's changes included — confirming the frontend rewrite and the milestone's one new Go dependency (Bios-Marcel/wastebasket/v2) don't break any platform build (COMPAT-06)
 
-**Plans**: 5/6 plans executed
+**Plans**: 6/6 plans executed
 
 Plans:
 
@@ -317,7 +317,7 @@ Plans:
 - [x] 28-03-PLAN.md — Diff list, similarity warning, Variants A/B, error step, catalog-actions menu entry point
 - [x] 28-04-PLAN.md — ACT-07 resolution: overwrite / keep both / discard, reusing WriteCatalogFrom and the shared -copy collision loop
 - [x] 28-05-PLAN.md — STATE-03 unreadable-catalog action trio (re-scan / open .html / remove from library)
-- [ ] 28-06-PLAN.md — COMPAT-06: a real pushed build.yml run as evidence + the WINDOWS.md ledger sweep
+- [x] 28-06-PLAN.md — COMPAT-06: a real pushed build.yml run as evidence + the WINDOWS.md ledger sweep
 
 **UI hint**: yes
 **Research flag**: This is the handoff's own "biggest backend piece" — plan-phase should run its own research pass before planning, per SUMMARY.md's flag, to resolve the volume-relocation policy and finalize the on-disk "unreadable subtree" marker format from Phase 25. **Resolved** in `28-RESEARCH.md`: volume identity is never persisted (ACT-08), the Phase 25 on-disk marker format is final and unchanged, and the research surfaced that the locked fourth diff state was unimplementable without a new opt-in `MarkUnreadableOnSkip` walk option — planned as plan 28-02's own reviewable task.
@@ -353,4 +353,4 @@ Plans:
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
 | 26. Settings | v3.0.0 | 5/5 | Complete    | 2026-08-15 |
 | 27. Catalog Actions + Watch | v3.0.0 | 7/7 | Complete    | 2026-08-16 |
-| 28. Re-scan & Diff | v3.0.0 | 5/6 | In Progress|  |
+| 28. Re-scan & Diff | v3.0.0 | 6/6 | In Progress|  |

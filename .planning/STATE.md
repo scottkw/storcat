@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 28
 current_phase_name: Re-scan & Diff
-status: executing
-stopped_at: Completed 28-05-PLAN.md
-last_updated: "2026-08-16T22:26:41.832Z"
+status: verifying
+stopped_at: Completed 28-06-PLAN.md -- Phase 28 and v3.0.0 milestone execution complete, ready for verification
+last_updated: "2026-08-16T22:51:42.557Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
   total_phases: 7
-  completed_phases: 6
+  completed_phases: 7
   total_plans: 43
-  completed_plans: 42
-  percent: 86
+  completed_plans: 43
+  percent: 100
 ---
 
 # Project State
@@ -30,12 +30,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 28 (Re-scan & Diff) — EXECUTING
 Plan: 6 of 6
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-16 — Phase 28 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 98%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -106,6 +106,7 @@ Progress: [██████████] 98%
 | Phase 28 P03 | 91min | 3 tasks | 6 files |
 | Phase 28 P04 | 45min | 2 tasks | 7 files |
 | Phase 28 P05 | 40min | 2 tasks | 2 files |
+| Phase 28 P06 | ~55min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -215,6 +216,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 28-04: Keep both's label drops its filename preview entirely (was collision-checked-unsound) rather than resolving the real name live -- nextCopyRoot stays the sole naming authority, verified live post-fix on the -copy-2 collision case
 - [Phase ?]: 28-05: UnreadableCatalogPanel's action trio gated on catalog && (RescanDialog/DeleteConfirmDialog need a resolved CatalogMetadata, not partial data)
 - [Phase ?]: 28-05: handleOpenHtml duplicated as a second call site of getCatalogHtmlPath+openExternal rather than extracted -- DetailsPanel.tsx must stay unmodified, and two call sites don't yet justify a shared helper
+- [Phase ?]: 28-06: Pushed local main to origin/main (329 commits, user-selected push-main route) and observed build.yml green on all three native runners (macOS/Windows/Linux) individually, cited by run URL and commit SHA -- COMPAT-06's build leg proven
+- [Phase ?]: 28-06: COMPAT-06 left Partial (not Complete) in REQUIREMENTS.md -- the requirement's literal text is builds+signs+notarizes+releases, and this plan's evidence proves only the build leg; sign/notarize/release stay open pending a deliberately-cut release tag and CRED-04/CRED-05
+- [Phase ?]: 28-06: WINDOWS.md entry #7 (RailSide quit-and-relaunch) closed on real live evidence via dev-browser -- real Settings UI toggle, window.runtime.Quit(), relaunch, 40 zero-flash DOM samples; entries #4/#5 reworded to native-runner compile evidence (still open), #10/#11 annotated with new call sites (still open); ten entries remain honestly open
 
 ### Key Research Findings
 
@@ -260,8 +264,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-16T22:26:41.790Z
-Stopped at: Completed 28-05-PLAN.md
+Last session: 2026-08-16T22:51:42.486Z
+Stopped at: Completed 28-06-PLAN.md -- Phase 28 and v3.0.0 milestone execution complete, ready for verification
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
