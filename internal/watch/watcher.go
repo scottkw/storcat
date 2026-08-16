@@ -162,7 +162,17 @@ func (w *Watcher) loop() {
 			if !ok {
 				return
 			}
-			w.c.fireNow()
+			// WR-01: fireNow() calls fn() synchronously on the calling
+			// goroutine (its own doc comment; TestCoalescer_FiresNowIsImmediate
+			// locks that in), so invoking it directly here would run
+			// onChange() on this loop() goroutine -- contradicting the
+			// package doc comment's threading contract ("the callback may
+			// be invoked from a timer goroutine ... not the watcher's own
+			// event-loop goroutine") and stalling the very select that
+			// drains both Events and Errors for as long as onChange takes.
+			// Dispatch on a separate goroutine instead, matching trigger()'s
+			// existing off-loop delivery.
+			go w.c.fireNow()
 		case <-w.done:
 			return
 		}
