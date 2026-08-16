@@ -225,14 +225,6 @@ function RescanDialog({ catalog, catalogDir, oldTreeAvailable, onClose, onError 
         ? 'step 2 of 3'
         : 'step 1 of 3';
 
-  // A first-candidate PREVIEW label, not a collision-checked guarantee --
-  // if this exact name is already taken by the time the write happens, the
-  // backend's shared collision loop (nextCopyRoot, reused unmodified from
-  // Duplicate) silently resolves to the next free one. No live
-  // collision-check call is made just to keep this label perfectly
-  // accurate (28-UI-SPEC.md's Resolution Footer Contract).
-  const copyRootPreview = catalog.filename.replace(/\.json$/, '') + '-copy.json';
-
   return (
     <div className="ws-rescan-scrim" onClick={handleCloseRequest}>
       <div
@@ -364,13 +356,19 @@ function RescanDialog({ catalog, catalogDir, oldTreeAvailable, onClose, onError 
               >
                 Overwrite catalog
               </button>
+              {/* No filename in the label -- the actual write target comes
+                  from the backend's shared collision loop (nextCopyRoot,
+                  reused unmodified from Duplicate) and can land on
+                  "-copy-2" or later if "-copy" is already taken. Naming a
+                  file here that the write might not use would be a stale
+                  promise; the button says only what it always does. */}
               <button
                 type="button"
                 className="ws-rescan-btn-outline"
                 disabled={resolving}
                 onClick={() => handleResolve('keep-both')}
               >
-                Keep both (write {copyRootPreview})
+                Keep both
               </button>
             </div>
             <button
