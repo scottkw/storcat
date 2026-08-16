@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 10
+open_count: 11
 waived_count: 0
 fixed_count: 3
-total_count: 13
-last_updated: 2026-08-16T14:18:38.439Z
+total_count: 14
+last_updated: 2026-08-16T14:53:40.425Z
 ---
 
 # Broken Windows Ledger
@@ -28,6 +28,7 @@ last_updated: 2026-08-16T14:18:38.439Z
 | 11 | 27 | deviation | internal/catalog/atomicwrite.go |  | WriteFileAtomic parent-directory fsync unsupported on Windows (ACT-09): the best-effort syncDir(filepath.Dir(path)) added in 27-02 works on Linux and macOS (confirmed live via the SIGKILL harness on this macOS host), but Windows does not expose a directory handle that can be fsync'd the same way, so the call is expected to fail there. As of the 27-REVIEW-FIX WR-02 fix, the failure is logged once per process lifetime (sync.Once-guarded), not discarded -- this description previously said 'deliberately discarded', which was stale relative to the code even before that fix (the failure was already being logged unconditionally, just on every single write on Windows; WR-02 bounded that to once). The temp file's own tmp.Sync() still provides the primary durability guarantee on Windows either way. The once-per-run log path itself is unverified on Windows -- no Windows machine was available this session. Sweep before v3.0.0 ships. | open |  | 2026-08-16T00:04:20.134Z |  |
 | 12 | 27 | deviation | internal/osutil/trash.go |  | wastebasket's macOS AppleScript interpolation is an accepted, upstream-owned residual risk, not a defect to fix (ACT-04/ACT-05, threat T-27-01): the library's macOS backend builds an AppleScript string escaping only literal double-quote characters before osascript -e. This phase's mitigation is the osutil.ContainsPath containment gate applied to every path before the library is ever reached, which bounds the worst case but does not close the interpolation itself -- it is third-party code this project does not own. A future feature letting a user type an arbitrary filename that reaches the trash binding would need this revisited. | open |  | 2026-08-16T00:04:20.253Z |  |
 | 13 | 27 | unmet-truth | frontend/src/components/workspace/Menu.tsx |  | Menu click-outside focus-restore did not reliably survive live re-test in 27-07 (matrix row 5): the trigger received focus() momentarily during close but lost it again to document.body once the click gesture's own native focus-follows-click default action completed. FIXED in 27-REVIEW-FIX CR-01: Menu.tsx's handlePointerDown now calls event.preventDefault() on the outside-click pointerdown, which suppresses the browser's compatibility mousedown/click dispatch (and its focus-follows-click default action) for that interaction, so useModalBehavior's restoreTarget.focus() is the only focus mutation left standing. Re-verified live via dev-browser against wails dev :34115 using real (CDP-trusted, not synthetic-dispatch) mouse events: confirmed the pre-fix code still reproduces the <body> regression under this same test methodology (git-stash round-trip), then confirmed the post-fix code reliably restores focus to the '.ws-details-overflow' trigger button (document.activeElement.className === 'ws-details-overflow', not <body>) across repeated open/click-outside/close cycles. Still not confirmed in the actual shipped app's WKWebView engine on macOS (Chromium and WebKit can differ on native focus-follows-click timing) -- host-OS GUI automation remains prohibited by this project's standing constraint. The related speculative concern this same finding raised for DialogShell.tsx's close-button/footer-cancel-button click paths (WR-04 in the same review) was also live-verified this session and did NOT reproduce: both close paths correctly land focus back on the trigger, not <body>. | fixed |  | 2026-08-16T00:23:51.065Z | 2026-08-16T14:18:38.439Z |
+| 14 | 27 | deviation | internal/catalog/atomicwrite_sigkill_test.go |  | SIGKILL harness is coupled to WriteFileAtomic by convention, not by call (ACT-09 / threat T-27-06): internal/catalog/testdata/killtarget/main.go deliberately imports nothing from this project and hand-reproduces WriteFileAtomic's create-temp -> write -> sync -> close -> chmod -> rename sequence, because it must inject a mid-write delay without putting test-only sleep code into production. The phase 27 security audit compared the two sequences line by line and confirmed they currently match in order and syscalls, so the 42-iteration SIGKILL proof is real evidence for this durability pattern. The residual: if a future change alters WriteFileAtomic's internal ordering without a matching killtarget update, TestWriteFileAtomic_SurvivesKill would keep passing while no longer proving anything about the actual function. Not a missing mitigation -- both required properties (tmp.Sync() before close, syncDir after rename) are independently grep/read-verifiable in production code. Revisit if atomicwrite.go's write sequence is ever reordered. | open |  | 2026-08-16T14:53:40.425Z |  |
 
 ````json
 [
@@ -186,6 +187,18 @@ last_updated: 2026-08-16T14:18:38.439Z
     "reason": "",
     "recorded_at": "2026-08-16T00:23:51.065Z",
     "resolved_at": "2026-08-16T14:18:38.439Z"
+  },
+  {
+    "id": 14,
+    "kind": "deviation",
+    "phase": "27",
+    "file": "internal/catalog/atomicwrite_sigkill_test.go",
+    "line": null,
+    "description": "SIGKILL harness is coupled to WriteFileAtomic by convention, not by call (ACT-09 / threat T-27-06): internal/catalog/testdata/killtarget/main.go deliberately imports nothing from this project and hand-reproduces WriteFileAtomic's create-temp -> write -> sync -> close -> chmod -> rename sequence, because it must inject a mid-write delay without putting test-only sleep code into production. The phase 27 security audit compared the two sequences line by line and confirmed they currently match in order and syscalls, so the 42-iteration SIGKILL proof is real evidence for this durability pattern. The residual: if a future change alters WriteFileAtomic's internal ordering without a matching killtarget update, TestWriteFileAtomic_SurvivesKill would keep passing while no longer proving anything about the actual function. Not a missing mitigation -- both required properties (tmp.Sync() before close, syncDir after rename) are independently grep/read-verifiable in production code. Revisit if atomicwrite.go's write sequence is ever reordered.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-16T14:53:40.425Z",
+    "resolved_at": null
   }
 ]
 ````
