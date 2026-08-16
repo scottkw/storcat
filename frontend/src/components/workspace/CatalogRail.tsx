@@ -48,10 +48,17 @@ function CatalogRail() {
   // (AppContext.tsx) is what stops this effect firing twice for the same
   // value (e.g. the mount effect's dispatch above and a same-value Settings
   // change never both trigger a listing).
+  //
+  // railRefreshToken (27-RAIL-FIX) is the same trigger mechanism as a
+  // catalogDir change: a locally-initiated, already-succeeded Delete/
+  // Duplicate dispatches REQUEST_RAIL_REFRESH, this effect re-runs, and it
+  // calls the exact same loadCatalogsForDirectory the mount/catalogDir path
+  // and the catalogs:changed handler below both use -- no second way to
+  // compute the rail's contents.
   useEffect(() => {
     if (!state.catalogDir) return;
     loadCatalogsForDirectory(state.catalogDir);
-  }, [state.catalogDir, loadCatalogsForDirectory]);
+  }, [state.catalogDir, state.railRefreshToken, loadCatalogsForDirectory]);
 
   // WATCH-02: re-triggers the exact same listing the effect above already
   // calls -- no second read path. app.go emits this as a bare, payload-free

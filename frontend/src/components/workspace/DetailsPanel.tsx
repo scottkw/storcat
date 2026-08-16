@@ -72,6 +72,10 @@ function CatalogActions({
       return;
     }
     onError(null);
+    // 27-RAIL-FIX: this duplicate already succeeded on disk -- re-trigger
+    // the rail's one authoritative listing so the new row appears without
+    // requiring watching to be on (it defaults to off).
+    dispatch({ type: 'REQUEST_RAIL_REFRESH' });
   }
 
   const items: MenuItemSpec[] = [
@@ -161,13 +165,17 @@ function CatalogActions({
         onDeleted={() => {
           // If the deleted catalog was the current selection, fall back to
           // the details panel's existing "nothing selected" placeholder --
-          // no new empty state. The rail re-list arrives through the
-          // catalogs:changed-driven refresh 27-06/27-07 wire up, not a
-          // bespoke second refresh call here (27-CONTEXT.md's one locked
-          // refresh path).
+          // no new empty state.
           if (catalog.path === state.currentCatalogId) {
             dispatch({ type: 'CLEAR_CURRENT_CATALOG' });
           }
+          // 27-RAIL-FIX: this delete already succeeded on disk -- re-trigger
+          // the rail's one authoritative listing (same browseCatalogs call
+          // catalogs:changed re-triggers) so the row disappears without
+          // requiring watching to be on (it defaults to off). Reuses the
+          // single refresh path -- not a second way to compute the rail's
+          // contents.
+          dispatch({ type: 'REQUEST_RAIL_REFRESH' });
         }}
       />
     </>

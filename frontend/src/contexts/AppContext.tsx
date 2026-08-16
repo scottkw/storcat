@@ -59,6 +59,15 @@ export interface AppState {
   // could silently revert it. Never cleared -- SETTINGS_HYDRATED fires
   // once per launch, so nothing depends on this set shrinking again.
   touchedSettings: Set<keyof AppSettings>;
+  // Bumped by a locally-initiated, already-succeeded Delete/Duplicate
+  // (27-RAIL-FIX) so CatalogRail's existing catalogDir effect re-runs
+  // loadCatalogsForDirectory -- the same single refresh path
+  // catalogs:changed already re-triggers. Not a second way to compute the
+  // rail's contents: this only re-invokes the one authoritative
+  // browseCatalogs listing, on a state.catalogDir-independent trigger, so
+  // the rail reflects the user's own action even with watching off (the
+  // shipped default).
+  railRefreshToken: number;
 }
 
 type AppAction =
@@ -84,6 +93,9 @@ type AppAction =
   // back to their existing "nothing selected" placeholders, no new empty
   // state needed.
   | { type: 'CLEAR_CURRENT_CATALOG' }
+  // 27-RAIL-FIX: fired after a local Delete/Duplicate already succeeded, to
+  // re-trigger the rail's one authoritative listing (see railRefreshToken).
+  | { type: 'REQUEST_RAIL_REFRESH' }
   | { type: 'SET_PENDING_REVEAL'; payload: string | null }
   | { type: 'REVEAL_HIT'; payload: { catalogId: string; path: string } }
   | { type: 'SET_CREATE_OPEN'; payload: boolean }
@@ -136,6 +148,7 @@ const initialState: AppState = {
   createFolderPickerIntent: false,
   settings: DEFAULT_APP_SETTINGS,
   touchedSettings: new Set(),
+  railRefreshToken: 0,
 };
 
 // Extracts the in-progress/terminal title from whichever ScanState variant
@@ -262,6 +275,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
     case 'CLEAR_CURRENT_CATALOG':
       if (state.currentCatalogId === null) return state;
       return { ...state, currentCatalogId: null, selected: null };
+    case 'REQUEST_RAIL_REFRESH':
+      return { ...state, railRefreshToken: state.railRefreshToken + 1 };
     case 'SET_PENDING_REVEAL':
       return { ...state, pendingReveal: action.payload };
     case 'REVEAL_HIT': {
