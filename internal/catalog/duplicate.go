@@ -46,12 +46,26 @@ func DuplicateCatalog(jsonPath string) (string, error) {
 	// Derive the source HTML with the repo's one .json/.html pairing
 	// convention (internal/search/service.go:214). A missing HTML is not
 	// an error -- not every catalog has one.
+	//
+	// WR-03: containment-checked via resolveContainedSibling (rename.go)
+	// the same way RenameCatalog's identical derived-path read is, before
+	// anything reads it -- a symlink planted at this exact name could
+	// otherwise be read from outside the catalog directory. The
+	// destination newHTMLPath below needs no equivalent check:
+	// nextCopyRoot/isCandidateRootFree already guarantee neither
+	// <newRoot>.json nor <newRoot>.html exists yet, so it cannot be a
+	// pre-planted symlink.
 	htmlPath := strings.TrimSuffix(jsonPath, ".json") + ".html"
-	htmlData, err := os.ReadFile(htmlPath)
+	resolvedHTMLPath, err := resolveContainedSibling(htmlPath, dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return newJSONPath, nil
 		}
+		return newJSONPath, fmt.Errorf("duplicate %s: %w", jsonPath, err)
+	}
+
+	htmlData, err := os.ReadFile(resolvedHTMLPath)
+	if err != nil {
 		return newJSONPath, fmt.Errorf("duplicate %s: %w", jsonPath, err)
 	}
 

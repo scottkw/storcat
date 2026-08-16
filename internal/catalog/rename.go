@@ -6,7 +6,10 @@ import (
 	"fmt"
 	"html"
 	"os"
+	"path/filepath"
 	"strings"
+
+	"storcat-wails/internal/osutil"
 )
 
 // RenameCatalog sets a catalog's title -- written to the JSON root's "title"
@@ -42,7 +45,7 @@ func RenameCatalog(jsonPath string, newTitle string) error {
 	}
 
 	htmlPath := strings.TrimSuffix(jsonPath, ".json") + ".html"
-	htmlData, err := os.ReadFile(htmlPath)
+	resolvedHTMLPath, err := resolveContainedSibling(htmlPath, filepath.Dir(jsonPath))
 	if err != nil {
 		if os.IsNotExist(err) {
 			// Per 27-CONTEXT.md: rename is allowed on a catalog with no
@@ -53,11 +56,49 @@ func RenameCatalog(jsonPath string, newTitle string) error {
 		return fmt.Errorf("rename %s: %w", jsonPath, err)
 	}
 
+	htmlData, err := os.ReadFile(resolvedHTMLPath)
+	if err != nil {
+		return fmt.Errorf("rename %s: %w", jsonPath, err)
+	}
+
 	patched := rewriteHTMLTitle(htmlData, trimmed)
-	if err := WriteFileAtomic(htmlPath, patched, 0644); err != nil {
+	if err := WriteFileAtomic(resolvedHTMLPath, patched, 0644); err != nil {
 		return fmt.Errorf("rename %s: %w", jsonPath, err)
 	}
 	return nil
+}
+
+// resolveContainedSibling resolves siblingPath -- a filename this package
+// derives itself via TrimSuffix(jsonPath, ".json") + ".html", never accepted
+// from the renderer -- and confirms the resolved path still falls within
+// baseDir. This mirrors osutil.TrashPaths's own belt-and-braces
+// re-validation of every path it is handed (trash.go), applied here to the
+// .html sibling RenameCatalog/DuplicateCatalog derive themselves rather than
+// receive pre-validated from app.go's own containment gate (WR-03): without
+// this, a symlink planted at the derived path inside an otherwise-trusted
+// catalog directory would be read from -- and, for rename, written to --
+// wherever it points.
+//
+// A missing sibling returns an os.IsNotExist-compatible error (surfaced by
+// filepath.EvalSymlinks) so callers can keep their existing "no .html"
+// branch unchanged.
+func resolveContainedSibling(siblingPath, baseDir string) (string, error) {
+	abs, err := filepath.Abs(siblingPath)
+	if err != nil {
+		return "", err
+	}
+	resolved, err := filepath.EvalSymlinks(abs)
+	if err != nil {
+		return "", err
+	}
+	ok, err := osutil.ContainsPath(baseDir, resolved)
+	if err != nil {
+		return "", err
+	}
+	if !ok {
+		return "", fmt.Errorf("%s escapes catalog directory", siblingPath)
+	}
+	return resolved, nil
 }
 
 // setTitleInDocument locates the catalog's tree-root object within the
