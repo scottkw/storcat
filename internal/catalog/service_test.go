@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -488,6 +489,105 @@ func TestTraverseDirectory_SingleEntryErrorSkipsAndContinues(t *testing.T) {
 	}
 	if st.readErrors != 1 {
 		t.Errorf("readErrors = %d, want 1", st.readErrors)
+	}
+}
+
+// TestTraverseDirectory_MarksSkippedNodeWhenFlagSet verifies that, with
+// MarkUnreadableOnSkip set, a locked subdirectory (scan root still
+// reachable) is marked Unreadable/ReadError instead of silently dropped,
+// the walk still completes with a nil error (not a *SourceUnavailableError
+// -- the walk is not aborted), and siblings after the locked entry are
+// still visited.
+func TestTraverseDirectory_MarksSkippedNodeWhenFlagSet(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix-style permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("running as root bypasses permission bits")
+	}
+
+	s := NewService()
+	dir := t.TempDir()
+	if err := os.WriteFile(filepath.Join(dir, "before.txt"), []byte("a"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+	locked := filepath.Join(dir, "locked")
+	if err := os.Mkdir(locked, 0755); err != nil {
+		t.Fatalf("mkdir locked: %v", err)
+	}
+	if err := os.Chmod(locked, 0000); err != nil {
+		t.Fatalf("chmod locked: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(locked, 0755) })
+	if err := os.WriteFile(filepath.Join(dir, "after.txt"), []byte("b"), 0644); err != nil {
+		t.Fatalf("write fixture: %v", err)
+	}
+
+	st := &walkState{scanRoot: dir}
+	st.opts.MarkUnreadableOnSkip = true
+	item, err := s.traverseDirectory(context.Background(), dir, dir, st)
+	if err != nil {
+		t.Fatalf("traverseDirectory failed: %v", err)
+	}
+
+	var lockedNode *models.CatalogItem
+	var sawAfter bool
+	for _, c := range item.Contents {
+		if filepath.Base(c.Name) == "locked" {
+			lockedNode = c
+		}
+		if filepath.Base(c.Name) == "after.txt" {
+			sawAfter = true
+		}
+	}
+	if lockedNode == nil {
+		t.Fatal("expected a node for the locked subdirectory, got none")
+	}
+	if !lockedNode.Unreadable {
+		t.Error("expected the locked node to be marked Unreadable")
+	}
+	if lockedNode.ReadError == "" {
+		t.Error("expected a non-empty ReadError reason")
+	}
+	if !sawAfter {
+		t.Error("expected the sibling after the unreadable directory to still be visited")
+	}
+}
+
+// TestTraverseDirectory_DoesNotMarkSkippedNodeWhenFlagUnset verifies the
+// paired default: the same locked-subdirectory fixture, walked with the
+// default (zero-value) Options, produces no marker anywhere -- proving the
+// flag's default-false path is the one TestTraverseDirectory_
+// SingleEntryErrorSkipsAndContinues already pins byte-for-byte.
+func TestTraverseDirectory_DoesNotMarkSkippedNodeWhenFlagUnset(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("unix-style permission bits don't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("running as root bypasses permission bits")
+	}
+
+	s := NewService()
+	dir := t.TempDir()
+	locked := filepath.Join(dir, "locked")
+	if err := os.Mkdir(locked, 0755); err != nil {
+		t.Fatalf("mkdir locked: %v", err)
+	}
+	if err := os.Chmod(locked, 0000); err != nil {
+		t.Fatalf("chmod locked: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(locked, 0755) })
+
+	st := &walkState{scanRoot: dir}
+	item, err := s.traverseDirectory(context.Background(), dir, dir, st)
+	if err != nil {
+		t.Fatalf("traverseDirectory failed: %v", err)
+	}
+
+	for _, c := range item.Contents {
+		if c.Unreadable || c.ReadError != "" {
+			t.Errorf("expected no marker anywhere with the flag unset, got %+v", c)
+		}
 	}
 }
 

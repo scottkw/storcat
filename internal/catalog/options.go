@@ -23,4 +23,16 @@ type Options struct {
 	// error/partial-catalog UI (CRT-10/CRT-11) instead of silently
 	// producing a catalog missing everything after the loss.
 	HaltOnSourceLoss bool
+	// MarkUnreadableOnSkip controls whether a skip-and-continue single-
+	// entry/subtree failure (scan root still reachable) also records the
+	// Unreadable/ReadError marker on that node instead of silently
+	// dropping it. It does NOT abort the walk -- with this set, a skipped
+	// node is marked and the walk continues past it exactly as it does
+	// today. The zero value (false) preserves today's behavior for every
+	// Create call site (CLI and GUI): neither sets this true. Re-scan's
+	// binding (app.go) is the one caller that sets it true, so a diff can
+	// distinguish "genuinely removed" from "merely unreadable right now"
+	// (28-RESEARCH.md's load-bearing gap: without this, a completed scan
+	// can never populate the fourth diff state).
+	MarkUnreadableOnSkip bool
 }

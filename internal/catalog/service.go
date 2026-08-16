@@ -199,11 +199,33 @@ func (s *Service) WriteCatalogFrom(tree *models.CatalogItem, title, outputDir, o
 	return result, nil
 }
 
+// displayPathFor computes the "./"-prefixed, Unix-style relative path
+// traverseDirectory has always used as a node's Name -- extracted so a
+// child that fails before traverseDirectory ever reaches it
+// (MarkUnreadableOnSkip's synthesized node, below) can compute the
+// identical identity a successful recursive call would have produced.
+func displayPathFor(itemPath, basePath string) (string, error) {
+	relPath, err := filepath.Rel(filepath.Dir(basePath), itemPath)
+	if err != nil {
+		return "", err
+	}
+	displayPath := "./" + filepath.ToSlash(relPath)
+	if relPath == filepath.Base(basePath) {
+		displayPath = "./"
+	}
+	return displayPath, nil
+}
+
 // traverseDirectory recursively builds catalog structure. ctx.Err() is
 // checked at the very top, before os.Stat, so cancellation is prompt for
 // every syscall that hasn't started yet (an already-in-flight blocked
 // syscall is a documented, accepted Go runtime limitation -- see
-// 25-RESEARCH.md Pitfall 3).
+// 25-RESEARCH.md Pitfall 3). When opts.MarkUnreadableOnSkip is true, a
+// skip-and-continue single-entry/subtree failure (scan root still
+// reachable) marks that node Unreadable/ReadError instead of silently
+// dropping it; the walk still does not abort. The zero value (every
+// Create call site) leaves that path exactly as it was before this option
+// existed.
 func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath string, st *walkState) (*models.CatalogItem, error) {
 	if err := ctx.Err(); err != nil {
 		return nil, fmt.Errorf("scan cancelled: %w", err)
@@ -214,16 +236,9 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 		return nil, err
 	}
 
-	// Calculate relative path
-	relPath, err := filepath.Rel(filepath.Dir(basePath), dirPath)
+	displayPath, err := displayPathFor(dirPath, basePath)
 	if err != nil {
 		return nil, err
-	}
-
-	// Convert to Unix-style path with ./ prefix
-	displayPath := "./" + filepath.ToSlash(relPath)
-	if relPath == filepath.Base(basePath) {
-		displayPath = "./"
 	}
 
 	// Handle files
@@ -261,7 +276,14 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 				return node, &SourceUnavailableError{SourcePath: st.scanRoot}
 			}
 			// Root still reachable: today's skip-and-continue behavior,
-			// unchanged -- an empty, error-free directory node.
+			// unchanged -- an empty, error-free directory node, unless the
+			// caller opted in to marking it instead of silently dropping
+			// the failure (MarkUnreadableOnSkip, re-scan only -- Create
+			// never sets this).
+			if st.opts.MarkUnreadableOnSkip {
+				node.Unreadable = true
+				node.ReadError = err.Error()
+			}
 			return node, nil
 		}
 
@@ -335,7 +357,32 @@ func (s *Service) traverseDirectory(ctx context.Context, dirPath, basePath strin
 					return node, &SourceUnavailableError{SourcePath: st.scanRoot}
 				}
 				// Skip items we can't access -- unchanged byte-for-byte
-				// behavior when the root is still reachable.
+				// behavior when the root is still reachable, unless the
+				// caller opted in to marking the skipped child instead of
+				// dropping it silently (MarkUnreadableOnSkip). This branch
+				// never built a node for the failed child, so marking it
+				// means synthesizing a minimal one here rather than gating
+				// an existing return.
+				if st.opts.MarkUnreadableOnSkip {
+					childType := "file"
+					var childContents []*models.CatalogItem
+					if entry.IsDir() {
+						childType = "directory"
+						childContents = []*models.CatalogItem{}
+					}
+					childDisplayPath, derr := displayPathFor(childPath, basePath)
+					if derr != nil {
+						childDisplayPath = childPath
+					}
+					contents = append(contents, &models.CatalogItem{
+						Type:       childType,
+						Name:       childDisplayPath,
+						Size:       0,
+						Contents:   childContents,
+						Unreadable: true,
+						ReadError:  err.Error(),
+					})
+				}
 				continue
 			}
 
