@@ -73,6 +73,12 @@ function Menu({ isOpen, onClose, triggerRef, items, id, ariaLabel }: MenuProps) 
       const target = event.target as Node;
       if (containerRef.current?.contains(target)) return;
       if (triggerRef.current?.contains(target)) return;
+      // CR-01: suppress the browser's own compatibility mousedown (and its
+      // focus-follows-click default action) for this interaction, so
+      // useModalBehavior's restoreTarget.focus() is the only focus mutation
+      // that happens. Without this, mousedown fires after this handler and
+      // blurs focus to <body>, overwriting the restore that already ran.
+      event.preventDefault();
       onClose();
     };
     document.addEventListener('pointerdown', handlePointerDown);
