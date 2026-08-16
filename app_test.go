@@ -12,6 +12,8 @@ import (
 	"time"
 
 	"storcat-wails/internal/catalog"
+	"storcat-wails/internal/config"
+	"storcat-wails/internal/search"
 	"storcat-wails/pkg/models"
 )
 
@@ -687,6 +689,83 @@ func TestWritePartialCatalog_ConcurrentCallsWriteOnce(t *testing.T) {
 // TestCancelActiveScan_ReportsWhetherAScanWasRunning verifies that, with a
 // scan handle stored, cancelActiveScan cancels it and reports true; called
 // again with the handle already cleared, it reports false.
+// TestRescan_DoesNotRetainPartialForWritePartialCatalog verifies that a
+// failed re-scan (SourceUnavailableError) never populates
+// a.lastPartial/a.lastPartialResult/a.lastScanReq -- RescanCatalog's error
+// step offers only Retry/Close (28-UI-SPEC.md), so nothing it produces may
+// become reachable through WritePartialCatalog, which is aimed at Create's
+// retained tree, never a re-scan's.
+func TestRescan_DoesNotRetainPartialForWritePartialCatalog(t *testing.T) {
+	newRescanApp := func(t *testing.T) (*App, string) {
+		t.Helper()
+		catalogDir := t.TempDir()
+		configManager := config.NewDefaultManager()
+		_ = configManager.SetCatalogDirectory(catalogDir)
+		app := &App{
+			catalogService: catalog.NewService(),
+			searchService:  search.NewService(),
+			configManager:  configManager,
+		}
+		jsonPath := filepath.Join(catalogDir, "cat.json")
+		if err := os.WriteFile(jsonPath, []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`), 0644); err != nil {
+			t.Fatalf("seed catalog file: %v", err)
+		}
+		return app, jsonPath
+	}
+
+	// A source path removed before RescanCatalog ever walks it reliably
+	// produces a *catalog.SourceUnavailableError -- the same root-vanished
+	// classification TestCreateCatalogWithContext_RootVanishesBeforeAnyProgress
+	// exercises at the service layer.
+	runFailingRescan := func(t *testing.T, app *App, jsonPath string) {
+		t.Helper()
+		sourceDir := t.TempDir()
+		if err := os.RemoveAll(sourceDir); err != nil {
+			t.Fatalf("remove sourceDir: %v", err)
+		}
+		_, err := app.RescanCatalog(jsonPath, sourceDir, true)
+		if err == nil {
+			t.Fatal("expected an error for a vanished source path")
+		}
+		var srcErr *catalog.SourceUnavailableError
+		if !errors.As(err, &srcErr) {
+			t.Fatalf("expected an error matching *catalog.SourceUnavailableError, got %v", err)
+		}
+	}
+
+	t.Run("nothing retained beforehand", func(t *testing.T) {
+		app, jsonPath := newRescanApp(t)
+		runFailingRescan(t, app, jsonPath)
+
+		_, err := app.WritePartialCatalog()
+		if err == nil || err.Error() != "no partial scan retained to write" {
+			t.Errorf("WritePartialCatalog() error = %v, want %q", err, "no partial scan retained to write")
+		}
+	})
+
+	t.Run("a Create partial retained beforehand is untouched", func(t *testing.T) {
+		app, jsonPath := newRescanApp(t)
+		sentinelTree := &models.CatalogItem{Type: "directory", Name: "./sentinel"}
+		sentinelReq := &lastScanRequest{title: "Sentinel"}
+		app.scanMu.Lock()
+		app.lastPartial = &catalog.PartialScan{Tree: sentinelTree}
+		app.lastScanReq = sentinelReq
+		app.scanMu.Unlock()
+
+		runFailingRescan(t, app, jsonPath)
+
+		app.scanMu.Lock()
+		partial, req := app.lastPartial, app.lastScanReq
+		app.scanMu.Unlock()
+		if partial == nil || partial.Tree != sentinelTree {
+			t.Errorf("lastPartial changed by RescanCatalog: got %+v, want the sentinel unchanged", partial)
+		}
+		if req != sentinelReq {
+			t.Errorf("lastScanReq changed by RescanCatalog: got %+v, want the sentinel unchanged", req)
+		}
+	})
+}
+
 func TestCancelActiveScan_ReportsWhetherAScanWasRunning(t *testing.T) {
 	app := &App{}
 	_, cancel := context.WithCancel(context.Background())

@@ -444,6 +444,16 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 	ctx, cancel := context.WithCancel(context.Background())
 	a.activeScanCancel = cancel
 	a.scanDone = make(chan struct{})
+	// Deliberately absent here, on every path through this function (success
+	// AND failure): any assignment to a.lastPartial / a.lastPartialResult /
+	// a.lastScanReq. startScan clears then conditionally repopulates these
+	// three fields because Create's error step offers a "Write partial
+	// catalog" action; RescanDialog's error step (28-UI-SPEC.md) offers only
+	// Retry/Close, so there is nothing here to retain -- and retaining one
+	// would leave a re-scan's tree reachable through WritePartialCatalog,
+	// aimed at the wrong output path. A future refactor that "restores
+	// symmetry with startScan" by adding this back must not: see
+	// TestRescan_DoesNotRetainPartialForWritePartialCatalog (app_test.go).
 	a.scanMu.Unlock()
 
 	defer func() {
