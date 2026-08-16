@@ -595,8 +595,6 @@ func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode string) (*m
 		return nil, fmt.Errorf("resolve re-scan %s: no re-scanned tree held for this catalog -- re-scan again", jsonPath)
 	}
 	tree := a.lastRescanTree
-	a.lastRescanTree = nil
-	a.lastRescanJSONPath = ""
 	a.scanMu.Unlock()
 
 	// The title follows the ORIGINAL catalog's own title, so a
@@ -609,10 +607,29 @@ func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode string) (*m
 		title = old.Title
 	}
 
+	// The held tree/path are deliberately NOT cleared until the write below
+	// succeeds -- mirroring WritePartialCatalog's own check-decide-write
+	// discipline in this file. Clearing eagerly (as this used to) meant any
+	// write failure, including a non-destructive nextCopyRoot collision-probe
+	// failure that touches zero bytes on disk, permanently lost the retained
+	// tree and forced a full re-scan to retry.
 	result, err := a.catalogService.WriteRescanResult(tree, title, resolved, resolveMode, catalog.Options{})
 	if err != nil {
 		return nil, fmt.Errorf("resolve re-scan %s: %w", jsonPath, err)
 	}
+
+	a.scanMu.Lock()
+	// Guard against a concurrent new RescanCatalog that started (and
+	// re-populated these fields for a different tree) while this write was
+	// in flight -- only clear if lastRescanJSONPath still matches the tree
+	// this call just wrote, the same retainedGen-style discipline
+	// WritePartialCatalog uses for its own retained state.
+	if a.lastRescanJSONPath == resolved {
+		a.lastRescanTree = nil
+		a.lastRescanJSONPath = ""
+	}
+	a.scanMu.Unlock()
+
 	return result, nil
 }
 

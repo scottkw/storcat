@@ -6,6 +6,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"testing"
@@ -863,6 +864,85 @@ func TestResolveRescan_DiscardIsNotAWritePath(t *testing.T) {
 	app.scanMu.Unlock()
 	if held == nil {
 		t.Error("held re-scan tree was cleared by a rejected discard call")
+	}
+}
+
+// TestResolveRescan_RetainsTreeAcrossFailedWriteAndSucceedsOnRetry proves
+// WR-01: a write failure (here, a read-only catalog directory so
+// WriteFileAtomic's temp-file creation fails before a single byte is
+// written) must NOT lose the retained re-scan tree -- the old
+// clear-before-write ordering meant any such failure stranded the user with
+// no way to retry without a full re-scan. A retry, once the directory is
+// writable again, must succeed using the SAME held tree.
+func TestResolveRescan_RetainsTreeAcrossFailedWriteAndSucceedsOnRetry(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("chmod-based permission denial doesn't apply on windows")
+	}
+	if os.Geteuid() == 0 {
+		t.Skip("running as root bypasses permission bits")
+	}
+
+	catalogDir := t.TempDir()
+	configManager := config.NewDefaultManager()
+	_ = configManager.SetCatalogDirectory(catalogDir)
+	app := &App{
+		catalogService: catalog.NewService(),
+		searchService:  search.NewService(),
+		configManager:  configManager,
+	}
+
+	jsonPath := filepath.Join(catalogDir, "cat.json")
+	original := []byte(`{"type":"directory","name":"./","size":0,"contents":[]}`)
+	if err := os.WriteFile(jsonPath, original, 0644); err != nil {
+		t.Fatalf("seed catalog: %v", err)
+	}
+	resolved, err := filepath.EvalSymlinks(jsonPath)
+	if err != nil {
+		t.Fatalf("resolve symlinks: %v", err)
+	}
+
+	newTree := &models.CatalogItem{Type: "directory", Name: "./", Contents: []*models.CatalogItem{
+		{Type: "file", Name: "./new.txt", Size: 1},
+	}}
+	app.scanMu.Lock()
+	app.lastRescanTree = newTree
+	app.lastRescanJSONPath = resolved
+	app.scanMu.Unlock()
+
+	if err := os.Chmod(catalogDir, 0555); err != nil {
+		t.Fatalf("chmod catalogDir read-only: %v", err)
+	}
+	t.Cleanup(func() { _ = os.Chmod(catalogDir, 0755) })
+
+	_, err = app.ResolveRescan(jsonPath, catalogDir, string(catalog.ResolveOverwrite))
+	if err == nil {
+		t.Fatal("expected an error writing to a read-only catalog directory")
+	}
+
+	app.scanMu.Lock()
+	held := app.lastRescanTree
+	app.scanMu.Unlock()
+	if held != newTree {
+		t.Fatal("lastRescanTree was cleared despite the write failing -- a retry now has nothing to write")
+	}
+
+	if err := os.Chmod(catalogDir, 0755); err != nil {
+		t.Fatalf("chmod catalogDir writable again: %v", err)
+	}
+
+	result, err := app.ResolveRescan(jsonPath, catalogDir, string(catalog.ResolveOverwrite))
+	if err != nil {
+		t.Fatalf("retry after directory became writable again: %v", err)
+	}
+	if result == nil {
+		t.Fatal("expected a non-nil result from the successful retry")
+	}
+
+	app.scanMu.Lock()
+	heldAfter := app.lastRescanTree
+	app.scanMu.Unlock()
+	if heldAfter != nil {
+		t.Error("lastRescanTree should be cleared after a successful write")
 	}
 }
 
