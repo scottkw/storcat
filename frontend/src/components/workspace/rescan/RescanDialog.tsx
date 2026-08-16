@@ -8,6 +8,7 @@ import { models } from '../../../../wailsjs/go/models';
 import { formatBytes } from '../../../lib/format';
 import VolumePicker from '../create/VolumePicker';
 import ScanningBody from '../create/ScanningBody';
+import ErrorBody from '../create/ErrorBody';
 import DiffList from './DiffList';
 
 export interface RescanDialogProps {
@@ -116,12 +117,20 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
 
     if (!outcome.success) {
       const failure = classifyScanFailure(outcome.error);
+      if (failure.kind === 'sourceLoss') {
+        // The picked volume vanished mid-walk -- transition the shared
+        // scan slice into its own error member so this component's
+        // 'scanning' step renders the interrupted-scan body instead of the
+        // live-progress one. state.rescan.step stays 'scanning' (there is
+        // no separate rescan-owned error step): the same shared-slice
+        // architecture the happy path already uses.
+        dispatch({ type: 'SCAN_FAILED', payload: { message: failure.message, sourcePath } });
+        return;
+      }
+      // Any other rejection (e.g. a cancellation): back to step 1 with the
+      // same catalog/oldTreeAvailable, surfaced through the same error slot
+      // Footer's other actions already share.
       dispatch({ type: 'SCAN_RESET' });
-      // Back to step 1 with the same catalog/oldTreeAvailable -- lets the
-      // user retry without losing the dialog. The full Retry/Close error
-      // step (28-UI-SPEC.md's Error Step) is plan 28-02+; this tracer
-      // surfaces the failure through the same error slot Footer's other
-      // actions already share.
       dispatch({ type: 'RESCAN_OPENED', payload: { catalog, oldTreeAvailable } });
       onError(failure.message);
       return;
@@ -154,8 +163,15 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [step, selectedSource]);
 
-  const headerTitle =
-    step === 'diff'
+  // Triggered identically to Create's own source-loss step: the picked
+  // volume vanishes mid-walk. Checked ahead of the ordinary step-2 title so
+  // it always wins while step is 'scanning' and the shared slice has
+  // failed.
+  const isErrorStep = step === 'scanning' && state.scan.status === 'error';
+
+  const headerTitle = isErrorStep
+    ? 'Scan interrupted'
+    : step === 'diff'
       ? oldTreeAvailable
         ? `Re-scan changed ${diff ? diffTotal(diff) : 0} entries`
         // Deliberately doesn't presuppose which resolution is coming --
@@ -166,7 +182,13 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
       : step === 'scanning'
         ? `Re-scanning ${selectedSource ? sourceDisplayNameOf(selectedSource) : ''}`
         : `Re-scan ${catalog.title}`;
-  const headerStep = step === 'diff' ? 'step 3 of 3' : step === 'scanning' ? 'step 2 of 3' : 'step 1 of 3';
+  const headerStep = isErrorStep
+    ? 'failed'
+    : step === 'diff'
+      ? 'step 3 of 3'
+      : step === 'scanning'
+        ? 'step 2 of 3'
+        : 'step 1 of 3';
 
   return (
     <div className="ws-rescan-scrim" onClick={handleCloseRequest}>
@@ -195,6 +217,22 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
         {step === 'scanning' && (state.scan.status === 'counting' || state.scan.status === 'scanning') && (
           <div className="ws-rescan-body">
             <ScanningBody scan={state.scan} />
+          </div>
+        )}
+
+        {/* No partial-write affordance renders anywhere in this flow -- a
+            partial diff (a fully-loaded old tree against a half-walked new
+            one) has no well-defined resolution, so writingPartial/
+            onWritePartial are both omitted and "Retry scan" takes the
+            primary-styled slot in the omitted button's place. */}
+        {isErrorStep && state.scan.status === 'error' && (
+          <div className="ws-rescan-body">
+            <ErrorBody
+              scan={state.scan}
+              onRetry={handleStart}
+              onCloseWithoutWriting={handleCloseRequest}
+              explanation={`Nothing about ${catalog.filename} has changed — your existing catalog is exactly as it was. Retry the scan, or close without writing anything.`}
+            />
           </div>
         )}
 

@@ -2,12 +2,31 @@ import type { ScanState } from '../../../types/scan';
 
 type ErrorScanState = Extract<ScanState, { status: 'error' }>;
 
+// Create's own original explanation, now the default for the `explanation`
+// prop below -- keeping this as the default (rather than requiring every
+// call site to repeat it) is what lets CreateSlideOver's call site stay
+// unedited (28-03).
+const DEFAULT_EXPLANATION =
+  "Nothing was written yet. A partial catalog is still useful for a failing card — it records what could be read, and marks the gap.";
+
 export interface ErrorBodyProps {
   scan: ErrorScanState;
-  writingPartial: boolean;
-  onWritePartial: () => void;
+  // Optional, TOGETHER (28-03) -- when both are omitted, the partial-write
+  // button doesn't render and "Retry scan" is promoted into the
+  // primary-styled slot in its place, so exactly one strong call to action
+  // exists either way. Re-scan's error step has nothing well-defined to
+  // write a partial version of (a partial diff against a half-walked new
+  // tree has no resolution -- 28-UI-SPEC.md), so its call site omits both.
+  // CreateSlideOver's own call site is unchanged -- it still always passes
+  // both.
+  writingPartial?: boolean;
+  onWritePartial?: () => void;
   onRetry: () => void;
   onCloseWithoutWriting: () => void;
+  // Optional (28-03), defaulting to Create's own literal above so
+  // CreateSlideOver's call site needs no edit. Re-scan's call site overrides
+  // this with copy about its own EXISTING catalog, not a not-yet-written one.
+  explanation?: string;
 }
 
 /**
@@ -31,7 +50,14 @@ export interface ErrorBodyProps {
  * disconnect with no prior read errors) this line is omitted entirely,
  * satisfying E6's zero-one-many resolution with the same template.
  */
-function ErrorBody({ scan, writingPartial, onWritePartial, onRetry, onCloseWithoutWriting }: ErrorBodyProps) {
+function ErrorBody({
+  scan,
+  writingPartial = false,
+  onWritePartial,
+  onRetry,
+  onCloseWithoutWriting,
+  explanation = DEFAULT_EXPLANATION,
+}: ErrorBodyProps) {
   // The locked headline template ("Stopped at {pct}% -- the volume went
   // away") assumes a percentage is always known. A source loss can also
   // happen during the counting sub-state, before any total -- and therefore
@@ -69,10 +95,7 @@ function ErrorBody({ scan, writingPartial, onWritePartial, onRetry, onCloseWitho
         </div>
       </div>
 
-      <p className="ws-create-explain">
-        Nothing was written yet. A partial catalog is still useful for a failing card — it records what could
-        be read, and marks the gap.
-      </p>
+      <p className="ws-create-explain">{explanation}</p>
 
       <div className="ws-create-actions">
         {/* Primary: calls wailsAPI.writePartialCatalog (via onWritePartial,
@@ -81,27 +104,41 @@ function ErrorBody({ scan, writingPartial, onWritePartial, onRetry, onCloseWitho
             synchronous ref guard -- is what stops a second call from ever
             being issued; the binding itself also caches its first result,
             so two clicks land on one catalog even if this disable somehow
-            raced (T-25-13, defense in depth). */}
+            raced (T-25-13, defense in depth). Omitted entirely when the
+            caller passes no onWritePartial (28-03) -- "Retry scan" below
+            takes this slot's primary styling instead, so exactly one strong
+            CTA exists either way. */}
+        {onWritePartial && (
+          <button
+            type="button"
+            className="ws-create-btn ws-create-btn-primary"
+            disabled={writingPartial}
+            onClick={onWritePartial}
+          >
+            Write partial catalog
+          </button>
+        )}
+        {/* Restarts the scan on the same already-selected source. StartScan
+            runs synchronously on the Go side and its deferred cleanup clears
+            the active-scan handle before the rejected promise ever reaches
+            this component, so by the time this button is clickable the prior
+            context has already released -- no separate wait is needed beyond
+            the submitting-ref guard CreateSlideOver's handleCreate already
+            applies to every start (T-25-24). Disabled while writingPartial is
+            true (CR-02/WR-02): retrying while a partial write is still in
+            flight would clear the retained tree that write is reading from,
+            racing the write for the state it records on completion.
+            Outlined secondary when a partial-write action exists alongside
+            it; promoted to the primary-styled slot (28-03) when it doesn't,
+            per the doc comment on the button above. */}
         <button
           type="button"
-          className="ws-create-btn ws-create-btn-primary"
+          className={
+            onWritePartial ? 'ws-create-btn-outline ws-create-btn-outline-34' : 'ws-create-btn ws-create-btn-primary'
+          }
           disabled={writingPartial}
-          onClick={onWritePartial}
+          onClick={onRetry}
         >
-          Write partial catalog
-        </button>
-        {/* Outlined secondary: restarts the scan on the same already-selected
-            source. StartScan runs synchronously on the Go side and its
-            deferred cleanup clears the active-scan handle before the
-            rejected promise ever reaches this component, so by the time
-            this button is clickable the prior context has already released
-            -- no separate wait is needed beyond the submitting-ref guard
-            CreateSlideOver's handleCreate already applies to every start
-            (T-25-24). Disabled while writingPartial is true (CR-02/WR-02):
-            retrying while a partial write is still in flight would clear
-            the retained tree that write is reading from, racing the write
-            for the state it records on completion. */}
-        <button type="button" className="ws-create-btn-outline ws-create-btn-outline-34" disabled={writingPartial} onClick={onRetry}>
           Retry scan
         </button>
         {/* Text tertiary: names the consequence, not the gesture -- a user

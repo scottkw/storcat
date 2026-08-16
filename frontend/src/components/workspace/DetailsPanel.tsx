@@ -55,6 +55,12 @@ function CatalogActions({
   const [menuOpen, setMenuOpen] = useState(false);
   const [renameOpen, setRenameOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  // RescanDialog is conditionally mounted here too -- the same pattern
+  // Footer's own instance already uses, not shared with it (this menu item
+  // and the footer button are two independent entry points onto the same
+  // component, 28-UI-SPEC.md's Entry Points table).
+  const [rescanOpen, setRescanOpen] = useState(false);
+  const isScanningNow = state.scan.status === 'counting' || state.scan.status === 'scanning';
 
   // No busy state and no disabled item while this runs -- a fast local file
   // copy, this app has no spinners, and 27-UI-SPEC.md's E1 table marks the
@@ -86,6 +92,31 @@ function CatalogActions({
       onSelect: () => {
         setMenuOpen(false);
         setRenameOpen(true);
+      },
+    },
+    {
+      id: 'rescan',
+      // Longer than the footer button's "Re-scan volume…" -- both locked
+      // labels, the difference deliberate: a generic menu item needs the
+      // disambiguating "& diff" suffix the footer's single-catalog context
+      // doesn't (28-UI-SPEC.md's Copywriting Contract).
+      label: 'Re-scan volume & diff…',
+      onSelect: () => {
+        // Same shared guard the footer button already applies
+        // (state.scan.status). Menu.tsx's MenuItemSpec has no per-item
+        // disabled/title field to render aria-disabled/dimmed on the menu
+        // button itself without editing Menu.tsx (locked unmodified this
+        // plan, 28-UI-SPEC.md) -- so this guard is enforced functionally: a
+        // click while scanning surfaces the exact locked tooltip string
+        // through the shared error slot instead of opening the dialog,
+        // never a silent no-op.
+        if (isScanningNow) {
+          setMenuOpen(false);
+          onError('A scan is already running — open it from the status bar.');
+          return;
+        }
+        setMenuOpen(false);
+        setRescanOpen(true);
       },
     },
     {
@@ -179,6 +210,9 @@ function CatalogActions({
           dispatch({ type: 'REQUEST_RAIL_REFRESH' });
         }}
       />
+      {rescanOpen && (
+        <RescanDialog catalog={catalog} oldTreeAvailable onError={onError} onClose={() => setRescanOpen(false)} />
+      )}
     </>
   );
 }
