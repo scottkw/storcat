@@ -2182,6 +2182,45 @@
   cursor: default;
 }
 
+/* ---------------------------------------------------------------------
+ * Phase 28-05 -- UnreadableCatalogPanel's action trio (STATE-03). Re-scan
+ * volume / Open the .html instead / Remove from library, each routed to an
+ * already-shipped surface (RescanDialog Variant B, Footer's handleOpenHtml
+ * logic, the existing DeleteConfirmDialog). No new CSS custom properties.
+ * --------------------------------------------------------------------- */
+
+.ws-unreadable-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.ws-unreadable-action {
+  height: 32px;
+  padding: 0 15px;
+  border-radius: 8px;
+  font-size: 12.5px;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid var(--l);
+  color: var(--tx);
+}
+
+.ws-unreadable-action:disabled {
+  opacity: .5;
+  cursor: default;
+}
+
+.ws-unreadable-action-primary {
+  background: var(--ac);
+  color: var(--onac);
+  font-weight: 600;
+  border: none;
+}
+
+.ws-unreadable-action-danger {
+  color: var(--danger);
+}
+
 /* The write-failure inline banner -- same shape as RenameDialog/
  * DeleteConfirmDialog's .ws-dialog-error (12px, --danger), its own
  * declaration per this app's "own declaration per genuinely distinct

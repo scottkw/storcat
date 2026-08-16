@@ -1,4 +1,8 @@
+import { useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
+import { wailsAPI } from '../../services/wailsAPI';
+import RescanDialog from './rescan/RescanDialog';
+import DeleteConfirmDialog from './DeleteConfirmDialog';
 
 // A catalog can arrive broken by either of two independent routes: the rail
 // listing's own parse-status check (BrowseCatalogs' detectParseError, which
@@ -16,10 +20,19 @@ const BYTE_OFFSET_RE = /^byte (\d+): (.*)$/s;
 const READ_FAILURE_RE = /no such file or directory|permission denied|failed to read catalog file/i;
 
 function UnreadableCatalogPanel() {
-  const { state } = useAppContext();
+  const { state, dispatch } = useAppContext();
   const catalog = state.catalogs.find((c) => c.path === state.currentCatalogId);
   const treeMessage = state.tree.status === 'error' ? state.tree.message : '';
   const rawError = pickRawError(catalog, treeMessage);
+
+  // Hooks declared unconditionally, ahead of the early return below, so
+  // their call order never varies across renders -- same discipline
+  // DetailsPanel's own action-error slot follows.
+  const [rescanOpen, setRescanOpen] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [openBusy, setOpenBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const isScanningNow = state.scan.status === 'counting' || state.scan.status === 'scanning';
 
   if (rawError === '') return null;
 
@@ -40,6 +53,31 @@ function UnreadableCatalogPanel() {
     ['Reason', reason],
     ['Parser', parser],
   ];
+
+  // Reuses DetailsPanel's Footer.handleOpenHtml logic verbatim (same
+  // getCatalogHtmlPath + openExternal call pair) -- an unreadable catalog
+  // can still have a valid .html companion since only the JSON failed to
+  // parse. No second path derivation.
+  async function handleOpenHtml() {
+    if (!catalog || openBusy) return;
+    setOpenBusy(true);
+    setActionError(null);
+    if (!state.catalogDir) {
+      setActionError('No catalog directory configured.');
+      setOpenBusy(false);
+      return;
+    }
+    const htmlPathResult = await wailsAPI.getCatalogHtmlPath(catalog.path, state.catalogDir);
+    if (htmlPathResult.success) {
+      const openResult = await wailsAPI.openExternal(htmlPathResult.htmlPath, state.catalogDir);
+      if (!openResult.success) {
+        setActionError(openResult.error);
+      }
+    } else {
+      setActionError(htmlPathResult.error);
+    }
+    setOpenBusy(false);
+  }
 
   return (
     <div
@@ -108,8 +146,85 @@ function UnreadableCatalogPanel() {
         {rawError}
       </div>
 
-      {/* No action buttons this phase -- STATE-03's re-scan / open-HTML /
-          remove-from-library trio lands together in Phase 28. */}
+      {catalog && (
+        <div className="ws-unreadable-actions">
+          {/* Button 1 -- "Re-scan volume" (no ellipsis, locked): deliberately
+              distinct from the details-panel footer's own longer label
+              (which carries a trailing ellipsis) and the catalog-actions
+              menu's disambiguated "& diff" variant -- all three are locked
+              labels, and the differences are intentional, not drift. Opens
+              RescanDialog at the pick-volume step with the old-tree flag
+              false: the JSON here doesn't parse, so there is no old tree to
+              diff against and step 3 renders the reduced Variant B
+              (scan-complete summary, overwrite/keep-both only, no stat
+              grid, no diff list). */}
+          <button
+            type="button"
+            className="ws-unreadable-action ws-unreadable-action-primary"
+            disabled={isScanningNow}
+            aria-disabled={isScanningNow}
+            title={isScanningNow ? 'A scan is already running — open it from the status bar.' : undefined}
+            onClick={() => setRescanOpen(true)}
+          >
+            Re-scan volume
+          </button>
+          {/* Omitted entirely (not greyed) when there's no .html companion --
+              the same "no button whose only outcome is inapplicable" rule
+              the delete dialog's own conditional .html row follows. */}
+          {catalog.hasHtml && (
+            <button
+              type="button"
+              className="ws-unreadable-action"
+              disabled={openBusy}
+              onClick={handleOpenHtml}
+            >
+              Open the .html instead
+            </button>
+          )}
+          {/* Opens the existing Phase 27 delete confirmation, unchanged --
+              there is no library-membership concept to toggle; membership IS
+              the file living in the configured catalog directory, so this is
+              Phase 27's delete-to-Trash, reused, not re-implemented. */}
+          <button
+            type="button"
+            className="ws-unreadable-action ws-unreadable-action-danger"
+            onClick={() => setDeleteOpen(true)}
+          >
+            Remove from library
+          </button>
+        </div>
+      )}
+
+      {actionError && (
+        <span style={{ fontSize: 11, color: 'var(--danger)', lineHeight: 1.4 }}>{actionError}</span>
+      )}
+
+      {catalog && rescanOpen && (
+        <RescanDialog
+          catalog={catalog}
+          catalogDir={state.catalogDir}
+          oldTreeAvailable={false}
+          onError={setActionError}
+          onClose={() => setRescanOpen(false)}
+        />
+      )}
+
+      {catalog && (
+        <DeleteConfirmDialog
+          isOpen={deleteOpen}
+          onClose={() => setDeleteOpen(false)}
+          catalog={catalog}
+          catalogDir={state.catalogDir}
+          onDeleted={() => {
+            // This panel only renders for the current catalog selection, so
+            // the deleted catalog is always the current one -- same
+            // fall-back-to-placeholder + rail-refresh pair CatalogActions'
+            // own onDeleted already uses.
+            dispatch({ type: 'CLEAR_CURRENT_CATALOG' });
+            dispatch({ type: 'REQUEST_RAIL_REFRESH' });
+          }}
+        />
+      )}
     </div>
   );
 }
