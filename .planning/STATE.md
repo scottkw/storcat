@@ -5,15 +5,15 @@ milestone_name: Workspace Redesign
 current_phase: 28
 current_phase_name: Re-scan & Diff
 status: executing
-stopped_at: Completed 28-01-PLAN.md
-last_updated: "2026-08-16T19:23:42.456Z"
+stopped_at: Completed 28-02-PLAN.md
+last_updated: "2026-08-16T19:40:49.160Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
   total_phases: 7
   completed_phases: 6
   total_plans: 43
-  completed_plans: 38
+  completed_plans: 39
   percent: 86
 ---
 
@@ -29,13 +29,13 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 ## Current Position
 
 Phase: 28 (Re-scan & Diff) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 Status: Ready to execute
 Last activity: 2026-08-16 — Phase 28 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [█████████░] 88%
+Progress: [█████████░] 91%
 
 ## Performance Metrics
 
@@ -102,6 +102,7 @@ Progress: [█████████░] 88%
 | Phase 27 P06 | 12min | 2 tasks | 6 files |
 | Phase 27 P07 | 45min | 3 tasks | 4 files |
 | Phase 28 P01 | 55min | 2 tasks | 17 files |
+| Phase 28 P02 | 15min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -203,6 +204,8 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 28-01: RescanCatalog never touches a.lastPartial/a.lastPartialResult/a.lastScanReq on any path -- given its own reviewable commit (Task 2) per 28-RESEARCH.md's flagged highest-risk regression
 - [Phase ?]: 28-01: Directories are diffed for existence only (added/removed/unchanged), never 'changed' -- avoids double-counting a directory's own mtime bump alongside its child's added/removed row
 - [Phase ?]: 28-01: RescanDialog's tracer-scope error handling returns to step 1 via re-dispatching RESCAN_OPENED and surfaces the message through DetailsPanel's existing error slot -- the full Retry/Close error step is explicitly plan 28-02+ scope
+- [Phase ?]: 28-02: Descendant pruning added to ComputeDiff -- an unreadable-in-new path's old-tree descendants are excluded from the diff entirely, never reported removed (Rule 2, closes a real gap in T-28-05's mitigation)
+- [Phase ?]: 28-02: Test-file Options literals use field assignment, not struct-literal colon syntax, to avoid colliding with the plan's own single-opt-in verification grep
 
 ### Key Research Findings
 
@@ -248,8 +251,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-16T19:23:42.438Z
-Stopped at: Completed 28-01-PLAN.md
+Last session: 2026-08-16T19:40:49.142Z
+Stopped at: Completed 28-02-PLAN.md
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 
