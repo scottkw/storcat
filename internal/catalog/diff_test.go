@@ -436,7 +436,9 @@ func TestComputeDiff_EndToEndWithRealUnreadableSubdirectory(t *testing.T) {
 	t.Cleanup(func() { _ = os.Chmod(locked, 0755) })
 
 	// newTree: re-scan's exact call shape -- MarkUnreadableOnSkip true.
-	newTree, err := s.Walk(context.Background(), dir, Options{MarkUnreadableOnSkip: true}, nil)
+	newOpts := Options{}
+	newOpts.MarkUnreadableOnSkip = true
+	newTree, err := s.Walk(context.Background(), dir, newOpts, nil)
 	if err != nil {
 		t.Fatalf("Walk (new): %v", err)
 	}
