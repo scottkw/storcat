@@ -1,163 +1,97 @@
 ---
 phase: 27-catalog-actions-watch
-reviewed: 2026-08-16T15:10:00Z
+reviewed: 2026-08-16T14:40:00Z
 depth: standard
-files_reviewed: 12
+files_reviewed: 6
 files_reviewed_list:
-  - internal/catalog/atomicwrite.go
   - internal/catalog/rename.go
   - internal/catalog/rename_test.go
   - internal/catalog/duplicate.go
-  - internal/catalog/duplicate_test.go
+  - internal/catalog/atomicwrite.go
   - internal/watch/watcher.go
-  - internal/watch/watcher_test.go
-  - internal/osutil/trash.go
   - frontend/src/components/workspace/Menu.tsx
-  - frontend/src/hooks/useModalBehavior.ts
-  - frontend/src/components/workspace/DialogShell.tsx
-  - app.go
 findings:
   critical: 0
-  warning: 1
-  info: 0
-  total: 1
+  warning: 2
+  info: 1
+  total: 3
 status: issues_found
 ---
 
 # Phase 27: Code Review Report
 
-**Reviewed:** 2026-08-16T15:10:00Z
+**Reviewed:** 2026-08-16T14:40:00Z
 **Depth:** standard
-**Files Reviewed:** 12
+**Files Reviewed:** 6
 **Status:** issues_found
 
 ## Summary
 
-Re-review iteration 2 of the `--auto` fix loop. All four applied fixes from iteration 1's review
-(`27-REVIEW.iter2.md`) were re-verified directly against the current code, not taken on faith:
+Final re-review (iteration 3 of 3), focused on iteration 2's `RenameCatalog` reordering and a second look at iteration 1's `Menu.tsx` `preventDefault()` fix.
 
-- **CR-01 (Menu.tsx focus restore):** confirmed correctly scoped — `event.preventDefault()` only runs on the
-  "target is outside both `containerRef` and `triggerRef`" close branch, never on a click inside the menu or on
-  the trigger itself. Per the scrutiny instruction, I traced through the side effect explicitly: because
-  `preventDefault()` on a cancelable `pointerdown` suppresses the browser's compatibility `mousedown`/`click`
-  dispatch for that gesture, a click on a *different* interactive control elsewhere in the app while the menu is
-  open will close the menu but will **not** activate that control on the same click — a second click is needed.
-  This is real, but it is the same "first click away only dismisses" behavior used by native OS context menus and
-  every major popover/dropdown implementation (Radix, MUI, react-aria), it was already identified and explicitly
-  accepted as a trade-off (not a regression) in the originating review, and no product spec here calls for
-  click-through-to-target behavior. Not re-raised as a new finding.
-- **WR-01 (watcher Errors dispatch):** `go w.c.fireNow()` is race-safe — `coalescer.stop()`'s `c.stopped` guard,
-  read under the same mutex `fireNow()` locks, correctly prevents a late-spawned goroutine from firing after
-  `Close()`. Verified with `go test ./internal/watch/... -race -count=3`: clean.
-- **WR-02 (fsync log spam):** the `sync.Once` guard is exactly one of the two remedies the originating review
-  itself proposed, is correctly placed at package scope, and is now unconditional-log-once rather than
-  windows-only, so it still catches a first-time failure on any platform. It does narrow observability to "at
-  most once ever, process-wide" rather than "once per distinct failure" (e.g., a second, unrelated persistent
-  failure on a different catalog directory later in the same session would not be logged) — a real limitation, but
-  the specific remedy applied here is one the prior review named as acceptable, so this is not re-raised as new.
-- **WR-03 (`.html` sibling containment bypass):** `resolveContainedSibling` calls `osutil.ContainsPath` directly —
-  it is not a second, weaker reimplementation, it *is* the same function `TrashPaths`/`GetCatalogHtmlPath`/
-  `RenameCatalog`'s own primary-path check use. Confirmed via the regression tests
-  (`TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir`, `TestDuplicateCatalog_RejectsHTMLSymlinkEscapingCatalogDir`)
-  and `go build ./... && go vet ./... && go test ./... -race -count=1`, all clean.
-- **WR-04 (DialogShell focus loss):** correctly left untouched; the speculated failure mode was live-verified not
-  to reproduce, and `useModalBehavior.ts` is shared by every overlay in the app, so touching it speculatively would
-  have been the higher-risk move.
+**Iteration 2's reordering is correct.** Tracing `RenameCatalog` line by line: every fallible step — reading the JSON, computing the patched JSON bytes, resolving+containment-checking the `.html` sibling, reading the sibling, computing the patched HTML bytes — now happens entirely in memory before either `WriteFileAtomic` call. The *only* code that runs after the first write (`WriteFileAtomic(jsonPath, ...)`) is the second write itself. That means the only way a "rejected" rename can now leave the JSON title mutated is a failure of the second `WriteFileAtomic` call proper (disk full, permission change between read and write, crash) — exactly the residual the code comment at rename.go:76-86 describes, and no validation/containment step can trigger it anymore. The regression test (`TestRenameCatalog_RejectedHTMLStepLeavesJSONTitleUnchanged`) genuinely exercises the fixed code path for the right reason: both its subtests (symlink escape, unreadable `.html`) fail before either write is attempted, so `jsonBefore == jsonAfter` is pinning real behavior, not passing by accident.
 
-While tracing WR-03's new code path, I found one **new, previously-unflagged, and experimentally confirmed**
-correctness bug in `rename.go` that this fix pass touched but did not introduce (it predates WR-03; WR-03 just
-makes it newly *reachable* via the symlink-escape rejection path it added, in addition to its pre-existing
-plain-I/O-error triggers). Detailed below as WR-01 of this review.
+Pre-computing `patchedHTML` before either write does not introduce a new problem: the file was already being read in full either way, the read-to-write window is not materially widened (a JSON write plus a rename+fsync, not a large gap), and there's no new resource leak (`os.ReadFile` closes its own handle).
+
+`DuplicateCatalog` was re-confirmed to genuinely not share `RenameCatalog`'s hazard class: it only ever writes to a *newly chosen* filename (`nextCopyRoot` guarantees `<newRoot>.json`/`.html` didn't previously exist), so a rejected `.html` step leaves an incomplete new artifact, never a corrupted pre-existing one — the source `jsonPath`/its `.html` are never opened for writing. The comment at duplicate.go:74-79 ("report exactly what succeeded... no rollback") is the correct framing and applies equally, if silently, to the two earlier `.html`-step failure branches (lines 60-65, 67-70) that return the same `(newJSONPath, err)` shape without repeating the rationale — not a defect, just unduplicated commentary.
+
+Two real, still-open issues surfaced on this pass: one in `RenameCatalog`'s partial-failure error reporting, and one in `Menu.tsx`'s `preventDefault()` fix having a broader blast radius than the accepted trade-off describes. Neither is a crash/security/data-loss issue, so both are WARNING, not BLOCKER. See below.
 
 ## Warnings
 
-### WR-01: `RenameCatalog` mutates the JSON title before validating the `.html` sibling, so a rejected rename leaves the JSON silently renamed anyway
+### WR-01: RenameCatalog's HTML-write failure doesn't tell the caller the JSON already changed
 
-**File:** `internal/catalog/rename.go:27-69`
-**Issue:** `RenameCatalog` writes the new title to the JSON file (`WriteFileAtomic(jsonPath, ...)`, line 43) *before*
-resolving or containment-checking the derived `.html` sibling (lines 47-57). If the sibling step then fails for any
-reason — including the exact symlink-escape rejection `resolveContainedSibling` (WR-03) exists to produce, or a
-plain permission error on the `.html` file — `RenameCatalog` returns a non-nil `error`, but the JSON file has
-already been renamed. The caller (and, through it, the user) is told the rename failed, while the catalog's title
-was in fact changed on disk.
+**File:** `internal/catalog/rename.go:76-86`
+**Issue:** When the *second* `WriteFileAtomic` (the `.html` write) fails after the first (`.json`) write has already succeeded, the function returns a plain `fmt.Errorf("rename %s: %w", jsonPath, err)` — indistinguishable in shape from every other error this function returns, including the ones raised *before* any write happens. The caller (and, through it, the user) has no way to tell "nothing happened, retry is a no-op" apart from "the title was already changed in the JSON, only the HTML view is now stale." A user who sees a generic "rename failed" message and retries with a different title, or simply gives up, may be left with a JSON/HTML title mismatch they don't know exists. Contrast with `DuplicateCatalog`, which handles its own equivalent partial-success case by returning the real, already-written path alongside the error so the caller can report what actually happened (duplicate.go:73-79) — `RenameCatalog`'s `error`-only signature has no equivalent channel, and doesn't compensate for that with a distinguishing message.
 
-I reproduced this experimentally against the current tree (test removed after confirming; not left in the repo):
+This is the "cheap way to narrow the residual further" the reordering didn't cover: the fix isn't about shrinking the crash window (genuinely not cheap, see IN-01), it's about being honest in the one case that *isn't* a crash — an ordinary write failure on the second file, which is common enough (permissions, disk full) to be worth a distinct message.
 
-```
-$ go test ./internal/catalog/ -run TestRenameCatalog_PartialWriteOnHTMLEscapeRejection -v
-    got expected error: rename .../photos.json: .../photos.html escapes catalog directory
-    json title after rejected rename: "Photos 2024"
-    BUG CONFIRMED: json title was mutated to "Photos 2024" despite RenameCatalog returning an error
-```
-
-`app.go`'s `RenameCatalog` binding and `wailsAPI.ts`'s `renameCatalog` wrapper both propagate only the error (Wails
-discards a Go binding's non-error return value on the JS side when the promise rejects), so there is no
-partial-success signal reaching the frontend either — the UI will show a rename-failed toast while the on-disk
-title has already changed, and the discrepancy is only visible the next time the catalog is browsed/reloaded. This
-is a logic/consistency bug, not the "report exactly what succeeded" pattern `DuplicateCatalog` deliberately
-documents for itself (that function creates a *new* file on partial failure and still returns its path; this
-function silently mutates the *existing* file with no equivalent signal).
-
-**Fix:** Resolve/read the `.html` sibling before writing the JSON, so a rejected operation leaves nothing mutated:
-
+**Fix:**
 ```go
-func RenameCatalog(jsonPath string, newTitle string) error {
-	trimmed := strings.TrimSpace(newTitle)
-	if trimmed == "" {
-		return fmt.Errorf("rename %s: title is empty", jsonPath)
+if hasHTML {
+	if err := WriteFileAtomic(resolvedHTMLPath, patchedHTML, 0644); err != nil {
+		return fmt.Errorf("rename %s: title updated in %s but failed to update %s: %w",
+			jsonPath, filepath.Base(jsonPath), filepath.Base(resolvedHTMLPath), err)
 	}
-
-	data, err := os.ReadFile(jsonPath)
-	if err != nil {
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
-	}
-	out, err := setTitleInDocument(data, trimmed)
-	if err != nil {
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
-	}
-
-	// Resolve/validate/read the .html sibling BEFORE writing the JSON, so a
-	// rejected sibling (symlink escape, permission error, ...) leaves the
-	// JSON completely untouched instead of half-renamed.
-	htmlPath := strings.TrimSuffix(jsonPath, ".json") + ".html"
-	hasHTML := true
-	resolvedHTMLPath, err := resolveContainedSibling(htmlPath, filepath.Dir(jsonPath))
-	if err != nil {
-		if !os.IsNotExist(err) {
-			return fmt.Errorf("rename %s: %w", jsonPath, err)
-		}
-		hasHTML = false
-	}
-	var patchedHTML []byte
-	if hasHTML {
-		htmlData, err := os.ReadFile(resolvedHTMLPath)
-		if err != nil {
-			return fmt.Errorf("rename %s: %w", jsonPath, err)
-		}
-		patchedHTML = rewriteHTMLTitle(htmlData, trimmed)
-	}
-
-	if err := WriteFileAtomic(jsonPath, out, 0644); err != nil {
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
-	}
-	if hasHTML {
-		if err := WriteFileAtomic(resolvedHTMLPath, patchedHTML, 0644); err != nil {
-			return fmt.Errorf("rename %s: %w", jsonPath, err)
-		}
-	}
-	return nil
 }
 ```
 
-This closes the containment/read failure class entirely (the dominant one, and the one WR-03 just added a new
-trigger for) and narrows the residual gap to a genuine mid-write disk failure between the two `WriteFileAtomic`
-calls, which is a much smaller and harder-to-avoid window inherent to any two-file update. Worth adding a
-regression test alongside the fix (`TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir` currently only asserts
-the outside file is untouched; it does not assert the JSON title is untouched — extending it, or adding a sibling
-test, would catch a regression of this exact bug).
+### WR-02: Menu.tsx's outside-click `preventDefault()` blocks focus on other page elements, not just re-clicks on the trigger
+
+**File:** `frontend/src/components/workspace/Menu.tsx:72-86`
+**Issue:** `preventDefault()` on a `pointerdown` event is the standard technique browsers use to suppress that event's default action, which for a focusable target includes focus assignment (the same mechanism `onMouseDown={e => e.preventDefault()}` exploits to stop a button from stealing focus). This listener is registered on `document` and only excludes the menu's own container and its trigger button (lines 74-75) — it does **not** exclude other focusable elements elsewhere on the page (inputs, other buttons, links). So: while this menu is open, clicking directly on, say, a search input or another toolbar button will correctly close the menu, but the click's own default action — focusing that input/button — is suppressed too, because `preventDefault()` was called on the same `pointerdown`. The user has to click a second time to actually focus what they clicked on the first time. This is a real, commonly-reachable regression (any interaction that opens the menu then clicks straight to another control), not just the accepted "clicking the trigger again only dismisses, doesn't reopen" trade-off the CR-01 comment describes — the comment's stated purpose (stopping the browser's own mousedown focus default from clobbering `restoreTarget.focus()`) is legitimate, but the blanket `preventDefault()` reaches every other element on the page too, which was never the intent.
+**Fix:** Scope the `preventDefault()` to only the case it's actually needed for — i.e. only when the outside click is not itself landing on something that should keep its own focus:
+```tsx
+const handlePointerDown = (event: PointerEvent) => {
+  const target = event.target as Node;
+  if (containerRef.current?.contains(target)) return;
+  if (triggerRef.current?.contains(target)) return;
+  // Only suppress the browser's own focus-follows-click default action
+  // when the click isn't itself headed for a focusable element -- letting
+  // an outside click on e.g. a search input focus that input is the
+  // correct, expected behavior; it's only an empty-area/backdrop click
+  // where useModalBehavior's restoreTarget.focus() needs to win the race.
+  const isFocusableTarget =
+    target instanceof HTMLElement &&
+    target.matches('a[href],button,input,select,textarea,[tabindex]:not([tabindex="-1"])');
+  if (!isFocusableTarget) {
+    event.preventDefault();
+  }
+  onClose();
+};
+```
+Note this only narrows the blast radius within `Menu.tsx`; if `useModalBehavior`'s restore-on-close still fights the newly-focused element afterward, that's a `useModalBehavior`-side concern outside this file's scope.
+
+## Info
+
+### IN-01: The two-write residual is honestly described but the window could be narrowed further, if ever worth the complexity
+
+**File:** `internal/catalog/rename.go:76-86`, `internal/catalog/atomicwrite.go:37-105`
+**Issue:** The comment's claim that a full two-file atomic swap is out of scope is reasonable, but there is a smaller, still-real narrowing available that isn't a full transaction: `WriteFileAtomic` currently does write-to-temp, fsync, chmod, rename, best-effort directory-fsync *per file, sequentially*. Calling it twice back-to-back (as `RenameCatalog` does) means the crash window between the two files' final states spans not just two renames but also the first call's own directory-fsync and the second call's temp-file write+fsync+chmod in between. A helper that (a) writes+fsyncs both temp files first, (b) performs both `os.Rename` calls back-to-back, then (c) fsyncs the shared parent directory once, would shrink the window to just the two adjacent renames — still not a true transaction (a crash between the two renames is still observable), but meaningfully tighter than today's ordering. Not a correctness bug in the current code, and not "cheap" in the sense of a one-line change (it needs a small new shared helper used by both `RenameCatalog`'s two writes), so this is left as a suggestion rather than a required fix.
+**Fix:** Consider, if this residual is ever revisited: a `WriteFilesAtomicPair` (or similar) helper in `atomicwrite.go` that batches the write+fsync steps for N files before performing all N renames adjacently and a single trailing directory fsync.
 
 ---
 
-_Reviewed: 2026-08-16T15:10:00Z_
+_Reviewed: 2026-08-16T14:40:00Z_
 _Reviewer: Claude (gsd-code-reviewer)_
 _Depth: standard_
