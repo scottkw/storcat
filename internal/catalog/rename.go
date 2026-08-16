@@ -81,7 +81,8 @@ func RenameCatalog(jsonPath string, newTitle string) error {
 		// pair is not a single atomic transaction -- see the fix report for
 		// why a full two-file atomic swap is out of scope here.
 		if err := WriteFileAtomic(resolvedHTMLPath, patchedHTML, 0644); err != nil {
-			return fmt.Errorf("rename %s: %w", jsonPath, err)
+			return fmt.Errorf("rename %s: title updated in %s but failed to update %s: %w",
+				jsonPath, filepath.Base(jsonPath), filepath.Base(resolvedHTMLPath), err)
 		}
 	}
 	return nil
