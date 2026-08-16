@@ -141,10 +141,13 @@ export const wailsAPI = {
   // place, or keep-both alongside the original via the same "-copy"/
   // "-copy-N" collision loop Duplicate already uses. mode is bridged as a
   // plain string (ResolveMode's own doc comment explains why); "discard"
-  // has no Go call at all and is never passed here.
-  resolveRescan: async (jsonPath: string, catalogDir: string, mode: ResolveMode) => {
+  // has no Go call at all and is never passed here. catalogDir is NOT
+  // accepted here (WR-02) -- the Go side derives it itself from the
+  // configured catalog directory, the same way RescanCatalog does, rather
+  // than trusting a renderer-supplied value for its containment check.
+  resolveRescan: async (jsonPath: string, mode: ResolveMode) => {
     try {
-      const result = await ResolveRescan(jsonPath, catalogDir, mode);
+      const result = await ResolveRescan(jsonPath, mode);
       return { success: true as const, result };
     } catch (error: any) {
       return wailsError(error);

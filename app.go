@@ -548,11 +548,18 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 // jsonPath is re-derived and re-validated against catalogDir with the
 // identical filepath.Abs -> filepath.EvalSymlinks -> osutil.ContainsPath
 // sequence DeleteCatalog uses (T-28-11) -- never trusted from the
-// renderer's payload beyond that check. The tree actually written is the
-// one RescanCatalog already walked and diffed, held on a.lastRescanTree
-// under scanMu; a mismatch between that held path and this call's resolved
-// target (or no tree held at all) fails closed rather than walking again
-// or writing a stale tree to the wrong catalog.
+// renderer's payload beyond that check. catalogDir itself is derived from
+// a.configManager, exactly as RescanCatalog derives it, rather than
+// accepted as a caller-supplied parameter (WR-02): the write can only ever
+// proceed if resolved == a.lastRescanJSONPath, a value set by a prior
+// RescanCatalog call whose own containment check already ran against this
+// same config-derived directory, so a renderer-supplied catalogDir added
+// nothing but a second, weaker guard that a future edit could accidentally
+// come to rely on. The tree actually written is the one RescanCatalog
+// already walked and diffed, held on a.lastRescanTree under scanMu; a
+// mismatch between that held path and this call's resolved target (or no
+// tree held at all) fails closed rather than walking again or writing a
+// stale tree to the wrong catalog.
 // mode is a plain string, not catalog.ResolveMode, deliberately: Wails'
 // codegen does not walk into internal/catalog to emit a TS type for a
 // defined string-const type referenced only as a parameter (the same
@@ -561,10 +568,17 @@ func (a *App) RescanCatalog(jsonPath, sourcePath string, oldTreeAvailable bool) 
 // `import {catalog} from '../models'` with no corresponding namespace,
 // failing tsc outright. The two accepted values are validated by exact
 // string match against catalog.ResolveOverwrite/ResolveKeepBoth below.
-func (a *App) ResolveRescan(jsonPath string, catalogDir string, mode string) (*models.CreateCatalogResult, error) {
+func (a *App) ResolveRescan(jsonPath string, mode string) (*models.CreateCatalogResult, error) {
 	resolveMode := catalog.ResolveMode(mode)
 	if resolveMode != catalog.ResolveOverwrite && resolveMode != catalog.ResolveKeepBoth {
 		return nil, fmt.Errorf("resolve re-scan %s: unsupported mode %q", jsonPath, mode)
+	}
+
+	catalogDir := ""
+	if a.configManager != nil {
+		if cfg := a.configManager.Get(); cfg != nil {
+			catalogDir = cfg.CatalogDirectory
+		}
 	}
 	if catalogDir == "" {
 		return nil, fmt.Errorf("resolve re-scan %s: no catalog directory configured", jsonPath)

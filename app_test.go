@@ -801,7 +801,7 @@ func TestResolveRescan_RejectsPathOutsideCatalogDir(t *testing.T) {
 	app.lastRescanJSONPath = resolvedOutside
 	app.scanMu.Unlock()
 
-	_, err = app.ResolveRescan(outsideJSON, catalogDir, string(catalog.ResolveOverwrite))
+	_, err = app.ResolveRescan(outsideJSON, string(catalog.ResolveOverwrite))
 	if err == nil {
 		t.Fatal("expected an error for a jsonPath outside the configured catalog directory")
 	}
@@ -844,7 +844,7 @@ func TestResolveRescan_DiscardIsNotAWritePath(t *testing.T) {
 	app.lastRescanJSONPath = resolved
 	app.scanMu.Unlock()
 
-	_, err = app.ResolveRescan(jsonPath, catalogDir, "discard")
+	_, err = app.ResolveRescan(jsonPath, "discard")
 	if err == nil {
 		t.Fatal("expected an error for mode \"discard\"")
 	}
@@ -914,7 +914,7 @@ func TestResolveRescan_RetainsTreeAcrossFailedWriteAndSucceedsOnRetry(t *testing
 	}
 	t.Cleanup(func() { _ = os.Chmod(catalogDir, 0755) })
 
-	_, err = app.ResolveRescan(jsonPath, catalogDir, string(catalog.ResolveOverwrite))
+	_, err = app.ResolveRescan(jsonPath, string(catalog.ResolveOverwrite))
 	if err == nil {
 		t.Fatal("expected an error writing to a read-only catalog directory")
 	}
@@ -930,7 +930,7 @@ func TestResolveRescan_RetainsTreeAcrossFailedWriteAndSucceedsOnRetry(t *testing
 		t.Fatalf("chmod catalogDir writable again: %v", err)
 	}
 
-	result, err := app.ResolveRescan(jsonPath, catalogDir, string(catalog.ResolveOverwrite))
+	result, err := app.ResolveRescan(jsonPath, string(catalog.ResolveOverwrite))
 	if err != nil {
 		t.Fatalf("retry after directory became writable again: %v", err)
 	}

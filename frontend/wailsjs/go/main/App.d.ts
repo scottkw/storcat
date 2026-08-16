@@ -37,7 +37,7 @@ export function RenameCatalog(arg1:string,arg2:string,arg3:string):Promise<void>
 
 export function RescanCatalog(arg1:string,arg2:string,arg3:boolean):Promise<models.DiffResult>;
 
-export function ResolveRescan(arg1:string,arg2:string,arg3:string):Promise<models.CreateCatalogResult>;
+export function ResolveRescan(arg1:string,arg2:string):Promise<models.CreateCatalogResult>;
 
 export function RevealInFileManager(arg1:string,arg2:string):Promise<void>;
 

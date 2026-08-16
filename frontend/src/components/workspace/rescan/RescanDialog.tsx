@@ -149,10 +149,12 @@ function RescanDialog({ catalog, catalogDir, oldTreeAvailable, onClose, onError 
 
   // Overwrite/Keep-both -- the two write resolutions. Discard calls no
   // binding at all (handleCloseRequest covers it, nothing written).
-  // catalogDir is required for the Go side's containment check, the same
-  // guard every other catalog-mutating action in this app already applies
-  // (Rename/Duplicate/Delete) -- fail closed here rather than sending an
-  // empty directory the backend would just reject anyway.
+  // catalogDir is checked here only as client-side UX -- fail closed rather
+  // than firing a call the backend would just reject anyway when no
+  // catalog directory is configured. It is NOT passed to resolveRescan
+  // (WR-02): the Go side derives its own catalogDir from config, the same
+  // way RescanCatalog does, rather than trusting this value for its
+  // containment check.
   async function handleResolve(mode: 'overwrite' | 'keep-both') {
     if (resolving) return;
     if (!catalogDir) {
@@ -162,7 +164,7 @@ function RescanDialog({ catalog, catalogDir, oldTreeAvailable, onClose, onError 
     setResolving(true);
     setResolveError(null);
 
-    const outcome = await wailsAPI.resolveRescan(catalog.path, catalogDir, mode);
+    const outcome = await wailsAPI.resolveRescan(catalog.path, mode);
 
     setResolving(false);
     if (!outcome.success) {

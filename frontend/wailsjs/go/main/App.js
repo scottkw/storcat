@@ -66,8 +66,8 @@ export function RescanCatalog(arg1, arg2, arg3) {
   return window['go']['main']['App']['RescanCatalog'](arg1, arg2, arg3);
 }
 
-export function ResolveRescan(arg1, arg2, arg3) {
-  return window['go']['main']['App']['ResolveRescan'](arg1, arg2, arg3);
+export function ResolveRescan(arg1, arg2) {
+  return window['go']['main']['App']['ResolveRescan'](arg1, arg2);
 }
 
 export function RevealInFileManager(arg1, arg2) {
