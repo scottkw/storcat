@@ -211,7 +211,13 @@ function CatalogActions({
         }}
       />
       {rescanOpen && (
-        <RescanDialog catalog={catalog} oldTreeAvailable onError={onError} onClose={() => setRescanOpen(false)} />
+        <RescanDialog
+          catalog={catalog}
+          catalogDir={catalogDir}
+          oldTreeAvailable
+          onError={onError}
+          onClose={() => setRescanOpen(false)}
+        />
       )}
     </>
   );
@@ -386,6 +392,7 @@ function Footer({
       {rescanOpen && (
         <RescanDialog
           catalog={catalog}
+          catalogDir={catalogDir}
           oldTreeAvailable
           onError={onError}
           onClose={() => setRescanOpen(false)}

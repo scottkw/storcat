@@ -13,6 +13,7 @@ import DiffList from './DiffList';
 
 export interface RescanDialogProps {
   catalog: models.CatalogMetadata;
+  catalogDir: string | null;
   oldTreeAvailable: boolean;
   onClose: () => void;
   onError: (message: string | null) => void;
@@ -69,11 +70,13 @@ function newTreeStatsFrom(diff: DiffResult): { fileCount: number; totalBytes: nu
  * while open, so a plain mount effect (not an isOpen-keyed re-seed) is
  * correct for registering its own state.rescan slice.
  */
-function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDialogProps) {
+function RescanDialog({ catalog, catalogDir, oldTreeAvailable, onClose, onError }: RescanDialogProps) {
   const { state, dispatch } = useAppContext();
   const [selectedSource, setSelectedSource] = useState<ScanSource | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+  const [resolving, setResolving] = useState(false);
+  const [resolveError, setResolveError] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch({ type: 'RESCAN_OPENED', payload: { catalog, oldTreeAvailable } });
@@ -144,6 +147,38 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
     dispatch({ type: 'RESCAN_DIFFED', payload: { diff: outcome.diff as unknown as DiffResult } });
   }
 
+  // Overwrite/Keep-both -- the two write resolutions. Discard calls no
+  // binding at all (handleCloseRequest covers it, nothing written).
+  // catalogDir is required for the Go side's containment check, the same
+  // guard every other catalog-mutating action in this app already applies
+  // (Rename/Duplicate/Delete) -- fail closed here rather than sending an
+  // empty directory the backend would just reject anyway.
+  async function handleResolve(mode: 'overwrite' | 'keep-both') {
+    if (resolving) return;
+    if (!catalogDir) {
+      setResolveError('No catalog directory configured.');
+      return;
+    }
+    setResolving(true);
+    setResolveError(null);
+
+    const outcome = await wailsAPI.resolveRescan(catalog.path, catalogDir, mode);
+
+    setResolving(false);
+    if (!outcome.success) {
+      const actionLabel = mode === 'overwrite' ? 'Overwrite' : 'Keep both';
+      setResolveError(`${actionLabel} failed: ${outcome.error}`);
+      return;
+    }
+
+    // Success path mirrors Duplicate's own: re-trigger the rail's one
+    // authoritative listing so the resolved/new file appears without
+    // requiring watching to be on (it defaults to off).
+    dispatch({ type: 'REQUEST_RAIL_REFRESH' });
+    dispatch({ type: 'RESCAN_CLOSED' });
+    onClose();
+  }
+
   const step = state.rescan?.step ?? 'pick-volume';
   const diff = state.rescan?.diff ?? null;
   const rescanSourcePath = state.rescan?.sourcePath ?? null;
@@ -189,6 +224,14 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
       : step === 'scanning'
         ? 'step 2 of 3'
         : 'step 1 of 3';
+
+  // A first-candidate PREVIEW label, not a collision-checked guarantee --
+  // if this exact name is already taken by the time the write happens, the
+  // backend's shared collision loop (nextCopyRoot, reused unmodified from
+  // Duplicate) silently resolves to the next free one. No live
+  // collision-check call is made just to keep this label perfectly
+  // accurate (28-UI-SPEC.md's Resolution Footer Contract).
+  const copyRootPreview = catalog.filename.replace(/\.json$/, '') + '-copy.json';
 
   return (
     <div className="ws-rescan-scrim" onClick={handleCloseRequest}>
@@ -304,12 +347,37 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
           </div>
         )}
 
+        {step === 'diff' && resolveError && <div className="ws-rescan-resolve-error">{resolveError}</div>}
+
         {step === 'diff' && (
           <div className="ws-rescan-footer">
+            <div className="ws-rescan-footer-actions">
+              {/* Accent-filled, not danger-styled -- the handoff's own
+                  choice, unchanged by CONTEXT. The destructiveness is
+                  carried by the resolution caption above, not this button's
+                  color (28-UI-SPEC.md's Resolution Footer Contract). */}
+              <button
+                type="button"
+                className="ws-rescan-btn-primary"
+                disabled={resolving}
+                onClick={() => handleResolve('overwrite')}
+              >
+                Overwrite catalog
+              </button>
+              <button
+                type="button"
+                className="ws-rescan-btn-outline"
+                disabled={resolving}
+                onClick={() => handleResolve('keep-both')}
+              >
+                Keep both (write {copyRootPreview})
+              </button>
+            </div>
             <button
               type="button"
               className="ws-rescan-btn-text"
               style={{ marginLeft: 'auto' }}
+              disabled={resolving}
               onClick={handleCloseRequest}
             >
               Discard scan and close

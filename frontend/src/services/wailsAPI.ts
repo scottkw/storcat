@@ -34,8 +34,10 @@ import {
   WritePartialCatalog,
   ListVolumes,
   RescanCatalog,
+  ResolveRescan,
 } from '../../wailsjs/go/main/App';
 import { main } from '../../wailsjs/go/models';
+import type { ResolveMode } from '../types/rescan';
 
 // Wails' generated bindings reject a Go error's message as a plain string,
 // not an Error instance -- `error.message` is undefined for every rejection
@@ -130,6 +132,20 @@ export const wailsAPI = {
     try {
       const diff = await RescanCatalog(jsonPath, sourcePath, oldTreeAvailable);
       return { success: true as const, diff };
+    } catch (error: any) {
+      return wailsError(error);
+    }
+  },
+
+  // Writes the tree a just-completed re-scan diffed to disk -- overwrite in
+  // place, or keep-both alongside the original via the same "-copy"/
+  // "-copy-N" collision loop Duplicate already uses. mode is bridged as a
+  // plain string (ResolveMode's own doc comment explains why); "discard"
+  // has no Go call at all and is never passed here.
+  resolveRescan: async (jsonPath: string, catalogDir: string, mode: ResolveMode) => {
+    try {
+      const result = await ResolveRescan(jsonPath, catalogDir, mode);
+      return { success: true as const, result };
     } catch (error: any) {
       return wailsError(error);
     }

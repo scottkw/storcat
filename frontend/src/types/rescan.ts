@@ -51,6 +51,16 @@ export interface DiffResult {
 export type DiffGroupKey = Exclude<DiffState, 'unchanged'>;
 
 /**
+ * Mirrors internal/catalog/resolve.go's ResolveMode string constants --
+ * bridged as a plain string (see wailsAPI.ts's resolveRescan), not the
+ * generated models.CreateCatalogResult's own machinery, the same
+ * DiffState-style mirror this file already uses above. 'discard' is
+ * deliberately NOT a member: it has no Go call at all (the dialog just
+ * closes), so this type only ever names the two write modes.
+ */
+export type ResolveMode = 'overwrite' | 'keep-both';
+
+/**
  * The three steps this tracer's RescanDialog drives: pick a source volume,
  * watch the shared live scan progress (state.scan, the same slice Create
  * drives), then see the computed diff. The error/interrupted step and the
