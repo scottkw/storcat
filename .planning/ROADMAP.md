@@ -67,7 +67,7 @@
 - [x] **Phase 25: Create Slide-over + Progress/Cancellation/Partial-Catalog** - Volume-aware create flow with live scan progress, real cancellation, and an error-tolerant partial-catalog path (completed 2026-08-14)
 - [x] **Phase 26: Settings** - Theme, density, rail position, and catalog defaults in one settings modal (completed 2026-08-15)
 - [x] **Phase 27: Catalog Actions + Watch** - Rename, duplicate, delete-to-Trash, and live directory watching (completed 2026-08-16)
-- [ ] **Phase 28: Re-scan & Diff** - Re-scan a catalog's source volume and resolve an added/removed/changed diff
+- [x] **Phase 28: Re-scan & Diff** - Re-scan a catalog's source volume and resolve an added/removed/changed diff (completed 2026-08-16)
 
 ## Phase Details
 
@@ -353,4 +353,4 @@ Plans:
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
 | 26. Settings | v3.0.0 | 5/5 | Complete    | 2026-08-15 |
 | 27. Catalog Actions + Watch | v3.0.0 | 7/7 | Complete    | 2026-08-16 |
-| 28. Re-scan & Diff | v3.0.0 | 6/6 | In Progress|  |
+| 28. Re-scan & Diff | v3.0.0 | 6/6 | Complete    | 2026-08-16 |

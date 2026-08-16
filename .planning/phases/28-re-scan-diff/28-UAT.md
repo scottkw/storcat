@@ -1,5 +1,5 @@
 ---
-status: testing
+status: accepted
 phase: 28-re-scan-diff
 source: [28-VERIFICATION.md]
 started: 2026-08-16T23:20:00Z
@@ -14,7 +14,7 @@ expected: |
   wailsAPI.listVolumes() resolves quickly enough in practice — on real removable media,
   not just this dev machine — that the absence of a loading spinner in step 1 never reads
   as a frozen dialog.
-awaiting: user response
+awaiting: none — user accepted backstop items 2026-08-16
 
 ## Tests
 
@@ -31,7 +31,7 @@ deliberately not pinned by a timing assertion.
 how_to_test: Open Re-scan with a slow external or optical volume mounted. Watch step 1 render.
 If it ever looks frozen rather than instant, this fails.
 
-result: [pending]
+result: [accepted-deferred] user accepted; observe in real use
 
 ### 2. The 0.6 similarity ratio and 20-entry floor flag a wrong disc without false positives
 
@@ -46,14 +46,15 @@ how_to_test: Over normal use, note any re-scan where the banner appeared but the
 correct (false positive), or where you did swap discs and it stayed quiet (false negative).
 Both constants are named package-level and greppable for tuning.
 
-result: [pending]
+result: [accepted-deferred] user accepted; observe in real use
 
 ## Summary
 
 total: 2
 passed: 0
 issues: 0
-pending: 2
+pending: 0
+accepted_deferred: 2
 skipped: 0
 blocked: 0
 
