@@ -342,3 +342,69 @@ func TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir(t *testing.T) {
 		t.Errorf("file outside the catalog directory was modified via the .html symlink escape")
 	}
 }
+
+// WR-01 (27-REVIEW.md iteration 2): a rejected .html sibling step must leave
+// the JSON file's title completely untouched -- not silently renamed anyway.
+// Table-driven over every way resolveContainedSibling/the html read can fail,
+// since both share the same "validate before mutating" ordering fix.
+func TestRenameCatalog_RejectedHTMLStepLeavesJSONTitleUnchanged(t *testing.T) {
+	tests := []struct {
+		name     string
+		setupDir func(t *testing.T, dir string)
+	}{
+		{
+			name: "html symlink escapes catalog directory",
+			setupDir: func(t *testing.T, dir string) {
+				outsideDir := t.TempDir()
+				outsideFile := filepath.Join(outsideDir, "secret.html")
+				if err := os.WriteFile(outsideFile, []byte("<html><title>secret</title></html>"), 0644); err != nil {
+					t.Fatalf("write outside file: %v", err)
+				}
+				if err := os.Symlink(outsideFile, filepath.Join(dir, "photos.html")); err != nil {
+					t.Skipf("symlinks unavailable in this environment: %v", err)
+				}
+			},
+		},
+		{
+			name: "html file unreadable",
+			setupDir: func(t *testing.T, dir string) {
+				htmlPath := filepath.Join(dir, "photos.html")
+				if err := os.WriteFile(htmlPath, []byte("<html></html>"), 0644); err != nil {
+					t.Fatalf("write html fixture: %v", err)
+				}
+				if err := os.Chmod(htmlPath, 0000); err != nil {
+					t.Skipf("chmod unavailable in this environment: %v", err)
+				}
+				t.Cleanup(func() { _ = os.Chmod(htmlPath, 0644) })
+			},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			dir := t.TempDir()
+			jsonPath := writeFixture(t, dir, "photos.json", v2BareObjectFixture)
+			tt.setupDir(t, dir)
+
+			jsonBefore, err := os.ReadFile(jsonPath)
+			if err != nil {
+				t.Fatalf("read json before: %v", err)
+			}
+
+			if err := RenameCatalog(jsonPath, "Photos 2024"); err == nil {
+				t.Fatal("expected an error when the .html sibling step is rejected")
+			}
+
+			jsonAfter, err := os.ReadFile(jsonPath)
+			if err != nil {
+				t.Fatalf("read json after: %v", err)
+			}
+			if string(jsonBefore) != string(jsonAfter) {
+				t.Errorf("json title was mutated despite the rename being rejected:\nbefore: %s\nafter:  %s", jsonBefore, jsonAfter)
+			}
+			if strings.Contains(string(jsonAfter), "Photos 2024") {
+				t.Errorf("json contains the new title despite the rename being rejected: %s", jsonAfter)
+			}
+		})
+	}
+}

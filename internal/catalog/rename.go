@@ -40,30 +40,49 @@ func RenameCatalog(jsonPath string, newTitle string) error {
 		return fmt.Errorf("rename %s: %w", jsonPath, err)
 	}
 
+	// Resolve, containment-check, and read the .html sibling BEFORE writing
+	// the JSON. Every step here can fail (symlink escape via
+	// resolveContainedSibling, a permission error on the read) -- doing them
+	// first means a rejected rename leaves the JSON file completely
+	// untouched instead of silently half-renamed (WR-01, 27-REVIEW.md
+	// iteration 2: the previous JSON-first ordering let a rejected sibling
+	// step return an error while the title had already been mutated).
+	htmlPath := strings.TrimSuffix(jsonPath, ".json") + ".html"
+	hasHTML := true
+	resolvedHTMLPath, err := resolveContainedSibling(htmlPath, filepath.Dir(jsonPath))
+	if err != nil {
+		if !os.IsNotExist(err) {
+			return fmt.Errorf("rename %s: %w", jsonPath, err)
+		}
+		// Per 27-CONTEXT.md: rename is allowed on a catalog with no
+		// .html -- the JSON title is written and there is simply
+		// nothing to rewrite.
+		hasHTML = false
+	}
+
+	var patchedHTML []byte
+	if hasHTML {
+		htmlData, err := os.ReadFile(resolvedHTMLPath)
+		if err != nil {
+			return fmt.Errorf("rename %s: %w", jsonPath, err)
+		}
+		patchedHTML = rewriteHTMLTitle(htmlData, trimmed)
+	}
+
 	if err := WriteFileAtomic(jsonPath, out, 0644); err != nil {
 		return fmt.Errorf("rename %s: %w", jsonPath, err)
 	}
 
-	htmlPath := strings.TrimSuffix(jsonPath, ".json") + ".html"
-	resolvedHTMLPath, err := resolveContainedSibling(htmlPath, filepath.Dir(jsonPath))
-	if err != nil {
-		if os.IsNotExist(err) {
-			// Per 27-CONTEXT.md: rename is allowed on a catalog with no
-			// .html -- the JSON title is written and there is simply
-			// nothing to rewrite.
-			return nil
+	if hasHTML {
+		// Residual, unavoidable-without-more-machinery gap: if the process
+		// crashes or the disk fails between this write and the JSON write
+		// above, the two files can end up with different titles. Both
+		// individual writes are still crash-safe (WriteFileAtomic), but the
+		// pair is not a single atomic transaction -- see the fix report for
+		// why a full two-file atomic swap is out of scope here.
+		if err := WriteFileAtomic(resolvedHTMLPath, patchedHTML, 0644); err != nil {
+			return fmt.Errorf("rename %s: %w", jsonPath, err)
 		}
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
-	}
-
-	htmlData, err := os.ReadFile(resolvedHTMLPath)
-	if err != nil {
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
-	}
-
-	patched := rewriteHTMLTitle(htmlData, trimmed)
-	if err := WriteFileAtomic(resolvedHTMLPath, patched, 0644); err != nil {
-		return fmt.Errorf("rename %s: %w", jsonPath, err)
 	}
 	return nil
 }
