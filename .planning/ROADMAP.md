@@ -66,7 +66,7 @@
 - [x] **Phase 24: Cmd-K Command Palette** - Cross-catalog ⌘K search with capped results and the shared modal-behavior hook (completed 2026-08-14)
 - [x] **Phase 25: Create Slide-over + Progress/Cancellation/Partial-Catalog** - Volume-aware create flow with live scan progress, real cancellation, and an error-tolerant partial-catalog path (completed 2026-08-14)
 - [x] **Phase 26: Settings** - Theme, density, rail position, and catalog defaults in one settings modal (completed 2026-08-15)
-- [ ] **Phase 27: Catalog Actions + Watch** - Rename, duplicate, delete-to-Trash, and live directory watching
+- [x] **Phase 27: Catalog Actions + Watch** - Rename, duplicate, delete-to-Trash, and live directory watching (completed 2026-08-16)
 - [ ] **Phase 28: Re-scan & Diff** - Re-scan a catalog's source volume and resolve an added/removed/changed diff
 
 ## Phase Details
@@ -342,5 +342,5 @@ Plans:
 | 24. Cmd-K Command Palette | v3.0.0 | 5/5 | Complete    | 2026-08-14 |
 | 25. Create Slide-over + Progress/Cancellation/Partial-Catalog | v3.0.0 | 7/7 | Complete    | 2026-08-14 |
 | 26. Settings | v3.0.0 | 5/5 | Complete    | 2026-08-15 |
-| 27. Catalog Actions + Watch | v3.0.0 | 7/7 | In Progress|  |
+| 27. Catalog Actions + Watch | v3.0.0 | 7/7 | Complete    | 2026-08-16 |
 | 28. Re-scan & Diff | v3.0.0 | 0/TBD | Not started | - |
