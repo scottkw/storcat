@@ -42,17 +42,22 @@ expected: A watch event landing mid-`browseCatalogs` does not produce a torn or 
 why_human: Declared `verification: backstop`. Requires deterministic control over the event/fetch interleaving.
 result: [pending]
 
-### 6. Windows / Linux platform behavior (WINDOWS.md 8–11)
+### 6. RenameDialog failure sub-state, end to end
+expected: A rename that fails (e.g. an unwritable `.html`) keeps the dialog open, shows the real error inline, and allows a retry.
+why_human: Verified by direct binding rejection plus code-review parity with `Footer`'s proven pattern, not clicked through end-to-end in the dialog UI. Surfaced by the phase 27 UI review (priority fix 3).
+result: [pending]
+
+### 7. Windows / Linux platform behavior (WINDOWS.md 8–11)
 expected: fsnotify's Windows rename-release behavior, both new dependencies' Windows and Linux backends, and the parent-directory fsync's Windows discard path all behave as reasoned.
 why_human: No Windows or Linux machine was available this session. Tracked as ledger entries 8–11 for the pre-v3.0.0 sweep, not claimed as covered.
 result: [pending]
 
 ## Summary
 
-total: 6
+total: 7
 passed: 0
 issues: 0
-pending: 6
+pending: 7
 skipped: 0
 blocked: 0
 

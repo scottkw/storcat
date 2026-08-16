@@ -324,7 +324,7 @@ function Footer({
         {revealButtonLabel(platform)}
       </button>
       {error && (
-        <span style={{ fontSize: 11, color: '#e5534b', lineHeight: 1.4 }}>{error}</span>
+        <span style={{ fontSize: 11, color: 'var(--danger)', lineHeight: 1.4 }}>{error}</span>
       )}
     </div>
   );
