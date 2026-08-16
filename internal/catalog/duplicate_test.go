@@ -237,3 +237,47 @@ func TestDuplicateCatalog_RejectsMissingSource(t *testing.T) {
 		t.Errorf("expected no files to be created, dir has %d entries", len(entries))
 	}
 }
+
+// WR-03: a symlink named "<root>.html" pointing outside jsonPath's own
+// directory must not be followed as the duplicate's source html. Mirrors
+// TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir (rename_test.go)
+// and internal/osutil/reveal_test.go's "symlink pointing outside
+// catalogDir" case.
+func TestDuplicateCatalog_RejectsHTMLSymlinkEscapingCatalogDir(t *testing.T) {
+	dir := t.TempDir()
+	src := filepath.Join(dir, "photos.json")
+	if err := os.WriteFile(src, []byte(`{"title":"photos"}`), 0644); err != nil {
+		t.Fatalf("write source: %v", err)
+	}
+
+	outsideDir := t.TempDir()
+	outsideFile := filepath.Join(outsideDir, "secret.html")
+	if err := os.WriteFile(outsideFile, []byte("secret contents"), 0644); err != nil {
+		t.Fatalf("write outside file: %v", err)
+	}
+
+	htmlPath := filepath.Join(dir, "photos.html")
+	if err := os.Symlink(outsideFile, htmlPath); err != nil {
+		t.Skipf("symlinks unavailable in this environment: %v", err)
+	}
+
+	newJSONPath, err := DuplicateCatalog(src)
+	if err == nil {
+		t.Fatal("expected an error for an .html sibling that resolves outside the catalog directory")
+	}
+
+	// Per DuplicateCatalog's own doc comment, the .json copy is written
+	// before the .html sibling is even looked at and is never rolled back
+	// on a later failure -- so newJSONPath is still reported and still
+	// exists; only the "-copy.html" that would have carried the symlink's
+	// escape must never be created.
+	if newJSONPath == "" {
+		t.Fatal("expected the already-succeeded json copy path to still be reported")
+	}
+	if _, statErr := os.Stat(newJSONPath); statErr != nil {
+		t.Errorf("expected the json copy to exist despite the html-sibling rejection: %v", statErr)
+	}
+	if _, statErr := os.Stat(newJSONPath[:len(newJSONPath)-len(".json")] + ".html"); !os.IsNotExist(statErr) {
+		t.Errorf("expected no html copy to be created after the symlink-escape rejection, stat err: %v", statErr)
+	}
+}

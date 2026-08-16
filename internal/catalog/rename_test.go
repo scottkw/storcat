@@ -311,3 +311,34 @@ func TestRenameCatalog_RejectsInvalidJSON(t *testing.T) {
 		t.Errorf("invalid json file was modified despite rejection")
 	}
 }
+
+// WR-03: a symlink named "<root>.html" pointing outside jsonPath's own
+// directory must not be followed -- neither read from nor written to.
+// Mirrors internal/osutil/reveal_test.go's "symlink pointing outside
+// catalogDir" case.
+func TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir(t *testing.T) {
+	dir := t.TempDir()
+	jsonPath := writeFixture(t, dir, "photos.json", v2BareObjectFixture)
+
+	outsideDir := t.TempDir()
+	outsideFile := filepath.Join(outsideDir, "secret.html")
+	if err := os.WriteFile(outsideFile, []byte("<html><title>secret</title></html>"), 0644); err != nil {
+		t.Fatalf("write outside file: %v", err)
+	}
+
+	htmlPath := filepath.Join(dir, "photos.html")
+	if err := os.Symlink(outsideFile, htmlPath); err != nil {
+		t.Skipf("symlinks unavailable in this environment: %v", err)
+	}
+
+	outsideBefore, _ := os.ReadFile(outsideFile)
+
+	if err := RenameCatalog(jsonPath, "Photos 2024"); err == nil {
+		t.Fatal("expected an error for an .html sibling that resolves outside the catalog directory")
+	}
+
+	outsideAfter, _ := os.ReadFile(outsideFile)
+	if string(outsideBefore) != string(outsideAfter) {
+		t.Errorf("file outside the catalog directory was modified via the .html symlink escape")
+	}
+}
