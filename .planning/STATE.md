@@ -4,17 +4,17 @@ milestone: v3.0.0
 milestone_name: Workspace Redesign
 current_phase: 27
 current_phase_name: Catalog Actions + Watch
-status: executing
-stopped_at: Completed 27-06-PLAN.md
-last_updated: "2026-08-15T23:25:09.481Z"
+status: verifying
+stopped_at: Completed 27-07-PLAN.md -- Phase 27 (catalog-actions-watch) fully executed, ready for verification
+last_updated: "2026-08-16T00:27:24.145Z"
 last_activity: 2026-08-15
 last_activity_desc: Phase 26 execution started
 progress:
   total_phases: 7
-  completed_phases: 5
+  completed_phases: 6
   total_plans: 37
-  completed_plans: 36
-  percent: 71
+  completed_plans: 37
+  percent: 86
 ---
 
 # Project State
@@ -30,12 +30,12 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 Phase: 27 (Catalog Actions + Watch) — EXECUTING
 Plan: 7 of 7
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-08-15 — Phase 27 execution started
 
 Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
 
-Progress: [██████████] 97%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -99,6 +99,7 @@ Progress: [██████████] 97%
 | Phase 27 P04 | ~20min | 3 tasks | 5 files |
 | Phase 27 P05 | 35min | 2 tasks | 3 files |
 | Phase 27 P06 | 12min | 2 tasks | 6 files |
+| Phase 27 P07 | 45min | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -193,6 +194,9 @@ Decisions are logged in PROJECT.md Key Decisions table. v3.0.0 milestone decisio
 - [Phase ?]: 27-06: shutdown() closes the watcher directly rather than routing through applyWatchState -- applyWatchState's job is start-or-restart against current config, wrong behavior on quit; a.applyWatchState() call count is 3 (startup, SetWatchDirectory, SetCatalogDirectory)
 - [Phase ?]: 27-06: SetWatchDirectory/SetCatalogDirectory persist through configManager first, then call applyWatchState() -- reversing the order would start/restart the watcher against stale config
 - [Phase ?]: 27-06: A watcher that fails to start degrades silently (no watching:started/watching:failed event) per 27-UI-SPEC E4's optimistic status-bar indicator resolution and 27-RESEARCH Pitfall 9's scope-creep warning
+- [Phase ?]: WINDOWS.md entry #6 (atomicwrite SIGKILL crash-safety) marked fixed on 27-02's real subprocess-kill evidence
+- [Phase ?]: Menu.tsx click-outside focus-restore found broken live (contradicts 27-04's claimed-passing coverage) -- recorded as WINDOWS.md entry 13, not fixed (out of 27-07 file scope)
+- [Phase ?]: Row 27 (real OS-quit watcher release) verified via the toggle-off path's lsof fd-count evidence instead of an actual app quit, to avoid risking the shared wails dev verification session
 
 ### Key Research Findings
 
@@ -238,8 +242,8 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-08-15T23:25:09.464Z
-Stopped at: Completed 27-06-PLAN.md
+Last session: 2026-08-16T00:27:24.126Z
+Stopped at: Completed 27-07-PLAN.md -- Phase 27 (catalog-actions-watch) fully executed, ready for verification
 Resume file: None
 Resume command: `/gsd-autonomous --from 26`
 

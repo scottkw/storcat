@@ -96,7 +96,7 @@
 
 ### Watch — directory monitoring
 
-- [ ] **WATCH-01**: User sees `● watching <catalog directory>` in the status bar when watching is enabled
+- [x] **WATCH-01**: User sees `● watching <catalog directory>` in the status bar when watching is enabled
 - [x] **WATCH-02**: User sees the rail update when catalogs are added, removed, or modified outside the app
 - [x] **WATCH-03**: User can turn watching off in Settings, and the watcher is released
 
@@ -210,7 +210,7 @@ Deferred — acknowledged but not in this roadmap.
 | ACT-07 | Phase 28 | Pending |
 | ACT-08 | Phase 28 | Pending |
 | ACT-09 | Phase 27 | Complete |
-| WATCH-01 | Phase 27 | Pending |
+| WATCH-01 | Phase 27 | Complete |
 | WATCH-02 | Phase 27 | Complete |
 | WATCH-03 | Phase 27 | Complete |
 | STATE-01 | Phase 23 | Complete |
