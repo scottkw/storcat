@@ -2058,6 +2058,12 @@
   gap: 14px;
 }
 
+/* Step 3 (Diff & Resolve)'s own literal padding -- 28-UI-SPEC.md's Step 3
+ * body spec (16px 18px 14px) differs from the shell's generic 18px. */
+.ws-rescan-body-diff {
+  padding: 16px 18px 14px;
+}
+
 .ws-rescan-subline {
   font-size: 11.5px;
   color: var(--dm);
@@ -2126,6 +2132,29 @@
 .ws-rescan-error {
   font-size: 11.5px;
   color: var(--danger);
+  line-height: 1.5;
+}
+
+/* ---------------------------------------------------------------------
+ * Phase 28-03 -- Similarity warning banner and the always-visible
+ * resolution caption (Task 2). The banner reuses the exact tint literal
+ * already declared for the volume-card "read errors" tag and the
+ * done-state "partial" tag (25-UI-SPEC.md) -- its own declaration per this
+ * app's "own declaration per genuinely distinct consumer" convention.
+ * ------------------------------------------------------------------- */
+
+.ws-rescan-warn {
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: rgba(240,180,41,.14);
+  color: #f0b429;
+  font-size: 11.5px;
+  line-height: 1.5;
+}
+
+.ws-rescan-caption {
+  font-size: 11.5px;
+  color: var(--dm);
   line-height: 1.5;
 }
 

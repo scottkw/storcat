@@ -5,8 +5,10 @@ import { useModalBehavior } from '../../../hooks/useModalBehavior';
 import { classifyScanFailure, sourceDisplayNameOf, sourcePathOf, type ScanSource } from '../../../types/scan';
 import type { DiffResult, DiffState } from '../../../types/rescan';
 import { models } from '../../../../wailsjs/go/models';
+import { formatBytes } from '../../../lib/format';
 import VolumePicker from '../create/VolumePicker';
 import ScanningBody from '../create/ScanningBody';
+import DiffList from './DiffList';
 
 export interface RescanDialogProps {
   catalog: models.CatalogMetadata;
@@ -23,8 +25,33 @@ const STAT_TILES: Array<{ key: Exclude<DiffState, 'unreadable'> | 'unreadable'; 
   { key: 'unchanged', label: 'unchanged', color: 'var(--dm)' },
 ];
 
+// "N" in the Variant A header title -- never includes unchanged.
 function diffTotal(diff: DiffResult): number {
   return diff.added + diff.removed + diff.changed + diff.unreadable;
+}
+
+// The similarity banner's "of {total}" denominator -- all five categories,
+// the same distinct-path-count basis the sum invariant itself uses.
+function diffGrandTotal(diff: DiffResult): number {
+  return diffTotal(diff) + diff.unchanged;
+}
+
+// Variant B (oldTreeAvailable: false) has no old tree to diff against, so
+// ComputeDiff reports every new-tree path as "added" (catalog.ComputeDiff's
+// nil-old-tree behavior) -- these are real added entries, not a fabricated
+// count, and this is the only place fileCount/totalBytes for Variant B's
+// summary line can come from: RescanCatalog's binding returns only a
+// DiffResult, no separate scan-result struct for this path.
+function newTreeStatsFrom(diff: DiffResult): { fileCount: number; totalBytes: number } {
+  let fileCount = 0;
+  let totalBytes = 0;
+  for (const entry of diff.entries) {
+    if (entry.state === 'added' && entry.type === 'file') {
+      fileCount += 1;
+      totalBytes += entry.newSize ?? 0;
+    }
+  }
+  return { fileCount, totalBytes };
 }
 
 /**
@@ -129,7 +156,13 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
 
   const headerTitle =
     step === 'diff'
-      ? `Re-scan changed ${diff ? diffTotal(diff) : 0} entries`
+      ? oldTreeAvailable
+        ? `Re-scan changed ${diff ? diffTotal(diff) : 0} entries`
+        // Deliberately doesn't presuppose which resolution is coming --
+        // the scan alone fixes nothing, and "Keep both" specifically
+        // leaves the original unreadable catalog untouched
+        // (28-UI-SPEC.md's Step 3 Variant B).
+        : 'Scan complete'
       : step === 'scanning'
         ? `Re-scanning ${selectedSource ? sourceDisplayNameOf(selectedSource) : ''}`
         : `Re-scan ${catalog.title}`;
@@ -165,11 +198,22 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
           </div>
         )}
 
-        {step === 'diff' && diff && (
-          <div className="ws-rescan-body">
+        {step === 'diff' && diff && oldTreeAvailable && (
+          <div className="ws-rescan-body ws-rescan-body-diff">
             <div className="ws-rescan-subline mono">
               {catalog.filename} · scanned {rescanSourcePath} just now
             </div>
+            {/* Rendered above the stat grid, Variant A only, only when the
+                Go side's low-similarity flag is set -- purely informational,
+                never disables or gates any footer action (28-UI-SPEC.md's
+                Similarity Warning Contract). */}
+            {diff.lowSimilarity && (
+              <div className="ws-rescan-warn">
+                This looks like a different volume than the one this catalog came from — {diff.added + diff.removed}{' '}
+                of {diffGrandTotal(diff)} entries differ. Double-check before overwriting; a large, legitimate change
+                is still possible.
+              </div>
+            )}
             <div className="ws-rescan-stats">
               {STAT_TILES.map((tile) => (
                 <div key={tile.key} className="ws-rescan-stat">
@@ -179,6 +223,26 @@ function RescanDialog({ catalog, oldTreeAvailable, onClose, onError }: RescanDia
                   <span className="ws-rescan-stat-label">{tile.label}</span>
                 </div>
               ))}
+            </div>
+            <DiffList entries={diff.entries} />
+            <div className="ws-rescan-caption">
+              Overwriting replaces {catalog.filename}&rsquo;s current contents with this scan&rsquo;s results — the
+              previous version can't be recovered. Choose Keep both instead if you want to preserve it.
+            </div>
+          </div>
+        )}
+
+        {step === 'diff' && diff && !oldTreeAvailable && (
+          <div className="ws-rescan-body ws-rescan-body-diff">
+            <div className="ws-rescan-subline mono">
+              {(() => {
+                const stats = newTreeStatsFrom(diff);
+                return `${stats.fileCount} files · ${formatBytes(stats.totalBytes)} · scanned ${rescanSourcePath} just now`;
+              })()}
+            </div>
+            <div className="ws-rescan-caption">
+              Overwriting rebuilds {catalog.filename} in place from this scan. Choosing Keep both leaves{' '}
+              {catalog.filename} exactly as unreadable as it is now, and saves this scan separately.
             </div>
           </div>
         )}
