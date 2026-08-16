@@ -1,10 +1,10 @@
 ---
 schema_version: 1
-open_count: 10
+open_count: 11
 waived_count: 0
 fixed_count: 2
-total_count: 12
-last_updated: 2026-08-16T00:04:20.253Z
+total_count: 13
+last_updated: 2026-08-16T00:23:51.065Z
 ---
 
 # Broken Windows Ledger
@@ -27,6 +27,7 @@ last_updated: 2026-08-16T00:04:20.253Z
 | 10 | 27 | deviation | internal/osutil/trash.go |  | wastebasket Windows and Linux backends runtime-unverified (ACT-04/ACT-05): the SHFileOperationW (Windows) and FreeDesktop-trash-spec (Linux) backends were read in full at research time and cross-build cleanly, but only the macOS osascript/Finder backend was actually exercised live this phase (real Trash move, real induced failure via chflags uchg, real retry). Runtime behavior on the other two platforms is unverified. Sweep before v3.0.0 ships. | open |  | 2026-08-16T00:04:20.018Z |  |
 | 11 | 27 | deviation | internal/catalog/atomicwrite.go |  | WriteFileAtomic parent-directory fsync unsupported on Windows (ACT-09): the best-effort syncDir(filepath.Dir(path)) added in 27-02 works on Linux and macOS (confirmed live via the SIGKILL harness on this macOS host), but Windows does not expose a directory handle that can be fsync'd the same way, so the call is expected to fail there and its error is deliberately discarded (the temp file's own tmp.Sync() still provides the primary durability guarantee on Windows). The discard path itself is unverified on Windows -- no Windows machine was available this session. Sweep before v3.0.0 ships. | open |  | 2026-08-16T00:04:20.134Z |  |
 | 12 | 27 | deviation | internal/osutil/trash.go |  | wastebasket's macOS AppleScript interpolation is an accepted, upstream-owned residual risk, not a defect to fix (ACT-04/ACT-05, threat T-27-01): the library's macOS backend builds an AppleScript string escaping only literal double-quote characters before osascript -e. This phase's mitigation is the osutil.ContainsPath containment gate applied to every path before the library is ever reached, which bounds the worst case but does not close the interpolation itself -- it is third-party code this project does not own. A future feature letting a user type an arbitrary filename that reaches the trash binding would need this revisited. | open |  | 2026-08-16T00:04:20.253Z |  |
+| 13 | 27 | unmet-truth | frontend/src/components/workspace/Menu.tsx |  | Menu click-outside focus-restore does not reliably survive in this session's live re-test (matrix row 5, 27-07): 27-04-SUMMARY.md's coverage D1 claimed 'focus restore to the trigger button on every close path' verified live and passing, but re-testing this phase in the same Chromium-based dev-browser environment against wails dev :34115 shows the trigger DOES receive focus() momentarily during the close (confirmed via a focus()-call instrumentation log showing ws-details-overflow.focus() firing) but then loses it again to document.body by the time the click gesture's own native focus-follows-click default action completes, landing on <body> instead. Escape-driven close (a keyboard-only dismissal with no competing native click-focus event) restores focus reliably every time. Not fixed here -- Menu.tsx/useModalBehavior.ts are outside this plan's files_modified scope. Not confirmed whether this reproduces in the actual shipped app's WKWebView engine on macOS (Chromium and WebKit can differ on native focus-follows-click timing) -- host-OS GUI automation is prohibited by this project's standing constraint, so the real WKWebView window could not be driven to check. Needs a manual click-through in the built app before treating as a confirmed regression. | open |  | 2026-08-16T00:23:51.065Z |  |
 
 ````json
 [
@@ -172,6 +173,18 @@ last_updated: 2026-08-16T00:04:20.253Z
     "status": "open",
     "reason": "",
     "recorded_at": "2026-08-16T00:04:20.253Z",
+    "resolved_at": null
+  },
+  {
+    "id": 13,
+    "kind": "unmet-truth",
+    "phase": "27",
+    "file": "frontend/src/components/workspace/Menu.tsx",
+    "line": null,
+    "description": "Menu click-outside focus-restore does not reliably survive in this session's live re-test (matrix row 5, 27-07): 27-04-SUMMARY.md's coverage D1 claimed 'focus restore to the trigger button on every close path' verified live and passing, but re-testing this phase in the same Chromium-based dev-browser environment against wails dev :34115 shows the trigger DOES receive focus() momentarily during the close (confirmed via a focus()-call instrumentation log showing ws-details-overflow.focus() firing) but then loses it again to document.body by the time the click gesture's own native focus-follows-click default action completes, landing on <body> instead. Escape-driven close (a keyboard-only dismissal with no competing native click-focus event) restores focus reliably every time. Not fixed here -- Menu.tsx/useModalBehavior.ts are outside this plan's files_modified scope. Not confirmed whether this reproduces in the actual shipped app's WKWebView engine on macOS (Chromium and WebKit can differ on native focus-follows-click timing) -- host-OS GUI automation is prohibited by this project's standing constraint, so the real WKWebView window could not be driven to check. Needs a manual click-through in the built app before treating as a confirmed regression.",
+    "status": "open",
+    "reason": "",
+    "recorded_at": "2026-08-16T00:23:51.065Z",
     "resolved_at": null
   }
 ]
