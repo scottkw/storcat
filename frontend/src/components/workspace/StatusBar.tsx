@@ -51,6 +51,12 @@ function StatusBar() {
   const showScanSegment = scan.status === 'counting' || scan.status === 'scanning';
   const scanPct = scan.status === 'scanning' ? scanPercent(scan.bytesSeen, scan.totalBytes) : null;
 
+  // WATCH-01: both inputs are already resolved synchronously in AppContext
+  // by the time this renders, so there is no loading branch. Omitted
+  // entirely (no placeholder, no dash) when either input is false/unset --
+  // the same rule the scan segment already follows.
+  const showWatchSegment = state.settings.watchDirectory && !!state.catalogDir;
+
   return (
     <div className="ws-status mono">
       {/* Grouped so the three original segments stay left-together under
@@ -68,17 +74,32 @@ function StatusBar() {
           {formatGB(totalBytes)}
         </span>
       </div>
-      {showScanSegment && (
-        <button
-          type="button"
-          className="ws-status-scan"
-          onClick={() => dispatch({ type: 'SET_CREATE_OPEN', payload: true })}
-        >
-          <span aria-hidden="true">●</span>
-          <span className="ws-status-scan-name">{scan.title}</span>
-          <span style={{ flexShrink: 0 }}>· {scanPct !== null ? `${scanPct}%` : 'counting…'}</span>
-        </button>
-      )}
+      <div className="ws-status-right">
+        {/* Watching sits closer to centre (ambient, persistent state); scan
+            keeps the outermost, most-attention-grabbing position it already
+            occupies (transient, urgent state). Deliberately no live-region
+            announcement and no hover tooltip on this segment -- the scan
+            segment has neither, and this app has never used the
+            hover-tooltip affordance anywhere. */}
+        {showWatchSegment && (
+          <span className="ws-status-watching">
+            <span aria-hidden="true">●</span>
+            <span>watching</span>
+            <span className="ws-status-watching-dir">{state.catalogDir}</span>
+          </span>
+        )}
+        {showScanSegment && (
+          <button
+            type="button"
+            className="ws-status-scan"
+            onClick={() => dispatch({ type: 'SET_CREATE_OPEN', payload: true })}
+          >
+            <span aria-hidden="true">●</span>
+            <span className="ws-status-scan-name">{scan.title}</span>
+            <span style={{ flexShrink: 0 }}>· {scanPct !== null ? `${scanPct}%` : 'counting…'}</span>
+          </button>
+        )}
+      </div>
     </div>
   );
 }

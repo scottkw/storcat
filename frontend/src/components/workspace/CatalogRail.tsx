@@ -4,6 +4,7 @@ import { wailsAPI } from '../../services/wailsAPI';
 import { formatBytes, formatCount } from '../../lib/format';
 import { safeGetItem } from '../../themeTokens';
 import { CATALOG_DIR_KEY, setCatalogDirectorySetting } from '../../settingsStore';
+import { EventsOn } from '../../../wailsjs/runtime/runtime';
 
 function CatalogRail() {
   const { state, dispatch } = useAppContext();
@@ -50,6 +51,22 @@ function CatalogRail() {
   useEffect(() => {
     if (!state.catalogDir) return;
     loadCatalogsForDirectory(state.catalogDir);
+  }, [state.catalogDir, loadCatalogsForDirectory]);
+
+  // WATCH-02: re-triggers the exact same listing the effect above already
+  // calls -- no second read path. app.go emits this as a bare, payload-free
+  // signal specifically so the rail re-lists through the idempotent
+  // browseCatalogs rather than patching individual rows. Returning
+  // EventsOn's own unsubscribe function is what keeps a React 18 StrictMode
+  // double-invoke from leaking a second listener (same shape
+  // CreateSlideOver.tsx's scan:progress subscription already establishes).
+  useEffect(() => {
+    const unsubscribe = EventsOn('catalogs:changed', () => {
+      if (state.catalogDir) {
+        loadCatalogsForDirectory(state.catalogDir);
+      }
+    });
+    return unsubscribe;
   }, [state.catalogDir, loadCatalogsForDirectory]);
 
   const handleChooseDirectory = async () => {

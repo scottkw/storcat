@@ -133,7 +133,7 @@ function CatalogSettingsSection() {
         <ToggleRow
           checked={state.settings.watchDirectory}
           label="Watch catalog directory for changes"
-          note="applies once file watching ships"
+          note="Detects catalogs added, removed, or edited outside the app"
           noteMono={false}
           disabled={false}
           onToggle={() => {
