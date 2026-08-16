@@ -205,6 +205,8 @@ export namespace models {
 	    unreadable: number;
 	    unchanged: number;
 	    entries: DiffEntry[];
+	    oldEntryCount: number;
+	    lowSimilarity: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new DiffResult(source);
@@ -218,6 +220,8 @@ export namespace models {
 	        this.unreadable = source["unreadable"];
 	        this.unchanged = source["unchanged"];
 	        this.entries = this.convertValues(source["entries"], DiffEntry);
+	        this.oldEntryCount = source["oldEntryCount"];
+	        this.lowSimilarity = source["lowSimilarity"];
 	    }
 	
 		convertValues(a: any, classs: any, asMap: boolean = false): any {

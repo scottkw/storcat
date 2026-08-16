@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"fmt"
 	"testing"
 
 	"storcat-wails/pkg/models"
@@ -163,5 +164,233 @@ func TestDiff_NilOldTreeReportsAllAdded(t *testing.T) {
 	}
 	if result.Removed != 0 || result.Changed != 0 || result.Unchanged != 0 {
 		t.Errorf("expected only Added to be non-zero, got %+v", result)
+	}
+}
+
+// TestDiff_UnreadableIsNotRemoved verifies the phase's primary data-
+// integrity control (T-28-05): a subtree the re-scan cannot read (root
+// still reachable, MarkUnreadableOnSkip's marker) reports `unreadable`, and
+// its previously-known descendants -- files the old tree recorded inside
+// it -- are never reported `removed`, since the new walk had no visibility
+// into them this pass and "removed" would be a false claim.
+func TestDiff_UnreadableIsNotRemoved(t *testing.T) {
+	old := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "directory", Name: "./locked", Size: 20, Contents: []*models.CatalogItem{
+				{Type: "file", Name: "./locked/secret.txt", Size: 20, ModTime: 100},
+			}},
+		},
+	}
+	newTree := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{
+				Type: "directory", Name: "./locked", Size: 0, Contents: []*models.CatalogItem{},
+				Unreadable: true, ReadError: "permission denied",
+			},
+		},
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	if result.Removed != 0 {
+		t.Errorf("Removed = %d, want 0 -- an unreadable subtree (including its previously known contents) must never be counted removed", result.Removed)
+	}
+	if result.Unreadable != 1 {
+		t.Errorf("Unreadable = %d, want 1", result.Unreadable)
+	}
+	if result.Added != 0 || result.Changed != 0 {
+		t.Errorf("Added=%d Changed=%d, want 0,0", result.Added, result.Changed)
+	}
+}
+
+// TestDiff_UnreadableCarriesReadError verifies an unreadable entry's row
+// carries the node's own ReadError as its reason, with NewSize left at
+// zero -- no size is knowable for an entry that failed to read.
+func TestDiff_UnreadableCarriesReadError(t *testing.T) {
+	old := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "directory", Name: "./locked", Size: 0, Contents: []*models.CatalogItem{}},
+		},
+	}
+	newTree := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{
+				Type: "directory", Name: "./locked", Size: 0, Contents: []*models.CatalogItem{},
+				Unreadable: true, ReadError: "permission denied",
+			},
+		},
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	var entry *models.DiffEntry
+	for i := range result.Entries {
+		if result.Entries[i].Path == "./locked" {
+			entry = &result.Entries[i]
+		}
+	}
+	if entry == nil {
+		t.Fatal("expected a diff entry for ./locked")
+	}
+	if entry.State != models.DiffUnreadable {
+		t.Errorf("State = %v, want DiffUnreadable", entry.State)
+	}
+	if entry.ReadError != "permission denied" {
+		t.Errorf("ReadError = %q, want %q", entry.ReadError, "permission denied")
+	}
+	if entry.NewSize != 0 {
+		t.Errorf("NewSize = %d, want 0 -- no size is knowable for an unreadable entry", entry.NewSize)
+	}
+}
+
+// TestDiff_TypeChangeYieldsRemovedAndAdded verifies a path that is a file
+// in the old tree and a directory in the new tree (or vice versa) yields
+// TWO rows -- one removed, one added -- never a single changed row
+// (28-RESEARCH.md Assumption A3).
+func TestDiff_TypeChangeYieldsRemovedAndAdded(t *testing.T) {
+	old := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./thing", Size: 10, ModTime: 100},
+		},
+	}
+	newTree := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "directory", Name: "./thing", Size: 0, Contents: []*models.CatalogItem{}},
+		},
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	if result.Removed != 1 || result.Added != 1 {
+		t.Errorf("Removed=%d Added=%d, want 1,1", result.Removed, result.Added)
+	}
+	if result.Changed != 0 {
+		t.Errorf("Changed = %d, want 0 (a type change is never reported as changed)", result.Changed)
+	}
+
+	var removedEntry, addedEntry *models.DiffEntry
+	for i := range result.Entries {
+		e := &result.Entries[i]
+		if e.Path != "./thing" {
+			continue
+		}
+		switch e.State {
+		case models.DiffRemoved:
+			removedEntry = e
+		case models.DiffAdded:
+			addedEntry = e
+		}
+	}
+	if removedEntry == nil || removedEntry.Type != "file" {
+		t.Errorf("expected a removed entry with Type=file for ./thing, got %+v", removedEntry)
+	}
+	if addedEntry == nil || addedEntry.Type != "directory" {
+		t.Errorf("expected an added entry with Type=directory for ./thing, got %+v", addedEntry)
+	}
+}
+
+// TestDiff_CountsSumToDistinctPaths asserts the sum invariant directly
+// (not just each category's individual count) over a fixture covering all
+// five states plus a pruned unreadable-descendant.
+func TestDiff_CountsSumToDistinctPaths(t *testing.T) {
+	old := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./same.txt", Size: 10, ModTime: 100},
+			{Type: "file", Name: "./resized.txt", Size: 20, ModTime: 100},
+			{Type: "file", Name: "./gone.txt", Size: 30, ModTime: 100},
+			{Type: "directory", Name: "./locked", Size: 5, Contents: []*models.CatalogItem{
+				{Type: "file", Name: "./locked/hidden.txt", Size: 5, ModTime: 100},
+			}},
+		},
+	}
+	newTree := &models.CatalogItem{
+		Type: "directory", Name: "./",
+		Contents: []*models.CatalogItem{
+			{Type: "file", Name: "./same.txt", Size: 10, ModTime: 100},
+			{Type: "file", Name: "./resized.txt", Size: 25, ModTime: 100},
+			{Type: "file", Name: "./fresh.txt", Size: 8, ModTime: 200},
+			{
+				Type: "directory", Name: "./locked", Size: 0, Contents: []*models.CatalogItem{},
+				Unreadable: true, ReadError: "permission denied",
+			},
+		},
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	sum := result.Added + result.Removed + result.Changed + result.Unreadable + result.Unchanged
+	// Distinct diffable paths: same.txt, resized.txt, gone.txt, locked,
+	// fresh.txt = 5. locked/hidden.txt is pruned -- a descendant of an
+	// unreadable node, never a diffable path this scan. No type-change
+	// pair in this fixture, so no +1 extra.
+	if sum != 5 {
+		t.Errorf("category sum = %d, want 5", sum)
+	}
+	if result.Added != 1 || result.Removed != 1 || result.Changed != 1 || result.Unreadable != 1 || result.Unchanged != 1 {
+		t.Errorf("got Added=%d Removed=%d Changed=%d Unreadable=%d Unchanged=%d, want 1 each",
+			result.Added, result.Removed, result.Changed, result.Unreadable, result.Unchanged)
+	}
+}
+
+// TestDiff_LowSimilarityBelowFloor verifies a small old tree (below the
+// minimum-entries floor) replaced entirely never sets LowSimilarity, even
+// though its own add/remove ratio is 100% -- a handful of entries changing
+// is not evidence of a wrong-disc pick.
+func TestDiff_LowSimilarityBelowFloor(t *testing.T) {
+	old := &models.CatalogItem{Type: "directory", Name: "./"}
+	for i := 0; i < 5; i++ {
+		old.Contents = append(old.Contents, &models.CatalogItem{
+			Type: "file", Name: fmt.Sprintf("./old%d.txt", i), Size: 10,
+		})
+	}
+	newTree := &models.CatalogItem{Type: "directory", Name: "./"}
+	for i := 0; i < 5; i++ {
+		newTree.Contents = append(newTree.Contents, &models.CatalogItem{
+			Type: "file", Name: fmt.Sprintf("./new%d.txt", i), Size: 10,
+		})
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	if result.OldEntryCount != 5 {
+		t.Errorf("OldEntryCount = %d, want 5", result.OldEntryCount)
+	}
+	if result.LowSimilarity {
+		t.Error("LowSimilarity = true, want false -- 5 old entries is below the floor")
+	}
+}
+
+// TestDiff_LowSimilarityAboveThreshold verifies an old tree at or above the
+// floor, replaced entirely, sets LowSimilarity true.
+func TestDiff_LowSimilarityAboveThreshold(t *testing.T) {
+	old := &models.CatalogItem{Type: "directory", Name: "./"}
+	for i := 0; i < 25; i++ {
+		old.Contents = append(old.Contents, &models.CatalogItem{
+			Type: "file", Name: fmt.Sprintf("./old%d.txt", i), Size: 10,
+		})
+	}
+	newTree := &models.CatalogItem{Type: "directory", Name: "./"}
+	for i := 0; i < 25; i++ {
+		newTree.Contents = append(newTree.Contents, &models.CatalogItem{
+			Type: "file", Name: fmt.Sprintf("./new%d.txt", i), Size: 10,
+		})
+	}
+
+	result := ComputeDiff(old, newTree)
+
+	if result.OldEntryCount != 25 {
+		t.Errorf("OldEntryCount = %d, want 25", result.OldEntryCount)
+	}
+	// All 25 old entries removed, all 25 new entries added -- total 50,
+	// ratio 50/50 = 1.0, well above the 0.6 threshold.
+	if !result.LowSimilarity {
+		t.Error("LowSimilarity = false, want true -- entirely replaced catalog above the floor")
 	}
 }

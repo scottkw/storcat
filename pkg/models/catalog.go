@@ -14,15 +14,16 @@ package models
 // encoding/json marshals struct fields in declaration order, and an absent
 // omitempty field contributes no bytes either way.
 //
-// Unreadable and ReadError appear ONLY on a partial catalog written after a
-// scan-root loss (CRT-10/CRT-11) -- they mark the single directory node
-// where the loss was first detected. Both are absent-when-zero, so a
-// complete scan (the overwhelming majority of catalogs) omits them entirely
-// and its JSON is byte-for-byte the v2.3.0 shape (COMPAT-02). This is the
-// one scoped, deliberate divergence from that byte-identical guarantee, and
-// it exists only in the partial-catalog path. No reader in this repository
-// rejects unrecognized JSON keys, so these two keys are silently ignored by
-// every catalog reader that doesn't yet know about them.
+// Unreadable and ReadError appear on a partial catalog written after a
+// scan-root loss (CRT-10/CRT-11), marking the single directory node where
+// the loss was first detected -- and, since 28-02's MarkUnreadableOnSkip
+// walk option, also on any number of nodes within an otherwise-COMPLETE
+// re-scan whose subtree the walk could read into. Both are absent-when-
+// zero, so a plain scan (the overwhelming majority of catalogs, and every
+// Create call site) omits them entirely and its JSON is byte-for-byte the
+// v2.3.0 shape (COMPAT-02). No reader in this repository rejects
+// unrecognized JSON keys, so these two keys are silently ignored by every
+// catalog reader that doesn't yet know about them.
 type CatalogItem struct {
 	Type     string         `json:"type"`
 	Name     string         `json:"name"`
@@ -65,7 +66,13 @@ const (
 // removed, changed or unreadable path (never for unchanged, which is
 // count-only in DiffResult). OldSize/NewSize are omitempty and zero when
 // not applicable to State (an added entry has no OldSize, a removed entry
-// has no NewSize); ReadError is set only when State is DiffUnreadable.
+// has no NewSize, an unreadable entry has neither -- no size is knowable
+// for a node that failed to read); ReadError is set only when State is
+// DiffUnreadable. A file<->directory type change at the same Path produces
+// TWO entries sharing that Path (one DiffRemoved for the old type, one
+// DiffAdded for the new) rather than a single DiffChanged row -- it is a
+// different entity that happens to share a path, not a comparable edit
+// (28-RESEARCH.md Assumption A3).
 type DiffEntry struct {
 	Path      string    `json:"path"`
 	State     DiffState `json:"state"`
@@ -75,11 +82,13 @@ type DiffEntry struct {
 	ReadError string    `json:"readError,omitempty"`
 }
 
-// DiffResult is a re-scan's full comparison output. The five counts must
-// sum to the total number of distinct paths encountered across the old
-// tree union the new tree (28-UI-SPEC.md's stated invariant); Entries holds
-// one row per added/removed/changed/unreadable path, in no particular
-// order -- ordering for display is the frontend's concern.
+// DiffResult is a re-scan's full comparison output. The five counts sum to
+// the total number of distinct paths encountered across the old tree union
+// the new tree, plus one extra for each file<->directory type-change pair
+// (which contributes two entries for one path) -- 28-UI-SPEC.md's stated
+// invariant. Entries holds one row per added/removed/changed/unreadable
+// path, in no particular order -- ordering for display is the frontend's
+// concern.
 type DiffResult struct {
 	Added      int         `json:"added"`
 	Removed    int         `json:"removed"`
@@ -87,6 +96,15 @@ type DiffResult struct {
 	Unreadable int         `json:"unreadable"`
 	Unchanged  int         `json:"unchanged"`
 	Entries    []DiffEntry `json:"entries"`
+	// OldEntryCount is the old tree's own flattened entry count (before
+	// this scan) -- used only to gate LowSimilarity below a floor, since a
+	// small catalog replaced entirely is not evidence of a wrong-disc pick.
+	OldEntryCount int `json:"oldEntryCount"`
+	// LowSimilarity is a signal only -- 28-UI-SPEC.md's wrong-disc warning
+	// banner reads it to decide whether to render; nothing in Go blocks or
+	// refuses on it. True when OldEntryCount meets internal/catalog's
+	// similarity floor AND (Added+Removed)/total meets its threshold.
+	LowSimilarity bool `json:"lowSimilarity"`
 }
 
 // SearchResult represents a search result from catalog files
