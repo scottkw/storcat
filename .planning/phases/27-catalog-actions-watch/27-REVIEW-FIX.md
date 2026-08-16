@@ -1,78 +1,139 @@
 ---
 phase: 27-catalog-actions-watch
-fixed_at: 2026-08-16T14:30:00Z
+fixed_at: 2026-08-16T15:40:00Z
 review_path: .planning/phases/27-catalog-actions-watch/27-REVIEW.md
-iteration: 1
-findings_in_scope: 5
-fixed: 4
-skipped: 1
-status: partial
+iteration: 2
+findings_in_scope: 1
+fixed: 1
+skipped: 0
+status: all_fixed
 ---
 
 # Phase 27: Code Review Fix Report
 
-**Fixed at:** 2026-08-16T14:30:00Z
+**Fixed at:** 2026-08-16T15:40:00Z
 **Source review:** .planning/phases/27-catalog-actions-watch/27-REVIEW.md
-**Iteration:** 1
+**Iteration:** 2
 
-**Summary:**
-- Findings in scope (critical + warning): 5 (CR-01, WR-01, WR-02, WR-03, WR-04)
-- Fixed: 4
-- Skipped: 1 (WR-04 — verified live, does not reproduce)
+**Summary (this iteration):**
+- Findings in scope (critical + warning): 1 (WR-01)
+- Fixed: 1
+- Skipped: 0
 
-Note: IN-01 (info-level, a previously accepted trade-off) was out of `fix_scope: critical_warning` and not touched.
+**Cumulative picture across both iterations:**
+- Iteration 1 fixed CR-01, WR-01, WR-02, WR-03 (against `27-REVIEW.iter2.md`'s findings) and skipped WR-04
+  (verified live, did not reproduce). See that iteration's detail below, preserved from the prior report.
+- Iteration 2 (this run) fixes the one new warning the re-review surfaced while re-verifying iteration 1's
+  WR-03 fix: iteration-1's WR-03 fix (containment-checking the `.html` sibling) made a pre-existing
+  `RenameCatalog` ordering bug newly reachable via its own rejection path.
+- Net result after both iterations: 5 of 5 warning findings raised across both reviews are fixed; 1 (WR-04)
+  is documented as not reproducing; 0 findings remain open.
 
-**Verification environment:** all live browser verification ran against the pre-existing `wails dev` process on `:34115` (fresh `window.go.main.App` bindings confirmed, 35 methods) via the dev-browser skill, using real CDP-level mouse input (not synthetic `dispatchEvent`) — synthetic events do not trigger the browser's native focus-follows-click default action, so an earlier synthetic-event attempt gave a false negative before switching to `page.click()`/`page.mouse.click()`. Go verification (`go build ./... && go vet ./... && go test ./... -race -count=1`) and frontend verification (`npx tsc --noEmit && npm run build`) both ran in the main checkout (`workflow.use_worktrees: false`, so no isolated worktree was created for this run) and are reproducible from the current tree.
+**Verification environment:** `go build ./... && go vet ./... && go test ./... -race -count=1` and
+`(cd frontend && npx tsc --noEmit && npm run build)` both ran in the main checkout
+(`workflow.use_worktrees: false`, so no isolated worktree was created for this run) and are reproducible
+from the current tree.
 
-## Fixed Issues
+## Fixed Issues (this iteration)
 
-### CR-01: Menu.tsx click-outside close loses focus restore to `<body>`
+### WR-01: `RenameCatalog` mutates the JSON title before validating the `.html` sibling, so a rejected rename leaves the JSON silently renamed anyway
 
-**Files modified:** `frontend/src/components/workspace/Menu.tsx`
-**Commit:** `12c32dd3`
-**Applied fix:** Added `event.preventDefault()` in `handlePointerDown`'s outside-click branch, before `onClose()`. Per the Pointer Events spec this suppresses the browser's compatibility `mousedown`/`click` dispatch (and their default focus-follows-click action) for mouse-originated pointer input, so `useModalBehavior`'s `restoreTarget.focus()` is the only focus mutation left standing for that interaction.
+**Files modified:** `internal/catalog/rename.go`, `internal/catalog/rename_test.go`
+**Commit:** `de491fae`
+**Applied fix:** Reordered `RenameCatalog` so every step that can fail runs before anything is mutated:
+resolve + containment-check + read the `.html` sibling (via the existing `resolveContainedSibling` from the
+iteration-1 WR-03 fix) and pre-compute the patched HTML bytes first; only then write the JSON, and only then
+write the HTML. A missing sibling (`os.IsNotExist`) still takes the pre-existing "rename with no `.html`" path,
+now expressed as `hasHTML = false` rather than an early return, so the JSON write happens exactly once on every
+code path. The reviewer's suggested reordering applied cleanly to the current tree with no adaptation needed.
 
-**Live verification:** Used the dev-browser skill against the running `wails dev` process (`:34115`) with real CDP-trusted mouse events (`page.click()` / `page.mouse.click()` — a first attempt using JS-level `dispatchEvent` synthetic events gave a false negative on both pre- and post-fix code, because untrusted synthetic events don't trigger the browser's native focus-follows-click default action; switching to CDP-level input reproduced the defect correctly).
-- Pre-fix code (round-tripped via `git stash`): opened the `⋯` menu, clicked outside → `document.activeElement` was `BODY` — reproduced the regression exactly as `WINDOWS.md` entry 13 described.
-- Post-fix code: same steps → `document.activeElement.className === 'ws-details-overflow'` (the trigger button), across repeated open/close cycles.
+**Regression test added:** `TestRenameCatalog_RejectedHTMLStepLeavesJSONTitleUnchanged` in `rename_test.go`,
+table-driven over the two ways the sibling step can be rejected (symlink escaping the catalog directory, and
+an unreadable `.html` file), asserting the JSON file's bytes are byte-identical before and after a rejected
+rename. Confirmed failing against the pre-fix code via a `git stash` round-trip of `rename.go` alone (both
+subtests failed, showing the title mutated to "Photos 2024" despite the returned error — reproducing the
+reviewer's manual repro exactly) and passing against the fix. This is the first durable/committed coverage
+for this bug; the reviewer's own diagnostic test was deliberately not committed.
 
-**WINDOWS.md entry 13** updated with this evidence and marked `fixed` via `gsd-tools windows fixed 13` (commit `ed2a8d1a`, bundled with the WR-02 fix since both touch `WINDOWS.md`). Not confirmed in the actual shipped app's WKWebView engine on macOS (Chromium/WebKit can differ on native focus-follows-click timing) — host-OS GUI automation remains prohibited by this project's standing constraint, so that gap stays open as a residual, documented risk rather than being papered over.
+**DuplicateCatalog — same hazard class? Considered, and no:** `DuplicateCatalog` writes its destination
+`<newRoot>.json` before resolving/reading the *source* `.html` sibling, which looks superficially like the
+same ordering. It is not the same hazard, for two reasons specific to that function: (1) the destination JSON
+it writes is always a brand-new file — `nextCopyRoot`/`isCandidateRootFree` guarantee `<newRoot>.json` and
+`<newRoot>.html` don't exist yet — so a later failure never mutates a pre-existing, already-trusted catalog
+file the way `RenameCatalog`'s in-place JSON write did; the worst case is an orphaned new file, not a
+corrupted old one. (2) `DuplicateCatalog`'s own doc comment and its return signature (`(string, error)`)
+deliberately report "exactly what succeeded" on a later HTML-copy failure by returning the new JSON path
+alongside the error, rather than silently discarding that fact — the exact opposite of the silent-mutation
+problem WR-01 flagged for `RenameCatalog` (which returns `error` only, with nothing for a caller to inspect).
+Left unchanged this iteration. One caveat worth recording for a future pass, not fixed here since it's a
+pre-existing, separately-scoped concern rather part of this finding: per WR-01's own text, Wails discards a
+Go binding's non-error return value on the JS side when the promise rejects, so `DuplicateCatalog`'s
+"report what succeeded" path-return doesn't currently reach the frontend either — the backend's intent is
+sound, the wire contract just doesn't carry it through yet.
 
-### WR-01: `internal/watch`'s error-path callback invocation contradicts its own documented threading contract
+**Residual gap — explicitly not claiming full atomicity:** This fix closes the entire
+containment/read-failure class (the dominant one, and the one iteration 1's WR-03 fix added a new trigger
+for) by moving every fallible step ahead of the first write. It does **not** make the two-file update
+atomic: `WriteFileAtomic` makes each individual file write crash-safe, but if the process is killed or the
+disk fails in the narrow window *between* the JSON write succeeding and the HTML write starting/completing,
+the JSON and HTML titles can still end up out of sync. Achieving true all-or-nothing atomicity across two
+independent files would require additional machinery (e.g. a write-ahead journal, or renaming both from
+staged temp files under a directory-level lock) that this phase's scope does not call for and that isn't
+present anywhere else in this codebase's file-write patterns. This is documented in a code comment at the
+second `WriteFileAtomic` call in `rename.go` so the residual is visible in place, not just in this report.
 
-**Files modified:** `internal/watch/watcher.go`
-**Commit:** `993bd266`
-**Applied fix:** Changed the `Errors` branch in `loop()` from `w.c.fireNow()` to `go w.c.fireNow()`. `fireNow()` itself is documented and tested (`TestCoalescer_FiresNowIsImmediate`) to invoke `fn()` synchronously on its caller — that immediacy is a locked-in contract for its other caller pattern, so `fireNow()`'s own implementation was left untouched. Dispatching the call via `go` at this one call site keeps the callback off the `loop()` goroutine, matching `trigger()`'s existing off-loop delivery and closing the contradiction with the package doc comment's stated threading contract.
-**Verification:** `go build`, `go vet`, and `go test ./internal/watch/... -race -count=1` all pass, including the existing `TestCoalescer_FiresNowIsImmediate` (unaffected — `fireNow()`'s own contract is unchanged) and the watcher-level debounce/burst tests.
+## Skipped Issues (this iteration)
 
-### WR-02: `WriteFileAtomic`'s best-effort directory-sync failure will log on every single write on Windows
-
-**Files modified:** `internal/catalog/atomicwrite.go`, `.planning/WINDOWS.md`
-**Commit:** `ed2a8d1a`
-**Applied fix:** Added a package-level `sync.Once` (`logDirSyncFailureOnce`) guarding the `log.Printf` call in `WriteFileAtomic`, so the directory-sync failure is logged at most once per process lifetime instead of on every write — satisfying both goals simultaneously: the failure stays observable (log-and-continue, never silently discarded), and a platform where it is expected to fail on every call (Windows) no longer drowns the log.
-
-Also corrected `WINDOWS.md` entry 11's stale wording ("the error is deliberately discarded") — the error was already being logged unconditionally before this fix, not discarded; the description now reflects the actual pre-fix and post-fix behavior.
-**Verification:** `go build`, `go vet`, and `go test ./internal/catalog/... -race -count=1` pass, including the existing `TestWriteFileAtomic_DirSyncFailureIsNotFatal`.
-
-### WR-03: `RenameCatalog`/`DuplicateCatalog`'s derived `.html` sibling bypasses `osutil.ContainsPath`
-
-**Files modified:** `internal/catalog/rename.go`, `internal/catalog/duplicate.go`, `internal/catalog/rename_test.go`, `internal/catalog/duplicate_test.go`
-**Commits:** `f143b229` (fix), `767d2dfe` (regression tests)
-**Applied fix:** Added a shared `resolveContainedSibling(siblingPath, baseDir string) (string, error)` helper in `rename.go` that resolves symlinks and containment-checks the derived `.html` sibling against its own parent directory via `osutil.ContainsPath` — mirroring `osutil.TrashPaths`'s own belt-and-braces re-validation. `RenameCatalog` now reads/writes the resolved path (rejecting the operation if the sibling resolves outside its own directory); `DuplicateCatalog`'s read-only source-html lookup goes through the same gate. Deliberately did not add a `catalogDir` parameter to either function's public signature (which would have forced ~20 mechanical test-call-site updates for no behavioral gain) — the sibling's own parent directory is the correct, narrower containment root, since the derived path is constructed to live in exactly that directory by string convention. The duplicate's *destination* `.html` needed no equivalent check: `nextCopyRoot`/`isCandidateRootFree` already guarantee neither `<newRoot>.json` nor `<newRoot>.html` exists yet, so it cannot be a pre-planted symlink.
-
-Added one regression test per function (`TestRenameCatalog_RejectsHTMLSymlinkEscapingCatalogDir`, `TestDuplicateCatalog_RejectsHTMLSymlinkEscapingCatalogDir`), each confirmed to fail against the pre-fix code (verified via a `git show`-based round-trip of the two source files) and pass against the fix.
-**Verification:** `go build`, `go vet`, and `go test ./internal/catalog/... -race -count=1` pass (including the full pre-existing rename/duplicate suite plus the two new tests); `go build ./...` (whole repo) confirms no import cycle from `internal/catalog` importing `internal/osutil`.
-
-## Skipped Issues
-
-### WR-04: `useModalBehavior`'s focus-restore may also lose to `<body>` on `DialogShell`'s own close-button click
-
-**File:** `frontend/src/hooks/useModalBehavior.ts:135-141`, `frontend/src/components/workspace/DialogShell.tsx:41-43`
-**Reason:** Speculative per the review itself ("not confirmed live this session"). Verified live via dev-browser against `wails dev` (`:34115`) using real CDP-trusted mouse clicks, per the fix guidance's explicit instruction to verify before fixing: opened the Rename dialog, clicked the "×" close button — `document.activeElement.className === 'ws-details-overflow'` (the trigger), not `<body>`. Repeated with the "Keep original title" footer cancel button — same result. Neither close path reproduces the speculated failure mode; `useModalBehavior.ts` was left untouched (it is shared by every overlay in the app, so a speculative fix there would have been the higher-risk move for a defect that does not exist). Evidence recorded in `WINDOWS.md` entry 13's updated description (bundled with the CR-01 evidence, since both were tested in the same session).
-**Original issue:** Speculated that a real `<button>`'s own click-driven focus, followed by its removal on `DialogShell` unmount, could fall back focus to `<body>` before `restoreTarget.focus()` runs in the cleanup effect — the same failure class as CR-01 reached via a different path.
+None — the single in-scope finding was fixed.
 
 ---
 
-_Fixed: 2026-08-16T14:30:00Z_
+## Iteration 1 detail (preserved for history)
+
+**Summary:**
+- Findings in scope (critical + warning): 5 (CR-01, WR-01, WR-02, WR-03, WR-04 — against `27-REVIEW.iter2.md`)
+- Fixed: 4
+- Skipped: 1 (WR-04 — verified live, does not reproduce)
+
+Note: IN-01 (info-level, a previously accepted trade-off) was out of `fix_scope: critical_warning` and not
+touched.
+
+### CR-01: Menu.tsx click-outside close loses focus restore to `<body>`
+**Files modified:** `frontend/src/components/workspace/Menu.tsx`
+**Commit:** `12c32dd3`
+**Applied fix:** Added `event.preventDefault()` in `handlePointerDown`'s outside-click branch, before
+`onClose()`, so the browser's compatibility `mousedown`/`click` dispatch (and its default focus-follows-click
+action) never fires for that gesture, leaving `useModalBehavior`'s `restoreTarget.focus()` as the only focus
+mutation. Live-verified via dev-browser against `wails dev` with real CDP-trusted mouse input.
+
+### WR-01 (iteration 1 numbering — internal/watch): error-path callback invocation contradicted its documented threading contract
+**Files modified:** `internal/watch/watcher.go`
+**Commit:** `993bd266`
+**Applied fix:** Changed `w.c.fireNow()` to `go w.c.fireNow()` in `loop()`'s `Errors` branch, matching
+`trigger()`'s existing off-loop delivery. Verified with `go test ./internal/watch/... -race -count=1`.
+
+### WR-02: `WriteFileAtomic`'s best-effort directory-sync failure would log on every write on Windows
+**Files modified:** `internal/catalog/atomicwrite.go`, `.planning/WINDOWS.md`
+**Commit:** `ed2a8d1a`
+**Applied fix:** Added a package-level `sync.Once` guarding the log call, so the failure logs at most once
+per process lifetime instead of on every write.
+
+### WR-03: `RenameCatalog`/`DuplicateCatalog`'s derived `.html` sibling bypassed `osutil.ContainsPath`
+**Files modified:** `internal/catalog/rename.go`, `internal/catalog/duplicate.go`,
+`internal/catalog/rename_test.go`, `internal/catalog/duplicate_test.go`
+**Commits:** `f143b229` (fix), `767d2dfe` (regression tests)
+**Applied fix:** Added `resolveContainedSibling` — resolves symlinks and containment-checks the derived
+`.html` sibling against its own parent directory via `osutil.ContainsPath`, the same function
+`TrashPaths`/`GetCatalogHtmlPath`/`RenameCatalog`'s primary-path check already use. This is the helper the
+iteration-2 WR-01 fix (above) reuses without modification.
+
+### WR-04: `useModalBehavior`'s focus-restore might also lose to `<body>` on `DialogShell`'s own close-button click
+**Reason skipped:** Speculative per the review itself; verified live via dev-browser using real CDP-trusted
+mouse clicks on both the "×" close button and the footer cancel button — neither reproduced the speculated
+failure mode. `useModalBehavior.ts` left untouched (shared by every overlay in the app).
+
+---
+
+_Fixed: 2026-08-16T15:40:00Z_
 _Fixer: Claude (gsd-code-fixer)_
-_Iteration: 1_
+_Iteration: 2_
