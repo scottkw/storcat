@@ -255,13 +255,19 @@ active. Two phases (25, 28) are pre-flagged as needing their own research pass b
 
 ## Deferred Items
 
-Items acknowledged and carried forward from previous milestone close:
+Items acknowledged and deferred at milestone close on 2026-08-16 (v3.0.0):
 
 | Category | Item | Status | Deferred At |
 |----------|------|--------|-------------|
+| Requirement | COMPAT-06: build proven green on all three native runners (run 31976677486); sign/notarize/release unproven pending a cut release tag | Partial | v3.0.0 close |
 | Windows signing | CRED-04/CRED-05: Windows OV code signing credentials not yet provisioned (SSL.com eSigner, 4 secrets missing) | Open | v2.3.0 close |
-| Testing | TEST-01: Frontend unit tests (Vitest + Testing Library) for virtualizer, palette keyboard nav, modal behavior | v2 requirement, deferred | v3.0.0 requirements definition |
-| Interface | FUT-01–03: Rail-as-drawer below ~820px, frameless Windows/Linux window chrome, CLI subcommands for new capabilities | v2 requirements, deferred | v3.0.0 requirements definition |
+| Testing | TEST-01: Frontend unit tests (Vitest + Testing Library) for virtualizer, palette keyboard nav, modal behavior | Open | v3.0.0 requirements definition |
+| Cross-platform | WINDOWS.md: 10 of 14 ledger entries remain open (runtime correctness; no CI compile run settles them) | Open | v3.0.0 close |
+| UAT | 27-UAT scenario 7: Windows/Linux platform behavior — blocked, no such machine available | Blocked | v3.0.0 close |
+| UAT | 28-UAT: 2 backstop observations accepted-deferred (volume-enumeration latency on real removable media; untuned 0.6 / 20-entry wrong-disc constants) | Accepted-deferred | v3.0.0 close |
+| Nyquist | Phase 24 nyquist_compliant=false; phases 25, 27, 28 VALIDATION.md still `draft` (never reconciled by validate-phase) | Open | v3.0.0 close |
+| Quick task | 260327-ncx-fix-title-bar: SUMMARY.md exists but frontmatter lacks `status:` — completed work, incomplete metadata | Bookkeeping | v3.0.0 close |
+| Quick task | 260327-nh6-bump-version-2.2.1: SUMMARY.md records `completed: 2026-03-27`; frontmatter lacks `status:` | Bookkeeping | v3.0.0 close |
 
 ## Session Continuity
 

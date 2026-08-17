@@ -8,31 +8,26 @@ StorCat is a cross-platform desktop application for creating, browsing, and sear
 
 Fast, lightweight directory catalog management — Go/Wails delivers 93% smaller binaries and 5x faster search than the original Electron version, with full feature parity.
 
-## Current Milestone: v3.0.0 Workspace Redesign
+## Current Milestone
 
-**Goal:** Replace the three-tab Ant Design frontend with the 1a Workspace design from `design_handoff_storcat_ui/`, matching it exactly, and build every backend capability the design implies.
+None — v3.0.0 shipped 2026-08-16. Next milestone not yet defined (`/gsd-new-milestone`).
 
-**Target features:**
-- Workspace shell — 46px toolbar / 268px catalog rail / tree / 288px details / 26px status bar, swappable rail side, three responsive tiers
-- Virtualized catalog tree handling 40k+ nodes
-- ⌘K search palette across all catalogs, capped at 50 with "first 50 of N"
-- Create slide-over with live scan progress, partial-catalog error path, and done state
-- Settings modal — 11 theme cards, row density, rail position, catalog defaults
-- Catalog actions — rename, duplicate, delete-to-Trash, re-scan & diff
-- Empty-library and unreadable-catalog states with surfaced parse errors
-- Backend: scan progress events, volume enumeration, error-tolerant walk, fsnotify watch, sidecar count cache, reveal-in-file-manager
-
-**Milestone decisions:**
-- Ant Design removed entirely — every surface is custom-spec'd; custom Modal/Select/Input/Tooltip replace it
-- macOS `TitleBarHiddenInset` so real traffic lights sit in the 46px toolbar; Windows/Linux keep the native title bar
-- New capabilities are GUI-only — the 6 existing CLI subcommands keep working unchanged
-- Per-catalog file count and total bytes come from a sidecar cache keyed by path+mtime; catalog JSON on disk is unchanged
-- IBM Plex Sans + Mono vendored as self-hosted woff2 and embedded in the binary (no CDN)
-- The demo's `THEMES` array is authoritative for theme colors — existing theme accents change
 
 ## Requirements
 
 ### Validated
+
+- ✓ Single-view workspace: toolbar, rail, tree, details, status bar — v3.0.0
+- ✓ 11 themes + density + rail position via CSS custom properties — v3.0.0
+- ✓ Virtualized tree handles 40,000+ node catalogs — v3.0.0
+- ✓ ⌘K palette searches files across every catalog, live from disk — v3.0.0
+- ✓ Create flow with live progress, cancellation, partial-catalog recovery — v3.0.0
+- ✓ Settings surface that saves as you go — v3.0.0
+- ✓ Catalog rename / duplicate / delete-to-Trash — v3.0.0
+- ✓ Filesystem watcher keeps the rail current on external changes — v3.0.0
+- ✓ Re-scan & diff with five states and three resolutions — v3.0.0
+- ✓ Unreadable is a distinct diff state, never collapsed into removed — v3.0.0
+- ⚠ COMPAT-06 partial: build proven on 3 native runners; sign/notarize/release open — v3.0.0
 
 - ✓ Catalog JSON output: bare object format with v1 backward compatibility — v2.0.0
 - ✓ Empty directory contents serialize as `[]`, never `null` — v2.0.0
@@ -97,17 +92,18 @@ Defined in `.planning/REQUIREMENTS.md` for milestone v3.0.0 Workspace Redesign.
 
 ## Current State
 
-**Shipped:** v2.3.0 Code Signing & Package Manager CLI (2026-03-28)
+**Shipped:** v3.0.0 Workspace Redesign (2026-08-16)
 
-StorCat is a fully functional cross-platform desktop + CLI application with automated CI/CD, code signing, and release automation. The unified Go/Wails binary supports GUI mode (`storcat`) and 6 CLI subcommands (`create`, `search`, `list`, `show`, `open`, `version`). Three repos consolidated into one (main repo + thin `homebrew-storcat` satellite).
+StorCat's three-tab interface is gone. The app is now a single-view workspace — toolbar, catalog rail, virtualized tree, details panel, status bar — responsive and themed across all 11 themes. Catalogs of 40,000+ nodes browse smoothly; ⌘K finds any file across every catalog without leaving the workspace.
 
-**Release pipeline:** release-please maintains a release PR from conventional commits. Merging creates a git tag and GitHub release. `release.yml` builds on 4 platform runners (macOS universal, Windows, Linux x64+arm64), uploads artifacts, and publishes. `distribute.yml` auto-updates Homebrew cask and submits WinGet PR.
+**What v3.0.0 added:** a live-progress create flow with cancellation and partial-catalog recovery; a settings surface that saves as you go (theme, density, rail position, catalog defaults); catalog management (rename, duplicate, delete to Trash) with a filesystem watcher that keeps the rail current when catalogs change outside the app; and re-scan & diff — re-scan a catalog's source volume, see added/removed/changed/unreadable/unchanged, then resolve by overwrite, keep-both, or discard.
 
-**Code signing:** macOS Developer ID signing + notarization + stapling fully automated in CI (Gatekeeper-verified). Windows Authenticode signing pipeline built with SSL.com eSigner integration (code complete, awaiting credential provisioning — 4 eSigner secrets needed).
+**Data-integrity posture:** the re-scan write path is the only writing path and reuses the atomic-write primitive hardened in Phases 25–27 — no second write path. An unreadable subtree is a distinct fourth diff state, never collapsed into `removed`, so an overwrite cannot destroy data that is merely unreadable today.
 
-**Package manager CLI:** `brew install --cask storcat` symlinks binary to PATH. NSIS installer adds install directory to system PATH via EnVar plugin. Both enable `storcat` CLI immediately after install.
+**CI evidence:** `build.yml` ran green on all three native runners against this milestone's code (run 31976677486, commit 2715a42d) — native compilation on macOS/Windows/Linux plus frontend TypeScript type-checking. Signing, notarization, and release remain unproven; they live behind a release tag and Windows signing still skips while CRED-04/CRED-05 are unprovisioned.
 
-**Known tech debt:** Windows signing credentials not yet provisioned (SSL.com eSigner OV RSA ~$20/mo). Release pipeline E2E blocked until Windows secrets stored — macOS-only pipeline works.
+**Known tech debt:** COMPAT-06 partial (build proven, sign/notarize/release open). No frontend unit tests (TEST-01). WINDOWS.md carries 10 open runtime-correctness entries. Phase 24 is Nyquist-partial; phases 25, 27, 28 have unreconciled VALIDATION.md.
+
 
 ## Context
 
@@ -160,6 +156,14 @@ Previously shipped v2.0.0 on 2026-03-26 — complete backend rewrite from Electr
 | SSL.com eSigner for Windows signing | Post-2023 CA/Browser Forum rules prevent PFX export; cloud HSM is the path | ✓ Good |
 | EnVar plugin for NSIS PATH | No PATH truncation at 1024-byte NSIS limit; uses Win32 RegQueryValueEx directly | ✓ Good |
 | softprops tag_name for release-please | Uploads to existing release instead of creating new draft; publishes immediately | ✓ Good |
+| Single-view workspace over three tabs | Tabs hid state; one view keeps rail, tree and details visible together | ✓ Good |
+| Virtualize the tree, not the rail | 40k+ nodes live in the tree; the rail is bounded by catalog count | ✓ Good |
+| ⌘K reads live from disk, no cached index | Nothing to invalidate after rename/delete/re-scan — the palette cannot go stale | ✓ Good |
+| Re-scan reuses the Create scan pipeline | One `scanMu` guard, one `scan:progress` listener; a second path would drift from ACT-09 crash safety | ✓ Good |
+| Unreadable is a fourth diff state | Collapsing it into `removed` would let an overwrite destroy readable-tomorrow data | ✓ Good |
+| Re-scan never persists the source volume | ACT-08 "always ask" is a trust guarantee against silently re-scanning the wrong disc after a media swap | ✓ Good |
+| Theme/density as CSS custom properties on :root | Newer dialogs inherit theming with zero per-component wiring | ✓ Good |
+| requestIdRef stale-response guard | Adopted in CommandPalette/VolumePicker; retrofitted to CatalogRail after UAT found the race | ⚠️ Revisit — audit remaining async call sites |
 
 ## Constraints
 
@@ -185,4 +189,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-08-13 at start of v3.0.0 milestone*
+*Last updated: 2026-08-16 after v3.0.0 milestone*
