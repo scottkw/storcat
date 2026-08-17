@@ -179,6 +179,83 @@
 
 ---
 
+## Milestone: v3.0.0 — Workspace Redesign
+
+**Shipped:** 2026-08-16
+**Phases:** 7 | **Plans:** 43 | **Tasks:** 113
+**Commits:** 332 | **Diff:** 304 files, +56,840 / -2,704
+**Timeline:** 4 days (2026-08-13 → 2026-08-16)
+
+### What Was Built
+
+The three-tab Ant Design UI was replaced wholesale by a single-view workspace — toolbar, catalog
+rail, virtualized tree, details panel, status bar — matching the 1a Workspace design handoff, plus
+every backend capability that design implied. In order: the token/shell layer across 11 themes; a
+rail and virtualized tree proven at 42,550 nodes; a ⌘K palette searching every catalog live from
+disk; a create flow with real progress, cancellation and partial-catalog recovery; a settings
+surface backed by Go config; catalog rename/duplicate/delete-to-Trash with an fsnotify watcher; and
+re-scan & diff with five states and three resolutions.
+
+### What Worked
+
+- **Tracer-slice-first phases.** Every phase opened with a thin end-to-end slice (22-01, 28-01)
+  before horizontal expansion. Wiring problems surfaced on day one of a phase, not at verification.
+- **Reusing hardened primitives instead of adding paths.** Phase 28's only write path reuses
+  `WriteFileAtomic` and `nextCopyRoot` from Phases 25–27; re-scan reuses Create's `scanMu` guard and
+  its single `scan:progress` listener. The integration check found 8/8 seams wired precisely because
+  there were no parallel implementations to drift.
+- **Live dev-browser verification over reasoning from source.** It repeatedly caught things static
+  reading would not: a dead hover-inversion CSS rule (22), a silent error-message bug in the Wails
+  bridge (23), an instant-source-loss misclassification (25), and the CatalogRail stale-response
+  race (27, found at milestone close).
+- **Planners marking their own limits.** `verification: backstop` on genuinely non-inferable claims
+  (removable-media latency, untuned similarity constants) kept them visible instead of quietly
+  passing as verified.
+
+### What Was Inefficient
+
+- **UAT drifted behind execution.** Phases 26 and 27 shipped verified with 11 UAT scenarios never
+  run; they were only executed at milestone close, where one surfaced a real defect. Running UAT at
+  phase close rather than milestone close would have caught it four days earlier.
+- **Traceability went stale silently.** RAIL-06 sat `Pending` from Phase 23 through close despite
+  Phase 25 having wired it — caught only by the audit's three-source cross-reference.
+- **A code review found a Critical after its SUMMARYs were written.** `ComputeDiff` ordered `added`
+  before `unreadable`, defeating the phase's own primary data-integrity control. Review ran after
+  the summaries claimed completion, so the summaries were briefly wrong on disk.
+- **VALIDATION.md left `draft` on three of seven phases** — seeded by plan-phase, never reconciled,
+  so Nyquist compliance is simply unknown for 25, 27 and 28.
+
+### Patterns Established
+
+- **`requestIdRef` stale-response guard** — `useRef(0)`, increment at dispatch, compare on land.
+  Now in CommandPalette, VolumePicker, and (retrofitted) CatalogRail. This is the house pattern for
+  any async binding whose response can be superseded.
+- **Theme/density as CSS custom properties on `:root`** — every later dialog inherited theming with
+  zero per-component wiring. Dialogs built three phases apart needed no theme code at all.
+- **Unreadable as a first-class state, never collapsed into removed** — the general lesson: when a
+  system cannot see something, "absent" and "invisible" must stay distinguishable, because
+  destructive actions key off the difference.
+- **Refusing to over-claim in the record.** 28-06 proved the build leg and explicitly left
+  COMPAT-06 unchecked rather than let a compile-only run imply signing.
+
+### Key Lessons
+
+1. **Run UAT at phase close, not milestone close.** The one deferred batch contained a real bug.
+2. **A green CI run proves exactly what its jobs did.** Naming what evidence does *not* cover is
+   as valuable as naming what it does — the WINDOWS.md ledger stayed honest because of it.
+3. **When a plan forbids touching a shared file, say so in the deviation rather than working
+   around it invisibly.** The undimmed menu item was surfaced, decided, and recorded — not hidden.
+4. **A regression test is worth only what it fails against.** CR-01's test was confirmed to fail on
+   the buggy ordering before being accepted; that check took one minute and made the fix trustworthy.
+
+### Cost Observations
+
+- Model mix: orchestration on Opus, all executor/reviewer/verifier subagents on Sonnet
+- Sessions: 1 autonomous run for Phase 28 + milestone lifecycle
+- Notable: worktree isolation was disabled project-wide (`use_worktrees=false`), so all executors
+  ran sequentially on the main tree — no merge-back conflicts, at the cost of no intra-wave
+  parallelism. With 6 single-plan waves in Phase 28 there was nothing to parallelize anyway.
+
 ## Cross-Milestone Trends
 
 ### Process Evolution
