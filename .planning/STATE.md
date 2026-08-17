@@ -2,10 +2,9 @@
 gsd_state_version: 1.0
 milestone: v3.0.0
 milestone_name: Workspace Redesign
-current_phase: 28
-status: completed
+status: Awaiting next milestone
 stopped_at: Completed 28-06-PLAN.md -- Phase 28 and v3.0.0 milestone execution complete, ready for verification
-last_updated: "2026-08-16T23:23:08.429Z"
+last_updated: "2026-08-17T00:14:29.998Z"
 last_activity: 2026-08-16
 last_activity_desc: Phase 27 complete, transitioned to Phase 28
 progress:
@@ -14,6 +13,7 @@ progress:
   total_plans: 43
   completed_plans: 43
   percent: 100
+current_phase: 28
 current_phase_name: Re-scan & Diff
 ---
 
@@ -28,14 +28,10 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 
 ## Current Position
 
-Phase: 28
-Plan: Not started
-Status: All phases complete
-Last activity: 2026-08-16 — Phase 28 complete
-
-Phases 22 and 23 are COMPLETE and verified. Phases 24-28 remain.
-
-Progress: [██████████] 100%
+Phase: Milestone v3.0.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-08-16 — Milestone v3.0.0 completed and archived
 
 ## Performance Metrics
 
@@ -299,3 +295,7 @@ Resume command: `/gsd-autonomous --from 26`
 - **Verify against `:34115` only.** Vite's `:5173` serves the same frontend but exposes no `window.go`, so binding assertions pass vacuously there.
 - **`wails dev` is currently NOT running** — it exited when Phase 25 tested force-quit. Restart it before live verification.
 - **No frontend test framework** (TEST-01 explicitly deferred). Frontend proof is `tsc --noEmit` + `vite build` + live dev-browser.
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
