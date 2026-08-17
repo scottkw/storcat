@@ -1,4 +1,4 @@
-import { useCallback, useDeferredValue, useEffect, useMemo, useState } from 'react';
+import { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useAppContext } from '../../contexts/AppContext';
 import { wailsAPI } from '../../services/wailsAPI';
 import { formatBytes, formatCount } from '../../lib/format';
@@ -17,9 +17,16 @@ function CatalogRail() {
   const deferredFilter = useDeferredValue(filterInput);
   const trimmedFilter = deferredFilter.trim();
 
+  // Mirrors CommandPalette/VolumePicker's stale-response guard: a
+  // catalogs:changed event landing mid-flight of a slower directory-switch
+  // fetch must never let the older response overwrite the fresher one.
+  const requestIdRef = useRef(0);
+
   const loadCatalogsForDirectory = useCallback(
     (dir: string) => {
+      const requestId = ++requestIdRef.current;
       wailsAPI.browseCatalogs(dir).then((result) => {
+        if (requestId !== requestIdRef.current) return; // stale response, dropped
         if (result.success) {
           dispatch({ type: 'SET_CATALOGS', payload: result.catalogs ?? [] });
         }
