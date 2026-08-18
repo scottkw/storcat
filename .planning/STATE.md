@@ -261,7 +261,7 @@ Items acknowledged and deferred at milestone close on 2026-08-16 (v3.0.0):
 | Cross-platform | WINDOWS.md: 10 of 14 ledger entries remain open (runtime correctness; no CI compile run settles them) | Open | v3.0.0 close |
 | UAT | 27-UAT scenario 7: Windows/Linux platform behavior — blocked, no such machine available | Blocked | v3.0.0 close |
 | UAT | 28-UAT: 2 backstop observations accepted-deferred (volume-enumeration latency on real removable media; untuned 0.6 / 20-entry wrong-disc constants) | Accepted-deferred | v3.0.0 close |
-| Nyquist | Phase 24 nyquist_compliant=false; phases 25, 27, 28 VALIDATION.md still `draft` (never reconciled by validate-phase) | Open | v3.0.0 close |
+| Nyquist | Phase 24 nyquist_compliant=false. Phases 25/27/28 reconciled 2026-08-17 (`/gsd-validate-phase`): 0 fillable gaps, Go coverage complete and green; `nyquist_compliant: false` is frontend-only, blocked on TEST-01's deferral | Partial — 24 open, 25/27/28 validated | v3.0.0 close |
 | Quick task | 260327-ncx-fix-title-bar: SUMMARY.md exists but frontmatter lacks `status:` — completed work, incomplete metadata | Bookkeeping | v3.0.0 close |
 | Quick task | 260327-nh6-bump-version-2.2.1: SUMMARY.md records `completed: 2026-03-27`; frontmatter lacks `status:` | Bookkeeping | v3.0.0 close |
 

@@ -2,7 +2,7 @@
 phase: 28
 slug: re-scan-diff
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-status: draft
+status: validated
 nyquist_compliant: false
 wave_0_complete: false
 created: 2026-08-16
@@ -45,7 +45,23 @@ created: 2026-08-16
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| *(filled in once PLAN.md task IDs exist)* | — | — | — | — | — | — | — | — | ⬜ pending |
+| 28-01 T1 | 01 | 1 | ACT-06, ACT-08 | T-28-01 | `Walk` extraction is behavior-preserving; re-scan never routes through `startScan` | unit + regression | `go test ./internal/catalog/... -run 'TestCreateCatalog\|TestDiff' -count=1` | ✅ `internal/catalog/diff_test.go`, `walk.go` | ✅ pass — `service_test.go` provably unmodified; 13 diff tests green |
+| 28-01 T2 | 01 | 1 | STATE-03 | T-28-04 | Re-scan failure never populates `a.lastPartial`/`a.lastScanReq` | unit (app pkg) | `go test . -run TestRescan -count=1` | ✅ `app_test.go` | ✅ pass — `TestRescan_DoesNotRetainPartialForWritePartialCatalog` |
+| 28-02 T1 | 02 | 2 | ACT-06 | T-28-05 | Skipped subtree leaves a marker instead of being silently dropped | unit (tdd) | `go test ./internal/catalog/... -run MarksSkipped -count=1` | ✅ `service_test.go` | ✅ pass — `TestTraverseDirectory_MarksSkippedNodeWhenFlagSet`; the pre-existing skip-and-continue regression still passes unmodified |
+| 28-02 T2 | 02 | 2 | ACT-06 | T-28-05 | `unreadable` outranks `added`/size; descendants pruned, never reported `removed`; counts sum to distinct paths | unit (tdd) | `go test ./internal/catalog/... -run TestDiff -count=1` | ✅ `diff_test.go` | ✅ pass — 13 tests incl. `_UnreadableIsNotRemoved`, `_CountsSumToDistinctPaths`, `_TypeChangeYieldsRemovedAndAdded`, and an end-to-end real `chmod 000` fixture |
+| 28-02 T3 | 02 | 2 | ACT-06 | — | Exactly one opt-in caller turns the marker on | static assertion | `grep -c 'MarkUnreadableOnSkip:\s*true'` → 1 | ✅ `app.go` | ✅ pass — single call site |
+| 28-03 T1 | 03 | 3 | ACT-06 | T-28-08 | Paths/errors rendered as React text children only — no `innerHTML` path | typecheck + build + grep gate | `cd frontend && npx tsc --noEmit && npm run build` | n/a — TEST-01 deferred | ✅ pass — gates green; no `dangerouslySetInnerHTML`/`innerHTML` in `rescan/` |
+| 28-03 T2 | 03 | 3 | ACT-06, ACT-08 | T-28-09, T-28-10 | Similarity banner is advisory and disables nothing; caption names what is overwritten | typecheck + build + live | `npx tsc --noEmit && npm run build` + dev-browser | n/a — TEST-01 deferred | ✅ pass — live: banner shown, footer `disabled:false` |
+| 28-03 T3 | 03 | 3 | ACT-06 | — | Error step offers no partial-write affordance | typecheck + build + live | `npx tsc --noEmit && npm run build` + dev-browser | n/a — TEST-01 deferred | ✅ pass — live: "Scan interrupted", no "Write partial" element anywhere |
+| 28-03 T4 | 03 | 3 | ACT-06, ACT-08 | — | The diff step, end to end, against real staged fixtures | manual (dev-browser, `:34115`) | live verification | n/a — TEST-01 deferred | ✅ pass — tiles 2/1/1/1/3 summed to 8 = distinct paths; `chmod 000` dir under UNREADABLE, absent from REMOVED |
+| 28-04 T1 | 04 | 4 | ACT-07 | T-28-06, T-28-07 | Single write path: reuses `WriteCatalogFrom`/`WriteFileAtomic` and the shared `nextCopyRoot` | unit (tdd) | `go test ./internal/catalog/... -run TestWriteRescanResult -count=1` | ✅ `resolve_test.go` | ✅ pass — 4 tests; `grep -c WriteFileAtomic resolve.go` = 0, `nextCopyRoot` reused |
+| 28-04 T2 | 04 | 4 | ACT-07 | T-28-07 | Write failure surfaces the real error and leaves every action reachable | typecheck + build + live | `npx tsc --noEmit && npm run build` + dev-browser | n/a — TEST-01 deferred | ✅ pass — live: `.ws-rescan-resolve-error` banner, all three buttons `disabled:false` |
+| 28-04 T3 | 04 | 4 | ACT-07 | — | Overwrite / keep-both / discard each do exactly what they claim, on disk | manual (dev-browser + hashes) | live verification | n/a — TEST-01 deferred | ✅ pass — discard byte-identical (`e3bb4dbd…` unchanged); keep-both preserved original, collided to `-copy-2`; overwrite → `b12a275c…` |
+| 28-05 T1 | 05 | 5 | STATE-03 | — | Three exits all reuse existing surfaces; no invented membership state | typecheck + build + grep gate | `npx tsc --noEmit && npm run build` | n/a — TEST-01 deferred | ✅ pass — `app.go`/`DeleteConfirmDialog.tsx` diffs empty; no hidden/excluded/archived state |
+| 28-05 T2 | 05 | 5 | STATE-03 | — | The trio against genuinely unparseable catalogs | manual (dev-browser, `:34115`) | live verification | n/a — TEST-01 deferred | ✅ pass — 5 corrupted fixtures; real Trash move, recoverable; keep-both left the broken original byte-identical |
+| 28-06 T1 | 06 | 6 | COMPAT-06 | — | Publication route is a user decision, not a silent step | decision checkpoint | n/a — blocking human decision | n/a | ✅ resolved — user selected `push-main` |
+| 28-06 T2 | 06 | 6 | COMPAT-06 | — | Each of the three legs individually green, from one cited run | **manual, CI-observed** | a real push + an observed Actions run | n/a — no local substitute | ✅ pass — run 31976677486 @ `2715a42d`; `build-macos`/`build-linux`/`build-windows` all `success`; independently re-confirmed at audit (one run for that SHA, no `v3.0.0` tag, `release.yml` not fired) |
+| 28-06 T3 | 06 | 6 | COMPAT-06 | — | No ledger entry closed on evidence that does not establish it | ledger consistency | manual review of `.planning/WINDOWS.md` | ✅ `.planning/WINDOWS.md` | ✅ pass — exactly one entry closed (#7, live-verified); #4/#5 reworded but open; 10 open |
 
 ### Requirement → verification approach (from RESEARCH.md)
 
@@ -67,12 +83,12 @@ created: 2026-08-16
 
 ## Wave 0 Requirements
 
-- [ ] `internal/catalog/diff_test.go` — ACT-06's four-state categorization, the mtime-fallback edge case, and the type-change (file↔directory) edge case
-- [ ] `MarkUnreadableOnSkip` coverage in `internal/catalog/service_test.go` (or a new file), landing **alongside** the existing skip-and-continue regression test, which must keep passing unmodified
-- [ ] An `app`-package test proving re-scan's failure path does NOT populate `a.lastPartial`/`a.lastScanReq` — follow Phase 25's `TestStartScan_RetainsPartialOnSourceLoss` pattern in the existing `app_test.go`
-- [ ] A call-site test asserting keep-both invokes the shared `nextCopyRoot`, not a reimplementation
-- [ ] No framework install needed — Go stdlib `testing` is already wired
-- [ ] No new frontend test file — none needed, consistent with TEST-01's deferral
+- [x] `internal/catalog/diff_test.go` — ACT-06's four-state categorization, the mtime-fallback edge case, and the type-change (file↔directory) edge case
+- [x] `MarkUnreadableOnSkip` coverage in `internal/catalog/service_test.go` (or a new file), landing **alongside** the existing skip-and-continue regression test, which must keep passing unmodified
+- [x] An `app`-package test proving re-scan's failure path does NOT populate `a.lastPartial`/`a.lastScanReq` — follow Phase 25's `TestStartScan_RetainsPartialOnSourceLoss` pattern in the existing `app_test.go`
+- [x] A call-site test asserting keep-both invokes the shared `nextCopyRoot`, not a reimplementation
+- [x] No framework install needed — Go stdlib `testing` is already wired
+- [x] No new frontend test file — none needed, consistent with TEST-01's deferral
 
 ---
 
@@ -92,12 +108,51 @@ created: 2026-08-16
 
 ## Validation Sign-Off
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies
-- [ ] Sampling continuity: no 3 consecutive tasks without automated verify
-- [ ] Wave 0 covers all MISSING references
-- [ ] No watch-mode flags
-- [ ] Feedback latency < 120s
-- [ ] COMPAT-06 backed by an observed CI run, not a local build
-- [ ] `nyquist_compliant: true` set in frontmatter
+- [x] All tasks have `<automated>` verify or Wave 0 dependencies
+- [x] Sampling continuity: no 3 consecutive tasks without automated verify
+- [x] Wave 0 covers all MISSING references
+- [x] No watch-mode flags
+- [x] Feedback latency < 120s
+- [x] COMPAT-06 backed by an observed CI run, not a local build
+- [x] `nyquist_compliant` set honestly in frontmatter (`false` — frontend uncovered, TEST-01 deferred)
 
-**Approval:** pending
+**Approval:** reconciled 2026-08-17 by `/gsd-validate-phase 28` — per-task map built from the shipped plans, every automated row re-run green at audit time.
+
+---
+
+## Validation Audit 2026-08-17
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 fillable |
+| Resolved | 0 |
+| Escalated | 0 |
+
+**Auditor not spawned** — no fillable gap exists. This pass built the per-task map, which had never
+been filled: it still held its plan-time seed row, `*(filled in once PLAN.md task IDs exist)*`, so
+this phase reported as NOT-VALIDATED at milestone audit despite having the strongest automated
+coverage in the milestone.
+
+**Verified at audit time, not assumed** — every Wave 0 item exists and was re-run:
+
+| Wave 0 item | Evidence |
+|-------------|----------|
+| `internal/catalog/diff_test.go` | 13 tests green, incl. the sum invariant and a real `chmod 000` end-to-end fixture |
+| `MarkUnreadableOnSkip` coverage | `TestTraverseDirectory_MarksSkippedNodeWhenFlagSet`; the pre-existing skip-and-continue regression still passes **unmodified** |
+| app-package retained-partial test | `TestRescan_DoesNotRetainPartialForWritePartialCatalog` |
+| keep-both call-site assertion | `grep -c WriteFileAtomic resolve.go` = 0; `nextCopyRoot` reused from `duplicate.go` |
+
+**Post-SUMMARY fixes are covered too.** Code review found 1 Critical + 3 Warnings *after* the
+SUMMARYs were written; all four are fixed and pinned by tests re-run green here — notably
+`TestDiff_NewUnreadableEntryIsUnreadableNotAdded` (CR-01), which was confirmed to FAIL against the
+buggy ordering before being accepted, so it is a real regression test rather than a tautology.
+
+**COMPAT-06 stays honest.** The observed run proves native compilation on three real runner OSes
+plus TypeScript type-checking. It does not prove signing, notarization, or release, and this file
+does not claim it does — those are tag-gated in `release.yml`, and Windows signing skips with a
+warning while CRED-04/CRED-05 are unprovisioned.
+
+**Two backstop observations remain open** in `28-UAT.md` (`status: accepted`): volume-enumeration
+latency on real removable media, and the untuned `0.6` / 20-entry wrong-disc constants. Both were
+flagged `verification: backstop` by the plans themselves — real-world observations, not defects, and
+not automatable.

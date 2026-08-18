@@ -2,8 +2,8 @@
 phase: 25
 slug: create-slide-over-progress-cancellation-partial-catalog
 # status lifecycle: draft (seeded by plan-phase) → validated (set by validate-phase §6)
-status: draft
-nyquist_compliant: true
+status: validated
+nyquist_compliant: false
 wave_0_complete: true
 created: 2026-08-14
 ---
@@ -123,7 +123,7 @@ Every gap the research pass identified is created by the task that needs it, ins
 - [x] Wave 0 covers all MISSING references
 - [x] No watch-mode flags
 - [x] Feedback latency < 90s
-- [x] `nyquist_compliant: true` set in frontmatter
+- [x] `nyquist_compliant` set honestly in frontmatter (`false` — see 2026-08-17 audit)
 
 **Approval:** per-task map and manual-only table populated with observed results by 25-07-T3, executing this document's own Sampling Rate contract in full: `status` is left `draft` per this file's own lifecycle comment (flipped to `validated` only by `/gsd-validate-phase` §6, not by plan execution) -- this sign-off block is about verification coverage completeness, which is now full.
 
@@ -164,3 +164,36 @@ Every gap the research pass identified is created by the task that needs it, ins
 All verified at `wails dev` `:34115` against real `/Volumes` and real large scans (never Vite `:5173`, which exposes no `window.go`): the 340ms/260ms animation and five close paths; volume cards with live size/status including two genuinely unreadable `d--x--x--x` mounts; title/root independence; the derived WILL WRITE preview; all three toggles; both scanning sub-states with the counting→percentage transition and monotonic, spinner-free progress; cancel writing nothing; background handoff with an agreeing status-bar percentage and click-to-reopen into the live scanning state; the error state's three actions; both done flavors; four entry points resetting to the form; a real ⌘↵-triggered scan through to done; and CRT-13's force-quit-mid-scan, closed live in wave 7 via `window.runtime.Quit()`.
 
 **Still genuinely unverified, logged rather than claimed** — `.planning/WINDOWS.md` #4 (Windows `GetDiskFreeSpaceEx`), #5 (Linux `/proc/mounts`), #6 (atomic write surviving a `SIGKILL` — timing a kill inside a few-millisecond write window is not reliably schedulable here). Staging a real mid-walk source loss on removable media also remains manual-only.
+
+---
+
+## Validation Audit 2026-08-17
+
+| Metric | Count |
+|--------|-------|
+| Gaps found | 0 fillable |
+| Resolved | 0 |
+| Escalated | 0 |
+
+**Auditor not spawned** — no fillable gap exists. This pass reconciled the record rather than
+generating tests.
+
+**Two bookkeeping corrections:**
+
+1. `status` promoted `draft` → `validated`. The substantive audit ran on 2026-08-15; only the
+   lifecycle field was never flipped, which left `/gsd-audit-milestone` reporting this phase as
+   NOT-VALIDATED (coverage unknown) when its coverage was in fact fully assessed.
+2. `nyquist_compliant` corrected `true` → **`false`**. The frontmatter contradicted this file's own
+   2026-08-15 audit text, which states plainly that the flag *"stays `false` by design, not
+   omission"* because 8 of 16 requirements are frontend surfaces with no automatable path while
+   TEST-01 remains deferred. The audit's reasoning is correct and the frontmatter was wrong; the
+   frontmatter now agrees with it.
+
+**Re-verified at audit time (2026-08-17):** `go test ./... -count=1` green across all 9 packages;
+`internal/catalog` 77 passing, `internal/osutil` 27, `internal/watch` 13, `internal/search` 36,
+root `app` package 35.
+
+**Compliance posture:** every requirement with an automatable path is automated and green. The
+uncovered remainder is frontend-only and stays uncovered by deliberate project decision (TEST-01,
+recorded in STATE.md Deferred Items). Retiring TEST-01 is what flips this flag to `true` — nothing
+in this phase's own scope can or should.
