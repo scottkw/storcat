@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 Phase: Milestone v3.0.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-08-16 — Milestone v3.0.0 completed and archived
+Last activity: 2026-08-17 — Completed quick task 260817-soq: Fix distribute.yml so it fires after Release completes (workflow_run trigger)
 
 ## Performance Metrics
 
@@ -248,6 +248,12 @@ active. Two phases (25, 28) are pre-flagged as needing their own research pass b
 - 25-01: An unintended side effect was caused on the user's live desktop during live verification -- a stray osascript/System Events keystroke (attempting to target the StorCat app window, which did not reliably come to accessibility focus) landed in a Raycast Settings/Store window instead and appears to have installed a 'GIF Search' Raycast extension. Not requested. User should check Raycast's installed extensions and remove it if unwanted. All further OS-level UI automation was stopped immediately once noticed.
 
 - **Decision-coverage gate override (Phase 26, USER-approved 2026-08-15).** `check.decision-coverage-plan` returns `could-not-parse` on this project's CONTEXT.md format — discuss-phase here writes prose bullets under topic subheadings, not the `- **D-NN:** text` bullets the gate's parser requires, so it can name zero decisions rather than any uncovered one. It is a parser/format mismatch, not evidence of a dropped decision: the gsd-plan-checker's independent source audit confirmed every 26-CONTEXT.md decision (persistence, both carried security obligations, the `SearchIndexed` exclusion, dialog/theme/segmented decisions, the version bump, all discretion items) is carried into a plan. User elected to proceed and record the override. **Same override applies to phases 27 and 28 in this autonomous run.** verify-phase may re-surface this.
+
+### Quick Tasks Completed
+
+| # | Description | Date | Commit | Directory |
+|---|-------------|------|--------|-----------|
+| 260817-soq | Fix distribute.yml so it fires after Release completes (workflow_run trigger) | 2026-08-17 | d518ddd0 | [260817-soq-fix-distribute-yml-so-it-fires-after-rel](./quick/260817-soq-fix-distribute-yml-so-it-fires-after-rel/) |
 
 ## Deferred Items
 
