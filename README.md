@@ -1,10 +1,40 @@
-# StorCat v2.3.0
+# StorCat v3.0.0
 
 **Storage Media Cataloging Tool**
 
 StorCat is a cross-platform desktop and CLI application for creating, browsing, and searching directory catalogs. It generates JSON and HTML representations of directory trees. Built with Go and React, StorCat provides a fast, native experience across all major platforms.
 
 Run `storcat` with no arguments for the GUI, or use CLI subcommands (`storcat create`, `storcat search`, etc.) for scripting and terminal workflows.
+
+> **Note:** `main` is at v3.0.0. The latest *published* release is v2.3.0, which still ships the
+> older three-tab interface — the workspace described below arrives with the v3.0.0 release.
+> Build from source (see [Building from Source](#building-from-source)) to run it today.
+
+## What's New in v3.0.0 — The Workspace Redesign
+
+The three-tab interface is gone. v3.0.0 replaces it with a single-view workspace and adds the
+backend capabilities that design implies:
+
+- **One view, not three tabs** — toolbar, catalog rail, file tree, details panel, and status bar are
+  visible together. No more losing your place by switching tabs.
+- **Handles big catalogs** — the tree is virtualized and has been exercised against a 42,550-node
+  catalog; row count stays flat regardless of scroll position.
+- **⌘K command palette** — find any file across every catalog without leaving the workspace. Reads
+  live from disk, so it never serves a stale index after a rename or delete.
+- **Live scan progress** — creating a catalog shows real counts and bytes as it walks, can be
+  cancelled, backgrounded, and recovers a partial catalog if the source volume disappears.
+- **Settings that save as you go** — theme, row density, rail position, and catalog defaults,
+  persisted to the Go config rather than browser storage.
+- **Catalog management** — rename, duplicate, and delete to Trash (never a permanent delete), plus a
+  filesystem watcher that keeps the rail current when catalogs change outside the app.
+- **Re-scan & diff** — re-scan a catalog's source volume and see exactly what changed across five
+  states (added / removed / changed / unreadable / unchanged), then resolve by overwriting, keeping
+  both, or discarding. Nothing is written until you choose.
+
+**On the diff's safety:** an unreadable subtree is a distinct state, never collapsed into "removed".
+A directory you simply can't read today would otherwise look identical to one that was deleted — and
+overwriting on that assumption would discard data that is still there. Writes reuse the same
+crash-safe atomic-write path used everywhere else; there is no second write path.
 
 ## Why StorCat v2.0.0? The Migration from Electron to Go/Wails
 
@@ -43,28 +73,41 @@ Go with the Wails framework provides the best of both worlds:
 
 ### GUI (Desktop Application)
 
-- **Create Catalogs**: Scan any directory and create searchable catalogs
-  - Recursive directory scanning with symlink following
-  - File metadata capture (name, size, dates, creation time)
-  - JSON and HTML output formats
-  - v1.0 catalog backward compatibility
+- **Workspace**: One view — toolbar, catalog rail, file tree, details panel, status bar
+  - Catalog rail with live filter, file counts, byte totals, and a status dot per catalog
+  - Virtualized tree with breadcrumbs, expand-all / collapse-all, exercised at 42,550 nodes
+  - Details panel follows your selection; reveal in file manager, open the HTML view
+  - Responsive across three width tiers — the details panel becomes a drawer on narrow windows
 
-- **Advanced Search**: Fast search across all your catalogs
-  - Search by filename patterns
-  - Filter by multiple catalogs
-  - Sort by any column
-  - Per-column filtering
+- **Create Catalogs**: Scan any volume or folder into a searchable catalog
+  - Detected volumes offered as selectable cards with live size and readability status
+  - Live scan progress with real counts and bytes — no fake percentages
+  - Cancel mid-scan (writes nothing), or send it to the background and keep working
+  - Partial-catalog recovery when a source volume disappears mid-scan
+  - Recursive scanning with symlink following, JSON and HTML output, v1.0 backward compatibility
 
-- **Browse Catalogs**: View catalog metadata
-  - See all available catalogs with file size and dates
-  - View catalog statistics
-  - Open HTML catalog viewer
+- **⌘K Command Palette**: Find any file across every catalog
+  - Cross-catalog filename search, capped and reported honestly ("first 50 of N")
+  - Full keyboard navigation; jumping to a hit switches catalog, expands the path, and selects it
+  - Reads live from disk — no cached index to go stale after a rename, delete, or re-scan
 
-- **Modern UI**: React-based interface with Ant Design
-  - Responsive table with sticky headers
-  - Column resizing, sorting, and filtering
-  - 11 themes (StorCat Light/Dark, Dracula, Nord, Solarized, One Dark, Monokai, GitHub, Gruvbox)
-  - Collapsible sidebar with configurable positioning
+- **Catalog Management**: Rename, duplicate, delete
+  - Rename writes the title into the JSON and both HTML title sites
+  - Duplicate with automatic `-copy` / `-copy-2` collision handling
+  - Delete moves to the OS Trash — there is no permanent-delete path anywhere
+  - Filesystem watcher keeps the rail current when catalogs change outside the app
+
+- **Re-scan & Diff**: Reconcile a catalog against its source volume
+  - Five diff states with counts: added, removed, changed, unreadable, unchanged
+  - Always asks which volume to scan — nothing is remembered or pre-selected
+  - Warns when the scan looks like a different disc, without blocking you
+  - Resolve by overwrite, keep-both, or discard; nothing is written until you choose
+
+- **Settings**: Theme, density, rail position, and catalog defaults, saved as you go
+  - 11 themes (StorCat Light/Dark, Dracula, Solarized Dark/Light, Nord, One Dark, Monokai,
+    GitHub Light/Dark, Gruvbox Dark)
+  - Comfortable / compact row density; rail on the left or right
+  - Self-hosted fonts, no network calls
 
 ### CLI (Command Line)
 
@@ -267,27 +310,56 @@ Builds are located in `build/bin/`:
 
 ### Creating a Catalog
 
-1. Click the "Create Catalog" tab
-2. Click "Select Directory" and choose the folder to catalog
-3. Enter a title and description
-4. Click "Create Catalog"
-5. The catalog is saved to your configured catalog directory
+1. Click **＋ New** in the catalog rail
+2. Pick a detected volume, or choose any folder
+3. Set the title and filename — a live preview shows exactly what will be written
+4. Click **Start scan** (or press `⌘↵`)
+5. Watch live progress. You can cancel, or send the scan to the background and keep working
 
-### Searching Catalogs
+The catalog is saved to your configured catalog directory. If the source disappears mid-scan,
+StorCat offers to retry or write what it got as a partial catalog.
 
-1. Click the "Search Catalogs" tab
-2. Enter search terms (wildcards supported: `*.mp3`, `photo*`)
-3. Select which catalogs to search (or leave empty for all)
-4. Results show in a sortable, filterable table
-5. Click column headers to sort
-6. Use column filters for refined search
+### Browsing a Catalog
 
-### Browsing Catalogs
+1. Select a catalog in the rail — the tree loads beside it
+2. Expand folders, or use expand-all / collapse-all in the tree header
+3. Select any file to see its metadata in the details panel
+4. From the details footer: reveal in your file manager, or open the HTML view
 
-1. Click the "Browse Catalogs" tab
-2. View all available catalogs with metadata (size, dates)
-3. Click a catalog to open its HTML view
-4. Sort and filter the catalog list
+### Finding a File
+
+1. Press `⌘K` (`Ctrl+K` on Windows/Linux), or click the toolbar search field
+2. Type at least two characters — results stream in across *all* catalogs
+3. Arrow keys to move, `↵` to jump: StorCat switches catalog, expands the path, and selects the file
+
+### Managing Catalogs
+
+Select a catalog, then use the `⋯` menu in the details panel:
+
+| Action | What it does |
+|--------|--------------|
+| Rename catalog… | Rewrites the title in the JSON and both HTML title sites |
+| Re-scan volume & diff… | Re-scans the source and shows what changed (see below) |
+| Duplicate catalog | Copies to `-copy`, `-copy-2`, … as needed |
+| Delete catalog… | Moves to the OS Trash — recoverable, never a permanent delete |
+
+### Re-scanning and Reconciling
+
+1. Choose **Re-scan volume & diff…** from the `⋯` menu, or the details-panel footer
+2. Pick the source volume — StorCat always asks, and never pre-selects
+3. Watch the scan, then review the diff: added, removed, changed, unreadable, unchanged
+4. Resolve:
+   - **Overwrite catalog** — replaces it in place. Irreversible; the caption says so
+   - **Keep both** — writes a new catalog and leaves the original untouched
+   - **Discard scan and close** — writes nothing; the catalog is byte-identical afterwards
+
+If the numbers suggest you inserted the wrong disc, a warning appears — advisory only, it never
+disables anything.
+
+### If a Catalog Won't Open
+
+A catalog whose JSON can't be parsed shows a diagnostic with the real error, plus three ways out:
+re-scan its source volume, open the `.html` instead, or remove it from the library.
 
 ## Configuration
 
@@ -300,9 +372,28 @@ Default catalog directory:
 - **macOS/Linux**: `~/StorCat/catalogs`
 - **Windows**: `%USERPROFILE%\StorCat\catalogs`
 
-### Window State Persistence
+As of v3.0.0 all user settings live in this file rather than browser storage. Existing values are
+migrated once, non-destructively, on first launch.
 
-StorCat remembers window size and position across restarts. This can be toggled in Settings.
+### Settings
+
+Open with `⌘,` (`Ctrl+,`), the toolbar gear, or the theme chip. Changes save as you go — there is no
+Save button.
+
+| Setting | Options |
+|---------|---------|
+| Theme | 11 themes, light and dark |
+| Row density | Comfortable or compact |
+| Rail position | Left or right |
+| Catalog directory | Where catalogs are read from and written to |
+| Default filename root | Pre-filled when creating a catalog |
+| Write HTML alongside JSON | On / off |
+| Copy to a secondary location | On / off, with a folder picker |
+| Watch catalog directory | On / off — keeps the rail current on external changes |
+| Remember window size and position | On / off |
+
+Settings cannot be opened while a scan is running in the foreground; the entry points dim and
+explain why.
 
 ## Architecture
 
@@ -312,16 +403,20 @@ StorCat remembers window size and position across restarts. This can be toggled 
 - **Wails v2**: Desktop app framework with native webview
 - **Standard Library**: File I/O, JSON encoding, file walking
 - **djherbis/times**: Cross-platform file creation time
+- **fsnotify**: Filesystem watching for the catalog directory
+- **wastebasket/v2**: Cross-platform move-to-Trash (never a permanent delete)
 - **fatih/color**: Colorized CLI output
 - **tablewriter**: Tabular CLI output formatting
 - **pkg/browser**: Cross-platform browser launch
 
-**Frontend (React 18 + TypeScript 5):**
+**Frontend (React 18 + TypeScript):**
 - **React 18**: UI framework
-- **TypeScript 5**: Type safety
-- **Vite 5**: Build tool and dev server
-- **Ant Design 5**: UI component library
-- **Custom components**: ModernTable with advanced features
+- **TypeScript**: Type safety
+- **Vite**: Build tool and dev server
+- **@tanstack/react-virtual**: Tree virtualization — flat row count at any catalog size
+- **Custom components**: the workspace is hand-built against a CSS custom-property token layer
+- **Ant Design**: residual only. As of v3.0.0 no workspace component imports it; it survives as a
+  `ConfigProvider` wrapper supplying a light/dark algorithm, and is a removal candidate
 
 ### Project Structure
 
@@ -343,17 +438,31 @@ storcat/
 │   ├── output.go          # Shared output helpers
 │   └── *_test.go          # Per-command tests
 ├── internal/              # Go backend packages
-│   ├── catalog/           # Catalog creation service
-│   ├── search/            # Search service
-│   └── config/            # Configuration management
+│   ├── catalog/           # Catalog creation, walk, diff, resolve, atomic write
+│   ├── search/            # Search service (incl. cross-catalog indexed search)
+│   ├── config/            # Configuration management
+│   ├── volumes/           # Per-OS volume enumeration (stdlib only)
+│   ├── watch/             # Debounced fsnotify catalog-directory watcher
+│   ├── osutil/            # Trash, reveal-in-file-manager, open-external
+│   └── fixture/           # Test fixture helpers
 ├── pkg/
-│   └── models/            # Shared data models
+│   └── models/            # Shared data models (catalog, diff)
 ├── frontend/              # React frontend
 │   ├── src/
-│   │   ├── components/    # React components
+│   │   ├── components/
+│   │   │   └── workspace/ # WorkspaceShell, CatalogRail, TreePane, DetailsPanel,
+│   │   │       │          # Toolbar, StatusBar, CommandPalette, dialogs
+│   │   │       ├── create/   # Create slide-over (volume picker, scanning, error, done)
+│   │   │       ├── rescan/   # Re-scan dialog and diff list
+│   │   │       ├── palette/  # ⌘K palette internals
+│   │   │       └── settings/ # Theme grid, segmented controls, catalog settings
 │   │   ├── contexts/      # AppContext state management
+│   │   ├── hooks/         # useMediaQuery, useModalBehavior, …
+│   │   ├── services/      # wailsAPI.ts binding wrapper
+│   │   ├── settingsStore.ts # Write-through settings to the Go config
 │   │   ├── themes.ts      # 11 theme definitions
-│   │   └── App.tsx        # Main application
+│   │   ├── themeTokens.ts # Theme → CSS custom properties, applied pre-paint
+│   │   └── workspace.css  # Workspace layout and component styles
 │   ├── wailsjs/           # Auto-generated Wails bindings
 │   ├── package.json
 │   └── vite.config.ts
@@ -459,20 +568,31 @@ For those upgrading from StorCat v1.x (Electron):
 - **CLI**: Full command-line interface in the same binary (v2.1.0) — replaces the legacy `sdcat` bash scripts
 - **Code Signing**: macOS releases are Developer ID signed and notarized (v2.3.0)
 - **Release Automation**: Conventional commits drive version bumps, builds, and distribution (v2.3.0)
-- **Table**: Sticky headers with per-column filtering, sorting, and resizing work correctly
 - **API**: Direct Wails function calls instead of Electron IPC, with `{success,...}` envelope pattern
 - **Performance**: 93% smaller, 80% faster startup, 5x faster search
+- **Interface**: the three-tab layout was replaced entirely by the single-view workspace (v3.0.0)
+
+### What Changed in v3.0.0
+- **Interface**: three tabs → one workspace (rail, tree, details, toolbar, status bar)
+- **Tree**: virtualized, so large catalogs stay responsive
+- **Search**: moved into a ⌘K palette that spans every catalog, reading live from disk
+- **New capabilities**: catalog rename / duplicate / delete-to-Trash, a filesystem watcher,
+  and re-scan & diff
+- **Settings**: moved from browser `localStorage` into the Go config, with a one-time
+  non-destructive migration of existing values
+- **UI library**: Ant Design components replaced by hand-built components over a CSS
+  custom-property token layer
 
 ### What Stayed the Same
-- Catalog file format (v1.x catalogs work in v2.x — both JSON formats supported)
-- Search functionality
-- UI/UX design (React + Ant Design)
+- Catalog file format — v1.x catalogs still load, both JSON formats supported
+- The CLI and its output contracts
 - 11 themes
-- Configuration structure
+- Configuration structure and locations
 
 ### Compatibility
 
-StorCat v2.x can read catalogs created by any v1.x version. No migration needed.
+StorCat v3.x reads catalogs created by any v1.x or v2.x version. No migration needed, and the CLI
+is unchanged — existing scripts keep working.
 
 ## License
 
@@ -488,9 +608,10 @@ Copyright © 2024-2026 Ken Scott
 ## Acknowledgments
 
 - Built with [Wails](https://wails.io) - Go + Web for Desktop Apps
-- UI components from [Ant Design](https://ant.design)
-- Icons from [Ant Design Icons](https://ant.design/components/icon)
+- Tree virtualization by [TanStack Virtual](https://tanstack.com/virtual)
+- Typography: [IBM Plex](https://www.ibm.com/plex/), self-hosted
+- [Ant Design](https://ant.design) powered the pre-v3.0.0 interface
 
 ---
 
-**StorCat v2.3.0** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
+**StorCat v3.0.0** - Fast, Native, Cross-Platform Storage Media Cataloging (Desktop + CLI)
