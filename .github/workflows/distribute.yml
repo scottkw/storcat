@@ -1,6 +1,31 @@
 name: Distribute
 
 on:
+  # WHY workflow_run exists alongside release/published (do not delete this trigger):
+  #
+  # release.yml publishes its GitHub Release using the default GITHUB_TOKEN
+  # (no `token:` input on the softprops/action-gh-release step). GitHub does
+  # not emit workflow-triggering events -- including release: published --
+  # for actions taken with the default GITHUB_TOKEN. As a result the
+  # `release:` trigger below never fires for our releases; it looks
+  # redundant next to workflow_run, but it is not, because it is the only
+  # path that reacts to a manually-published release outside this repo's
+  # normal tag-push flow.
+  #
+  # workflow_run, in contrast, is not subject to that suppression -- it
+  # fires whenever the "Release" workflow run completes, regardless of
+  # which token drove it. It also guarantees release.yml's own artifact
+  # uploads have finished before this workflow's curl downloads run, which
+  # a `push: tags` trigger firing in parallel with release.yml would not.
+  #
+  # Known limitation: when release.yml itself is started via its own
+  # workflow_dispatch (not a tag push), github.event.workflow_run.head_branch
+  # holds the branch name (e.g. main) rather than a tag, so TAG resolution
+  # falls through to that branch name. This workflow's own workflow_dispatch
+  # with an explicit `tag` input is the manual escape hatch for that case.
+  workflow_run:
+    workflows: ["Release"]
+    types: [completed]
   release:
     types: [published]
   workflow_dispatch:
@@ -15,13 +40,14 @@ permissions:
 jobs:
   update-homebrew:
     runs-on: ubuntu-22.04
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Get version and compute SHA256
         id: meta
         run: |
-          TAG="${{ inputs.tag || github.event.release.tag_name }}"
+          TAG="${{ inputs.tag || github.event.release.tag_name || github.event.workflow_run.head_branch }}"
           VERSION_CLEAN="${TAG#v}"
           DMG_URL="https://github.com/scottkw/storcat/releases/download/${TAG}/StorCat-${TAG}-darwin-universal.dmg"
           curl -fsSL --retry 5 --retry-delay 10 -o /tmp/storcat.dmg "$DMG_URL"
