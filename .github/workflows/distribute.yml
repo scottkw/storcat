@@ -83,7 +83,16 @@ jobs:
 
   update-winget:
     runs-on: ubuntu-22.04
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
+      # Known limitation: vedantmgoyal9/winget-releaser infers its version from
+      # the release event payload, which is absent under workflow_run, so it
+      # cannot resolve a version on that trigger. Currently inert -- the check
+      # step below finds scottkw.StorCat not yet in the winget-pkgs registry
+      # on every trigger, so the submission step never runs regardless. This
+      # only becomes a real gap once the package is accepted upstream, at
+      # which point this job needs its own follow-up. Not engineered around
+      # here (no extra step conditions, no version plumbing into the action).
       - name: Check if package exists in winget-pkgs
         id: check
         run: |
@@ -108,12 +117,13 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    if: github.event_name != 'workflow_run' || github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
 
       - name: Generate WinGet manifests for new version
         run: |
-          TAG="${{ inputs.tag || github.event.release.tag_name }}"
+          TAG="${{ inputs.tag || github.event.release.tag_name || github.event.workflow_run.head_branch }}"
           VERSION_CLEAN="${TAG#v}"
           INSTALLER_URL="https://github.com/scottkw/storcat/releases/download/${TAG}/StorCat-${TAG}-windows-amd64-installer.exe"
           curl -fsSL --retry 5 --retry-delay 10 -o /tmp/installer.exe "$INSTALLER_URL"
@@ -143,7 +153,7 @@ jobs:
 
       - name: Commit manifests to main repo
         run: |
-          TAG="${{ inputs.tag || github.event.release.tag_name }}"
+          TAG="${{ inputs.tag || github.event.release.tag_name || github.event.workflow_run.head_branch }}"
           VERSION_CLEAN="${TAG#v}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
