@@ -6,10 +6,6 @@ StorCat is a cross-platform desktop and CLI application for creating, browsing, 
 
 Run `storcat` with no arguments for the GUI, or use CLI subcommands (`storcat create`, `storcat search`, etc.) for scripting and terminal workflows.
 
-> **Note:** `main` is at v3.0.0. The latest *published* release is v2.3.0, which still ships the
-> older three-tab interface — the workspace described below arrives with the v3.0.0 release.
-> Build from source (see [Building from Source](#building-from-source)) to run it today.
-
 ## What's New in v3.0.0 — The Workspace Redesign
 
 The three-tab interface is gone. v3.0.0 replaces it with a single-view workspace and adds the
