@@ -31,7 +31,7 @@ See: .planning/PROJECT.md (updated 2026-08-13)
 Phase: Milestone v3.0.0 complete
 Plan: —
 Status: Awaiting next milestone
-Last activity: 2026-08-17 — Completed quick task 260817-soq: Fix distribute.yml so it fires after Release completes (workflow_run trigger)
+Last activity: 2026-09-01 — Completed quick task 260901-dw8: Fix stale release-status note in README.md so it only references v3.0.0 as the latest release
 
 ## Performance Metrics
 
@@ -254,6 +254,7 @@ active. Two phases (25, 28) are pre-flagged as needing their own research pass b
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 260817-soq | Fix distribute.yml so it fires after Release completes (workflow_run trigger) | 2026-08-17 | d518ddd0 | [260817-soq-fix-distribute-yml-so-it-fires-after-rel](./quick/260817-soq-fix-distribute-yml-so-it-fires-after-rel/) |
+| 260901-dw8 | Fix stale release-status note in README.md so it only references v3.0.0 as the latest release | 2026-09-01 | ee639013 | [260901-dw8-fix-stale-release-status-note-in-readme-](./quick/260901-dw8-fix-stale-release-status-note-in-readme-/) |
 
 ## Deferred Items
 
