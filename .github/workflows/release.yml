@@ -402,6 +402,7 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.VERSION }}
           draft: false
+          fail_on_unmatched_files: true
           files: |
             artifacts/**/*
             checksums.txt
