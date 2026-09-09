@@ -174,8 +174,16 @@ main() {
 
   case "${1:-}" in
     --self-test)
-      self_test && exit 0
-      exit 1
+      # Called as a plain command, NOT as `self_test && exit 0`. The left
+      # operand of `&&` runs with `set -e` suspended for the whole function
+      # body, so a failure in the harness machinery itself — a `mktemp -d`, a
+      # fixture `mkdir`, a `cd` — would not abort and later assertions would
+      # run against fixtures that do not exist. Plain invocation keeps `set -e`
+      # live; the assertion bodies all capture child status explicitly
+      # (`rc=0; ( … ) || rc=$?`), so a failing assertion still records a FAIL
+      # row and lets the remaining rows run.
+      self_test
+      exit 0
       ;;
   esac
 
@@ -219,6 +227,8 @@ main() {
 # ---------------------------------------------------------------------------
 self_test() {
   local fix work names lastbyte nr hashn named rc rc_noarg rc_file err s1 s2
+  # The anti-vacuity floor. Enforced at the bottom of this function.
+  local EXPECTED_ASSERTIONS=11
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -331,8 +341,16 @@ self_test() {
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
   # stopped running assertions would otherwise report zero failures and exit 0.
+  # The floor only exists if the total is COMPARED, not merely printed — an
+  # exit status derived from "$failures" alone is satisfied by running no
+  # assertions at all. Bump EXPECTED_ASSERTIONS deliberately when adding a row.
   echo ""
   echo "$assertions assertion(s) run, $failures failed."
+  if [ "$assertions" -ne "$EXPECTED_ASSERTIONS" ]; then
+    echo "Error: expected $EXPECTED_ASSERTIONS assertion(s), ran $assertions." >&2
+    echo "The harness stopped early, or a row was added/removed without updating the count." >&2
+    return 1
+  fi
   [ "$failures" -eq 0 ]
 }
 
