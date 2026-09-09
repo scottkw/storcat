@@ -397,6 +397,36 @@ jobs:
       - name: Generate checksums
         run: bash scripts/gen-checksums.sh artifacts
 
+      # Run the verification the project tells downloaders to run, before
+      # publishing rather than after. The whole point of checksums.txt is to
+      # let someone detect a bad artifact set, and until now the release that
+      # produced the file never once exercised that path. This is also the step
+      # that would have caught the enumeration bugs in CI even unfixed, because
+      # a strict count shows fewer files covered than assets published.
+      - name: Verify checksums against downloaded artifacts
+        run: |
+          set -euo pipefail
+          # checksums.txt carries basenames only, so flatten into a scratch dir
+          # to make them resolve. Basenames are unique by then — the generator
+          # rejects collisions — so nothing is clobbered here.
+          mkdir -p verify
+          find -L artifacts -type f -exec cp {} verify/ \;
+          cp checksums.txt verify/
+          # No --ignore-missing. The published user command needs it because a
+          # user verifies whatever subset they downloaded; CI holds the full
+          # set and must demand a complete match. --strict fails on any
+          # improperly formatted line rather than warning and skipping it.
+          cd verify && sha256sum -c --strict checksums.txt
+          # -L so this count uses the same walk semantics as the generator;
+          # a bare -type f would disagree with it on a symlinked artifact.
+          assets=$(find -L ../artifacts -type f | wc -l)
+          lines=$(wc -l < checksums.txt)
+          if [ "$assets" -ne "$lines" ]; then
+            echo "::error::$assets artifact(s) staged for publish but $lines checksum line(s)"
+            exit 1
+          fi
+          echo "Verified $lines checksum line(s) against $assets artifact(s)."
+
       - name: Upload artifacts and publish release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe  # v2.6.1
         with:
