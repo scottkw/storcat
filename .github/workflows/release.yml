@@ -370,6 +370,16 @@ jobs:
     permissions:
       contents: write
     steps:
+      # Keep this checkout as the FIRST step of this job. When the workspace is
+      # not already a git repo, actions/checkout empties it before fetching, so
+      # running it after the artifact download would erase artifacts/ and the
+      # release would publish with no assets. It is here to put
+      # the checksum generator script in the workspace; do not move it for
+      # tidiness.
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+
       - name: Download all artifacts
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e  # v4.2.1
         with:
@@ -382,9 +392,16 @@ jobs:
         id: version
         run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
 
+      # Writes checksums.txt to the workspace root, outside artifacts/, so the
+      # script's derived count guard has nothing to exclude from its own input.
+      - name: Generate checksums
+        run: bash scripts/gen-checksums.sh artifacts
+
       - name: Upload artifacts and publish release
         uses: softprops/action-gh-release@153bb8e04406b158c6c84fc1615b65b24149a1fe  # v2.6.1
         with:
           tag_name: ${{ steps.version.outputs.VERSION }}
           draft: false
-          files: artifacts/**/*
+          files: |
+            artifacts/**/*
+            checksums.txt
