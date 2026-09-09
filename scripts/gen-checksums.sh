@@ -137,7 +137,7 @@ assert_count_matches() {
 
 # Walk the input directory recursively — actions/download-artifact with
 # `path: artifacts/` yields artifacts/<job-artifact-name>/<file>, never a flat
-# directory — recording `<basename><TAB><path>` per regular file. The sort key
+# directory — recording `<basename><TAB><path>` per uploadable file. The sort key
 # is carried on a tab-delimited scratch line so the sort acts on the filename
 # and nothing else. Two failure modes are designed out here: sorting the
 # finished hash-first lines sorts by hash rather than by filename, and a naive
@@ -156,7 +156,21 @@ collect() {
   # the loop consumed whatever it had managed to emit. Every downstream guard
   # then agreed with the short list, because every one of them measures that
   # same list. A partial walk is a hard failure, never a shorter release.
-  if ! find "$dir" -type f -print0 > "$list"; then
+  # -L follows symlinks, so the walk covers exactly what the publisher uploads.
+  # softprops/action-gh-release resolves its `files:` globs through @actions/glob
+  # (followSymbolicLinks defaults true) and filters with statSync, which follows
+  # symlinks — so a symlinked artifact IS uploaded. A bare `-type f` matches
+  # regular files only and silently omitted it, giving a published asset with no
+  # checksum line and, unlike the partial-walk case above, no stderr at all.
+  #
+  # -L rather than the wider `\( -type f -o -type l \)`: that form also matches
+  # symlinks to directories, dangling symlinks and loop entries, none of which
+  # the hasher can read and none of which the publisher uploads as files. Under
+  # -L a symlink to a file matches -type f under its own basename (the published
+  # name) and hashes through to the target bytes, a symlink to a directory is
+  # descended into exactly as the publisher's glob descends, and a loop makes
+  # find exit non-zero — caught by the check below rather than silently dropped.
+  if ! find -L "$dir" -type f -print0 > "$list"; then
     echo "Error: could not fully walk the artifact directory: $dir" >&2
     echo "find exited non-zero; refusing to checksum a partial artifact list." >&2
     exit 1
@@ -241,9 +255,9 @@ main() {
 # 9.9.9 version strings and literal guard arguments.
 # ---------------------------------------------------------------------------
 self_test() {
-  local fix work names lastbyte nr hashn named wrote rc rc_noarg rc_file err s1 s2
+  local fix work names lastbyte nr hashn named wrote linkhash rc rc_noarg rc_file err s1 s2
   # The anti-vacuity floor. Enforced at the bottom of this function.
-  local EXPECTED_ASSERTIONS=12
+  local EXPECTED_ASSERTIONS=13
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -371,6 +385,26 @@ self_test() {
   check "UNREADABLE SUBDIR partial walk exits 1, names the dir, writes nothing" \
     "rc=1 names_dir=yes wrote=no" "rc=$st_rc names_dir=$named wrote=$wrote" str
   echo "        stderr: $st_err"
+
+  # 13. SYMLINKED ARTIFACT — the publisher follows symlinks, so the generator
+  #     must too. Before -L this fixture emitted one line for two uploadable
+  #     assets, exit 0, no stderr at all. The digest is asserted against the
+  #     target's bytes to prove the hash reads through the link.
+  #     The target is zero-byte so the expected digest is the published
+  #     empty-string SHA-256 (same constant assertion 4 uses), which pins
+  #     "hashed through the link" without shelling out to the hasher here.
+  fix="$SCRATCH_DIR/symlink"
+  mkdir -p "$fix/real"
+  : > "$SCRATCH_DIR/symlink-target.bin"
+  printf 'plain\n' > "$fix/real/other.bin"
+  ln -s "$SCRATCH_DIR/symlink-target.bin" "$fix/StorCat-v9.9.9-linux-amd64.tar.gz"
+  _st_run "$fix"
+  names=$(awk '{print $2}' "$st_out" | tr '\n' ' '); names=${names% }
+  nr=$(awk 'END{print NR}' "$st_out")
+  linkhash=$(awk '$2=="StorCat-v9.9.9-linux-amd64.tar.gz"{print $1}' "$st_out")
+  check "SYMLINKED ARTIFACT symlink is covered and hashes through to the target" \
+    "rc=0 lines=2 names=StorCat-v9.9.9-linux-amd64.tar.gz other.bin hash=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" \
+    "rc=$st_rc lines=$nr names=$names hash=$linkhash" str
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
   # stopped running assertions would otherwise report zero failures and exit 0.
