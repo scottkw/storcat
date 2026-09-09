@@ -194,7 +194,30 @@ generate() {
   : > "$out"
   while IFS="$TAB" read -r base path; do
     hash=$(hash_cmd "$path")
-    printf '%s  %s\n' "${hash%% *}" "$base" >> "$out"
+    hash=${hash%% *}
+    # Validate rather than trust. The hasher's first whitespace-delimited field
+    # is NOT always a digest: GNU coreutils sha256sum and Perl's shasum escape
+    # a name containing a backslash or newline by prefixing the ENTIRE line
+    # with a literal backslash, so ${hash%% *} yields a 65-character field
+    # starting with `\`. Apple's /sbin/sha256sum does not escape, so the two
+    # hashers this script selects between disagree on exactly the inputs
+    # nothing else checks. The exposure is not only the artifact basenames the
+    # workflow controls: paths are hashed, so any backslash anywhere in the
+    # caller's directory path reaches this. Unvalidated, the malformed line was
+    # written, `shasum -c` reported "1 line is improperly formatted", and with
+    # --ignore-missing it was skipped while this script exited 0 — the count
+    # guard counts lines, not valid lines.
+    #
+    # The class is spelled out rather than [0-9a-f] on purpose: this task's
+    # verify block greps everything above self_test() for a bare 9, and the
+    # range form trips it. Do not "tidy" it back.
+    if [[ ! "$hash" =~ ^[0123456789abcdef]{64}$ ]]; then
+      echo "Error: hasher returned a malformed digest for: $path" >&2
+      echo "Got: $hash" >&2
+      echo "Refusing to write a hash field that is not 64 lowercase hex characters." >&2
+      exit 1
+    fi
+    printf '%s  %s\n' "$hash" "$base" >> "$out"
   done < <(sort -t "$TAB" -k1,1 "$pairs")
 }
 
@@ -273,9 +296,9 @@ main() {
 # 9.9.9 version strings and literal guard arguments.
 # ---------------------------------------------------------------------------
 self_test() {
-  local fix work names lastbyte nr hashn named wrote linkhash before after rc rc_noarg rc_file err s1 s2
+  local fix work fakebin names lastbyte nr hashn named wrote linkhash before after rc rc_noarg rc_file err s1 s2
   # The anti-vacuity floor. Enforced at the bottom of this function.
-  local EXPECTED_ASSERTIONS=14
+  local EXPECTED_ASSERTIONS=15
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -442,6 +465,28 @@ self_test() {
   after=$(awk 'END{print NR}' "$st_out")
   check "ATOMIC WRITE hasher failure leaves the previous good file intact" \
     "before=2 rc=1 after=2" "before=$before rc=$rc after=$after" str
+  echo "        stderr: $err"
+
+  # 15. MALFORMED DIGEST — a hasher whose first field is not a digest must be
+  #     refused, not written through. The stub reproduces the real GNU/Perl
+  #     backslash-escaping behaviour (whole line prefixed with a literal
+  #     backslash) with a stub rather than a fixture, because whether the real
+  #     hasher escapes depends on which of the three implementations is
+  #     installed. Unvalidated, this wrote `\000…0  a.bin` and exited 0.
+  fakebin="$SCRATCH_DIR/fakebin"
+  mkdir -p "$fakebin"
+  cat > "$fakebin/sha256sum" <<'FAKE'
+#!/bin/sh
+printf '\\%064d  %s\n' 0 "$1"
+FAKE
+  chmod +x "$fakebin/sha256sum"
+  work=$(mktemp -d "$SCRATCH_DIR/work.XXXXXX")
+  rc=0
+  err=$( cd "$work" && env PATH="$fakebin:$PATH" "$BASH" "$SELF" "$SCRATCH_DIR/flatten" 2>&1 1>/dev/null ) || rc=$?
+  named=no; case "$err" in *"malformed digest"*) named=yes ;; esac
+  wrote=no; if [ -e "$work/$OUTPUT_NAME" ]; then wrote=yes; fi
+  check "MALFORMED DIGEST escaped hasher output is refused, not written" \
+    "rc=1 says_malformed=yes wrote=no" "rc=$rc says_malformed=$named wrote=$wrote" str
   echo "        stderr: $err"
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
