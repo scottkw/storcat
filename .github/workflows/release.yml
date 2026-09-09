@@ -34,9 +34,22 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
 
+      # $TAG arrives via env so the Actions template engine never expands it
+      # into the script text, and the format check makes every downstream
+      # steps.version.outputs.VERSION free of shell metacharacters. Both halves
+      # need it: dispatch inputs are unconstrained, and git permits ; $ and
+      # backticks in tag names, which the v*.*.* push filter happily matches.
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Refusing malformed tag: $TAG"
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build macOS universal
         run: wails build -clean -platform darwin/universal
@@ -144,10 +157,22 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
 
+      # $TAG arrives via env so the Actions template engine never expands it
+      # into the script text, and the format check makes every downstream
+      # steps.version.outputs.VERSION free of shell metacharacters. Both halves
+      # need it: dispatch inputs are unconstrained, and git permits ; $ and
+      # backticks in tag names, which the v*.*.* push filter happily matches.
       - name: Get version from tag
         id: version
         shell: bash
-        run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Refusing malformed tag: $TAG"
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Install NSIS EnVar plugin
         shell: bash
@@ -244,9 +269,22 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
 
+      # $TAG arrives via env so the Actions template engine never expands it
+      # into the script text, and the format check makes every downstream
+      # steps.version.outputs.VERSION free of shell metacharacters. Both halves
+      # need it: dispatch inputs are unconstrained, and git permits ; $ and
+      # backticks in tag names, which the v*.*.* push filter happily matches.
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Refusing malformed tag: $TAG"
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build Linux amd64
         run: wails build -clean -platform linux/amd64
@@ -328,9 +366,22 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@v2.10.2
 
+      # $TAG arrives via env so the Actions template engine never expands it
+      # into the script text, and the format check makes every downstream
+      # steps.version.outputs.VERSION free of shell metacharacters. Both halves
+      # need it: dispatch inputs are unconstrained, and git permits ; $ and
+      # backticks in tag names, which the v*.*.* push filter happily matches.
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Refusing malformed tag: $TAG"
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
 
       - name: Build Linux arm64
         run: wails build -clean -platform linux/arm64
@@ -396,9 +447,22 @@ jobs:
       - name: List artifacts
         run: ls -laR artifacts/
 
+      # $TAG arrives via env so the Actions template engine never expands it
+      # into the script text, and the format check makes every downstream
+      # steps.version.outputs.VERSION free of shell metacharacters. Both halves
+      # need it: dispatch inputs are unconstrained, and git permits ; $ and
+      # backticks in tag names, which the v*.*.* push filter happily matches.
       - name: Get version from tag
         id: version
-        run: echo "VERSION=${{ inputs.tag || github.ref_name }}" >> $GITHUB_OUTPUT
+        shell: bash
+        env:
+          TAG: ${{ inputs.tag || github.ref_name }}
+        run: |
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.]+)?$ ]]; then
+            echo "::error::Refusing malformed tag: $TAG"
+            exit 1
+          fi
+          echo "VERSION=$TAG" >> "$GITHUB_OUTPUT"
 
       # Writes checksums.txt to the workspace root, outside artifacts/, so the
       # script's derived count guard has nothing to exclude from its own input.
