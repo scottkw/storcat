@@ -376,9 +376,17 @@ jobs:
       # release would publish with no assets. It is here to put
       # the checksum generator script in the workspace; do not move it for
       # tidiness.
+      # persist-credentials: false — this checkout exists only to put the
+      # checksum generator script in the workspace, and the default (true)
+      # writes an http.extraheader holding the GITHUB_TOKEN into .git/config.
+      # That credential would then sit in the workspace for the rest of a job
+      # that runs a third-party action and holds contents: write. Nothing here
+      # uses git after this step: the publish action takes its token as an
+      # input, not from .git/config.
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
         with:
           ref: ${{ inputs.tag || github.ref }}
+          persist-credentials: false
 
       - name: Download all artifacts
         uses: actions/download-artifact@95815c38cf2ff2164869cbab79da8d1f422bc89e  # v4.2.1
