@@ -145,12 +145,27 @@ assert_count_matches() {
 collect() {
   local dir="$1"
   local pairs="$2"
+  local list="$SCRATCH_DIR/find.out"
   local f
+
+  # find writes to a file so its exit status is checkable. The previous form —
+  # `done < <(find …)` — ran the walk in a process substitution, whose status
+  # the shell discards and which neither `set -e` nor `set -o pipefail` covers.
+  # An unreadable subdirectory, an I/O error or a vanished directory therefore
+  # truncated the walk silently: find printed to stderr, exited non-zero, and
+  # the loop consumed whatever it had managed to emit. Every downstream guard
+  # then agreed with the short list, because every one of them measures that
+  # same list. A partial walk is a hard failure, never a shorter release.
+  if ! find "$dir" -type f -print0 > "$list"; then
+    echo "Error: could not fully walk the artifact directory: $dir" >&2
+    echo "find exited non-zero; refusing to checksum a partial artifact list." >&2
+    exit 1
+  fi
 
   : > "$pairs"
   while IFS= read -r -d '' f; do
     printf '%s%s%s\n' "${f##*/}" "$TAB" "$f" >> "$pairs"
-  done < <(find "$dir" -type f -print0)
+  done < "$list"
 }
 
 # Emit one `<64 lowercase hex><two spaces><basename>` line per collected file,
@@ -226,9 +241,9 @@ main() {
 # 9.9.9 version strings and literal guard arguments.
 # ---------------------------------------------------------------------------
 self_test() {
-  local fix work names lastbyte nr hashn named rc rc_noarg rc_file err s1 s2
+  local fix work names lastbyte nr hashn named wrote rc rc_noarg rc_file err s1 s2
   # The anti-vacuity floor. Enforced at the bottom of this function.
-  local EXPECTED_ASSERTIONS=11
+  local EXPECTED_ASSERTIONS=12
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -338,6 +353,24 @@ self_test() {
   err=$( cd "$fix" && "$BASH" "$SELF" . 2>&1 1>/dev/null ) || rc=$?
   check "OUTPUT INSIDE INPUT cwd inside the hashed tree exits 1" 1 "$rc" eq
   echo "        stderr: $err"
+
+  # 12. UNREADABLE SUBDIR — a walk that could not complete must abort, not
+  #     publish what it managed to read. Before find's exit status was checked
+  #     this fixture wrote a two-line checksums.txt and exited 0, leaving
+  #     critical.bin uncovered with every guard green.
+  fix="$SCRATCH_DIR/unreadable"
+  mkdir -p "$fix/ok" "$fix/locked"
+  printf 'a\n' > "$fix/ok/a.bin"
+  printf 'b\n' > "$fix/ok/b.bin"
+  printf 'secret\n' > "$fix/locked/critical.bin"
+  chmod 000 "$fix/locked"
+  _st_run "$fix"
+  named=no; case "$st_err" in *"$fix"*) named=yes ;; esac
+  wrote=no; if [ -e "$st_out" ]; then wrote=yes; fi
+  chmod 755 "$fix/locked"   # restore so the EXIT trap's rm -rf can descend
+  check "UNREADABLE SUBDIR partial walk exits 1, names the dir, writes nothing" \
+    "rc=1 names_dir=yes wrote=no" "rc=$st_rc names_dir=$named wrote=$wrote" str
+  echo "        stderr: $st_err"
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
   # stopped running assertions would otherwise report zero failures and exit 0.
