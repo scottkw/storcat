@@ -199,7 +199,7 @@ generate() {
 }
 
 main() {
-  local dir out pairs
+  local dir out pairs tmp
 
   case "${1:-}" in
     --self-test)
@@ -224,6 +224,15 @@ main() {
 
   SCRATCH_DIR=$(mktemp -d)
   pairs="$SCRATCH_DIR/pairs"
+  # Built in the scratch dir, never at the final path. generate() appends one
+  # line at a time, so writing straight to "$out" meant a hasher failure on
+  # artifact n of N aborted under `set -e` with n-1 lines already committed —
+  # a syntactically perfect integrity file covering a strict subset of the
+  # release, with no marker that it was partial, and the previous good file
+  # already destroyed by the up-front truncation. The count guard never ran,
+  # because the script was gone. CI was partly shielded (the non-zero exit
+  # stops the publish step); the manual backfill caller was not.
+  tmp="$SCRATCH_DIR/out"
 
   # Guard order is deliberate: nothing is hashed until the input is known good,
   # nothing is written until the output location is known safe, and a basename
@@ -233,10 +242,19 @@ main() {
   assert_output_outside_input "$dir" "$out"
   assert_no_duplicate_basenames "$pairs"
 
-  generate "$pairs" "$out"
+  generate "$pairs" "$tmp"
 
   # Derived at run time from both sides of the transform, after the write.
-  assert_count_matches "$(awk 'END{print NR}' "$pairs")" "$(awk 'END{print NR}' "$out")"
+  assert_count_matches "$(awk 'END{print NR}' "$pairs")" "$(awk 'END{print NR}' "$tmp")"
+
+  # Publish only a file that passed every guard. Until this line runs, any
+  # existing checksums.txt is the previous good one, untouched.
+  # ponytail: SCRATCH_DIR comes from mktemp -d, so this may be a cross-device
+  # mv (copy + unlink) rather than an atomic rename. That is a far smaller
+  # window than the bug being fixed — it needs a kill during the copy of a
+  # sub-kilobyte file, not merely an unreadable artifact. Move the temp
+  # alongside "$out" and extend the EXIT trap if that window ever matters.
+  mv "$tmp" "$out"
 
   # Echo the result into the run log — the cheapest CHECK-01 evidence available
   # in a CI run nobody is watching. distribute.yml establishes this habit.
@@ -255,9 +273,9 @@ main() {
 # 9.9.9 version strings and literal guard arguments.
 # ---------------------------------------------------------------------------
 self_test() {
-  local fix work names lastbyte nr hashn named wrote linkhash rc rc_noarg rc_file err s1 s2
+  local fix work names lastbyte nr hashn named wrote linkhash before after rc rc_noarg rc_file err s1 s2
   # The anti-vacuity floor. Enforced at the bottom of this function.
-  local EXPECTED_ASSERTIONS=13
+  local EXPECTED_ASSERTIONS=14
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -405,6 +423,26 @@ self_test() {
   check "SYMLINKED ARTIFACT symlink is covered and hashes through to the target" \
     "rc=0 lines=2 names=StorCat-v9.9.9-linux-amd64.tar.gz other.bin hash=e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" \
     "rc=$st_rc lines=$nr names=$names hash=$linkhash" str
+
+  # 14. ATOMIC WRITE — a hasher failure part-way through the set must not
+  #     truncate the output, and must not destroy the previous good file.
+  #     Runs twice in the SAME working directory: a good run, then one with an
+  #     unreadable artifact. Before the build-then-rename change the second run
+  #     replaced a correct 2-line file with a 1-line one and left it on disk.
+  fix="$SCRATCH_DIR/atomic"
+  mkdir -p "$fix"
+  printf 'a\n' > "$fix/a.bin"
+  printf 'b\n' > "$fix/b.bin"
+  _st_run "$fix"
+  before=$(awk 'END{print NR}' "$st_out")
+  chmod 000 "$fix/b.bin"
+  rc=0
+  err=$( cd "$st_workdir" && "$BASH" "$SELF" "$fix" 2>&1 1>/dev/null ) || rc=$?
+  chmod 644 "$fix/b.bin"
+  after=$(awk 'END{print NR}' "$st_out")
+  check "ATOMIC WRITE hasher failure leaves the previous good file intact" \
+    "before=2 rc=1 after=2" "before=$before rc=$rc after=$after" str
+  echo "        stderr: $err"
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
   # stopped running assertions would otherwise report zero failures and exit 0.
