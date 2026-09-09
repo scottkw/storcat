@@ -39,12 +39,24 @@ SCRATCH_DIR=""
 cleanup_scratch() { [ -n "$SCRATCH_DIR" ] && rm -rf "$SCRATCH_DIR"; return 0; }
 trap cleanup_scratch EXIT
 
-# Select the hasher at run time. The ubuntu-22.04 runner has sha256sum (GNU
-# coreutils); macOS always has /usr/bin/shasum (Perl Digest::SHA) and only
-# recently gained sha256sum. Their output is byte-identical, so selection costs
-# four lines and changes nothing downstream. Finding neither is a hard failure:
-# substituting another digest here would be the most damaging silent default in
-# the pipeline.
+# Select the hasher at run time. Preference order is sha256sum then
+# shasum -a 256. On ubuntu-22.04 that resolves to GNU coreutils; on current
+# macOS it resolves to Apple's /sbin/sha256sum, with Perl's /usr/bin/shasum as
+# the fallback for older systems that lack sha256sum. The shasum branch is
+# therefore dead on a modern macOS box and live only on an older one.
+#
+# Their DIGESTS agree; their LINE FORMATTING does not. GNU coreutils and Perl
+# backslash-escape a name containing a backslash or newline by prefixing the
+# whole line with a literal `\`; Apple's does not. Verified on macOS 26.6 —
+# the same file, same digest, two different lines:
+#   /sbin/sha256sum 'back\slash.bin'  →  3a6eb079…  back\slash.bin
+#   shasum -a 256   'back\slash.bin'  → \3a6eb079…  back\\slash.bin
+# So this selection is not free and downstream cannot assume a fixed format.
+# generate() validates the digest field rather than trusting it; that check,
+# not this comment, is what enforces the invariant.
+#
+# Finding neither tool is a hard failure: substituting another digest here
+# would be the most damaging silent default in the pipeline.
 require_hash_tool() {
   if command -v sha256sum >/dev/null 2>&1; then
     hash_cmd() { sha256sum "$@"; }
