@@ -137,6 +137,17 @@ assert_no_duplicate_basenames() {
 # Both integers are derived from the input tree at run time. Hardcoding the
 # expected artifact count would fail the release on the next legitimate platform
 # change until someone found and bumped the literal.
+#
+# The operands must mean what the message says. This guard used to compare the
+# pairs file's line count against the output's line count — but generate()
+# writes exactly one output line per pairs line, so the two could only diverge
+# on a case the duplicate-basename guard already rejects. It measured the
+# transform, not the coverage, and could not disagree. `found` is now the
+# number of files the walk actually enumerated (NUL-delimited entries in find's
+# own output, independent of the pairs format), and `written` counts only
+# well-formed hash lines. Note this guard is not what makes coverage safe: a
+# truncated walk is caught by checking find's exit status, and an omitted
+# symlink by walking with -L. This is the arithmetic backstop behind those.
 assert_count_matches() {
   local found="$1"
   local written="$2"
@@ -157,7 +168,7 @@ assert_count_matches() {
 collect() {
   local dir="$1"
   local pairs="$2"
-  local list="$SCRATCH_DIR/find.out"
+  local list="$3"
   local f
 
   # find writes to a file so its exit status is checkable. The previous form —
@@ -234,7 +245,7 @@ generate() {
 }
 
 main() {
-  local dir out pairs tmp
+  local dir out pairs tmp list found written
 
   case "${1:-}" in
     --self-test)
@@ -268,19 +279,25 @@ main() {
   # because the script was gone. CI was partly shielded (the non-zero exit
   # stops the publish step); the manual backfill caller was not.
   tmp="$SCRATCH_DIR/out"
+  list="$SCRATCH_DIR/find.out"
 
   # Guard order is deliberate: nothing is hashed until the input is known good,
   # nothing is written until the output location is known safe, and a basename
   # collision is caught on the collected list so it costs nothing to detect.
-  collect "$dir" "$pairs"
+  collect "$dir" "$pairs" "$list"
   assert_dir_not_empty "$dir" "$pairs"
   assert_output_outside_input "$dir" "$out"
   assert_no_duplicate_basenames "$pairs"
 
   generate "$pairs" "$tmp"
 
-  # Derived at run time from both sides of the transform, after the write.
-  assert_count_matches "$(awk 'END{print NR}' "$pairs")" "$(awk 'END{print NR}' "$tmp")"
+  # Files the walk enumerated, counted from find's own NUL-delimited output so
+  # this side of the comparison does not come from the pairs format that the
+  # other side is built out of. Hex class spelled out, not [0-9a-f]: see the
+  # note in generate().
+  found=$(tr -cd '\000' < "$list" | wc -c | tr -d ' ')
+  written=$(awk '/^[0123456789abcdef]{64}  ./{n++} END{print n+0}' "$tmp")
+  assert_count_matches "$found" "$written"
 
   # Publish only a file that passed every guard. Until this line runs, any
   # existing checksums.txt is the previous good one, untouched.
@@ -310,7 +327,7 @@ main() {
 self_test() {
   local fix work fakebin names lastbyte nr hashn named wrote linkhash before after rc rc_noarg rc_file err s1 s2
   # The anti-vacuity floor. Enforced at the bottom of this function.
-  local EXPECTED_ASSERTIONS=15
+  local EXPECTED_ASSERTIONS=16
 
   SCRATCH_DIR=$(mktemp -d)   # removed by the global EXIT trap
   SELF="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd -P)/$(basename "${BASH_SOURCE[0]}")"
@@ -499,6 +516,31 @@ FAKE
   wrote=no; if [ -e "$work/$OUTPUT_NAME" ]; then wrote=yes; fi
   check "MALFORMED DIGEST escaped hasher output is refused, not written" \
     "rc=1 says_malformed=yes wrote=no" "rc=$rc says_malformed=$named wrote=$wrote" str
+  echo "        stderr: $err"
+
+  # 16. COUNT GUARD END-TO-END — rows 7 and 8 call assert_count_matches with
+  #     literal integers, which proves its arithmetic and nothing else. This
+  #     drives it through a real run by putting a `sort` on PATH that drops a
+  #     line, so the transform loses a file that the walk did enumerate: two
+  #     files found, one line written, guard fires, nothing published.
+  #     The stub passes stdin through untouched so the duplicate-basename
+  #     guard's `cut | sort | uniq -d` pipeline still behaves.
+  fakebin="$SCRATCH_DIR/fakesort"
+  mkdir -p "$fakebin"
+  cat > "$fakebin/sort" <<'FAKE'
+#!/bin/sh
+last=""
+for a; do last="$a"; done
+if [ -f "$last" ]; then sed '$d' "$last"; else cat; fi
+FAKE
+  chmod +x "$fakebin/sort"
+  work=$(mktemp -d "$SCRATCH_DIR/work.XXXXXX")
+  rc=0
+  err=$( cd "$work" && env PATH="$fakebin:$PATH" "$BASH" "$SELF" "$SCRATCH_DIR/flatten" 2>&1 1>/dev/null ) || rc=$?
+  named=no; case "$err" in *"found 2 artifact file(s) but wrote 1"*) named=yes ;; esac
+  wrote=no; if [ -e "$work/$OUTPUT_NAME" ]; then wrote=yes; fi
+  check "COUNT GUARD END-TO-END a lost line fires the guard and publishes nothing" \
+    "rc=1 counts_reported=yes wrote=no" "rc=$rc counts_reported=$named wrote=$wrote" str
   echo "        stderr: $err"
 
   # The assertion-run total is the anti-vacuity floor: a harness that silently
